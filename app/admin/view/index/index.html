@@ -1,0 +1,318 @@
+<p class="text-muted mb-3">用于展示当前系统中的统计数据、统计报表及重要实时数据。</p>
+<!-- 首页单页展示，不再使用内层 tab，避免与主框架 #tab-content-main 冲突造成“上下两个页面” -->
+<div class="index-dashboard-content">
+        <!-- 趋势图表 -->
+        <div class="card">
+            <div class="card-header border-transparent">
+                <h3 class="card-title">注册用户数</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="chart-register" style="height:250px;"></canvas>
+            </div>
+        </div>
+        
+        <!-- KPI 指标 -->
+        <div class="row mb-3">
+            <div class="col-lg-2 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info"><i class="fas fa-rocket"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">今日注册</span>
+                        <span class="info-box-number">{$stats.user_today_reg|default=0}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-user"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">今日登录</span>
+                        <span class="info-box-number">{$stats.user_today_login|default=0}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-calendar"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">三日新增</span>
+                        <span class="info-box-number">{$stats.user_three_days|default=0}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-primary"><i class="fas fa-calendar-plus"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">七日新增</span>
+                        <span class="info-box-number">{$stats.user_seven_days|default=0}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-purple"><i class="fas fa-user-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">七日活跃</span>
+                        <span class="info-box-number">{$stats.user_seven_active|default=0}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-teal"><i class="fas fa-user-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">月活跃</span>
+                        <span class="info-box-number">{$stats.user_month_active|default=0}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主要统计卡片 -->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>{$stats.user_count|default=0}</h3>
+                        <p>总会员数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-users"></i></div>
+                    <a href="{:url('member/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{$stats.attachment_count|default=0}</h3>
+                        <p>总附件数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-leaf"></i></div>
+                    <a href="{:url('attachment/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{$stats.admin_count|default=0}</h3>
+                        <p>总管理员数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-user-shield"></i></div>
+                    <a href="{:url('admin/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>{$stats.tenant_count|default=0}</h3>
+                        <p>总租户数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-building"></i></div>
+                    <a href="{:url('tenant/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        {if condition="$stats.tenant_stats"}
+        <!-- 租户统计（仅平台超管显示） -->
+        <div class="row mt-3">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-building"></i> 租户统计</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-info"><i class="fas fa-building"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">总租户数</span>
+                                        <span class="info-box-number">{$stats.tenant_stats.tenant_total}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">正常租户</span>
+                                        <span class="info-box-number">{$stats.tenant_stats.tenant_normal}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-danger"><i class="fas fa-ban"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">禁用租户</span>
+                                        <span class="info-box-number">{$stats.tenant_stats.tenant_disabled}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">即将到期</span>
+                                        <span class="info-box-number">{$stats.tenant_stats.tenant_expiring}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-primary"><i class="fas fa-shopping-cart"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">总订单数</span>
+                                        <span class="info-box-number">{$stats.tenant_stats.order_total}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">已支付订单</span>
+                                        <span class="info-box-number">{$stats.tenant_stats.order_paid}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-warning"><i class="fas fa-clock"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">待支付订单</span>
+                                        <span class="info-box-number">{$stats.tenant_stats.order_pending}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-teal"><i class="fas fa-yen-sign"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">总收入</span>
+                                        <span class="info-box-number">¥{$stats.tenant_stats.order_amount}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {/if}
+        
+        <!-- 资源统计 -->
+        <div class="row mt-3">
+            <div class="col-lg-3 col-6">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">运行中的插件</h3>
+                        <span class="badge badge-info float-right">实时</span>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-0">0</h4>
+                        <p class="text-muted mb-0">当前运行中的插件数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="card card-purple">
+                    <div class="card-header">
+                        <h3 class="card-title">数据库统计</h3>
+                        <span class="badge badge-purple float-right">实时</span>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-0">{$stats.db_tables|default=0}</h4>
+                        <p class="text-muted mb-0">数据表数量</p>
+                        <h5 class="mt-2 mb-0">{$stats.db_size|default=0}MB</h5>
+                        <p class="text-muted mb-0">占用空间</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">附件统计</h3>
+                        <span class="badge badge-dark float-right">实时</span>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-0">{$stats.attachment_count|default=0}</h4>
+                        <p class="text-muted mb-0">附件数量</p>
+                        <h5 class="mt-2 mb-0">{$stats.upload_size|default=0}KB</h5>
+                        <p class="text-muted mb-0">附件大小</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h3 class="card-title">图片统计</h3>
+                        <span class="badge badge-success float-right">实时</span>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-0">{$stats.image_count|default=0}</h4>
+                        <p class="text-muted mb-0">图片数量</p>
+                        <h5 class="mt-2 mb-0">{$stats.image_size|default=0}KB</h5>
+                        <p class="text-muted mb-0">图片大小</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+<style>
+.bg-purple { background-color: #6f42c1 !important; color: #fff; }
+.bg-purple .inner h3, .bg-purple .inner p { color: #fff; }
+.bg-teal { background-color: #20c997 !important; color: #fff; }
+.bg-teal .inner h3, .bg-teal .inner p { color: #fff; }
+.card-purple { border-top-color: #6f42c1; }
+.card-purple .card-header { background-color: #6f42c1; color: #fff; }
+.card-dark { border-top-color: #343a40; }
+.card-dark .card-header { background-color: #343a40; color: #fff; }
+.badge-purple { background-color: #6f42c1; }
+</style>
+<script src="/assets/lib/chart.js/chart.umd.js"></script>
+<script>
+(function(){
+    function initDashboard() {
+        if (typeof jQuery === 'undefined' || typeof Chart === 'undefined') {
+            setTimeout(initDashboard, 50);
+            return;
+        }
+        var $ = jQuery;
+        var registerTrend = {$stats.register_trend|json_encode|raw};
+        if (registerTrend && registerTrend.length) {
+            var ctx = document.getElementById('chart-register');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: registerTrend.map(function(d){ return d.date; }),
+                        datasets: [{
+                            label: '注册用户数',
+                            data: registerTrend.map(function(d){ return d.count; }),
+                            borderColor: '#3c8dbc',
+                            backgroundColor: 'rgba(60, 141, 188, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+    }
+    initDashboard();
+})();
+</script>

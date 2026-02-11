@@ -1,0 +1,6 @@
+{
+    "name": "demo",
+    "title": "示例插件",
+    "version": "1.0.0",
+    "hooks": ["login_after", "upload_after"]
+}

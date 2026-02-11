@@ -1,0 +1,45 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+<title>{$title|default='ThinkMes'} - ThinkMes</title>
+<script>
+// 向 localStorage 写入禁用 IFrame 的配置（AdminLTE 会从这里读取）
+try {
+    var iframeConfig = {
+        autoIframeMode: false,
+        autoItemActive: false,
+        autoShowNewTab: false,
+        onTabClick: function(e) { return e; },
+        onTabChanged: function(e) { return e; },
+        onTabCreated: function(e) { return e; }
+    };
+    localStorage.setItem('AdminLTE:IFrame:Options', JSON.stringify(iframeConfig));
+} catch(e) {}
+// 确保 AdminLTEOptions 正确设置
+window.AdminLTEOptions = window.AdminLTEOptions || {};
+window.AdminLTEOptions.autoIframeMode = false;
+window.AdminLTEOptions.iframe = false;
+</script>
+<!-- Bootstrap 4 (AdminLTE 3 依赖) -->
+<link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
+<!-- AdminLTE 3 -->
+<link rel="stylesheet" href="/assets/lib/adminlte/css/adminlte.min.css">
+<!-- Bootstrap Table -->
+<link rel="stylesheet" href="/assets/lib/bootstrap-table/css/bootstrap-table.min.css">
+<!-- Custom Theme -->
+<link rel="stylesheet" href="/assets/css/fastadmin-theme.css">
+<style>
+/* FastAdmin 兼容样式 */
+.panel-lead { font-size: 14px; }
+.panel-lead em { font-style: normal; font-weight: 600; margin-right: 8px; }
+.toolbar .btn { margin-right: 6px; }
+
+/* FastAdmin 布局：内容区占满剩余高度，供 addtabs 使用 */
+.wrapper { display: flex !important; flex-direction: column !important; min-height: 100vh !important; }
+.content-wrapper { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; width: 100% !important; }
+.content-wrapper > .content { flex: 1 !important; min-height: 0 !important; overflow: hidden !important; width: 100% !important; }
+</style>
+<script type="text/javascript">
+    var Config = {:json_encode($config ?? [], 256)};
+</script>

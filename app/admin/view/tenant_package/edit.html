@@ -1,0 +1,47 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑套餐</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="id" value="{$data.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">套餐名称</label>
+                <div class="col-sm-6"><input type="text" name="name" class="form-control" value="{$data.name}" required placeholder="必填"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">最大管理员数</label>
+                <div class="col-sm-6"><input type="number" name="max_admin" class="form-control" value="{$data.max_admin}" min="0" required></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">最大用户数</label>
+                <div class="col-sm-6"><input type="number" name="max_user" class="form-control" value="{$data.max_user}" min="0" required></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">默认有效期（天）</label>
+                <div class="col-sm-6"><input type="number" name="expire_days" class="form-control" value="{$data.expire_days}" placeholder="留空为永久" min="1"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">排序</label>
+                <div class="col-sm-6"><input type="number" name="sort" class="form-control" value="{$data.sort}"></div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{:url('tenant_package/index')}" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-edit').attr('action', base + '/tenant_package/edit');
+    $('#form-edit').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            alert(r.msg);
+            if (r.code === 1) location.href = base + '/tenant_package/index';
+        }, 'json');
+    });
+});
+</script>

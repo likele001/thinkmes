@@ -1,0 +1,2 @@
+-- demo 插件卸载 SQL（示例）
+-- 可选：DROP TABLE IF EXISTS fa_demo;

@@ -1,0 +1,133 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">添加分工分配</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">订单 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[order_id]" class="form-control" id="order_id" required>
+                        <option value="">请选择订单</option>
+                        {volist name="orderList" id="vo"}
+                        <option value="{$key}">{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">产品型号 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[model_id]" class="form-control" id="model_id" required>
+                        <option value="">请先选择订单</option>
+                    </select>
+                    <small class="form-text text-muted">选择订单后自动加载该订单的型号</small>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[process_id]" class="form-control" id="process_id" required>
+                        <option value="">请选择工序</option>
+                        {volist name="processList" id="vo"}
+                        <option value="{$key}">{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">员工 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[user_id]" class="form-control" id="user_id" required>
+                        <option value="">请选择员工</option>
+                        {volist name="userList" id="vo"}
+                        <option value="{$key}">{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">分配数量 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <input type="number" name="row[quantity]" class="form-control" min="1" placeholder="请输入分配数量" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">产品编号前缀</label>
+                <div class="col-sm-6">
+                    <input type="text" name="row[item_prefix]" class="form-control" placeholder="产品编号前缀（可选）">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">备注</label>
+                <div class="col-sm-6">
+                    <textarea name="row[remark]" class="form-control" rows="3" placeholder="请输入备注"></textarea>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">提交</button>
+                    <a href="{$config.moduleurl}/mes/allocation/index" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    function initForm() {
+        if (typeof jQuery === 'undefined') {
+            setTimeout(initForm, 50);
+            return;
+        }
+        var $ = jQuery;
+        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        
+        // 订单选择变化时加载型号
+        $('#order_id').on('change', function() {
+            var orderId = $(this).val();
+            if (!orderId) {
+                $('#model_id').html('<option value="">请先选择订单</option>');
+                return;
+            }
+            $.get(base + '/mes/allocation/getOrderModels', {order_id: orderId}, function(r) {
+                if (r.code == 1 && r.data) {
+                    var html = '<option value="">请选择型号</option>';
+                    $.each(r.data, function(i, item) {
+                        html += '<option value="' + item.id + '">' + item.name + ' (数量: ' + item.quantity + ')</option>';
+                    });
+                    $('#model_id').html(html);
+                } else {
+                    $('#model_id').html('<option value="">该订单暂无型号</option>');
+                }
+            }, 'json');
+        });
+        
+        $('#form-add').attr('action', base + '/mes/allocation/add');
+        $('#form-add').on('submit', function (e) {
+            e.preventDefault();
+            $.post($(this).attr('action'), $(this).serialize(), function (r) {
+                if (r && r.msg) {
+                    alert(r.msg);
+                }
+                if (r && r.code === 1) {
+                    location.href = base + '/mes/allocation/index';
+                }
+            }, 'json').fail(function(xhr) {
+                try {
+                    var r = JSON.parse(xhr.responseText);
+                    alert(r.msg || '操作失败');
+                } catch(e) {
+                    alert('操作失败');
+                }
+            });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initForm);
+    } else {
+        initForm();
+    }
+})();
+</script>

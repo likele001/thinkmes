@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租户注册 - MES系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; }
+        .container { max-width: 700px; margin: 40px auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #fff; font-size: 32px; margin-bottom: 10px; }
+        .header p { color: #ccc; font-size: 14px; }
+        .form-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .form-title { font-size: 22px; color: #333; margin-bottom: 25px; font-weight: bold; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #555; margin-bottom: 8px; font-size: 14px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #4CAF50; }
+        .form-group select { background: white; }
+        .form-group .help { font-size: 12px; color: #999; margin-top: 5px; }
+        .package-list { margin-bottom: 15px; }
+        .package-item { padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; }
+        .package-item:hover { background: #f9f9f9; }
+        .package-item.active { border-color: #4CAF50; background: #f0f7ff; }
+        .package-item h4 { margin: 0 0 8px; color: #333; font-size: 16px; }
+        .package-item p { margin: 0; color: #666; font-size: 13px; }
+        .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .btn:hover { background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%); }
+        .hint { margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 4px; font-size: 13px; color: #fff; }
+        .hint strong { color: #fff; }
+        .error-msg { color: #f44336; font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MES制造执行系统</h1>
+            <p>租户注册</p>
+        </div>
+
+        <div class="form-box">
+            <form id="registerForm" method="post" action="{:url('admin/register/save')}">
+                <input type="hidden" name="__token__" value="{:token()}">
+
+                <div class="form-title">基本信息</div>
+
+                <div class="form-group">
+                    <label>租户名称 *</label>
+                    <input type="text" name="tenant_name" required placeholder="请输入租户名称（1-100字符）" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label>登录账号 *</label>
+                    <input type="text" name="username" required placeholder="请输入登录账号（3-30字符，字母数字下划线）" maxlength="30" pattern="[a-zA-Z0-9_]+">
+                    <div class="help">用于登录后台系统</div>
+                </div>
+
+                <div class="form-group">
+                    <label>登录密码 *</label>
+                    <input type="password" name="password" required placeholder="请输入登录密码（6-30字符）" minlength="6" maxlength="30">
+                    <div class="help">请妥善保管密码</div>
+                </div>
+
+                <div class="form-group">
+                    <label>昵称 *</label>
+                    <input type="text" name="nickname" required placeholder="请输入显示名称（1-50字符）" maxlength="50">
+                    <div class="help">在系统中显示的名称</div>
+                </div>
+
+                <div class="form-group">
+                    <label>联系邮箱 *</label>
+                    <input type="email" name="email" required placeholder="请输入联系邮箱">
+                </div>
+
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="tel" name="mobile" placeholder="请输入联系电话（选填）">
+                </div>
+
+                <div class="form-title">选择套餐</div>
+                <div class="package-list">
+                    <div class="package-item active" onclick="selectPackage(1, this)">
+                        <h4>基础版</h4>
+                        <p>含：订单、产品、BOM、物料、工序、客户、供应商、分工、报工、工资、追溯、生产计划、工序工价</p>
+                    </div>
+                    <div class="package-item" onclick="selectPackage(2, this)">
+                        <h4>标准版</h4>
+                        <p>含：基础版所有功能 + 采购管理</p>
+                    </div>
+                    <div class="package-item" onclick="selectPackage(3, this)">
+                        <h4>专业版</h4>
+                        <p>含：标准版所有功能 + 库存管理 + 质检管理 + 发货管理 + 仓库管理</p>
+                    </div>
+                    <div class="package-item" onclick="selectPackage(4, this)">
+                        <h4>企业版</h4>
+                        <p>含：专业版所有功能 + BI数据报表 + 无限制用户</p>
+                    </div>
+                </div>
+                <input type="hidden" name="package_id" id="packageId" value="1" required>
+
+                <button type="submit" class="btn">立即注册</button>
+
+                <div class="hint">
+                    <strong>注册说明：</strong><br>
+                    1. 注册成功后系统将自动创建租户和管理员账号<br>
+                    2. 租户编码将自动生成，用于标识您的企业<br>
+                    3. 请牢记您的登录账号和密码
+                </div>
+            </form>
+        </div>
+
+        <script>
+            function selectPackage(id, element) {
+                document.getElementById('packageId').value = id;
+                document.querySelectorAll('.package-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                if (element) {
+                    element.currentTarget.classList.add('active');
+                } else {
+                    event.currentTarget.classList.add('active');
+                }
+            }
+
+            // 检查租户名称是否可用
+            const tenantNameInput = document.querySelector('input[name="tenant_name"]');
+            if (tenantNameInput) {
+                let checkTimer;
+                tenantNameInput.addEventListener('input', function() {
+                    clearTimeout(checkTimer);
+                    checkTimer = setTimeout(() => {
+                        const name = this.value.trim();
+                        if (name.length > 0) {
+                            fetch('/admin/register/check?tenant_name=' + encodeURIComponent(name))
+                                .then(response => response.json())
+                                .then(data => {
+                                    // 可选：显示错误提示
+                                });
+                        }
+                    }, 500);
+                });
+
+                // 检查登录账号是否可用
+                const usernameInput = document.querySelector('input[name="username"]');
+                if (usernameInput) {
+                    let checkTimer2;
+                    usernameInput.addEventListener('input', function() {
+                        clearTimeout(checkTimer2);
+                        checkTimer2 = setTimeout(() => {
+                            const name = this.value.trim();
+                            if (name.length >= 3) {
+                                fetch('/admin/register/checkUsername?username=' + encodeURIComponent(name))
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // 可选：显示错误提示
+                                    });
+                            }
+                        }, 500);
+                    });
+                }
+            }
+
+            // 表单提交
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                fetch('/admin/register/save', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 1) {
+                        alert(data.msg);
+                        setTimeout(() => {
+                            window.location.href = '/admin/index/login';
+                        }, 1500);
+                    } else {
+                        alert(data.msg || '注册失败');
+                    }
+                })
+                .catch(error => {
+                    alert('提交失败：' + error);
+                });
+            });
+        </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# ThinkMes Nginx 示例 - 站点根目录指向 thinkmes/public
+server {
+    listen 80;
+    server_name thinkmes.test;
+    root /www/wwwroot/thinkmes/public;
+    index index.php index.html;
+    location / {
+        if (!-e $request_filename) {
+            rewrite ^(.*)$ /index.php?s=$1 last;
+        }
+    }
+    location ~ \.php$ {
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+    location ~ /runtime/ { deny all; }
+    location ~ /\.env { deny all; }
+}

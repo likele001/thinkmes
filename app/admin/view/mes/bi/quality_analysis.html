@@ -1,0 +1,55 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>质量分析报表</em> 统计质量数据</div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <input type="date" class="form-control" id="start_date" value="{php}echo date('Y-m-01');{/php}">
+            </div>
+            <div class="col-md-4">
+                <input type="date" class="form-control" id="end_date" value="{php}echo date('Y-m-d');{/php}">
+            </div>
+            <div class="col-md-4">
+                <button type="button" class="btn btn-primary" id="btn-query">查询</button>
+            </div>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+
+<script>
+(function() {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var table = $('#table');
+    
+    function loadTable() {
+        var startDate = $('#start_date').val();
+        var endDate = $('#end_date').val();
+        
+        table.bootstrapTable('destroy').bootstrapTable({
+            url: base + '/mes/bi/qualityAnalysis?start_date=' + startDate + '&end_date=' + endDate,
+            pk: 'stat_date',
+            sortName: 'stat_date',
+            sortOrder: 'desc',
+            columns: [
+                {field: 'stat_date', title: '日期', sortable: true},
+                {field: 'total_count', title: '总报工数', width: 120, align: 'right'},
+                {field: 'qualified_count', title: '合格数', width: 120, align: 'right'},
+                {field: 'unqualified_count', title: '不合格数', width: 120, align: 'right'},
+                {field: 'qualified_rate', title: '合格率(%)', width: 120, align: 'right', formatter: function(value) {
+                    var color = value >= 95 ? 'success' : (value >= 90 ? 'warning' : 'danger');
+                    return '<span class="badge badge-' + color + '">' + parseFloat(value || 0).toFixed(2) + '%</span>';
+                }}
+            ]
+        });
+    }
+    
+    $('#btn-query').on('click', function() {
+        loadTable();
+    });
+    
+    // 初始加载
+    loadTable();
+})();
+</script>

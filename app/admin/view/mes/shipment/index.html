@@ -1,0 +1,25 @@
+<div class="card card-tabs">
+    <div class="card-header">
+        <ul class="nav nav-tabs" data-field="type">
+            <li class="active"><a href="#t-list" data-toggle="tab">{:__('发货列表')}</a></li>
+        </ul>
+    </div>
+    <div class="card-content">
+        <div class="tab-pane active" id="t-list">
+            <div class="widget-body nopadding">
+                <div id="toolbar" class="toolbar">
+                    <a href="{:url('mes/shipment/add')}" class="btn btn-primary btn-xs">
+                        <i class="fa fa-plus"></i> {:__('创建发货')}
+                    </a>
+                    <button type="button" class="btn btn-default btn-refresh btn-xs">
+                        <i class="fa fa-refresh"></i> {:__('刷新')}
+                    </button>
+                </div>
+                <table id="table" class="table table-striped table-bordered table-hover table-nowrap"
+                       data-operate-edit="{:url('mes/shipment/edit')}"
+                       data-operate-del="{:url('mes/shipment/del')}">
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

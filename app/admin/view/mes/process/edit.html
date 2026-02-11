@@ -1,0 +1,51 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">编辑工序</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="row[id]" value="{$row.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序名称 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <input type="text" name="row[name]" class="form-control" value="{$row.name}" placeholder="请输入工序名称" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序编码</label>
+                <div class="col-sm-6">
+                    <input type="text" name="row[code]" class="form-control" value="{$row.code}" placeholder="请输入工序编码">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序描述</label>
+                <div class="col-sm-6">
+                    <textarea name="row[description]" class="form-control" rows="3" placeholder="请输入工序描述">{$row.description}</textarea>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">排序</label>
+                <div class="col-sm-6">
+                    <input type="number" name="row[sort]" class="form-control" value="{$row.sort}" placeholder="排序值，数字越小越靠前">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <label class="radio-inline">
+                        <input type="radio" name="row[status]" value="1" {eq name="row.status" value="1"}checked{/eq}> 正常
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="row[status]" value="0" {eq name="row.status" value="0"}checked{/eq}> 禁用
+                    </label>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{$config.moduleurl}/mes/process/index" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

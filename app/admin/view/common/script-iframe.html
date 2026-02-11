@@ -1,0 +1,84 @@
+<script>
+// 检测是否在 iframe 中，如果是，添加 URL 参数并重新加载（仅首次）
+(function() {
+    if (window.self !== window.top) {
+        // 在 iframe 中
+        var url = new URL(window.location.href);
+        if (!url.searchParams.has('iframe')) {
+            url.searchParams.set('iframe', '1');
+            window.location.replace(url.toString());
+            return;
+        }
+    }
+})();
+</script>
+<script>
+// 向 localStorage 写入禁用 IFrame 的配置（AdminLTE 会从这里读取）
+try {
+    var iframeConfig = {
+        autoIframeMode: false,
+        autoItemActive: false,
+        autoShowNewTab: false,
+        onTabClick: function(e) { return e; },
+        onTabChanged: function(e) { return e; },
+        onTabCreated: function(e) { return e; }
+    };
+    localStorage.setItem('AdminLTE:IFrame:Options', JSON.stringify(iframeConfig));
+} catch(e) {}
+
+// 确保 AdminLTEOptions 正确设置
+window.AdminLTEOptions = window.AdminLTEOptions || {};
+window.AdminLTEOptions.autoIframeMode = false;
+window.AdminLTEOptions.iframe = false;
+</script>
+<!-- jQuery 已在 <head> 中加载 -->
+<script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/lib/bootstrap-table/js/bootstrap-table.min.js"></script>
+<script src="/assets/lib/fontawesome/js/all.min.js"></script>
+<script src="/assets/lib/adminlte/js/adminlte.min.js"></script>
+<script>
+// 双重保护：完全禁用 AdminLTE 的 IFrame 插件
+(function() {
+    // 在 AdminLTE 加载后立即禁用 IFrame 插件
+    function disableIFrame() {
+        if (typeof AdminLTE !== 'undefined' && AdminLTE !== null) {
+            // 完全删除 IFrame 插件
+            if (AdminLTE.IFrame) {
+                delete AdminLTE.IFrame;
+            }
+
+            // 创建一个空的 IFrame 对象，防止其他代码调用时出错
+            AdminLTE.IFrame = function() {
+                return this;
+            };
+            AdminLTE.IFrame.prototype = {};
+            AdminLTE.IFrame.prototype._init = function() {
+                return;
+            };
+            AdminLTE.IFrame.prototype._initFrameElement = function() {
+                return;
+            };
+            AdminLTE.IFrame._jQueryInterface = function() {
+                return this;
+            };
+
+            // 移除所有可能触发 IFrame 初始化的事件监听器
+            if (typeof jQuery !== 'undefined') {
+                jQuery(document).off('init.lte.iframe');
+                jQuery(document).off('DOMContentLoaded', '[data-widget="iframe"]');
+            }
+        } else {
+            // 如果 AdminLTE 还没加载，等待一下再试（最多等待 2 秒）
+            var attempts = arguments.callee.attempts || 0;
+            arguments.callee.attempts = attempts + 1;
+            if (attempts < 40) { // 40 * 50ms = 2秒
+                setTimeout(disableIFrame, 50);
+            }
+        }
+    }
+
+    // 立即执行
+    disableIFrame();
+})();
+</script>
+<script src="/assets/js/backend-loader.js"></script>

@@ -1,0 +1,38 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">添加功能 - {$package.name}</h3></div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal">
+            <input type="hidden" name="package_id" value="{$package.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">选择功能</label>
+                <div class="col-sm-8">
+                    {volist name="allFeatures" id="name" key="code"}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="feature_codes[]" value="{$code}" id="feature_{$code}" {in name="code" value="$existingFeatures"}checked{/in}>
+                        <label class="form-check-label" for="feature_{$code}">{$name}</label>
+                    </div>
+                    {/volist}
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">提交</button>
+                    <a href="{:url('tenant_package_feature/index', ['package_id' => $package.id])}" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-add').attr('action', base + '/tenant_package_feature/add');
+    $('#form-add').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            alert(r.msg);
+            if (r.code === 1) location.href = base + '/tenant_package_feature/index?package_id={$package.id}';
+        }, 'json');
+    });
+});
+</script>

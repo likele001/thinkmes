@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>后台登录 - ThinkMes</title>
+    <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/lib/adminlte/css/adminlte.min.css">
+    <link rel="stylesheet" href="/assets/css/fastadmin-theme.css">
+    <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+    <div class="card card-outline card-primary">
+        <div class="card-header text-center">
+            <a href="#" class="h4"><b>ThinkMes</b> 后台</a>
+        </div>
+        <div class="card-body login-card-body">
+            <p class="login-box-msg">登录到管理后台</p>
+            <form action="{:url('index/login')}" method="post" id="login-form">
+                <input type="hidden" name="url" value="{$url|default='admin/index/index'}">
+                <div class="input-group mb-3">
+                    <input type="text" name="username" class="form-control" placeholder="用户名" required autofocus>
+                    <div class="input-group-append">
+                        <div class="input-group-text"><i class="fas fa-user"></i></div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="password" name="password" class="form-control" placeholder="密码" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text"><i class="fas fa-lock"></i></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-8">
+                        <div class="icheck-primary">
+                            <input type="checkbox" id="remember" name="remember" value="1">
+                            <label for="remember">保持会话</label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-primary btn-block">登录</button>
+                    </div>
+                </div>
+            </form>
+            <p class="mb-0 text-center text-muted small">默认账号 admin / 123456</p>
+        </div>
+    </div>
+</div>
+<script src="/assets/lib/jquery/jquery.min.js"></script>
+<script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+$('#login-form').on('submit', function(e){
+    e.preventDefault();
+    var $f = $(this), $btn = $f.find('button[type=submit]');
+    $btn.prop('disabled', true);
+    $.post($f.attr('action'), $f.serialize(), function(res){
+        if(res.code === 1){
+            window.location.href = (res.data && res.data.url) ? res.data.url : (window.location.origin + '/admin/index/index');
+        } else {
+            alert(res.msg || '登录失败');
+            $btn.prop('disabled', false);
+        }
+    }, 'json').fail(function(){ alert('请求失败'); $btn.prop('disabled', false); });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<form id="form-add" class="form-horizontal" role="form" action="" method="post">
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('订单号')}<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <input class="form-control" value="{$order.order_no|default=''}" readonly>
+            <input type="hidden" name="row[order_id]" value="{$order.id|default=''}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('客户名称')}</label>
+        <div class="col-xs-12 col-sm-8">
+            <input class="form-control" value="{$order.customer_name|default=''}" readonly>
+            <input type="hidden" name="row[customer_id]" value="{$order.customer_id|default=''}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('发货时间')}</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-shipment_time" class="form-control datetimepicker" name="row[shipment_time]" value="" placeholder="选择发货时间">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('物流公司')}</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-logistics_company" class="form-control" name="row[logistics_company]" value="" placeholder="请输入物流公司">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('物流单号')}</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-logistics_no" class="form-control" name="row[logistics_no]" value="" placeholder="请输入物流单号">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('收货人')}<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receiver_name" class="form-control" name="row[receiver_name]" value="" data-rule="required" placeholder="请输入收货人">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('收货电话')}</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receiver_phone" class="form-control" name="row[receiver_phone]" value="" placeholder="请输入收货电话">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('收货地址')}<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-receiver_address" class="form-control" name="row[receiver_address]" value="" data-rule="required" placeholder="请输入收货地址">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('备注')}</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-remark" class="form-control" name="row[remark]" rows="3" placeholder="请输入备注"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('发货明细')}</label>
+        <div class="col-xs-12 col-sm-10">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>型号</th>
+                        <th>发货数量</th>
+                        <th>批次号</th>
+                        <th>追溯码</th>
+                        <th width="60">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="items-container">
+                    <!-- 动态添加明细行 -->
+                </tbody>
+            </table>
+            <button type="button" id="add-item" class="btn btn-sm btn-primary">添加明细</button>
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed disabled">{:__('确定')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('重置')}</button>
+        </div>
+    </div>
+</form>
+<script>
+var modelList = {$modelList|raw};
+$(document).ready(function() {
+    var itemIndex = 0;
+
+    // 添加一行明细
+    function addItem() {
+        var html = '<tr>' +
+            '<td><select class="form-control" name="items[' + itemIndex + '][model_id]">';
+        $.each(modelList, function(i, v) {
+            html += '<option value="' + v.id + '">' + v.name + '</option>';
+        });
+        html += '</select></td>' +
+            '<td><input type="number" class="form-control" name="items[' + itemIndex + '][quantity]" value="1" min="1"></td>' +
+            '<td><input type="text" class="form-control" name="items[' + itemIndex + '][batch_no]" placeholder="批次号"></td>' +
+            '<td><input type="text" class="form-control" name="items[' + itemIndex + '][trace_code]" placeholder="追溯码"></td>' +
+            '<td><button type="button" class="btn btn-xs btn-danger remove-item">删除</button></td>' +
+            '</tr>';
+        $('#items-container').append(html);
+        itemIndex++;
+    }
+
+    // 添加按钮
+    $('#add-item').click(function() {
+        addItem();
+    });
+
+    // 删除按钮
+    $(document).on('click', '.remove-item', function() {
+        $(this).closest('tr').remove();
+    });
+});
+</script>

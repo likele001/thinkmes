@@ -1,0 +1,63 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>生产效率报表</em> 统计生产效率数据</div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <input type="date" class="form-control" id="start_date" value="{php}echo date('Y-m-01');{/php}">
+            </div>
+            <div class="col-md-4">
+                <input type="date" class="form-control" id="end_date" value="{php}echo date('Y-m-d');{/php}">
+            </div>
+            <div class="col-md-4">
+                <button type="button" class="btn btn-primary" id="btn-query">查询</button>
+            </div>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+
+<script>
+(function() {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var table = $('#table');
+    
+    function loadTable() {
+        var startDate = $('#start_date').val();
+        var endDate = $('#end_date').val();
+        
+        table.bootstrapTable('destroy').bootstrapTable({
+            url: base + '/mes/bi/productionEfficiency?start_date=' + startDate + '&end_date=' + endDate,
+            pk: 'stat_date',
+            sortName: 'stat_date',
+            sortOrder: 'desc',
+            columns: [
+                {field: 'stat_date', title: '日期', sortable: true},
+                {field: 'worker_count', title: '工人数', width: 100, align: 'right'},
+                {field: 'total_quantity', title: '总产量', width: 120, align: 'right'},
+                {field: 'total_hours', title: '总工时', width: 120, align: 'right', formatter: function(value) {
+                    return parseFloat(value || 0).toFixed(2);
+                }},
+                {field: 'total_wage', title: '总工资', width: 120, align: 'right', formatter: function(value) {
+                    return '¥' + parseFloat(value || 0).toFixed(2);
+                }},
+                {field: 'report_count', title: '报工次数', width: 100, align: 'right'},
+                {field: 'efficiency', title: '人均产量', width: 120, align: 'right', formatter: function(value, row) {
+                    if (row.worker_count > 0) {
+                        return (row.total_quantity / row.worker_count).toFixed(2);
+                    }
+                    return '0.00';
+                }}
+            ]
+        });
+    }
+    
+    $('#btn-query').on('click', function() {
+        loadTable();
+    });
+    
+    // 初始加载
+    loadTable();
+})();
+</script>

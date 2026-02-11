@@ -1,0 +1,191 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">批量分工分配</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-batch" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">订单 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="order_id" class="form-control" id="order_id" required>
+                        <option value="">请选择订单</option>
+                        {volist name="orderList" id="vo"}
+                        <option value="{$key}">{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div id="allocation-container" style="display: none;">
+                <div class="form-group row">
+                    <div class="col-sm-12">
+                        <h5>分配列表</h5>
+                        <table class="table table-bordered" id="allocation-table">
+                            <thead>
+                                <tr>
+                                    <th width="30%">产品型号</th>
+                                    <th width="20%">工序</th>
+                                    <th width="20%">员工</th>
+                                    <th width="15%">数量</th>
+                                    <th width="15%">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allocation-tbody">
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-sm btn-success" id="btn-add-allocation">
+                            <i class="fas fa-plus"></i> 添加分配
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 提示：选择订单后，可以批量添加多个分工分配。每个分配需要指定型号、工序、员工和数量。
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">批量分配</button>
+                    <a href="{$config.moduleurl}/mes/allocation/index" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    function initForm() {
+        if (typeof jQuery === 'undefined') {
+            setTimeout(initForm, 50);
+            return;
+        }
+        var $ = jQuery;
+        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        var allocationIndex = 0;
+        var modelList = {};
+        var processList = {};
+        var userList = {};
+        
+        // 获取下拉选项数据
+        $('#order_id option').each(function() {
+            // 这里可以从后端获取
+        });
+        
+        // 订单选择变化时加载型号
+        $('#order_id').on('change', function() {
+            var orderId = $(this).val();
+            if (!orderId) {
+                $('#allocation-container').hide();
+                return;
+            }
+            $.get(base + '/mes/allocation/getOrderModels', {order_id: orderId}, function(r) {
+                if (r.code == 1 && r.data) {
+                    modelList = {};
+                    $.each(r.data, function(i, item) {
+                        modelList[item.id] = item.name;
+                    });
+                    $('#allocation-container').show();
+                } else {
+                    alert('该订单暂无型号');
+                    $('#allocation-container').hide();
+                }
+            }, 'json');
+        });
+        
+        // 获取工序和员工列表（从页面中提取）
+        {volist name="processList" id="vo"}
+        processList[{$key}] = '{$vo}';
+        {/volist}
+        
+        {volist name="userList" id="vo"}
+        userList[{$key}] = '{$vo}';
+        {/volist}
+        
+        // 添加分配行
+        function addAllocationRow() {
+            var modelOptions = '<option value="">请选择型号</option>';
+            $.each(modelList, function(id, name) {
+                modelOptions += '<option value="' + id + '">' + name + '</option>';
+            });
+            
+            var processOptions = '<option value="">请选择工序</option>';
+            $.each(processList, function(id, name) {
+                processOptions += '<option value="' + id + '">' + name + '</option>';
+            });
+            
+            var userOptions = '<option value="">请选择员工</option>';
+            $.each(userList, function(id, name) {
+                userOptions += '<option value="' + id + '">' + name + '</option>';
+            });
+            
+            var html = '<tr data-index="' + allocationIndex + '">' +
+                '<td><select name="allocations[' + allocationIndex + '][model_id]" class="form-control form-control-sm" required>' + modelOptions + '</select></td>' +
+                '<td><select name="allocations[' + allocationIndex + '][process_id]" class="form-control form-control-sm" required>' + processOptions + '</select></td>' +
+                '<td><select name="allocations[' + allocationIndex + '][user_id]" class="form-control form-control-sm" required>' + userOptions + '</select></td>' +
+                '<td><input type="number" name="allocations[' + allocationIndex + '][quantity]" class="form-control form-control-sm" min="1" required></td>' +
+                '<td><button type="button" class="btn btn-sm btn-danger btn-remove-row">删除</button></td>' +
+                '</tr>';
+            $('#allocation-tbody').append(html);
+            allocationIndex++;
+        }
+        
+        $('#btn-add-allocation').on('click', function() {
+            addAllocationRow();
+        });
+        
+        // 删除行
+        $(document).on('click', '.btn-remove-row', function() {
+            $(this).closest('tr').remove();
+        });
+        
+        // 表单提交
+        $('#form-batch').attr('action', base + '/mes/allocation/batch');
+        $('#form-batch').on('submit', function (e) {
+            e.preventDefault();
+            var allocations = [];
+            $('#allocation-tbody tr').each(function() {
+                var modelId = $(this).find('select[name*="[model_id]"]').val();
+                var processId = $(this).find('select[name*="[process_id]"]').val();
+                var userId = $(this).find('select[name*="[user_id]"]').val();
+                var quantity = $(this).find('input[name*="[quantity]"]').val();
+                if (modelId && processId && userId && quantity) {
+                    allocations.push({
+                        model_id: modelId,
+                        process_id: processId,
+                        user_id: userId,
+                        quantity: quantity
+                    });
+                }
+            });
+            
+            if (allocations.length == 0) {
+                alert('请至少添加一条分配记录');
+                return;
+            }
+            
+            $.post($(this).attr('action'), {
+                order_id: $('#order_id').val(),
+                allocations: JSON.stringify(allocations)
+            }, function (r) {
+                if (r && r.msg) {
+                    alert(r.msg);
+                }
+                if (r && r.code === 1) {
+                    location.href = base + '/mes/allocation/index';
+                }
+            }, 'json').fail(function(xhr) {
+                try {
+                    var r = JSON.parse(xhr.responseText);
+                    alert(r.msg || '操作失败');
+                } catch(e) {
+                    alert('操作失败');
+                }
+            });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initForm);
+    } else {
+        initForm();
+    }
+})();
+</script>

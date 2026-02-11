@@ -1,0 +1,56 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑用户</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="id" value="{$data.id|default=0}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">用户名</label>
+                <div class="col-sm-6"><input type="text" class="form-control" value="{$data.username|default=''}" readonly></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">密码</label>
+                <div class="col-sm-6"><input type="password" name="password" class="form-control" placeholder="留空不修改"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">昵称</label>
+                <div class="col-sm-6"><input type="text" name="nickname" class="form-control" value="{$data.nickname|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">手机</label>
+                <div class="col-sm-6"><input type="text" name="mobile" class="form-control" value="{$data.mobile|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">邮箱</label>
+                <div class="col-sm-6"><input type="text" name="email" class="form-control" value="{$data.email|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="status" class="form-control">
+                        <option value="1" {if condition="$data.status == 1"}selected{/if}>正常</option>
+                        <option value="0" {if condition="$data.status == 0"}selected{/if}>禁用</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{:url('member/index')}" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-edit').attr('action', base + '/member/edit');
+    $('#form-edit').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            alert(r.msg);
+            if (r.code === 1) location.href = base + '/member/index';
+        }, 'json');
+    });
+});
+</script>

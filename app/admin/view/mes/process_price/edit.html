@@ -1,0 +1,61 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">编辑工序工价</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="row[id]" value="{$data.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">产品型号 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[model_id]" class="form-control" id="model_id" required>
+                        <option value="">请选择产品型号</option>
+                        {volist name="modelList" id="vo"}
+                        <option value="{$key}" {eq name="key" value="$data.model_id"}selected{/eq}>{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[process_id]" class="form-control" id="process_id" required>
+                        <option value="">请选择工序</option>
+                        {volist name="processList" id="vo"}
+                        <option value="{$key}" {eq name="key" value="$data.process_id"}selected{/eq}>{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">计件工价(元/件) <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <input type="number" name="row[price]" class="form-control" step="0.01" min="0" value="{$data.price}" placeholder="请输入计件工价" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">计时工价(元/小时)</label>
+                <div class="col-sm-6">
+                    <input type="number" name="row[time_price]" class="form-control" step="0.01" min="0" value="{$data.time_price}" placeholder="请输入计时工价">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <label class="radio-inline">
+                        <input type="radio" name="row[status]" value="1" {eq name="data.status" value="1"}checked{/eq}> 正常
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="row[status]" value="0" {eq name="data.status" value="0"}checked{/eq}> 禁用
+                    </label>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{$config.moduleurl}/mes/process_price/index" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

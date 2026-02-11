@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script>
+    // 向 localStorage 写入禁用 IFrame 的配置（AdminLTE 会从这里读取）
+    try {
+        var iframeConfig = {
+            autoIframeMode: false,
+            autoItemActive: false,
+            autoShowNewTab: false,
+            onTabClick: function(e) { return e; },
+            onTabChanged: function(e) { return e; },
+            onTabCreated: function(e) { return e; }
+        };
+        localStorage.setItem('AdminLTE:IFrame:Options', JSON.stringify(iframeConfig));
+    } catch(e) {}
+    // 确保 AdminLTEOptions 正确设置
+    window.AdminLTEOptions = window.AdminLTEOptions || {};
+    window.AdminLTEOptions.autoIframeMode = false;
+    window.AdminLTEOptions.iframe = false;
+    </script>
+    {include file="common/meta" /}
+    <!-- 先加载 jQuery，确保页面内联脚本可以使用 $ -->
+    <script src="/assets/lib/jquery/jquery.min.js"></script>
+    <script>
+    // 检测是否真的在 iframe 中
+    // 如果不在 iframe 中但 URL 有 iframe=1 参数，说明是直接访问，应该跳转到完整页面
+    (function() {
+        if (window.self === window.top) {
+            // 不在 iframe 中，但 URL 有 iframe=1 参数，移除参数并跳转
+            try {
+                var url = new URL(window.location.href);
+                if (url.searchParams.has('iframe')) {
+                    url.searchParams.delete('iframe');
+                    window.location.replace(url.toString());
+                    return;
+                }
+            } catch(e) {
+                // 如果 URL API 不可用，使用传统方法
+                var url = window.location.href;
+                if (url.indexOf('iframe=1') !== -1) {
+                    url = url.replace(/[?&]iframe=1(&|$)/, function(match, p1) {
+                        return p1 === '&' ? '&' : '';
+                    }).replace(/[?&]$/, '');
+                    window.location.replace(url);
+                    return;
+                }
+            }
+        }
+    })();
+    </script>
+    <style>
+        /* iframe 内页面：完整文档 + 明确文字颜色，避免内容发白不可见（FastAdmin 标准） */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100%;
+            overflow: auto;
+            background: #f4f6f9 !important;
+            color: #212529 !important;
+        }
+        body.iframe-body {
+            display: block !important;
+            flex-direction: column !important;
+        }
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 15px !important;
+            min-height: auto !important;
+            color: #212529 !important;
+        }
+        .content-header {
+            margin-bottom: 15px;
+            flex-shrink: 0;
+            color: #212529 !important;
+        }
+        .content-header h1 {
+            color: #212529 !important;
+        }
+        .content {
+            background: #fff !important;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 0;
+            min-height: 200px;
+            color: #212529 !important;
+        }
+        .content .card,
+        .content .panel-lead,
+        .content .table,
+        .content .btn {
+            color: inherit;
+        }
+        .panel-lead em { color: #212529 !important; }
+        /* 隐藏所有可能出现的侧边栏和导航栏 */
+        .main-sidebar,
+        .main-header,
+        .main-footer,
+        .content-wrapper.iframe-mode > .nav {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="iframe-body">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6"><h1>{$title|default=''}</h1></div>
+                <div class="col-sm-6"><ol class="breadcrumb float-sm-right"><li class="breadcrumb-item active">{$title|default=''}</li></ol></div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="container-fluid">
+            {$__CONTENT__|raw}
+        </div>
+    </section>
+    {include file="common/script-iframe" /}
+</body>
+</html>

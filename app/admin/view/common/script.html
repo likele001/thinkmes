@@ -1,0 +1,85 @@
+<script src="/assets/lib/jquery/jquery.min.js"></script>
+<script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/lib/bootstrap-table/js/bootstrap-table.min.js"></script>
+<script src="/assets/lib/fontawesome/js/all.min.js"></script>
+<!-- 在 AdminLTE 加载前设置 localStorage 配置，禁用 IFrame 插件 -->
+<script>
+// 向 localStorage 写入禁用 IFrame 的配置（AdminLTE 会从这里读取）
+try {
+    var iframeConfig = {
+        autoIframeMode: false,
+        autoItemActive: false,
+        autoShowNewTab: false,
+        onTabClick: function(e) { return e; },
+        onTabChanged: function(e) { return e; },
+        onTabCreated: function(e) { return e; }
+    };
+    localStorage.setItem('AdminLTE:IFrame:Options', JSON.stringify(iframeConfig));
+} catch(e) {}
+
+// 确保 AdminLTEOptions 正确设置
+if (!window.AdminLTEOptions) {
+    window.AdminLTEOptions = {};
+}
+window.AdminLTEOptions.autoIframeMode = false;
+window.AdminLTEOptions.iframe = false;
+</script>
+<script src="/assets/lib/adminlte/js/adminlte.min.js"></script>
+<script>
+// 加载后立即禁用 IFrame 插件
+if (typeof AdminLTE !== 'undefined' && AdminLTE.IFrame) {
+    delete AdminLTE.IFrame;
+}
+$(document).off('init.lte.iframe');
+</script>
+<script src="/assets/lib/fastadmin-addtabs/jquery.addtabs.js"></script>
+<script src="/assets/js/backend-loader.js"></script>
+<style>
+/* FastAdmin 标准：标签内容区固定高度，iframe 填满 */
+.tab-addtabs { position: relative; min-height: 500px; height: calc(100vh - 180px); }
+.tab-addtabs .tab-pane { display: none; height: 100%; }
+.tab-addtabs .tab-pane.active { display: block; height: 100%; }
+.tab-addtabs .tab-pane iframe { border: none; width: 100%; height: 100%; min-height: 500px; display: block; }
+.content-wrapper .content { flex: 1; min-height: 0; overflow: hidden; }
+#addtabs-container { height: 100%; padding: 0; overflow: hidden; }
+</style>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') return;
+    var $ = jQuery;
+    $(function() {
+        var iframeHeight = Math.max(500, $(window).height() - 180);
+        $(document).addtabs({
+            nav: '#nav-addtabs',
+            tab: '#tab-addtabs-content',
+            iframeUse: true,
+            iframeHeight: iframeHeight,
+            close: true,
+            monitor: 'body'
+        });
+        $(window).on('resize', function() {
+            var h = Math.max(500, $(window).height() - 180);
+            $('.tab-addtabs .tab-pane iframe').attr('height', h).css('height', h + 'px');
+        });
+        $(document).on('click', '[data-addtabs-close="all"]', function(e) {
+            e.preventDefault();
+            var $nav = $('#nav-addtabs');
+            var $tab = $('#tab-addtabs-content');
+            $nav.find('li[role="presentation"]').not('#tab_index').remove();
+            $tab.find('.tab-pane').not('#con_index').remove();
+            $nav.find('#tab_index').addClass('active');
+            $tab.find('#con_index').addClass('active');
+        });
+        $(document).on('click', '[data-addtabs-close="other"]', function(e) {
+            e.preventDefault();
+            var $nav = $('#nav-addtabs');
+            var $tab = $('#tab-addtabs-content');
+            var $activeLi = $nav.find('li.active').first();
+            var activeId = $activeLi.attr('id');
+            var conId = activeId ? 'con_' + activeId.replace('tab_', '') : 'con_index';
+            $nav.find('li[role="presentation"]').each(function() { if (!$(this).is($activeLi)) $(this).remove(); });
+            $tab.find('.tab-pane').not('#' + conId).remove();
+        });
+    });
+})();
+</script>

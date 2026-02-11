@@ -1,0 +1,48 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>工资统计</em> 按员工统计工资数据</div>
+    </div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
+            <a href="{$config.moduleurl}/mes/wage/index" class="btn btn-default" title="工资明细"><i class="fas fa-list"></i> 工资明细</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+
+<script>
+(function() {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var table = $('#table');
+    
+    table.bootstrapTable({
+        url: base + '/mes/wage/statistics',
+        pk: 'user_id',
+        sortName: 'total_wage',
+        sortOrder: 'desc',
+        columns: [
+            {field: 'user_id', title: '员工ID', width: 100, sortable: true},
+            {field: 'nickname', title: '员工姓名', align: 'left'},
+            {field: 'piece_count', title: '计件数量', width: 100, align: 'right'},
+            {field: 'piece_wage', title: '计件工资', width: 120, align: 'right', formatter: function(value) {
+                return '¥' + parseFloat(value || 0).toFixed(2);
+            }},
+            {field: 'time_hours', title: '计时工时', width: 100, align: 'right', formatter: function(value) {
+                return parseFloat(value || 0).toFixed(2);
+            }},
+            {field: 'time_wage', title: '计时工资', width: 120, align: 'right', formatter: function(value) {
+                return '¥' + parseFloat(value || 0).toFixed(2);
+            }},
+            {field: 'total_wage', title: '总工资', width: 150, align: 'right', formatter: function(value) {
+                return '<span class="text-danger font-weight-bold" style="font-size: 16px;">¥' + parseFloat(value || 0).toFixed(2) + '</span>';
+            }}
+        ]
+    });
+    
+    // 刷新
+    $('.btn-refresh').on('click', function() {
+        table.bootstrapTable('refresh');
+    });
+})();
+</script>

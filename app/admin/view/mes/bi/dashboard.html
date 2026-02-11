@@ -1,0 +1,93 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-chart-line"></i> 生产数据大屏</h3>
+    </div>
+    <div class="card-body">
+        <!-- 实时数据卡片 -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3 id="today-quantity">0</h3>
+                        <p>今日产量</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-cubes"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3 id="today-wage">¥0</h3>
+                        <p>今日工资</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-yen-sign"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3 id="active-allocations">0</h3>
+                        <p>进行中任务</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3 id="pending-reports">0</h3>
+                        <p>待审核报工</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 图表区域 -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">订单状态分布</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="orderChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">生产计划状态</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="planChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 趋势图 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">最近7天生产趋势</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="trendChart" style="height: 400px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/lib/chart.js/chart.umd.js"></script>

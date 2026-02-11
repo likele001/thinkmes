@@ -1,0 +1,52 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">批量设置工序工价</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-batch" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">产品型号 <span class="text-danger">*</span></label>
+                <div class="col-sm-8">
+                    <select name="model_ids[]" class="form-control select2" multiple="multiple" id="model_ids" required style="width: 100%;">
+                        {volist name="modelList" id="vo"}
+                        <option value="{$key}">{$vo}</option>
+                        {/volist}
+                    </select>
+                    <small class="form-text text-muted">可多选，选择要设置工价的产品型号</small>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序 <span class="text-danger">*</span></label>
+                <div class="col-sm-8">
+                    <select name="process_ids[]" class="form-control select2" multiple="multiple" id="process_ids" required style="width: 100%;">
+                        {volist name="processList" id="vo"}
+                        <option value="{$key}">{$vo}</option>
+                        {/volist}
+                    </select>
+                    <small class="form-text text-muted">可多选，选择要设置工价的工序</small>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">计件工价(元/件) <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <input type="number" name="price" class="form-control" step="0.01" min="0" placeholder="请输入计件工价" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">计时工价(元/小时)</label>
+                <div class="col-sm-6">
+                    <input type="number" name="time_price" class="form-control" step="0.01" min="0" placeholder="请输入计时工价" value="0">
+                </div>
+            </div>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 提示：将批量为选中的产品型号和工序组合设置工价。如果已存在工价，将更新；如果不存在，将新增。
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">批量设置</button>
+                    <a href="{$config.moduleurl}/mes/process_price/index" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

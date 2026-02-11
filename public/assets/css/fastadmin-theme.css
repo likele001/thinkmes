@@ -1,0 +1,499 @@
+/**
+ * FastAdmin 风格主题覆盖
+ * 配色参考 AdminLTE 2 skin-blue：主色 #3c8dbc，侧栏 #222d32
+ */
+
+/* ========== 全局主色（覆盖 AdminLTE 3 默认蓝） ========== */
+:root {
+    --fa-primary: #3c8dbc;
+    --fa-primary-dark: #357ca5;
+    --fa-sidebar-bg: #222d32;
+    --fa-sidebar-hover: #1e282c;
+    --fa-login-bg: #d2d6de;
+    --primary: #3c8dbc;
+    --blue: #3c8dbc;
+}
+
+/* 主色按钮、链接、边框 */
+.btn-primary,
+.bg-primary,
+.card-primary:not(.card-outline) .card-header,
+.nav-pills .nav-link.active,
+.badge-primary,
+.alert-primary {
+    background-color: var(--fa-primary) !important;
+    border-color: var(--fa-primary) !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--fa-primary-dark) !important;
+    border-color: var(--fa-primary-dark) !important;
+}
+a:not(.btn):not(.nav-link) {
+    color: var(--fa-primary);
+}
+a:not(.btn):not(.nav-link):hover {
+    color: var(--fa-primary-dark);
+}
+.card-outline.card-primary .card-header,
+.card-outline.card-primary {
+    border-color: var(--fa-primary);
+}
+.card-outline.card-primary .card-header {
+    background-color: var(--fa-primary);
+    color: #fff;
+}
+
+/* ========== 后台侧边栏 FastAdmin 深色 ========== */
+.main-sidebar,
+.main-sidebar.sidebar-dark-primary {
+    background-color: var(--fa-sidebar-bg) !important;
+}
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link:not(.active):hover,
+.sidebar-dark-primary .nav-sidebar .nav-link:hover {
+    background-color: var(--fa-sidebar-hover) !important;
+}
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
+    background-color: var(--fa-primary) !important;
+    color: #fff;
+}
+
+/* ========== 菜单项间距优化（参考 FastAdmin） ========== */
+.nav-sidebar,
+.nav-sidebar.nav-pills,
+.nav-sidebar.flex-column {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.nav-sidebar > .nav-item,
+.nav-sidebar.nav-pills > .nav-item,
+.nav-sidebar.flex-column > .nav-item {
+    margin: 2px 0 !important;
+    padding: 0 !important;
+}
+
+.nav-sidebar .nav-link,
+.nav-sidebar > .nav-item > .nav-link {
+    padding: 8px 12px 8px 15px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    min-height: auto !important;
+    line-height: 1.5 !important;
+}
+
+.nav-sidebar .nav-link i:not(.right) {
+    width: 20px !important;
+    margin-right: 8px !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+}
+
+.nav-sidebar .nav-link span {
+    flex: 1 !important;
+}
+
+.nav-sidebar .nav-link .right {
+    float: right !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+}
+
+/* ========== 侧边栏折叠状态（sidebar-collapse） ========== */
+/* 当侧边栏折叠时，隐藏文字标签，只显示图标 */
+/* 注意：sidebar-mini 单独使用时不应该隐藏文字，只有在 sidebar-collapse 时才隐藏 */
+body.sidebar-collapse .main-sidebar .nav-sidebar .nav-link span,
+body.sidebar-collapse .main-sidebar .nav-sidebar .nav-link p,
+body.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar .nav-link span,
+body.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar .nav-link p {
+    display: none !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 折叠状态下菜单项样式 */
+body.sidebar-collapse .main-sidebar .nav-sidebar .nav-link,
+body.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar .nav-link {
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    text-align: center !important;
+}
+
+/* 确保 sidebar-mini 展开时显示文字 */
+body.sidebar-mini:not(.sidebar-collapse) .main-sidebar .nav-sidebar .nav-link span,
+body.sidebar-mini:not(.sidebar-collapse) .main-sidebar .nav-sidebar .nav-link p {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+    left: auto !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 折叠状态下图标样式 */
+.sidebar-collapse .main-sidebar .nav-sidebar .nav-link i:not(.right),
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar .nav-link i:not(.right) {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* sidebar-mini 展开时保持图标右边距 */
+body.sidebar-mini:not(.sidebar-collapse) .main-sidebar .nav-sidebar .nav-link i:not(.right) {
+    margin-right: 8px !important;
+}
+
+/* 折叠状态下隐藏右侧箭头图标 */
+.sidebar-collapse .main-sidebar .nav-sidebar .nav-link .right,
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar .nav-link .right {
+    display: none !important;
+}
+
+/* 折叠状态下隐藏子菜单 */
+.sidebar-collapse .main-sidebar .nav-sidebar .nav-treeview,
+.sidebar-mini.sidebar-collapse .main-sidebar .nav-sidebar .nav-treeview {
+    display: none !important;
+}
+
+/* 折叠状态下隐藏用户面板的文字 */
+.sidebar-collapse .main-sidebar .user-panel .info,
+.sidebar-mini.sidebar-collapse .main-sidebar .user-panel .info {
+    display: none !important;
+}
+
+.sidebar-collapse .main-sidebar .user-panel,
+.sidebar-mini.sidebar-collapse .main-sidebar .user-panel {
+    padding: 10px !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+.sidebar-collapse .main-sidebar .user-panel .image,
+.sidebar-mini.sidebar-collapse .main-sidebar .user-panel .image {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* 折叠状态下隐藏品牌文字 */
+.sidebar-collapse .main-sidebar .brand-link .brand-text,
+.sidebar-mini.sidebar-collapse .main-sidebar .brand-link .brand-text {
+    display: none !important;
+}
+
+/* 折叠状态下品牌链接样式 */
+.sidebar-collapse .main-sidebar .brand-link,
+.sidebar-mini.sidebar-collapse .main-sidebar .brand-link {
+    padding: 10px !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* AdminLTE 3 侧边栏宽度设置 */
+/* 默认展开状态 */
+.main-sidebar {
+    width: 250px !important;
+}
+
+.content-wrapper,
+.main-footer {
+    margin-left: 250px !important;
+}
+
+/* 保证标签页内容区有高度，避免 iframe 空白 */
+.content-wrapper .content {
+    min-height: calc(100vh - 120px) !important;
+    display: block !important;
+}
+.content-wrapper .content .container-fluid {
+    min-height: calc(100vh - 180px) !important;
+    padding-top: 0 !important;
+}
+.content-wrapper .content .tab-content {
+    min-height: calc(100vh - 200px) !important;
+    display: block !important;
+}
+.content-wrapper .content .tab-content .tab-pane.active.show {
+    min-height: calc(100vh - 200px) !important;
+    display: block !important;
+}
+.content-wrapper .content .tab-content .tab-pane.active.show iframe {
+    min-height: calc(100vh - 200px) !important;
+    height: calc(100vh - 200px) !important;
+    display: block !important;
+}
+
+/* 折叠状态（sidebar-collapse 或 sidebar-mini + sidebar-collapse） */
+.sidebar-collapse .main-sidebar,
+.sidebar-mini.sidebar-collapse .main-sidebar {
+    width: 4.6rem !important;
+}
+
+.sidebar-collapse .content-wrapper,
+.sidebar-collapse .main-footer,
+.sidebar-mini.sidebar-collapse .content-wrapper,
+.sidebar-mini.sidebar-collapse .main-footer {
+    margin-left: 4.6rem !important;
+}
+
+/* 确保 sidebar-mini 单独使用时也正确显示 */
+.sidebar-mini:not(.sidebar-collapse) .main-sidebar {
+    width: 250px !important;
+}
+
+.sidebar-mini:not(.sidebar-collapse) .content-wrapper,
+.sidebar-mini:not(.sidebar-collapse) .main-footer {
+    margin-left: 250px !important;
+}
+
+.nav-sidebar .nav-treeview {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-left: 5px !important;
+}
+
+.nav-sidebar .nav-treeview > .nav-item {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.nav-sidebar .nav-treeview .nav-link {
+    padding: 8px 12px 8px 35px !important;
+}
+.brand-link {
+    background-color: var(--fa-sidebar-hover) !important;
+    border-bottom: 1px solid #1a2226 !important;
+}
+.brand-text {
+    color: #fff !important;
+    font-weight: 600;
+}
+
+/* ========== 后台顶栏 ========== */
+.main-header {
+    border-bottom: 1px solid #dee2e6;
+    background: #fff !important;
+}
+.navbar-light .navbar-nav .nav-link {
+    color: #495057;
+}
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--fa-primary);
+}
+
+/* ========== 登录页（后台 + 前端会员）FastAdmin 风格 ========== */
+body.login-page {
+    background: var(--fa-login-bg) !important;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.login-box {
+    width: 100%;
+    max-width: 400px;
+}
+.login-box .card {
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.15) !important;
+    overflow: hidden;
+}
+.login-box .card-header {
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    border-bottom: 0;
+}
+.login-box .card-header a {
+    color: #fff !important;
+    text-decoration: none;
+}
+.login-box .card-body {
+    padding: 24px 20px;
+}
+.login-box .login-box-msg {
+    margin-bottom: 18px;
+    color: #666;
+    font-size: 14px;
+}
+.login-box .input-group {
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+.login-box .form-control {
+    border: 1px solid #ced4da;
+    padding: 10px 14px;
+    height: auto;
+}
+.login-box .input-group-text {
+    background: #f8f9fa;
+    border: 1px solid #ced4da;
+    color: #6c757d;
+    padding: 10px 12px;
+}
+.login-box .btn-primary {
+    padding: 10px 16px;
+    font-weight: 600;
+    border-radius: 4px;
+}
+.login-box .btn-block {
+    margin-top: 4px;
+}
+
+/* ========== 内容区卡片 ========== */
+.content-wrapper .card {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.content-wrapper .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    padding: 12px 16px;
+}
+.content-wrapper .card-body {
+    padding: 16px;
+}
+
+/* ========== 小统计块 ========== */
+.small-box {
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    overflow: hidden;
+}
+.small-box .inner h3 {
+    font-weight: 700;
+}
+.small-box .icon {
+    font-size: 70px;
+    opacity: .3;
+}
+.small-box .small-box-footer {
+    background: rgba(0,0,0,.1);
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
+/* ========== 表格与表单 ========== */
+.table {
+    font-size: 14px;
+}
+.form-control:focus {
+    border-color: var(--fa-primary);
+    box-shadow: 0 0 0 0.2rem rgba(60, 141, 188, .25);
+}
+.form-group label {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* ========== 前端会员顶栏 ========== */
+body.layout-top-nav .main-header.navbar-white {
+    background: #fff !important;
+    border-bottom: 1px solid #dee2e6;
+}
+body.layout-top-nav .navbar-brand {
+    color: var(--fa-primary) !important;
+    font-weight: 700;
+}
+body.layout-top-nav .nav-link {
+    color: #495057;
+}
+body.layout-top-nav .nav-link:hover {
+    color: var(--fa-primary);
+}
+
+/* ========== 页脚 ========== */
+.main-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #6c757d;
+}
+
+/* ========== Tab 标签页样式（FastAdmin 风格） ========== */
+.nav-addtabs {
+    border-bottom: 1px solid #dee2e6;
+    white-space: nowrap;
+}
+
+.nav-addtabs > li {
+    margin-bottom: -1px;
+    float: left;
+    margin-right: 2px;
+}
+
+.nav-addtabs > li > a {
+    padding: 8px 15px;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    color: #495057;
+    background-color: transparent;
+    display: block;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.nav-addtabs > li > a:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.nav-addtabs > li.active > a {
+    color: var(--fa-primary);
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    border-bottom-color: transparent;
+    font-weight: 600;
+}
+
+.nav-addtabs .close-tab {
+    margin-left: 8px;
+    cursor: pointer;
+    opacity: 0.5;
+    font-size: 14px;
+}
+
+.nav-addtabs .close-tab:hover {
+    opacity: 1;
+    color: #dc3545;
+}
+
+.tab-addtabs {
+    position: relative;
+    min-height: 400px;
+}
+
+.tab-addtabs .tab-pane {
+    display: none;
+}
+
+.tab-addtabs .tab-pane.active {
+    display: block;
+}
+
+.tab-addtabs .tab-pane iframe {
+    border: none;
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+}

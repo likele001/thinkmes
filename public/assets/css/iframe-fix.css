@@ -1,0 +1,117 @@
+/* iframe 标签页显示问题修复（AdminLTE 3） */
+/* 解决打开标签页内容空白、iframe 高度为 0 的问题 */
+
+.wrapper {
+    min-height: 100vh !important;
+    height: auto !important;
+}
+
+/* AdminLTE 3 内容区必须占满剩余高度 */
+.content-wrapper {
+    min-height: 100vh !important;
+}
+.content-wrapper .content {
+    min-height: calc(100vh - 120px) !important;
+    flex: 1 !important;
+}
+.content-wrapper .content .container-fluid {
+    width: 100% !important;
+    min-height: calc(100vh - 180px) !important;
+}
+
+.container-lg {
+    width: 100% !important;
+    min-height: calc(100vh - 100px) !important;
+    height: auto !important;
+}
+
+/* 标签页内容区域强制显示（避免空白） */
+.content-wrapper .tab-content,
+.tab-content {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    min-height: calc(100vh - 200px) !important;
+    height: auto !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+/* 仅当前激活的标签页显示，避免 !important 覆盖 JS 的 display:none 导致内容空白 */
+.content-wrapper .tab-content .tab-pane,
+.tab-content .tab-pane {
+    width: 100% !important;
+    min-height: calc(100vh - 200px) !important;
+    position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.tab-pane.active.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+}
+
+/* 未激活的 tab-pane 允许被 JS 隐藏，不强制 display */
+.tab-content .tab-pane:not(.active):not(.show) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* iframe 强制样式，防止空白 */
+.content-wrapper .tab-pane.active.show iframe,
+.tab-pane.active.show iframe {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: calc(100vh - 200px) !important;
+    min-height: 600px !important;
+    border: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    background: #fff !important;
+}
+
+/* 确保父元素链都可见 */
+.row, .col {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* 防止隐藏类影响 */
+.d-none, .d-sm-none, .d-md-none, .d-lg-none, .d-xl-none {
+    display: none !important;
+}
+
+/* 侧边栏相关（AdminLTE 3 使用 .main-sidebar） */
+.main-sidebar .sidebar {
+    height: 100% !important;
+}
+
+/* 响应式修复 */
+@media (max-width: 991.98px) {
+    .wrapper {
+        margin-left: 0 !important;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%) !important;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0) !important;
+    }
+}
+
+/* 确保核心元素始终可见 */
+html, body {
+    height: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* 防止滚动条影响布局 */
+body {
+    overflow-y: auto !important;
+}

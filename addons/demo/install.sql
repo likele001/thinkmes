@@ -1,0 +1,2 @@
+-- demo 插件安装 SQL（示例）
+-- SELECT 1;
