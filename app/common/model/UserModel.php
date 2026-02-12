@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace app\common\model;
 
-use think\Model;
+use app\common\model\BaseModel as Model;
 
 /**
  * C端用户模型 fa_user

@@ -7,6 +7,7 @@ use Closure;
 use think\facade\Db;
 use think\Request;
 use think\Response;
+use think\facade\Session;
 
 /**
  * 多租户解析：根据域名或 header 解析 tenant_id，写入 request 属性
@@ -16,11 +17,25 @@ class TenantResolve
     public function handle(Request $request, Closure $next): Response
     {
         $tenantId = 0;
+        // 1. 优先使用会话中的租户信息（登录用户）
+        try {
+            $admin = Session::get('admin_info');
+            if (!empty($admin) && isset($admin['tenant_id']) && (int)$admin['tenant_id'] > 0) {
+                $tenantId = (int)$admin['tenant_id'];
+                $request->tenantId = $tenantId;
+                return $next($request);
+            }
+        } catch (\Throwable $e) {
+            // 忽略 session 读取错误，继续下面的解析逻辑
+        }
+
+        // 2. 再尝试从请求头读取（X-Tenant-Id），便于 API 或代理传入
         $host = $request->host();
         $headerTenant = $request->header('X-Tenant-Id');
         if ($headerTenant !== null && $headerTenant !== '') {
             $tenantId = max(0, (int) $headerTenant);
         } elseif ($host && $host !== 'localhost' && $host !== '127.0.0.1') {
+            // 3. 最后回退到域名解析（保留原有逻辑）
             try {
                 $row = Db::name('tenant')->where('status', 1)
                     ->where(function ($q) use ($host) {

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace app\admin\model;
 
-use think\Model;
+use app\common\model\BaseModel as Model;
 
 /**
  * 租户注册申请模型

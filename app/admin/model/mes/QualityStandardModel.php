@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace app\admin\model\mes;
 
-use think\Model;
+use app\common\model\BaseModel as Model;
 
 /**
  * 质检标准模型
