@@ -59,8 +59,21 @@ class Shipment extends Backend
     public function add(): string|Response
     {
         $orderId = $this->request->get('order_id');
+        
+        // 如果没有订单ID，显示订单选择列表
         if (!$orderId) {
-            return $this->error('参数错误');
+            // 注意：这里应该显示订单列表让用户选择
+            // 由于这是通过标签页打开的，直接返回AJAX会显示错误
+            // 所以改为显示一个简单的选择页面
+            $tenantId = $this->getTenantId();
+            $orders = OrderModel::where('tenant_id', $tenantId)
+                ->where('shipment_status', 0) // 未发货
+                ->order('id', 'desc')
+                ->select();
+            
+            View::assign('orders', $orders);
+            View::assign('title', '选择订单');
+            return $this->fetchWithLayout('mes/shipment/select_order');
         }
 
         $tenantId = $this->getTenantId();
@@ -283,8 +296,19 @@ class Shipment extends Backend
     public function track(): string|Response
     {
         $id = $this->request->get('id');
+        
+        // 如果没有发货单ID，显示发货单列表
         if (empty($id)) {
-            return $this->error('参数错误');
+            $tenantId = $this->getTenantId();
+            $shipments = ShipmentModel::with(['order', 'customer'])
+                ->where('tenant_id', $tenantId)
+                ->order('id', 'desc')
+                ->limit(100)
+                ->select();
+            
+            View::assign('shipments', $shipments);
+            View::assign('title', '选择发货单');
+            return $this->fetchWithLayout('mes/shipment/select_shipment');
         }
 
         $tenantId = $this->getTenantId();

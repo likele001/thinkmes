@@ -222,6 +222,43 @@ Route::group('mes', function () {
     Route::post('supplier/edit', 'mes.Supplier/edit');
     Route::post('supplier/del', 'mes.Supplier/del');
 
+    // 库存管理
+    Route::get('stock/index', 'mes.Stock/index');
+    Route::get('stock', 'mes.Stock/index');
+    Route::get('stock/check', 'mes.Stock/check');
+    Route::get('stock/log', 'mes.Stock/log');
+    Route::post('stock/in', 'mes.Stock/in');
+    Route::post('stock/out', 'mes.Stock/out');
+    Route::post('stock/del', 'mes.Stock/del');
+
+    // 仓库管理
+    Route::get('warehouse/add', 'mes.Warehouse/add');
+    Route::get('warehouse/edit', 'mes.Warehouse/edit');
+    Route::get('warehouse/index', 'mes.Warehouse/index');
+    Route::get('warehouse', 'mes.Warehouse/index');
+    Route::post('warehouse/add', 'mes.Warehouse/add');
+    Route::post('warehouse/edit', 'mes.Warehouse/edit');
+    Route::post('warehouse/del', 'mes.Warehouse/del');
+
+    // 采购管理
+    Route::get('purchase/index', 'mes.Purchase/index');
+    Route::get('purchase/inbound', 'mes.Purchase/inbound');
+    Route::get('purchase/request', 'mes.Purchase/requestList');
+    Route::get('purchase', 'mes.Purchase/index');
+    Route::post('purchase/add', 'mes.Purchase/add');
+    Route::post('purchase/edit', 'mes.Purchase/edit');
+    Route::post('purchase/del', 'mes.Purchase/del');
+
+    // 质检管理
+    Route::get('quality/index', 'mes.Quality/index');
+    Route::get('quality/statistics', 'mes.Quality/statistics');
+    Route::get('quality/check', 'mes.Quality/check');
+    Route::get('quality/standard', 'mes.Quality/standard');
+    Route::get('quality', 'mes.Quality/index');
+    Route::post('quality/add', 'mes.Quality/add');
+    Route::post('quality/edit', 'mes.Quality/edit');
+    Route::post('quality/del', 'mes.Quality/del');
+
     // 工资管理
     Route::get('wage', 'mes.Wage/index');
     Route::get('wage/index', 'mes.Wage/index');
@@ -242,6 +279,16 @@ Route::group('mes', function () {
     Route::get('bi/productionEfficiency', 'mes.Bi/productionEfficiency');
     Route::get('bi/qualityAnalysis', 'mes.Bi/qualityAnalysis');
     Route::get('bi/costAnalysis', 'mes.Bi/costAnalysis');
+
+    // 发货管理
+    Route::get('shipment/add', 'mes.Shipment/add');
+    Route::get('shipment/edit', 'mes.Shipment/edit');
+    Route::get('shipment/track', 'mes.Shipment/track');
+    Route::get('shipment/index', 'mes.Shipment/index');
+    Route::get('shipment', 'mes.Shipment/index');
+    Route::post('shipment/add', 'mes.Shipment/add');
+    Route::post('shipment/edit', 'mes.Shipment/edit');
+    Route::post('shipment/del', 'mes.Shipment/del');
 
     // MES 首页（放在最后，避免匹配其他mes路由）
     Route::get('index', 'mes.Mes/index');

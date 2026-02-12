@@ -1,0 +1,111 @@
+{include file='common/meta' /}
+<style>
+/* 简单表单样式 */
+.form-group {
+    margin-bottom: 15px;
+}
+.form-control {
+    max-width: 300px;
+}
+</style>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>采购入库</h4>
+    </div>
+    <div class="panel-body">
+        <form id="form-add" class="form-horizontal" role="form" action="" method="post">
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">供应商</label>
+                <div class="col-xs-12 col-sm-8">
+                    <select id="c-supplier_id" class="form-control selectpicker" name="row[supplier_id]" data-rule="required">
+                        <option value="">请选择供应商</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">仓库</label>
+                <div class="col-xs-12 col-sm-8">
+                    <select id="c-warehouse_id" class="form-control selectpicker" name="row[warehouse_id]" data-rule="required">
+                        <option value="">请选择仓库</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">入库单号</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input id="c-bill_no" class="form-control" name="row[bill_no]" value="" placeholder="请输入入库单号">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">采购订单号</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input id="c-order_no" class="form-control" name="row[order_no]" value="" placeholder="请输入采购订单号">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">入库日期</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input id="c-inbound_date" class="form-control" name="row[inbound_date]" type="date" placeholder="请选择入库日期">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">备注</label>
+                <div class="col-xs-12 col-sm-8">
+                    <textarea id="c-remark" class="form-control" name="row[remark]" rows="3" placeholder="请输入备注"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-xs-12 col-sm-8 col-sm-offset-4">
+                    <button type="submit" class="btn btn-success submit-btn">提交</button>
+                    <button type="reset" class="btn btn-default">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+$(function() {
+    // 绑定供应商change事件
+    $('#c-supplier_id').on('change', function() {
+        var supplierId = $(this).val();
+        if (supplierId) {
+            // 动态获取该供应商的物料列表（示例）
+            $.get('{:url("admin/mes/purchase/getMaterials")}?supplier_id=' + supplierId, function(res) {
+                if (res.code === 1) {
+                    var options = '<option value="">请选择物料</option>';
+                    $.each(res.data, function(i, item) {
+                        options += '<option value="' + item.id + '">' + item.name + '</option>';
+                    });
+                    $('#c-material_id').html(options);
+                }
+            });
+        }
+    });
+
+    // 表单验证
+    $('#form-add').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '{:url("admin/mes/purchase/saveInbound")}',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 1) {
+                    Fast.api.close();
+                    Fast.api.msg(res.msg);
+                    // 可以跳转到列表页或刷新列表
+                } else {
+                    Fast.api.error(res.msg);
+                }
+            }
+        });
+    });
+
+    // 重置按钮
+    $('button[type="reset"]').on('click', function() {
+        $('#form-add')[0].reset();
+    });
+});
+</script>
+{include file='common/script-iframe' /}

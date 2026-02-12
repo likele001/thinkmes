@@ -1,0 +1,116 @@
+{include file='common/meta' /}
+<style>
+/* 统计卡片样式 */
+.stat-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #337ab7;
+    margin-bottom: 10px;
+}
+.stat-label {
+    color: #777;
+    font-size: 14px;
+}
+</style>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>质检统计</h4>
+    </div>
+    <div class="panel-body">
+        <form id="form-search" class="form-horizontal" role="form">
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">日期范围</label>
+                <div class="col-xs-12 col-sm-3">
+                    <input id="c-start_date" class="form-control" name="start_date" type="date" value="{$startDate|default=''}" placeholder="开始日期">
+                </div>
+                <div class="col-xs-12 col-sm-3">
+                    <input id="c-end_date" class="form-control" name="end_date" type="date" value="{$endDate|default=''}" placeholder="结束日期">
+                </div>
+                <div class="col-xs-12 col-sm-2">
+                    <button type="submit" class="btn btn-primary">查询</button>
+                    <button type="reset" class="btn btn-default">重置</button>
+                </div>
+            </div>
+        </form>
+
+        {if !empty($list)}
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number">{$total_count|default=0}</div>
+                    <div class="stat-label">总检查数</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number">{$total_qualified|default=0}</div>
+                    <div class="stat-label">合格数</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number">{$total_unqualified|default=0}</div>
+                    <div class="stat-label">不合格数</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number">{$avg_qualified_rate|default=0|number_format=2}%</div>
+                    <div class="stat-label">合格率</div>
+                </div>
+            </div>
+        </div>
+        {/if}
+
+        {if !empty($list)}
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>检查数</th>
+                    <th>合格数</th>
+                    <th>不合格数</th>
+                    <th>合格率</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="list" id="vo"}
+                <tr>
+                    <td>{$vo.stat_date|date='Y-m-d'}</td>
+                    <td>{$vo.total_count}</td>
+                    <td>{$vo.total_qualified}</td>
+                    <td>{$vo.total_unqualified}</td>
+                    <td>{$vo.avg_qualified_rate}%</td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+        {else}
+        <div class="text-center" style="margin-top: 30px; color: #999;">暂无数据</div>
+        {/if}
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 查询按钮
+    $('#form-search').on('submit', function(e) {
+        // 直接提交表单，刷新页面
+        return true;
+    });
+
+    // 重置按钮
+    $('button[type="reset"]').on('click', function() {
+        $('#form-search')[0].reset();
+        });
+});
+</script>
+{include file='common/script-iframe' /}

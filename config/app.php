@@ -8,6 +8,8 @@ return [
     'app_namespace'    => '',
     // 是否启用路由
     'with_route'       => true,
+    // 开启自动多应用模式
+    'auto_multi_app'   => true,
     // 默认应用
     'default_app'      => 'index',
     // 默认时区

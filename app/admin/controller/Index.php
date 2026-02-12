@@ -316,7 +316,17 @@ class Index extends Backend
                 continue;
             }
             $v['icon'] = ($v['icon'] ?? '') . ' fa-fw';
-            $v['url'] = isset($v['url']) && $v['url'] ? $v['url'] : '/admin/' . ($v['name'] ?? '');
+            // URL生成：根据name生成正确的URL
+            if (!isset($v['url']) || !$v['url']) {
+                $name = $v['name'] ?? '';
+                // 如果name已经以admin/开头，只加前导斜杠（admin/role/index -> /admin/role/index）
+                if (str_starts_with($name, 'admin/')) {
+                    $v['url'] = '/' . $name;
+                } else {
+                    // 否则加上/admin/前缀（mes/order -> /admin/mes/order）
+                    $v['url'] = '/admin/' . $name;
+                }
+            }
             $v['title'] = $v['title'] ?? '';
             $v['menuclass'] = '';
             $v['menutabs'] = 'addtabs="' . ($v['id'] ?? '') . '"';

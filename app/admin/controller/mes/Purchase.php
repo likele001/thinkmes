@@ -23,7 +23,7 @@ class Purchase extends Backend
     /**
      * 采购申请列表
      */
-    public function request(): string|Response
+    public function requestList(): string|Response
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
@@ -282,5 +282,35 @@ class Purchase extends Backend
             Db::rollback();
             return $this->error('确认失败：' . $e->getMessage());
         }
+    }
+
+    /**
+     * 根据供应商ID获取物料列表
+     */
+    public function getMaterials(): Response
+    {
+        $supplierId = $this->request->get('supplier_id');
+        if (empty($supplierId)) {
+            return $this->success('', []);
+        }
+
+        $tenantId = $this->getTenantId();
+        // 这里可以根据实际业务逻辑获取该供应商的物料列表
+        // 暂时返回所有活跃的物料
+        $materials = MaterialModel::where('tenant_id', $tenantId)
+            ->where('status', 'active')
+            ->field('id, name')
+            ->select()
+            ->toArray();
+
+        return $this->success('', $materials);
+    }
+
+    /**
+     * 保存入库单
+     */
+    public function saveInbound(): Response
+    {
+        return $this->addInbound();
     }
 }

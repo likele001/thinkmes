@@ -1,0 +1,174 @@
+{include file='common/meta' /}
+<style>
+/* 简单表单样式 */
+.form-group {
+    margin-bottom: 15px;
+}
+.form-control {
+    max-width: 300px;
+}
+</style>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>采购申请管理</h4>
+    </div>
+    <div class="panel-body">
+        <form id="form-search" class="form-horizontal" role="form">
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">状态</label>
+                <div class="col-xs-12 col-sm-3">
+                    <select id="c-status" class="form-control" name="status">
+                        <option value="">全部</option>
+                        <option value="0">待审核</option>
+                        <option value="1">已审核</option>
+                        <option value="2">已采购</option>
+                        <option value="3">已取消</option>
+                    </select>
+                </div>
+                <div class="col-xs-12 col-sm-2">
+                    <button type="submit" class="btn btn-primary">查询</button>
+                    <button type="reset" class="btn btn-default">重置</button>
+                </div>
+            </div>
+        </form>
+
+        <table id="table" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" name="ids" value="" id="checkall" /></th>
+                    <th>申请编号</th>
+                    <th>物料名称</th>
+                    <th>供应商</th>
+                    <th>申请数量</th>
+                    <th>申请日期</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div id="pagination" class="pagination"></div>
+    </div>
+</div>
+<script>
+$(function() {
+    // 加载数据
+    function loadData(page) {
+        var status = $('#c-status').val();
+        $.ajax({
+            url: '{:url("/admin/mes/purchase/request")}',
+            type: 'GET',
+            data: {
+                page: page,
+                limit: 20,
+                status: status
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 1) {
+                    var html = '';
+                    $.each(res.data.list, function(i, item) {
+                        var statusText = '';
+                        switch (item.status) {
+                            case 0:
+                                statusText = '<span class="label label-warning">待审核</span>';
+                                break;
+                            case 1:
+                                statusText = '<span class="label label-info">已审核</span>';
+                                break;
+                            case 2:
+                                statusText = '<span class="label label-success">已采购</span>';
+                                break;
+                            case 3:
+                                statusText = '<span class="label label-danger">已取消</span>';
+                                break;
+                        }
+                        html += '<tr>' +
+                            '<td><input type="checkbox" name="id" value="' + item.id + '" /></td>' +
+                            '<td>' + (item.request_no || '') + '</td>' +
+                            '<td>' + (item.material ? item.material.name : '') + '</td>' +
+                            '<td>' + (item.supplier ? item.supplier.name : '') + '</td>' +
+                            '<td>' + (item.quantity || 0) + '</td>' +
+                            '<td>' + (item.create_time ? new Date(item.create_time * 1000).toLocaleString() : '') + '</td>' +
+                            '<td>' + statusText + '</td>' +
+                            '<td>' +
+                                '<a href="javascript:;" class="btn btn-xs btn-primary" onclick="audit(' + item.id + ', 1)">通过</a> ' +
+                                '<a href="javascript:;" class="btn btn-xs btn-danger" onclick="audit(' + item.id + ', 2)">驳回</a>' +
+                            '</td>' +
+                            '</tr>';
+                    });
+                    $('#table tbody').html(html);
+                    // 渲染分页
+                    renderPagination(page, Math.ceil(res.data.total / 20));
+                } else {
+                    alert(res.msg);
+                }
+            }
+        });
+    }
+
+    // 渲染分页
+    function renderPagination(current, total) {
+        var html = '<ul class="pagination">';
+        if (current > 1) {
+            html += '<li><a href="javascript:;" onclick="loadData(' + (current - 1) + ')">上一页</a></li>';
+        }
+        for (var i = 1; i <= total; i++) {
+            if (i == current) {
+                html += '<li class="active"><a href="javascript:;">' + i + '</a></li>';
+            } else {
+                html += '<li><a href="javascript:;" onclick="loadData(' + i + ')">' + i + '</a></li>';
+            }
+        }
+        if (current < total) {
+            html += '<li><a href="javascript:;" onclick="loadData(' + (current + 1) + ')">下一页</a></li>';
+        }
+        html += '</ul>';
+        $('#pagination').html(html);
+    }
+
+    // 审核
+    window.audit = function(id, status) {
+        if (confirm('确定要' + (status == 1 ? '通过' : '驳回') + '该申请吗？')) {
+            $.ajax({
+                url: '{:url("admin/mes/purchase/auditRequest")}',
+                type: 'POST',
+                data: {
+                    ids: id,
+                    status: status
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.code === 1) {
+                        alert(res.msg);
+                        loadData(1);
+                    } else {
+                        alert(res.msg);
+                    }
+                }
+            });
+        }
+    };
+
+    // 查询按钮
+    $('#form-search').on('submit', function(e) {
+        e.preventDefault();
+        loadData(1);
+    });
+
+    // 重置按钮
+    $('button[type="reset"]').on('click', function() {
+        $('#form-search')[0].reset();
+    });
+
+    // 全选
+    $('#checkall').on('click', function() {
+        $('input[name="id"]').prop('checked', $(this).prop('checked'));
+    });
+
+    // 初始加载数据
+    loadData(1);
+});
+</script>
+{include file='common/script-iframe' /}

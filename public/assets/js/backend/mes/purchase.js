@@ -1,6 +1,6 @@
 (function () {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    var requestUrl = base + '/mes/purchase/request';
+    var requestUrl = base + '/admin/mes/purchase/request';
     var inboundUrl = base + '/mes/purchase/inbound';
 
     function reqStatusFmt(v) {
@@ -23,24 +23,6 @@
     }
 
     var Controller = {
-        request: function () {
-            var $table = $('#table');
-            $table.bootstrapTable({
-                url: requestUrl,
-                columns: [
-                    {field: 'id', title: 'ID', width: 80},
-                    {field: 'request_no', title: '申请单号', width: 150},
-                    {field: 'material.name', title: '物料名称'},
-                    {field: 'supplier.name', title: '供应商', width: 120},
-                    {field: 'required_quantity', title: '需求数量', width: 100},
-                    {field: 'estimated_amount', title: '预估金额', width: 120},
-                    {field: 'status', title: '状态', width: 100, formatter: reqStatusFmt}
-                ],
-                responseHandler: function (res) {
-                    return { total: (res.data && res.data.total) ? res.data.total : 0, rows: (res.data && res.data.list) ? res.data.list : [] };
-                }
-            });
-        },
         inbound: function () {
             var $table = $('#table');
             $table.bootstrapTable({
