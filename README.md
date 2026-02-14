@@ -1,6 +1,6 @@
 # ThinkMes - 完整的SaaS多租户管理系统
 
-基于 ThinkPHP 8.1 + FastAdmin 风格的完整SaaS多租户管理系统。
+基于 ThinkPHP 8.1 风格的完整SaaS多租户管理系统。
 
 ## ✨ 核心特性
 
