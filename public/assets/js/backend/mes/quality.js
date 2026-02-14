@@ -16,6 +16,9 @@
     var Controller = {
         standard: function () {
             var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
             $table.bootstrapTable({
                 url: standardUrl,
                 columns: [
@@ -32,6 +35,9 @@
         },
         check: function () {
             var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
             $table.bootstrapTable({
                 url: checkUrl,
                 columns: [
@@ -53,6 +59,9 @@
         },
         statistics: function () {
             var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
             $table.bootstrapTable({
                 url: statisticsUrl,
                 columns: [

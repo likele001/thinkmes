@@ -1,0 +1,138 @@
+<?php /*a:1:{s:55:"/www/wwwroot/thinkmes/app/admin/view/mes/stock/log.html";i:1770894462;}*/ ?>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">库存流水</h3>
+                <div class="card-tools">
+                    <form id="form-search" class="form-inline" action="<?php echo url('mes/stock/log'); ?>" method="get">
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" name="search" class="form-control float-right" placeholder="搜索">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body table-responsive p-0">
+                <table id="table" class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>流水编号</th>
+                            <th>物料名称</th>
+                            <th>变动数量</th>
+                            <th>业务类型</th>
+                            <th>操作人</th>
+                            <th>操作时间</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <!-- /.card-body -->
+            <div class="card-footer">
+                <div id="pagination" class="float-right"></div>
+            </div>
+        </div>
+        <!-- /.card -->
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 初始化表格
+    $('#table').bootstrapTable({
+        url: '<?php echo url("mes/stock/log"); ?>',
+        method: 'get',
+        pagination: true,
+        sidePagination: 'server',
+        pageSize: 20,
+        pageList: [10, 20, 50, 100],
+        search: false,
+        showRefresh: true,
+        showColumns: true,
+        columns: [
+            {
+                field: 'id',
+                title: '流水编号',
+                align: 'center'
+            },
+            {
+                field: 'material_id',
+                title: '物料名称',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return row.material ? row.material.name : '-';
+                }
+            },
+            {
+                field: 'quantity',
+                title: '变动数量',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value > 0 ? '<span class="text-success">+' + value + '</span>' : '<span class="text-danger">' + value + '</span>';
+                }
+            },
+            {
+                field: 'business_type',
+                title: '业务类型',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    var typeMap = {
+                        'purchase_in': '采购入库',
+                        'production_out': '生产领料',
+                        'check_in': '盘点入库',
+                        'check_out': '盘点出库',
+                        'other_in': '其他入库',
+                        'other_out': '其他出库'
+                    };
+                    return typeMap[value] || value;
+                }
+            },
+            {
+                field: 'operator_id',
+                title: '操作人',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value ? value : '-';
+                }
+            },
+            {
+                field: 'create_time',
+                title: '操作时间',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value ? new Date(value * 1000).toLocaleString() : '-';
+                }
+            },
+            {
+                field: 'remark',
+                title: '备注',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value ? value : '-';
+                }
+            }
+        ],
+        responseHandler: function(res) {
+            return {
+                "total": res.data.total,
+                "rows": res.data.list
+            };
+        },
+        onLoadError: function() {
+            alert('加载失败，请重试');
+        }
+    });
+
+    // 搜索表单提交
+    $('#form-search').on('submit', function(e) {
+        // 直接提交表单，刷新页面
+        return true;
+    });
+});
+</script>

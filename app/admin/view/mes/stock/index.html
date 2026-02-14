@@ -1,22 +1,24 @@
-<div class="card card-tabs">
+<div class="card">
     <div class="card-header">
-        <ul class="nav nav-tabs" data-field="type">
-            <li class="active"><a href="#t-stock" data-toggle="tab">{:__('库存列表')}</a></li>
-            <li><a href="{:url('admin/mes/stock/log')}" data-toggle="tab">{:__('库存流水')}</a></li>
-            <li><a href="{:url('admin/mes/stock/outbound')}" data-toggle="tab">{:__('领料单')}</a></li>
-        </ul>
-    </div>
-    <div class="card-content">
-        <div class="tab-pane active" id="t-stock">
-            <div class="widget-body nopadding">
-                <div id="toolbar" class="toolbar">
-                    <button type="button" class="btn btn-default btn-refresh btn-xs">
-                        <i class="fa fa-refresh"></i> {:__('刷新')}
-                    </button>
+        <h3 class="card-title">库存列表</h3>
+        <div class="card-tools">
+            <form id="form-search" class="form-inline" action="{:url('mes/stock/index')}" method="get">
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <input type="text" name="name" class="form-control float-right" placeholder="搜索物料名称">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                    </div>
                 </div>
-                <table id="table" class="table table-striped table-bordered table-hover table-nowrap">
-                </table>
-            </div>
+            </form>
         </div>
+    </div>
+    <div class="card-body table-responsive p-0">
+        <div id="toolbar" class="toolbar">
+            <button type="button" class="btn btn-default btn-refresh btn-xs">
+                <i class="fa fa-refresh"></i> 刷新
+            </button>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover table-nowrap">
+        </table>
     </div>
 </div>

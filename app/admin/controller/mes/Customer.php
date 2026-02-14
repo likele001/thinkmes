@@ -29,7 +29,15 @@ class Customer extends Backend
         $status = $this->request->get('status');
 
         $tenantId = $this->getTenantId();
-        $query = CustomerModel::where('tenant_id', $tenantId)->order('id', 'desc');
+        $query = CustomerModel::order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         if ($name !== '') {
             $query->where('customer_name', 'like', '%' . $name . '%');
@@ -59,7 +67,7 @@ class Customer extends Backend
                 $customer = CustomerModel::create($params);
                 return $this->success('添加成功', ['id' => $customer->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
 
@@ -90,7 +98,7 @@ class Customer extends Backend
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -122,7 +130,7 @@ class Customer extends Backend
             }
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 }

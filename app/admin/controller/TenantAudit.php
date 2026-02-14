@@ -95,29 +95,8 @@ class TenantAudit extends Backend
                 'update_time' => time(),
             ]);
 
-            // 获取套餐对应的MES功能，查找对应的auth_rule_id
-            $packageFeatures = TenantPackageFeatureModel::where('package_id', $register->package_id)
-                ->where('is_enabled', 1)
-                ->column('feature_code');
-
-            // 根据feature_code查找对应的auth_rule ID
-            if (!empty($packageFeatures)) {
-                $authRuleIds = Db::name('auth_rule')
-                    ->where('status', 1)
-                    ->whereIn('name', $packageFeatures)
-                    ->column('id');
-            } else {
-                $authRuleIds = [];
-            }
-
-            // 创建租户默认角色（包含套餐所有权限）
-            $role = RoleModel::create([
-                'name' => $tenant->name . '管理员',
-                'rules' => implode(',', $authRuleIds),
-                'status' => 1,
-                'create_time' => time(),
-                'update_time' => time(),
-            ]);
+            // 获取或创建套餐对应的永久默认角色
+            $roleId = $this->ensureDefaultRoleForPackage((int) $register->package_id);
 
             // 自动创建租户管理员账号（使用用户注册时填写的账号和密码）
             $salt = substr(md5(uniqid()), 0, 6);
@@ -132,7 +111,7 @@ class TenantAudit extends Backend
                 'email' => $register->contact_email,
                 'mobile' => $register->contact_phone,
                 'avatar' => '/assets/img/avatar.png',
-                'role_ids' => (string) $role->id, // 分配角色
+                'role_ids' => (string) $roleId, // 分配套餐永久角色
                 'data_scope' => 3, // 全部数据权限
                 'status' => 1,
                 'create_time' => time(),
@@ -158,6 +137,53 @@ class TenantAudit extends Backend
         } catch (\Exception $e) {
             Db::rollback();
             return $this->error('审核失败：' . $e->getMessage());
+        }
+    }
+    
+    protected function ensureDefaultRoleForPackage(int $packageId): int
+    {
+        if ($packageId <= 0) {
+            return 0;
+        }
+        try {
+            $pkg = \app\admin\model\TenantPackageModel::find($packageId);
+            if (!$pkg) {
+                return 0;
+            }
+            $features = Db::name('tenant_package_feature')
+                ->where('package_id', $packageId)
+                ->where('is_enabled', 1)
+                ->column('feature_code');
+            $authRuleIds = [];
+            if (!empty($features)) {
+                $authRuleIds = Db::name('auth_rule')
+                    ->where('status', 1)
+                    ->whereIn('name', $features)
+                    ->column('id');
+            }
+            $baseIds = Db::name('auth_rule')->where('status', 1)->whereIn('name', ['dashboard','admin/index','admin/index/index'])->column('id');
+            $authRuleIds = array_values(array_unique(array_merge($authRuleIds, $baseIds, [1])));
+            $roleName = '套餐:' . ($pkg['name'] ?? ('#' . $pkg['id'])) . '默认角色';
+            $exist = RoleModel::where('name', $roleName)->find();
+            $rulesStr = implode(',', array_map('strval', $authRuleIds));
+            if ($exist) {
+                $exist->rules = $rulesStr;
+                $exist->status = 1;
+                $exist->update_time = time();
+                $exist->save();
+                return (int) $exist->id;
+            } else {
+                $role = RoleModel::create([
+                    'name' => $roleName,
+                    'rules' => $rulesStr,
+                    'status' => 1,
+                    'create_time' => time(),
+                    'update_time' => time(),
+                ]);
+                return (int) ($role->id ?? 0);
+            }
+        } catch (\Throwable $e) {
+            return 0;
         }
     }
 

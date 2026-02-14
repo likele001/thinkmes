@@ -30,8 +30,15 @@ class ProcessPrice extends Backend
         
         $tenantId = $this->getTenantId();
         $query = ProcessPriceModel::with(['model.product', 'process'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
         
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
@@ -73,7 +80,7 @@ class ProcessPrice extends Backend
                 $model = ProcessPriceModel::create($params);
                 return $this->success('添加成功', ['id' => $model->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
         
@@ -133,7 +140,7 @@ class ProcessPrice extends Backend
                 $model->save($params);
                 return $this->success('保存成功', ['id' => $model->id]);
             } catch (\Exception $e) {
-                return $this->error('保存失败：' . $e->getMessage());
+                return $this->error('保存失败');
             }
         }
         
@@ -185,7 +192,7 @@ class ProcessPrice extends Backend
                 ->delete();
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 
@@ -242,7 +249,7 @@ class ProcessPrice extends Backend
                 return $this->success("批量设置成功：新增 {$successCount} 条，更新 {$skipCount} 条");
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('批量设置失败：' . $e->getMessage());
+                return $this->error('批量设置失败');
             }
         }
         

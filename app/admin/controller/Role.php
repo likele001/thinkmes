@@ -26,6 +26,16 @@ class Role extends Backend
         $query = RoleModel::order('id', 'asc');
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
+        try {
+            $titleMap = Db::name('auth_rule')->column('title', 'id');
+        } catch (\Throwable $e) {
+            $titleMap = [];
+        }
+        foreach ($list as &$row) {
+            $ids = array_filter(array_map('intval', explode(',', (string) ($row['rules'] ?? ''))));
+            $names = array_map(function($id) use ($titleMap) { return $titleMap[$id] ?? ('#' . $id); }, $ids);
+            $row['rules_names'] = $names;
+        }
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
 

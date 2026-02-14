@@ -1,0 +1,181 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑订单</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="row[id]" value="{$row.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">订单名称</label>
+                <div class="col-sm-6"><input type="text" name="row[order_name]" class="form-control" required value="{$row.order_name|default=''}" placeholder="请输入订单名称"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">客户</label>
+                <div class="col-sm-6">
+                    <select name="row[customer_id]" class="form-control" id="customer_id">
+                        <option value="">请选择客户</option>
+                        {volist name="customerList" id="vo"}
+                        <option value="{$key}" {if $row.customer_id == $key}selected{/if}>{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">客户名称</label>
+                <div class="col-sm-6"><input type="text" name="row[customer_name]" class="form-control" value="{$row.customer_name|default=''}" placeholder="选择客户后自动填充"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">客户电话</label>
+                <div class="col-sm-6"><input type="text" name="row[customer_phone]" class="form-control" value="{$row.customer_phone|default=''}" placeholder="选择客户后自动填充"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">交货时间</label>
+                <div class="col-sm-6"><input type="datetime-local" name="row[delivery_time]" class="form-control" value="{$row.delivery_time ? date('Y-m-d\TH:i', $row.delivery_time) : ''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">订单状态</label>
+                <div class="col-sm-6">
+                    <select name="row[status]" class="form-control">
+                        <option value="0" {if $row.status == 0}selected{/if}>待生产</option>
+                        <option value="1" {if $row.status == 1}selected{/if}>生产中</option>
+                        <option value="2" {if $row.status == 2}selected{/if}>已完成</option>
+                        <option value="3" {if $row.status == 3}selected{/if}>已取消</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">备注</label>
+                <div class="col-sm-6"><textarea name="row[remark]" class="form-control" rows="3" placeholder="请输入备注">{$row.remark|default=''}</textarea></div>
+            </div>
+            
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">订单型号</label>
+                <div class="col-sm-10">
+                    <div id="model-list">
+                        {if !empty($orderModels)}
+                        {volist name="orderModels" id="om" key="k"}
+                        <div class="model-item mb-2">
+                            <select name="models[{$k-1}][model_id]" class="form-control d-inline-block" style="width: 300px;">
+                                <option value="">请选择型号</option>
+                                {volist name="modelList" id="vo"}
+                                <option value="{$key}" {if $om.model_id == $key}selected{/if}>{$vo}</option>
+                                {/volist}
+                            </select>
+                            <input type="number" name="models[{$k-1}][quantity]" class="form-control d-inline-block" style="width: 150px; margin-left: 10px;" placeholder="数量" min="1" value="{$om.quantity}">
+                            <button type="button" class="btn btn-danger btn-sm ml-2 btn-remove-model">删除</button>
+                        </div>
+                        {/volist}
+                        {else}
+                        <div class="model-item mb-2">
+                            <select name="models[0][model_id]" class="form-control d-inline-block" style="width: 300px;">
+                                <option value="">请选择型号</option>
+                                {volist name="modelList" id="vo"}
+                                <option value="{$key}">{$vo}</option>
+                                {/volist}
+                            </select>
+                            <input type="number" name="models[0][quantity]" class="form-control d-inline-block" style="width: 150px; margin-left: 10px;" placeholder="数量" min="1" value="1">
+                            <button type="button" class="btn btn-danger btn-sm ml-2 btn-remove-model" style="display:none;">删除</button>
+                        </div>
+                        {/if}
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm mt-2" id="btn-add-model">添加型号</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <div class="row">
+            <div class="col-sm-6 offset-sm-2">
+                <button type="submit" form="form-edit" class="btn btn-primary">保存修改</button>
+                <a href="{$config.moduleurl}/mes/order/index" class="btn btn-default ml-2">返回列表</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(arguments.callee, 50);
+        return;
+    }
+    var $ = jQuery;
+    
+    $(function () {
+        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        var modelIndex = $('.model-item').length;
+        
+        var modelOptions = '';
+        $('#model-list select:first option').each(function() {
+            if ($(this).val() !== '') {
+                modelOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+            }
+        });
+        
+        $('#btn-add-model').on('click', function() {
+            var html = '<div class="model-item mb-2">' +
+                '<select name="models[' + modelIndex + '][model_id]" class="form-control d-inline-block" style="width: 300px;">' +
+                '<option value="">请选择型号</option>' +
+                modelOptions +
+                '</select>' +
+                '<input type="number" name="models[' + modelIndex + '][quantity]" class="form-control d-inline-block" style="width: 150px; margin-left: 10px;" placeholder="数量" min="1" value="1">' +
+                '<button type="button" class="btn btn-danger btn-sm ml-2 btn-remove-model">删除</button>' +
+                '</div>';
+            $('#model-list').append(html);
+            modelIndex++;
+            updateRemoveButtons();
+        });
+        
+        $(document).on('click', '.btn-remove-model', function() {
+            $(this).closest('.model-item').remove();
+            updateRemoveButtons();
+        });
+        
+        function updateRemoveButtons() {
+            var count = $('.model-item').length;
+            $('.btn-remove-model').toggle(count > 1);
+        }
+        updateRemoveButtons();
+        
+        $('#form-edit').attr('action', base + '/mes/order/edit?ids={$row.id}');
+        $('#form-edit').on('submit', function (e) {
+            e.preventDefault();
+            var formData = $(this).serializeArray();
+            var data = {};
+            var models = [];
+            
+            $.each(formData, function(i, field) {
+                var name = field.name;
+                if (name.startsWith('row[')) {
+                    var key = name.match(/row\[(.*?)\]/)[1];
+                    data[key] = field.value;
+                } else if (name.startsWith('models[')) {
+                    var match = name.match(/models\[(\d+)\]\[(.*?)\]/);
+                    if (match) {
+                        var idx = parseInt(match[1]);
+                        var key = match[2];
+                        if (!models[idx]) models[idx] = {};
+                        models[idx][key] = field.value;
+                    }
+                }
+            });
+            
+            models = models.filter(function(m) {
+                return m && m.model_id && m.quantity > 0;
+            });
+            
+            if (models.length === 0) {
+                alert('请至少添加一个订单型号');
+                return;
+            }
+            
+            $.post($('#form-edit').attr('action'), {
+                row: data,
+                models: JSON.stringify(models)
+            }, function (r) {
+                alert(r.msg || (r.code === 1 ? '保存成功' : '失败'));
+                if (r.code === 1) {
+                    location.href = base + '/mes/order/index';
+                }
+            }, 'json');
+        });
+    });
+})();
+</script>

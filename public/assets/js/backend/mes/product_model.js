@@ -12,6 +12,17 @@
         return v == 1 ? '<span class="badge badge-success">正常</span>' : '<span class="badge badge-danger">禁用</span>'; 
     }
 
+    function fmtTime(v) {
+        if (v === null || v === undefined || v === '') return '';
+        var n = Number(v);
+        if (!isNaN(n) && isFinite(n)) {
+            return new Date((n > 1e12 ? n : n * 1000)).toLocaleString('zh-CN');
+        }
+        var s = String(v).trim();
+        var d = new Date(s.replace(' ', 'T'));
+        return isNaN(d.getTime()) ? s : d.toLocaleString('zh-CN');
+    }
+
     function operFmt(value, row) {
         return '<a href="' + editUrl + '?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit">编辑</a> ' +
             '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
@@ -20,6 +31,9 @@
     var Controller = {
         index: function () {
             var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
             $table.bootstrapTable({
                 url: indexUrl,
                 pk: 'id',
@@ -34,10 +48,9 @@
                     {field: 'id', title: 'ID', width: 80, sortable: true},
                     {field: 'full_name', title: '型号名称', align: 'left'},
                     {field: 'model_code', title: '型号编码', align: 'left'},
+                    {field: 'stock', title: '成品库存', width: 100, sortable: true},
                     {field: 'status', title: '状态', width: 100, formatter: statusFmt},
-                    {field: 'create_time', title: '创建时间', width: 180, formatter: function(value) {
-                        return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
-                    }},
+                    {field: 'create_time', title: '创建时间', width: 180, formatter: fmtTime},
                     {field: 'operate', title: '操作', width: 150, events: {
                         'click .btn-edit': function(e, value, row) {
                             location.href = editUrl + '?ids=' + row.id;

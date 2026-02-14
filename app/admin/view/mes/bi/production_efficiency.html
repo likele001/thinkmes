@@ -19,7 +19,7 @@
 </div>
 
 <script>
-(function() {
+$(function() {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var table = $('#table');
     
@@ -27,7 +27,14 @@
         var startDate = $('#start_date').val();
         var endDate = $('#end_date').val();
         
-        table.bootstrapTable('destroy').bootstrapTable({
+        if (typeof table.bootstrapTable !== 'function') {
+            return;
+        }
+        
+        if (table.data('bootstrap.table')) {
+            table.bootstrapTable('destroy');
+        }
+        table.bootstrapTable({
             url: base + '/mes/bi/productionEfficiency?start_date=' + startDate + '&end_date=' + endDate,
             pk: 'stat_date',
             sortName: 'stat_date',
@@ -53,11 +60,11 @@
         });
     }
     
-    $('#btn-query').on('click', function() {
+    $(document).off('click', '#btn-query').on('click', '#btn-query', function() {
         loadTable();
     });
     
     // 初始加载
     loadTable();
-})();
+});
 </script>

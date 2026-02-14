@@ -1,0 +1,90 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>订单物料清单</em> 订单：{$order.order_name} ({$order.order_no})</div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info"><i class="fas fa-shopping-cart"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">总需求物料</span>
+                        <span class="info-box-number">{:count($orderMaterials)} 种</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">缺料品种</span>
+                        <span class="info-box-number">{$shortageCount} 种</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-yen-sign"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">预估总成本</span>
+                        <span class="info-box-number">￥{$totalAmount|number_format=2}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
+            <a href="{$config.moduleurl}/mes/order/index" class="btn btn-default"><i class="fas fa-arrow-left"></i> 返回订单列表</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%">
+            <thead>
+                <tr>
+                    <th>物料名称</th>
+                    <th>规格型号</th>
+                    <th>需求数量</th>
+                    <th>当前库存</th>
+                    <th>缺料数量</th>
+                    <th>预估单价</th>
+                    <th>预估总额</th>
+                    <th>供应商</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="orderMaterials" id="vo"}
+                <tr>
+                    <td>{$vo.material.name|default='-'}</td>
+                    <td>-</td>
+                    <td>{$vo.required_quantity}</td>
+                    <td>{$vo.material.stock|default=0}</td>
+                    <td>
+                        {php}$shortage = max(0, $vo.required_quantity - ($vo.material->stock ?? 0));{/php}
+                        {if $shortage > 0}
+                        <span class="text-danger">{$shortage}</span>
+                        {else}
+                        0
+                        {/if}
+                    </td>
+                    <td>￥{$vo.estimated_price}</td>
+                    <td>￥{$vo.estimated_amount}</td>
+                    <td>{$vo.supplier.name|default='-'}</td>
+                    <td>
+                        {if $vo.purchase_status == 0}
+                        <span class="badge badge-secondary">未采购</span>
+                        {elseif $vo.purchase_status == 1}
+                        <span class="badge badge-info">采购中</span>
+                        {else}
+                        <span class="badge badge-success">已入库</span>
+                        {/if}
+                    </td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {});
+</script>

@@ -29,7 +29,15 @@ class Process extends Backend
         $status = $this->request->get('status');
 
         $tenantId = $this->getTenantId();
-        $query = ProcessModel::where('tenant_id', $tenantId)->order('sort', 'asc')->order('id', 'desc');
+        $query = ProcessModel::order('sort', 'asc')->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         if ($name !== '') {
             $query->where('name', 'like', '%' . $name . '%');
@@ -59,7 +67,7 @@ class Process extends Backend
                 $process = ProcessModel::create($params);
                 return $this->success('添加成功', ['id' => $process->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
 
@@ -90,7 +98,7 @@ class Process extends Backend
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -122,7 +130,7 @@ class Process extends Backend
             }
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 }

@@ -23,8 +23,30 @@
     }
 
     var Controller = {
+        requestList: function () {
+            var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
+            $table.bootstrapTable({
+                url: requestUrl,
+                columns: [
+                    {field: 'id', title: 'ID', width: 80},
+                    {field: 'request_no', title: '申请单号', width: 150},
+                    {field: 'material.name', title: '物料名称'},
+                    {field: 'required_quantity', title: '需求数量', width: 100},
+                    {field: 'status', title: '状态', width: 100, formatter: reqStatusFmt}
+                ],
+                responseHandler: function (res) {
+                    return { total: (res.data && res.data.total) ? res.data.total : 0, rows: (res.data && res.data.list) ? res.data.list : [] };
+                }
+            });
+        },
         inbound: function () {
             var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
             $table.bootstrapTable({
                 url: inboundUrl,
                 columns: [

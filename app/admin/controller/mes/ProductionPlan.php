@@ -30,8 +30,15 @@ class ProductionPlan extends Backend
         
         $tenantId = $this->getTenantId();
         $query = ProductionPlanModel::with(['order', 'model.product'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
         
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -64,6 +71,9 @@ class ProductionPlan extends Backend
             $tenantId = $this->getTenantId();
             $params['tenant_id'] = $tenantId;
             $params['plan_code'] = ProductionPlanModel::generatePlanCode();
+            $params['plan_name'] = $params['plan_name'] ?? '未命名计划';
+            $params['order_id'] = $params['order_id'] ?? 0;
+            $params['model_id'] = $params['model_id'] ?? 0;
             $params['create_time'] = time();
             $params['update_time'] = time();
             
@@ -75,11 +85,19 @@ class ProductionPlan extends Backend
                 $params['planned_end_time'] = strtotime($params['planned_end_time']);
             }
             
+            // 填充默认值，避免数据库 NOT NULL 约束导致失败
+            $params['plan_name'] = $params['plan_name'] ?? '未命名计划';
+            $params['order_id'] = $params['order_id'] ?? 0;
+            $params['model_id'] = $params['model_id'] ?? 0;
+            if (empty($params['plan_code'])) {
+                $params['plan_code'] = 'PP' . date('YmdHis') . rand(1000, 9999);
+            }
+            
             try {
                 $plan = ProductionPlanModel::create($params);
                 return $this->success('添加成功', ['id' => $plan->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
         
@@ -126,7 +144,7 @@ class ProductionPlan extends Backend
                 $plan->save($params);
                 return $this->success('保存成功', ['id' => $plan->id]);
             } catch (\Exception $e) {
-                return $this->error('保存失败：' . $e->getMessage());
+                return $this->error('保存失败');
             }
         }
         
@@ -176,7 +194,7 @@ class ProductionPlan extends Backend
                 ->delete();
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 

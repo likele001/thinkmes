@@ -7,5 +7,6 @@ return [
         'crud'  => \app\command\Crud::class,
         'addon' => \app\command\Addon::class,
         'cache:clear' => \app\command\Clear::class,
+        'check:tables' => \app\command\CheckTables::class,
     ],
 ];

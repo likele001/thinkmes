@@ -10,6 +10,7 @@ use app\admin\model\mes\OrderModel;
 use app\admin\model\mes\CustomerModel;
 use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\TraceCodeModel;
+use app\admin\model\mes\StockLogModel;
 use think\facade\Db;
 use think\facade\View;
 use think\Response;
@@ -39,8 +40,15 @@ class Shipment extends Backend
 
         $tenantId = $this->getTenantId();
         $query = ShipmentModel::with(['order', 'customer'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -77,6 +85,7 @@ class Shipment extends Backend
         }
 
         $tenantId = $this->getTenantId();
+        /** @var OrderModel $order */
         $order = OrderModel::where('tenant_id', $tenantId)->find($orderId);
         if (!$order) {
             return $this->error('订单不存在');
@@ -102,6 +111,14 @@ class Shipment extends Backend
                 $params['shipment_time'] = strtotime($params['shipment_time']);
             }
 
+            // 填充默认值，避免数据库 NOT NULL 约束导致失败
+            $params['logistics_company'] = $params['logistics_company'] ?? '';
+            $params['logistics_no'] = $params['logistics_no'] ?? '';
+            $params['receiver_name'] = $params['receiver_name'] ?? '';
+            $params['receiver_phone'] = $params['receiver_phone'] ?? '';
+            $params['receiver_address'] = $params['receiver_address'] ?? '';
+            $params['sign_user'] = $params['sign_user'] ?? '';
+
             // 处理JSON格式的明细数据
             if (is_string($items)) {
                 $items = json_decode($items, true);
@@ -109,6 +126,7 @@ class Shipment extends Backend
 
             Db::startTrans();
             try {
+                /** @var ShipmentModel $shipment */
                 $shipment = ShipmentModel::create($params);
 
                 $totalQuantity = 0;
@@ -124,6 +142,17 @@ class Shipment extends Backend
                             'create_time' => time(),
                         ]);
                         $totalQuantity += $item['quantity'];
+
+                        // 自动扣减成品库存
+                        StockLogModel::logProduct(
+                            $tenantId,
+                            (int)$item['model_id'],
+                            -(float)$item['quantity'],
+                            'shipment_out',
+                            (int)$shipment->id,
+                            (int)$this->auth->id,
+                            '发货出库：' . $shipment->shipment_no
+                        );
                     }
                 }
 
@@ -141,7 +170,7 @@ class Shipment extends Backend
                 return $this->success('添加成功', ['id' => $shipment->id]);
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
 
@@ -199,7 +228,7 @@ class Shipment extends Backend
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -245,7 +274,7 @@ class Shipment extends Backend
             return $this->success('删除成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 
@@ -286,7 +315,7 @@ class Shipment extends Backend
             return $this->success('签收成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('签收失败：' . $e->getMessage());
+            return $this->error('签收失败');
         }
     }
 

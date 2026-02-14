@@ -1,0 +1,142 @@
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">{:isset($id) ? '编辑质检标准' : '添加质检标准'}</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <form id="form-standard" action="{:url('mes/quality/addStandard')}" method="post">
+                    <input type="hidden" name="row[id]" value="{:isset($row) ? $row['id'] : ''}">
+                    <div class="form-group">
+                        <label for="row[code]">标准编号</label>
+                        <input type="text" class="form-control" id="row[code]" name="row[code]" value="{:isset($row) ? $row['code'] : ''}" placeholder="请输入标准编号">
+                    </div>
+                    <div class="form-group">
+                        <label for="row[name]">标准名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="row[name]" name="row[name]" value="{:isset($row) ? $row['name'] : ''}" placeholder="请输入标准名称" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="row[process_id]">适用工序 <span class="text-danger">*</span></label>
+                        <select class="form-control" id="row[process_id]" name="row[process_id]" required>
+                            <option value="">请选择工序</option>
+                            {foreach $processList as $id => $name}
+                            <option value="{$id}" {:isset($row) && $row['process_id'] == $id ? 'selected' : ''}>{$name}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="row[model_id]">适用型号 <span class="text-danger">*</span></label>
+                        <select class="form-control" id="row[model_id]" name="row[model_id]" required>
+                            <option value="">请选择型号</option>
+                            {foreach $modelList as $id => $name}
+                            <option value="{$id}" {:isset($row) && $row['model_id'] == $id ? 'selected' : ''}>{$name}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="row[description]">标准描述</label>
+                        <textarea class="form-control" id="row[description]" name="row[description]" rows="3" placeholder="请输入标准描述">{:isset($row) ? $row['description'] : ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>检查项 <span class="text-danger">*</span></label>
+                        <div id="check-items-container">
+                            {if isset($row) && !empty($row['check_items'])}
+                                {foreach json_decode($row['check_items'], true) as $item}
+                                <div class="check-item row mb-2">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="row[check_items][][name]" value="{$item['name']}" placeholder="检查项名称">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="row[check_items][][standard]" value="{$item['standard']}" placeholder="检查标准">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger btn-sm remove-check-item"><i class="fas fa-minus"></i></button>
+                                    </div>
+                                </div>
+                                {/foreach}
+                            {else}
+                                <div class="check-item row mb-2">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="row[check_items][][name]" placeholder="检查项名称">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="row[check_items][][standard]" placeholder="检查标准">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger btn-sm remove-check-item"><i class="fas fa-minus"></i></button>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                        <button type="button" id="add-check-item" class="btn btn-sm btn-success mt-2"><i class="fas fa-plus"></i> 添加检查项</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="row[status]">状态</label>
+                        <select class="form-control" id="row[status]" name="row[status]">
+                            <option value="1" {:isset($row) && $row['status'] == 1 ? 'selected' : ''}>启用</option>
+                            <option value="0" {:isset($row) && $row['status'] == 0 ? 'selected' : ''}>禁用</option>
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <a href="{:url('mes/quality/standard')}" class="btn btn-default">取消</a>
+                    </div>
+                </form>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 添加检查项
+    $('#add-check-item').on('click', function() {
+        var html = '<div class="check-item row mb-2">'
+            + '<div class="col-md-5">'
+            + '<input type="text" class="form-control" name="row[check_items][][name]" placeholder="检查项名称">'
+            + '</div>'
+            + '<div class="col-md-5">'
+            + '<input type="text" class="form-control" name="row[check_items][][standard]" placeholder="检查标准">'
+            + '</div>'
+            + '<div class="col-md-2">'
+            + '<button type="button" class="btn btn-danger btn-sm remove-check-item"><i class="fas fa-minus"></i></button>'
+            + '</div>'
+            + '</div>';
+        $('#check-items-container').append(html);
+    });
+
+    // 移除检查项
+    $(document).on('click', '.remove-check-item', function() {
+        $(this).closest('.check-item').remove();
+    });
+
+    // 表单验证
+    $('#form-standard').on('submit', function(e) {
+        // 检查是否至少有一个检查项
+        var checkItems = $('input[name="row[check_items][][name]"]');
+        if (checkItems.length === 0) {
+            alert('请至少添加一个检查项');
+            return false;
+        }
+
+        // 检查所有检查项是否填写完整
+        var isValid = true;
+        checkItems.each(function() {
+            if ($(this).val().trim() === '') {
+                isValid = false;
+                return false;
+            }
+        });
+
+        if (!isValid) {
+            alert('请填写所有检查项名称');
+            return false;
+        }
+
+        return true;
+    });
+});
+</script>

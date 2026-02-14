@@ -12,9 +12,13 @@
 </div>
 
 <script>
-(function() {
+$(function() {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var table = $('#table');
+    
+    if (typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) {
+        return;
+    }
     
     table.bootstrapTable({
         url: base + '/mes/wage/statistics',
@@ -41,8 +45,8 @@
     });
     
     // 刷新
-    $('.btn-refresh').on('click', function() {
+    $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function() {
         table.bootstrapTable('refresh');
     });
-})();
+});
 </script>

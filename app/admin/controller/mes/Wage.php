@@ -28,9 +28,16 @@ class Wage extends Backend
         $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
         
         $tenantId = $this->getTenantId();
-        $query = WageModel::where('tenant_id', $tenantId)
-            ->order('work_date', 'desc')
+        $query = WageModel::order('work_date', 'desc')
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
         
         // 搜索条件
         $userId = $this->request->get('user_id');
@@ -70,7 +77,6 @@ class Wage extends Backend
         $query = Db::name('mes_wage')
             ->alias('w')
             ->join('fa_user u', 'w.user_id = u.id')
-            ->where('w.tenant_id', $tenantId)
             ->field('w.user_id, u.nickname, 
                      SUM(CASE WHEN w.work_type = "piece" THEN w.total_wage ELSE 0 END) as piece_wage,
                      SUM(CASE WHEN w.work_type = "time" THEN w.total_wage ELSE 0 END) as time_wage,
@@ -79,6 +85,14 @@ class Wage extends Backend
                      SUM(CASE WHEN w.work_type = "time" THEN w.work_hours ELSE 0 END) as time_hours')
             ->group('w.user_id, u.nickname')
             ->order('total_wage', 'desc');
+        if ($tenantId > 0) {
+            $query->where('w.tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('w.tenant_id', $tenantParam);
+            }
+        }
         
         $startDate = $this->request->get('start_date');
         $endDate = $this->request->get('end_date');
@@ -104,7 +118,15 @@ class Wage extends Backend
         $startDate = $this->request->get('start_date');
         $endDate = $this->request->get('end_date');
         
-        $query = WageModel::where('tenant_id', $tenantId);
+        $query = WageModel::order('work_date', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
         if ($startDate) {
             $query->where('work_date', '>=', $startDate);
         }
@@ -112,7 +134,7 @@ class Wage extends Backend
             $query->where('work_date', '<=', $endDate);
         }
         
-        $list = $query->order('work_date', 'desc')->select()->toArray();
+        $list = $query->select()->toArray();
         
         // 这里可以实现Excel导出功能
         return $this->success('导出功能开发中', $list);

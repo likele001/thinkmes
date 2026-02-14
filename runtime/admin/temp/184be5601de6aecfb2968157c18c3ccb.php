@@ -1,0 +1,149 @@
+<?php /*a:1:{s:57:"/www/wwwroot/thinkmes/app/admin/view/mes/stock/check.html";i:1770894513;}*/ ?>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">库存盘点</h3>
+                <div class="card-tools">
+                    <form id="form-search" class="form-inline" action="<?php echo url('mes/stock/index'); ?>" method="get">
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" name="name" class="form-control float-right" placeholder="搜索物料名称">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body table-responsive p-0">
+                <table id="table" class="table table-striped table-bordered table-hover table-nowrap">
+                </table>
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 初始化表格
+    $('#table').bootstrapTable({
+        url: '<?php echo url("mes/stock/index"); ?>',
+        method: 'get',
+        pagination: true,
+        sidePagination: 'server',
+        pageSize: 20,
+        pageList: [10, 20, 50, 100],
+        search: false,
+        showRefresh: true,
+        showColumns: true,
+        columns: [
+            {
+                checkbox: true
+            },
+            {
+                field: 'code',
+                title: '物料编码',
+                align: 'center'
+            },
+            {
+                field: 'name',
+                title: '物料名称',
+                align: 'center'
+            },
+            {
+                field: 'spec',
+                title: '规格型号',
+                align: 'center'
+            },
+            {
+                field: 'unit',
+                title: '单位',
+                align: 'center'
+            },
+            {
+                field: 'stock',
+                title: '当前库存',
+                align: 'center'
+            },
+            {
+                field: 'min_stock',
+                title: '安全库存',
+                align: 'center'
+            },
+            {
+                field: 'warehouse_id',
+                title: '仓库',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    var warehouseMap = <?php echo json_encode($warehouseList); ?>;
+                    return warehouseMap[value] || '-';
+                }
+            },
+            {
+                field: 'id',
+                title: '操作',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    var html = '';
+                    html += '<a href="javascript:;" class="btn btn-xs btn-primary check-stock" data-id="' + value + '" data-name="' + row.name + '" data-stock="' + row.stock + '" title="盘点"><i class="fas fa-balance-scale"></i></a> ';
+                    return html;
+                }
+            }
+        ],
+        responseHandler: function(res) {
+            return {
+                "total": res.data.total,
+                "rows": res.data.list
+            };
+        },
+        onLoadError: function() {
+            alert('加载失败，请重试');
+        }
+    });
+
+    // 盘点操作
+    $(document).on('click', '.check-stock', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        var currentStock = $(this).data('stock');
+        
+        var actualQuantity = prompt('请输入物料 "' + name + '" 的实际库存数量（当前系统库存：' + currentStock + '）:', currentStock);
+        if (actualQuantity === null) {
+            return;
+        }
+        
+        actualQuantity = parseFloat(actualQuantity);
+        if (isNaN(actualQuantity)) {
+            alert('请输入有效的数字');
+            return;
+        }
+        
+        var remark = prompt('请输入盘点备注（可选）:');
+        
+        $.ajax({
+            url: '<?php echo url("mes/stock/check"); ?>',
+            type: 'post',
+            data: {
+                material_id: id,
+                actual_quantity: actualQuantity,
+                remark: remark
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 1) {
+                    alert(res.msg);
+                    $('#table').bootstrapTable('refresh');
+                } else {
+                    alert(res.msg);
+                }
+            },
+            error: function() {
+                alert('网络错误，请重试');
+            }
+        });
+    });
+});
+</script>

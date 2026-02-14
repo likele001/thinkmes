@@ -39,8 +39,15 @@ class Quality extends Backend
 
         $tenantId = $this->getTenantId();
         $query = QualityStandardModel::with(['process', 'model'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
@@ -71,7 +78,7 @@ class Quality extends Backend
                 $standard = QualityStandardModel::create($params);
                 return $this->success('添加成功', ['id' => $standard->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
 
@@ -115,8 +122,15 @@ class Quality extends Backend
 
         $tenantId = $this->getTenantId();
         $query = QualityCheckModel::with(['report', 'allocation', 'standard'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -156,6 +170,14 @@ class Quality extends Backend
             $params['allocation_id'] = $report->allocation_id ?? 0;
             $params['check_no'] = QualityCheckModel::generateCheckNo();
             $params['check_user_id'] = $this->auth->id ?? 0;
+            
+            // 填充默认值，避免数据库 NOT NULL 约束导致失败
+            $params['report_id'] = $params['report_id'] ?? $reportId;
+            $params['allocation_id'] = $params['allocation_id'] ?? ($report->allocation_id ?? 0);
+            $params['standard_id'] = $params['standard_id'] ?? 0;
+            $params['check_quantity'] = $params['check_quantity'] ?? 0;
+            $params['qualified_quantity'] = $params['qualified_quantity'] ?? 0;
+            $params['unqualified_quantity'] = $params['unqualified_quantity'] ?? 0;
 
             // 处理检查时间
             if (!empty($params['check_time'])) {
@@ -195,7 +217,7 @@ class Quality extends Backend
                 return $this->success('质检完成', ['id' => $qualityCheck->id]);
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('质检失败：' . $e->getMessage());
+                return $this->error('质检失败');
             }
         }
 

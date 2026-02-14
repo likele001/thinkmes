@@ -1,0 +1,24 @@
+<?php /*a:1:{s:53:"/www/wwwroot/thinkmes/app/admin/view/index/error.html";i:1770864765;}*/ ?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>无权限 - KeleAdmin</title>
+    <link rel="stylesheet" href="/public/assets/lib/adminlte/css/adminlte.min.css">
+</head>
+<body class="hold-transition">
+<div class="content-wrapper" style="margin-left:0">
+    <section class="content">
+        <div class="error-page">
+            <h2 class="headline text-warning">403</h2>
+            <div class="error-content">
+                <h3><i class="fas fa-exclamation-triangle text-warning"></i> 无权限访问</h3>
+                <p><?php echo htmlentities((string) (isset($msg) && ($msg !== '')?$msg:'您没有权限访问该页面')); ?></p>
+                <a href="<?php echo url('index/index'); ?>" class="btn btn-primary">返回首页</a>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

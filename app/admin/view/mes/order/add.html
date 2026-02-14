@@ -63,14 +63,15 @@
                     <button type="button" class="btn btn-success btn-sm mt-2" id="btn-add-model">添加型号</button>
                 </div>
             </div>
-            
-            <div class="form-group row">
-                <div class="col-sm-6 offset-sm-2">
-                    <button type="submit" class="btn btn-primary">提交</button>
-                    <a href="{$config.moduleurl}/mes/order/index" class="btn btn-default ml-2">返回</a>
-                </div>
-            </div>
         </form>
+    </div>
+    <div class="card-footer">
+        <div class="row">
+            <div class="col-sm-6 offset-sm-2">
+                <button type="submit" form="form-add" class="btn btn-primary">确定添加</button>
+                <a href="{$config.moduleurl}/mes/order/index" class="btn btn-default ml-2">返回列表</a>
+            </div>
+        </div>
     </div>
 </div>
 <script>
@@ -134,30 +135,22 @@
     $('#form-add').attr('action', base + '/mes/order/add');
     $('#form-add').on('submit', function (e) {
         e.preventDefault();
-        var formData = $(this).serializeArray();
         var data = {};
-        var models = [];
-        
-        // 处理表单数据
-        $.each(formData, function(i, field) {
-            var name = field.name;
-            if (name.startsWith('row[')) {
-                var key = name.match(/row\[(.*?)\]/)[1];
-                data[key] = field.value;
-            } else if (name.startsWith('models[')) {
-                var match = name.match(/models\[(\d+)\]\[(.*?)\]/);
-                if (match) {
-                    var idx = parseInt(match[1]);
-                    var key = match[2];
-                    if (!models[idx]) models[idx] = {};
-                    models[idx][key] = field.value;
-                }
-            }
+        // 行数据
+        $('#form-add [name^="row["]').each(function () {
+            var name = $(this).attr('name');
+            var key = name.match(/row\[(.*?)\]/)[1];
+            data[key] = $(this).val();
         });
-        
-        // 过滤空型号
-        models = models.filter(function(m) {
-            return m.model_id && m.quantity > 0;
+        // 直接从 DOM 收集型号与数量（更稳）
+        var models = [];
+        $('#model-list .model-item').each(function () {
+            var mid = $(this).find('select[name*="[model_id]"]').val();
+            var qty = parseInt($(this).find('input[name*="[quantity]"]').val(), 10) || 0;
+            if (mid) {
+                if (qty <= 0) { qty = 1; $(this).find('input[name*="[quantity]"]').val(qty); }
+                models.push({ model_id: mid, quantity: qty });
+            }
         });
         
         if (models.length === 0) {
@@ -165,15 +158,32 @@
             return;
         }
         
-        $.post($('#form-add').attr('action'), {
-            row: data,
-            models: JSON.stringify(models)
-        }, function (r) {
+        var fd = new FormData();
+        Object.keys(data).forEach(function(k){ fd.append('row[' + k + ']', data[k]); });
+        models.forEach(function(m, i){
+            fd.append('models[' + i + '][model_id]', m.model_id);
+            fd.append('models[' + i + '][quantity]', m.quantity);
+        });
+        $.ajax({
+            url: $('#form-add').attr('action'),
+            type: 'POST',
+            dataType: 'json',
+            data: fd,
+            processData: false,
+            contentType: false
+        }).done(function (r) {
             alert(r.msg || (r.code === 1 ? '添加成功' : '失败'));
             if (r.code === 1) {
                 location.href = base + '/mes/order/index';
             }
-        }, 'json');
+        }).fail(function (xhr, status, err) {
+            var msg = '请求失败：' + (xhr.responseText || status || err || '');
+            try {
+                var json = JSON.parse(xhr.responseText);
+                msg = json.msg || msg;
+            } catch(e) {}
+            alert(msg);
+        });
         });
     });
     })();

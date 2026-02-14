@@ -1,0 +1,155 @@
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">质检标准管理</h3>
+                <div class="card-tools">
+                    <a href="{:url('/admin/mes/quality/addStandard')}" class="btn btn-sm btn-success"><i class="fas fa-plus"></i> 添加标准</a>
+                    <form id="form-search" class="form-inline ml-2" action="{:url('mes/quality/standard')}" method="get">
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" name="search" class="form-control float-right" placeholder="搜索">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body table-responsive p-0">
+                <table id="table" class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" name="ids" value="" id="checkall" /></th>
+                            <th>标准编号</th>
+                            <th>标准名称</th>
+                            <th>适用工序</th>
+                            <th>适用型号</th>
+                            <th>检查项数量</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <!-- /.card-body -->
+            <div class="card-footer">
+                <div id="pagination" class="float-right"></div>
+            </div>
+        </div>
+        <!-- /.card -->
+    </div>
+</div>
+
+<script>
+$(function() {
+    var table = $('#table');
+    if (typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) {
+        return;
+    }
+    // 初始化表格
+    table.bootstrapTable({
+        url: '{:url("mes/quality/standard")}',
+        method: 'get',
+        pagination: true,
+        sidePagination: 'server',
+        pageSize: 20,
+        pageList: [10, 20, 50, 100],
+        search: false,
+        showRefresh: true,
+        showColumns: true,
+        columns: [
+            {
+                checkbox: true
+            },
+            {
+                field: 'code',
+                title: '标准编号',
+                align: 'center'
+            },
+            {
+                field: 'name',
+                title: '标准名称',
+                align: 'center'
+            },
+            {
+                field: 'process_id',
+                title: '适用工序',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return row.process ? row.process.name : '-';
+                }
+            },
+            {
+                field: 'model_id',
+                title: '适用型号',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return row.model ? row.model.name : '-';
+                }
+            },
+            {
+                field: 'check_items',
+                title: '检查项数量',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    try {
+                        var items = JSON.parse(value);
+                        return Array.isArray(items) ? items.length : 0;
+                    } catch (e) {
+                        return 0;
+                    }
+                }
+            },
+            {
+                field: 'status',
+                title: '状态',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value === 1 ? '<span class="badge badge-success">启用</span>' : '<span class="badge badge-danger">禁用</span>';
+                }
+            },
+            {
+                field: 'create_time',
+                title: '创建时间',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value ? new Date(value * 1000).toLocaleString() : '-';
+                }
+            },
+            {
+                field: 'id',
+                title: '操作',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    var html = '';
+                    html += '<a href="{:url("mes/quality/addStandard")}?id=' + value + '" class="btn btn-xs btn-primary" title="编辑"><i class="fas fa-edit"></i></a> ';
+                    return html;
+                }
+            }
+        ],
+        responseHandler: function(res) {
+            return {
+                "total": res.data.total,
+                "rows": res.data.list
+            };
+        },
+        onLoadError: function() {
+            alert('加载失败，请重试');
+        }
+    });
+
+    // 全选/取消全选
+    $(document).off('click', '#checkall').on('click', '#checkall', function() {
+        $('#table').bootstrapTable('togglePagination');
+    });
+
+    // 搜索表单提交
+    $(document).off('submit', '#form-search').on('submit', '#form-search', function(e) {
+        return true;
+    });
+});
+</script>

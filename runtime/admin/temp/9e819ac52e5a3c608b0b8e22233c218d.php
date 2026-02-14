@@ -1,0 +1,25 @@
+<?php /*a:1:{s:57:"/www/wwwroot/thinkmes/app/admin/view/mes/stock/index.html";i:1770897013;}*/ ?>
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">库存列表</h3>
+        <div class="card-tools">
+            <form id="form-search" class="form-inline" action="<?php echo url('mes/stock/index'); ?>" method="get">
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <input type="text" name="name" class="form-control float-right" placeholder="搜索物料名称">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card-body table-responsive p-0">
+        <div id="toolbar" class="toolbar">
+            <button type="button" class="btn btn-default btn-refresh btn-xs">
+                <i class="fa fa-refresh"></i> 刷新
+            </button>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover table-nowrap">
+        </table>
+    </div>
+</div>

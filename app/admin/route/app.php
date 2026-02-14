@@ -11,14 +11,20 @@ Route::get('index/error', 'Index/errorPage');
 Route::get('index/index', 'Index/index');
 Route::get('index/menu', 'Index/menu');
 
-// 管理员
-Route::get('admin/index', 'Admin/index');
-Route::get('admin/add', 'Admin/add');
-Route::get('admin/edit', 'Admin/edit');
-Route::post('admin/add', 'Admin/addPost');
-Route::post('admin/edit', 'Admin/editPost');
-Route::post('admin/del', 'Admin/del');
-Route::post('admin/resetPwd', 'Admin/resetPwd');
+// 个人中心
+Route::get('profile/index', 'Profile/index');
+Route::post('profile/updateProfile', 'Profile/updateProfile');
+
+// 管理员（使用分组，路径为 /admin/admin/*）
+Route::group('admin', function () {
+    Route::get('index', 'Admin/index');
+    Route::get('add', 'Admin/add');
+    Route::get('edit', 'Admin/edit');
+    Route::post('add', 'Admin/addPost');
+    Route::post('edit', 'Admin/editPost');
+    Route::post('del', 'Admin/del');
+    Route::post('resetPwd', 'Admin/resetPwd');
+});
 
 // 租户管理（仅平台超管）
 Route::get('tenant/index', 'Tenant/index');
@@ -99,6 +105,15 @@ Route::post('index/clearCache', 'Index/clearCache');
 // MES 制造执行系统
 // 使用路由分组，更符合 FastAdmin 风格，所有 mes/* 路由都在分组内
 Route::group('mes', function () {
+    // 售后管理
+    Route::get('after_sales/add', 'mes.AfterSales/add');
+    Route::get('after_sales/edit', 'mes.AfterSales/edit');
+    Route::get('after_sales/index', 'mes.AfterSales/index');
+    Route::get('after_sales', 'mes.AfterSales/index');
+    Route::post('after_sales/add', 'mes.AfterSales/add');
+    Route::post('after_sales/edit', 'mes.AfterSales/edit');
+    Route::post('after_sales/del', 'mes.AfterSales/del');
+
     // 产品型号管理（具体路由放在前面，避免被通用路由匹配）
     Route::get('product_model/add', 'mes.ProductModel/add');
     Route::get('product_model/edit', 'mes.ProductModel/edit');
@@ -222,14 +237,17 @@ Route::group('mes', function () {
     Route::post('supplier/edit', 'mes.Supplier/edit');
     Route::post('supplier/del', 'mes.Supplier/del');
 
-    // 库存管理
+    // 库存管理（具体路由放在前面，避免被通用路由匹配）
     Route::get('stock/index', 'mes.Stock/index');
-    Route::get('stock', 'mes.Stock/index');
     Route::get('stock/check', 'mes.Stock/check');
     Route::get('stock/log', 'mes.Stock/log');
+    Route::get('stock/outbound', 'mes.Stock/outbound');
+    Route::get('stock', 'mes.Stock/index');
     Route::post('stock/in', 'mes.Stock/in');
     Route::post('stock/out', 'mes.Stock/out');
     Route::post('stock/del', 'mes.Stock/del');
+    Route::post('stock/check', 'mes.Stock/check');
+    Route::post('stock/outbound', 'mes.Stock/outbound');
 
     // 仓库管理
     Route::get('warehouse/add', 'mes.Warehouse/add');
@@ -254,10 +272,14 @@ Route::group('mes', function () {
     Route::get('quality/statistics', 'mes.Quality/statistics');
     Route::get('quality/check', 'mes.Quality/check');
     Route::get('quality/standard', 'mes.Quality/standard');
+    Route::get('quality/addStandard', 'mes.Quality/addStandard');
+    Route::get('quality/addCheck', 'mes.Quality/addCheck');
     Route::get('quality', 'mes.Quality/index');
     Route::post('quality/add', 'mes.Quality/add');
     Route::post('quality/edit', 'mes.Quality/edit');
     Route::post('quality/del', 'mes.Quality/del');
+    Route::post('quality/addStandard', 'mes.Quality/addStandard');
+    Route::post('quality/addCheck', 'mes.Quality/addCheck');
 
     // 工资管理
     Route::get('wage', 'mes.Wage/index');

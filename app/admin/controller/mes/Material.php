@@ -29,7 +29,15 @@ class Material extends Backend
         $status = $this->request->get('status');
 
         $tenantId = $this->getTenantId();
-        $query = MaterialModel::where('tenant_id', $tenantId)->order('id', 'desc');
+        $query = MaterialModel::order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         if ($name !== '') {
             $query->where('name', 'like', '%' . $name . '%');
@@ -54,12 +62,17 @@ class Material extends Backend
 
             $tenantId = $this->getTenantId();
             $params['tenant_id'] = $tenantId;
+            
+            // 填充默认值，避免数据库 NOT NULL 约束导致失败
+            $params['name'] = $params['name'] ?? '未命名物料';
+            $params['code'] = $params['code'] ?? ('M' . date('YmdHis') . rand(100, 999));
+            $params['unit'] = $params['unit'] ?? 'pcs';
 
             try {
                 $material = MaterialModel::create($params);
                 return $this->success('添加成功', ['id' => $material->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
 
@@ -90,7 +103,7 @@ class Material extends Backend
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -122,7 +135,7 @@ class Material extends Backend
             }
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 }

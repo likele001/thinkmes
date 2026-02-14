@@ -46,8 +46,15 @@ class Stock extends Backend
         $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
 
         $tenantId = $this->getTenantId();
-        $query = MaterialModel::where('tenant_id', $tenantId)
-            ->order('id', 'desc');
+        $query = MaterialModel::order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         // 搜索条件
         $name = trim((string) $this->request->get('name'));
@@ -88,8 +95,15 @@ class Stock extends Backend
 
         $tenantId = $this->getTenantId();
         $query = StockOutModel::with(['order', 'material'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -175,7 +189,7 @@ class Stock extends Backend
                 return $this->success('出库成功', ['id' => $outbound->id]);
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('出库失败：' . $e->getMessage());
+                return $this->error('出库失败');
             }
         }
 
@@ -218,7 +232,7 @@ class Stock extends Backend
             return $this->success('确认成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('确认失败：' . $e->getMessage());
+            return $this->error('确认失败');
         }
     }
 
@@ -227,6 +241,9 @@ class Stock extends Backend
      */
     public function log(): string|Response
     {
+        // 调试：确认方法被调用
+        
+
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
             View::assign('title', '库存流水');
@@ -262,8 +279,22 @@ class Stock extends Backend
     /**
      * 盘点
      */
-    public function check(): Response
+    public function check(): string|Response
     {
+        $limitParam = $this->request->get('limit');
+        if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
+            $tenantId = $this->getTenantId();
+
+            // 获取仓库列表
+            $warehouseList = WarehouseModel::where('tenant_id', $tenantId)
+                ->where('status', 1)
+                ->column('name', 'id');
+            View::assign('warehouseList', $warehouseList ?: []);
+
+            View::assign('title', '库存盘点');
+            return $this->fetchWithLayout('mes/stock/check');
+        }
+
         if (!$this->request->isPost()) {
             return $this->error('非法请求');
         }
@@ -306,7 +337,7 @@ class Stock extends Backend
             return $this->success('盘点成功，差异：' . ($diffQuantity >= 0 ? '+' : '') . $diffQuantity);
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('盘点失败：' . $e->getMessage());
+            return $this->error('盘点失败');
         }
     }
 }

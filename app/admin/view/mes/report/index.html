@@ -15,9 +15,13 @@
 </div>
 
 <script>
-(function() {
+$(function() {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var table = $('#table');
+    
+    if (typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) {
+        return;
+    }
     
     table.bootstrapTable({
         url: base + '/mes/report/index',
@@ -76,12 +80,12 @@
     });
     
     // 刷新
-    $('.btn-refresh').on('click', function() {
+    $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function() {
         table.bootstrapTable('refresh');
     });
     
     // 审核按钮
-    $('.btn-audit').on('click', function() {
+    $(document).off('click', '#toolbar .btn-audit').on('click', '#toolbar .btn-audit', function() {
         var rows = table.bootstrapTable('getSelections');
         if (rows.length == 0) {
             alert('请选择要审核的记录');
@@ -92,7 +96,7 @@
     });
     
     // 编辑按钮
-    $('.btn-edit').on('click', function() {
+    $(document).off('click', '#toolbar .btn-edit').on('click', '#toolbar .btn-edit', function() {
         var rows = table.bootstrapTable('getSelections');
         if (rows.length != 1) {
             alert('请选择一条记录');
@@ -102,7 +106,7 @@
     });
     
     // 删除按钮
-    $('.btn-del').on('click', function() {
+    $(document).off('click', '#toolbar .btn-del').on('click', '#toolbar .btn-del', function() {
         var rows = table.bootstrapTable('getSelections');
         if (rows.length == 0) {
             alert('请选择要删除的记录');
@@ -131,5 +135,5 @@
             $('.btn-edit, .btn-del, .btn-audit').addClass('disabled btn-disabled');
         }
     });
-})();
+});
 </script>

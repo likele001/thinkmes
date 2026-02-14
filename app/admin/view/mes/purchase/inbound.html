@@ -92,11 +92,10 @@ $(function() {
             dataType: 'json',
             success: function(res) {
                 if (res.code === 1) {
-                    Fast.api.close();
-                    Fast.api.msg(res.msg);
+                    alert(res.msg);
                     // 可以跳转到列表页或刷新列表
                 } else {
-                    Fast.api.error(res.msg);
+                    alert(res.msg);
                 }
             }
         });

@@ -32,9 +32,16 @@ class Warehouse extends Backend
         $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
 
         $tenantId = $this->getTenantId();
-        $query = WarehouseModel::where('tenant_id', $tenantId)
-            ->order('is_default', 'desc')
+        $query = WarehouseModel::order('is_default', 'desc')
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -73,7 +80,7 @@ class Warehouse extends Backend
 
                 return $this->success('添加成功', ['id' => $warehouse->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
 
@@ -114,7 +121,7 @@ class Warehouse extends Backend
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -157,7 +164,7 @@ class Warehouse extends Backend
 
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 }

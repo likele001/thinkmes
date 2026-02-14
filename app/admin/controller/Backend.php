@@ -14,9 +14,17 @@ use think\facade\View;
  */
 abstract class Backend extends BaseController
 {
+    /**
+     * 权限控制类
+     * @var Auth
+     */
+    protected $auth = null;
+
     protected function initialize(): void
     {
         parent::initialize();
+        
+        $this->auth = new Auth();
         
         // 定义是否Dialog请求
         if (!defined('IS_DIALOG')) {
@@ -111,7 +119,7 @@ abstract class Backend extends BaseController
         try {
             $prefix = config('database.connections.mysql.prefix', 'fa_');
             $full = $prefix . $tableName;
-            $tables = Db::query("SHOW TABLES LIKE '{$full}'");
+            $tables = Db::query('SHOW TABLES LIKE ?', [$full]);
             return !empty($tables);
         } catch (\Throwable $e) {
             return false;
@@ -249,7 +257,8 @@ abstract class Backend extends BaseController
                     // 如果 Referer 没有 iframe=1 参数，说明是从主页面跳转过来的，很可能是在 iframe 中
                     if (!$refererQuery || strpos($refererQuery, 'iframe=1') === false) {
                         // 检查当前 URL 是否有 iframe=1 参数
-                        if (in_array($this->request->get('iframe'), ['1'], true) || in_array($this->request->get('addtabs'), ['1'], true)) {
+                        $refParam = strtolower((string) $this->request->get('ref'));
+                        if (in_array($this->request->get('iframe'), ['1'], true) || in_array($this->request->get('addtabs'), ['1'], true) || $refParam === 'addtabs') {
                             $isInIframe = true;
                         }
                     }
@@ -258,7 +267,8 @@ abstract class Backend extends BaseController
         }
         
         // FastAdmin 标准：iframe/addtabs 请求使用 iframe 布局（完整 html+head+body+CSS）
-        if ($this->request->get('iframe') === '1' || $this->request->get('addtabs') === '1') {
+        $isAddtabs = ($this->request->get('addtabs') === '1') || (strtolower((string)$this->request->get('ref')) === 'addtabs');
+        if ($this->request->get('iframe') === '1' || $isAddtabs) {
             View::assign('__CONTENT__', $content);
             return View::fetch('layout/iframe');
         }

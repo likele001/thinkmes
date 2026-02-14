@@ -1,0 +1,174 @@
+<?php /*a:1:{s:60:"/www/wwwroot/thinkmes/app/admin/view/mes/stock/outbound.html";i:1770885747;}*/ ?>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">生产领料管理</h3>
+                <div class="card-tools">
+                    <form id="form-search" class="form-inline" action="<?php echo url('mes/stock/outbound'); ?>" method="get">
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" name="search" class="form-control float-right" placeholder="搜索">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body table-responsive p-0">
+                <table id="table" class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" name="ids" value="" id="checkall" /></th>
+                            <th>领料编号</th>
+                            <th>订单编号</th>
+                            <th>物料名称</th>
+                            <th>领料数量</th>
+                            <th>操作人</th>
+                            <th>操作时间</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <!-- /.card-body -->
+            <div class="card-footer">
+                <div id="pagination" class="float-right"></div>
+            </div>
+        </div>
+        <!-- /.card -->
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 初始化表格
+    $('#table').bootstrapTable({
+        url: '<?php echo url("mes/stock/outbound"); ?>',
+        method: 'get',
+        pagination: true,
+        sidePagination: 'server',
+        pageSize: 20,
+        pageList: [10, 20, 50, 100],
+        search: false,
+        showRefresh: true,
+        showColumns: true,
+        columns: [
+            {
+                checkbox: true
+            },
+            {
+                field: 'out_no',
+                title: '领料编号',
+                align: 'center'
+            },
+            {
+                field: 'order_id',
+                title: '订单编号',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return row.order ? row.order.order_no : '-';
+                }
+            },
+            {
+                field: 'material_id',
+                title: '物料名称',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return row.material ? row.material.name : '-';
+                }
+            },
+            {
+                field: 'out_quantity',
+                title: '领料数量',
+                align: 'center'
+            },
+            {
+                field: 'operator_id',
+                title: '操作人',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value ? value : '-';
+                }
+            },
+            {
+                field: 'out_time',
+                title: '操作时间',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value ? new Date(value * 1000).toLocaleString() : '-';
+                }
+            },
+            {
+                field: 'status',
+                title: '状态',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    return value === 1 ? '<span class="badge badge-success">已出库</span>' : '<span class="badge badge-warning">待出库</span>';
+                }
+            },
+            {
+                field: 'id',
+                title: '操作',
+                align: 'center',
+                formatter: function(value, row, index) {
+                    var html = '';
+                    if (row.status !== 1) {
+                        html += '<a href="javascript:;" class="btn btn-xs btn-success confirm-outbound" data-id="' + value + '" title="确认出库"><i class="fas fa-check"></i></a> ';
+                    }
+                    return html;
+                }
+            }
+        ],
+        responseHandler: function(res) {
+            return {
+                "total": res.data.total,
+                "rows": res.data.list
+            };
+        },
+        onLoadError: function() {
+            alert('加载失败，请重试');
+        }
+    });
+
+    // 全选/取消全选
+    $('#checkall').on('click', function() {
+        $('#table').bootstrapTable('togglePagination');
+    });
+
+    // 搜索表单提交
+    $('#form-search').on('submit', function(e) {
+        // 直接提交表单，刷新页面
+        return true;
+    });
+
+    // 确认出库
+    $(document).on('click', '.confirm-outbound', function() {
+        var id = $(this).data('id');
+        if (confirm('确定要确认出库吗？')) {
+            $.ajax({
+                url: '<?php echo url("mes/stock/confirmOutbound"); ?>',
+                type: 'post',
+                data: {
+                    id: id
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.code === 1) {
+                        $('#table').bootstrapTable('refresh');
+                    } else {
+                        alert(res.msg);
+                    }
+                },
+                error: function() {
+                    alert('网络错误，请重试');
+                }
+            });
+        }
+    });
+});
+</script>

@@ -46,12 +46,24 @@ class Admin extends Backend
         }
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
+        // 显示对应租户名称
+        $tenantIds = array_unique(array_filter(array_column($list, 'tenant_id'), function($v){ return $v !== null; }));
+        $tenantMap = [];
+        if (!empty($tenantIds)) {
+            try {
+                $tenantMap = \app\admin\model\TenantModel::whereIn('id', $tenantIds)->column('name', 'id');
+            } catch (\Throwable $e) {
+                $tenantMap = [];
+            }
+        }
         $scopeText = [1 => '个人', 2 => '子级', 3 => '全部'];
         foreach ($list as &$row) {
             unset($row['password'], $row['salt']);
             $ts = $row['login_time'] ?? null;
             $row['login_time'] = ($ts !== null && $ts !== '') ? date('Y-m-d H:i', (int) $ts) : '';
             $row['data_scope_text'] = $scopeText[(int) ($row['data_scope'] ?? 1)] ?? '个人';
+            $tid = (int) ($row['tenant_id'] ?? 0);
+            $row['tenant_name'] = $tid === 0 ? '平台' : ($tenantMap[$tid] ?? '-');
         }
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
@@ -73,6 +85,7 @@ class Admin extends Backend
         if ($this->request->isPost()) {
             return $this->addPost();
         }
+        $this->ensureDefaultPackageRoles();
         $roles = RoleModel::where('status', 1)->select()->toArray();
         $parents = $this->getParentAdminOptions();
         View::assign('roles', $roles);
@@ -93,7 +106,8 @@ class Admin extends Backend
         $username = trim((string) $this->request->post('username'));
         $password = (string) $this->request->post('password');
         $nickname = trim((string) $this->request->post('nickname', ''));
-        $roleIds = trim((string) $this->request->post('role_ids', ''));
+        $roleIdsInput = $this->request->post('role_ids');
+        $roleIds = is_array($roleIdsInput) ? implode(',', array_filter(array_map('intval', $roleIdsInput))) : trim((string) $roleIdsInput);
         $status = (int) $this->request->post('status', 1);
 
         if (strlen($username) < 2 || strlen($username) > 20) {
@@ -132,17 +146,25 @@ class Admin extends Backend
         if (!$this->canManageAdminId($id)) {
             return $this->error('无权限操作该管理员');
         }
-        $data = AdminModel::where('tenant_id', $this->getTenantId())->find($id);
+        $tenantId = $this->getTenantId();
+        $data = $tenantId === 0 ? AdminModel::find($id) : AdminModel::where('tenant_id', $tenantId)->find($id);
         if (!$data) {
             return $this->error('记录不存在');
         }
         $data = $data->toArray();
         unset($data['password'], $data['salt']);
+        $this->ensureDefaultPackageRoles();
         $roles = RoleModel::where('status', 1)->select()->toArray();
-        $parents = $this->getParentAdminOptions();
+        if ($tenantId === 0) {
+            $parents = AdminModel::where('tenant_id', (int) ($data['tenant_id'] ?? 0))->where('status', 1)->field('id,username,nickname')->order('id')->select()->toArray();
+        } else {
+            $parents = $this->getParentAdminOptions();
+        }
+        $roleIdsArr = array_filter(array_map('intval', explode(',', (string) ($data['role_ids'] ?? ''))));
         View::assign('roles', $roles);
         View::assign('parents', $parents);
         View::assign('data', $data);
+        View::assign('roleIdsArr', $roleIdsArr);
         View::assign('title', '编辑管理员');
         return $this->fetchWithLayout('admin/edit');
     }
@@ -153,13 +175,15 @@ class Admin extends Backend
         if (!$this->canManageAdminId($id)) {
             return $this->error('无权限操作该管理员');
         }
-        $admin = AdminModel::where('tenant_id', $this->getTenantId())->find($id);
+        $tenantId = $this->getTenantId();
+        $admin = $tenantId === 0 ? AdminModel::find($id) : AdminModel::where('tenant_id', $tenantId)->find($id);
         if (!$admin) {
             return $this->error('记录不存在');
         }
         $nickname = trim((string) $this->request->post('nickname', ''));
         $password = (string) $this->request->post('password', '');
-        $roleIds = trim((string) $this->request->post('role_ids', ''));
+        $roleIdsInput = $this->request->post('role_ids');
+        $roleIds = is_array($roleIdsInput) ? implode(',', array_filter(array_map('intval', $roleIdsInput))) : trim((string) $roleIdsInput);
         $status = (int) $this->request->post('status', 1);
         $pid = (int) $this->request->post('pid', 0);
         $dataScope = max(1, min(3, (int) $this->request->post('data_scope', 1)));
@@ -190,7 +214,8 @@ class Admin extends Backend
         if (!$this->canManageAdminId($id)) {
             return $this->error('无权限操作该管理员');
         }
-        $admin = AdminModel::where('tenant_id', $this->getTenantId())->find($id);
+        $tenantId = $this->getTenantId();
+        $admin = $tenantId === 0 ? AdminModel::find($id) : AdminModel::where('tenant_id', $tenantId)->find($id);
         if (!$admin) {
             return $this->error('记录不存在');
         }
@@ -203,6 +228,48 @@ class Admin extends Backend
         return $this->success('删除成功');
     }
 
+    protected function ensureDefaultPackageRoles(): void
+    {
+        try {
+            $packages = Db::name('tenant_package')->where('status', 1)->order('id')->select()->toArray();
+            foreach ($packages as $pkg) {
+                $features = Db::name('tenant_package_feature')
+                    ->where('package_id', (int) $pkg['id'])
+                    ->where('is_enabled', 1)
+                    ->column('feature_code');
+                $authRuleIds = [];
+                if (!empty($features)) {
+                    foreach ($features as $code) {
+                        $idsExact = Db::name('auth_rule')->where('status', 1)->where('name', $code)->column('id');
+                        $idsChildren = Db::name('auth_rule')->where('status', 1)->where('name', 'like', $code . '/%')->column('id');
+                        $authRuleIds = array_merge($authRuleIds, $idsExact, $idsChildren);
+                    }
+                }
+                // 保底加入控制台菜单与首页权限
+                $baseIds = Db::name('auth_rule')->where('status', 1)->whereIn('name', ['dashboard','admin/index','admin/index/index'])->column('id');
+                $authRuleIds = array_values(array_unique(array_merge($authRuleIds, $baseIds)));
+                $roleName = '套餐:' . ($pkg['name'] ?? ('#' . $pkg['id'])) . '默认角色';
+                $exist = RoleModel::where('name', $roleName)->find();
+                $rulesStr = implode(',', array_map('strval', $authRuleIds));
+                if ($exist) {
+                    $exist->rules = $rulesStr;
+                    $exist->status = 1;
+                    $exist->update_time = time();
+                    $exist->save();
+                } else {
+                    RoleModel::create([
+                        'name' => $roleName,
+                        'rules' => $rulesStr,
+                        'status' => 1,
+                        'create_time' => time(),
+                        'update_time' => time(),
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+    }
+
     public function resetPwd(): Response
     {
         $id = (int) $this->request->post('id');
@@ -210,7 +277,8 @@ class Admin extends Backend
             return $this->error('无权限操作该管理员');
         }
         $password = (string) $this->request->post('password', '123456');
-        $admin = AdminModel::where('tenant_id', $this->getTenantId())->find($id);
+        $tenantId = $this->getTenantId();
+        $admin = $tenantId === 0 ? AdminModel::find($id) : AdminModel::where('tenant_id', $tenantId)->find($id);
         if (!$admin) {
             return $this->error('记录不存在');
         }

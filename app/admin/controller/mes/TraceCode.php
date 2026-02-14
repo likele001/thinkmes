@@ -29,8 +29,15 @@ class TraceCode extends Backend
         
         $tenantId = $this->getTenantId();
         $query = TraceCodeModel::with(['order', 'model.product', 'process', 'report'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
         
         // 搜索条件
         $traceCode = trim((string) $this->request->get('trace_code'));
@@ -103,7 +110,7 @@ class TraceCode extends Backend
             
             return $this->success('追溯码生成成功', ['trace_code' => $traceCode, 'id' => $trace->id]);
         } catch (\Exception $e) {
-            return $this->error('追溯码生成失败：' . $e->getMessage());
+            return $this->error('追溯码生成失败');
         }
     }
 
@@ -172,7 +179,7 @@ class TraceCode extends Backend
             return $this->success("批量生成成功：新增 {$successCount} 条，跳过 {$skipCount} 条");
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('批量生成失败：' . $e->getMessage());
+            return $this->error('批量生成失败');
         }
     }
 
@@ -220,7 +227,7 @@ class TraceCode extends Backend
                 ->update(['status' => 0]);
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 }

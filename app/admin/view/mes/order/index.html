@@ -14,15 +14,43 @@
 </div>
 
 <script>
-(function() {
+(function init() {
+    if (typeof window.jQuery === 'undefined' || !window.jQuery.fn || typeof window.jQuery.fn.bootstrapTable !== 'function') {
+        setTimeout(init, 50);
+        return;
+    }
+    var $ = window.jQuery;
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    var table = $('#table');
-    
-    table.bootstrapTable({
+    var $table = $('#table');
+    function fmtTime(v) {
+        if (v === null || v === undefined || v === '') return '';
+        var n = Number(v);
+        if (!isNaN(n) && isFinite(n)) {
+            return new Date((n > 1e12 ? n : n * 1000)).toLocaleString('zh-CN');
+        }
+        var s = String(v).trim();
+        var d = new Date(s.replace(' ', 'T'));
+        return isNaN(d.getTime()) ? s : d.toLocaleString('zh-CN');
+    }
+    if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+        return;
+    }
+    $table.bootstrapTable({
         url: base + '/mes/order/index',
         pk: 'id',
         sortName: 'id',
         sortOrder: 'desc',
+        pagination: true,
+        sidePagination: 'server',
+        pageSize: 20,
+        pageList: [10, 20, 50],
+        responseHandler: function (res) {
+            var data = res.data || {};
+            return {
+                total: data.total || 0,
+                rows: data.list || []
+            };
+        },
         columns: [
             {field: 'id', title: 'ID', width: 80, sortable: true},
             {field: 'order_no', title: '订单号', align: 'left'},
@@ -34,12 +62,8 @@
                 var classMap = {0: 'secondary', 1: 'primary', 2: 'success', 3: 'danger'};
                 return '<span class="badge badge-' + (classMap[value] || 'secondary') + '">' + (statusMap[value] || '未知') + '</span>';
             }},
-            {field: 'delivery_time', title: '交货时间', width: 180, formatter: function(value) {
-                return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
-            }},
-            {field: 'create_time', title: '创建时间', width: 180, formatter: function(value) {
-                return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
-            }},
+            {field: 'delivery_time', title: '交货时间', width: 180, formatter: fmtTime},
+            {field: 'create_time', title: '创建时间', width: 180, formatter: fmtTime},
             {field: 'operate', title: '操作', width: 150, events: {
                 'click .btn-edit': function(e, value, row) {
                     location.href = base + '/mes/order/edit?id=' + row.id;
@@ -48,7 +72,7 @@
                     if (confirm('确定要删除吗？')) {
                         $.post(base + '/mes/order/del', {ids: row.id}, function(r) {
                             if (r.code == 1) {
-                                table.bootstrapTable('refresh');
+                                $table.bootstrapTable('refresh');
                                 alert(r.msg || '删除成功');
                             } else {
                                 alert(r.msg || '删除失败');
@@ -66,25 +90,19 @@
             }}
         ]
     });
-    
-    // 刷新
-    $('.btn-refresh').on('click', function() {
-        table.bootstrapTable('refresh');
+    $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function() {
+        $table.bootstrapTable('refresh');
     });
-    
-    // 编辑按钮
-    $('.btn-edit').on('click', function() {
-        var rows = table.bootstrapTable('getSelections');
+    $(document).off('click', '#toolbar .btn-edit').on('click', '#toolbar .btn-edit', function() {
+        var rows = $table.bootstrapTable('getSelections');
         if (rows.length != 1) {
             alert('请选择一条记录');
             return;
         }
         location.href = base + '/mes/order/edit?id=' + rows[0].id;
     });
-    
-    // 删除按钮
-    $('.btn-del').on('click', function() {
-        var rows = table.bootstrapTable('getSelections');
+    $(document).off('click', '#toolbar .btn-del').on('click', '#toolbar .btn-del', function() {
+        var rows = $table.bootstrapTable('getSelections');
         if (rows.length == 0) {
             alert('请选择要删除的记录');
             return;
@@ -95,17 +113,15 @@
         var ids = rows.map(function(r) { return r.id; });
         $.post(base + '/mes/order/del', {ids: ids.join(',')}, function(r) {
             if (r.code == 1) {
-                table.bootstrapTable('refresh');
+                $table.bootstrapTable('refresh');
                 alert(r.msg || '删除成功');
             } else {
                 alert(r.msg || '删除失败');
             }
         }, 'json');
     });
-    
-    // 表格行选择
-    table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
-        var rows = table.bootstrapTable('getSelections');
+    $table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
+        var rows = $table.bootstrapTable('getSelections');
         if (rows.length > 0) {
             $('.btn-edit, .btn-del').removeClass('disabled btn-disabled');
         } else {

@@ -11,12 +11,16 @@
     }
 
     function operFmt(value, row) {
-        return '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
+        return '<a href="javascript:;" class="btn btn-xs btn-primary btn-aftersales" title="创建售后">售后</a> ' +
+            '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
     }
 
     var Controller = {
         index: function () {
             var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
             $table.bootstrapTable({
                 url: indexUrl,
                 pk: 'id',
@@ -42,7 +46,15 @@
                     {field: 'create_time', title: '创建时间', width: 180, formatter: function(value) {
                         return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
                     }},
-                    {field: 'operate', title: '操作', width: 120, events: {
+                    {field: 'operate', title: '操作', width: 150, events: {
+                        'click .btn-aftersales': function(e, value, row) {
+                            var url = base + '/mes/after_sales/add?trace_code=' + row.trace_code + '&order_id=' + (row.order_id || '');
+                            if (typeof Fast !== 'undefined' && Fast.api && Fast.api.addtabs) {
+                                Fast.api.addtabs(url, '创建售后');
+                            } else {
+                                location.href = url;
+                            }
+                        },
                         'click .btn-del': function(e, value, row) {
                             if (confirm('确定要删除吗？')) {
                                 $.post(delUrl, {ids: row.id}, function(r) {

@@ -6,6 +6,7 @@ namespace app\admin\controller;
 use app\admin\model\TenantModel;
 use app\admin\model\TenantPackageModel;
 use app\admin\model\AdminModel;
+use app\admin\model\RoleModel;
 use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
@@ -43,10 +44,33 @@ class Tenant extends Backend
         $list = $query->page($page, $limit)->select()->toArray();
         $pkgIds = array_unique(array_column($list, 'package_id'));
         $pkgs = $pkgIds ? TenantPackageModel::whereIn('id', $pkgIds)->column('name', 'id') : [];
+        // 显示对应管理员名称（按租户分组拼接）
+        $tenantIds = array_unique(array_filter(array_column($list, 'id')));
+        $adminMap = [];
+        if (!empty($tenantIds)) {
+            try {
+                $admins = AdminModel::whereIn('tenant_id', $tenantIds)->field('tenant_id,username,nickname,status')->select()->toArray();
+                foreach ($admins as $ad) {
+                    $tid = (int) ($ad['tenant_id'] ?? 0);
+                    $name = ($ad['nickname'] ?: $ad['username']);
+                    if (!isset($adminMap[$tid])) $adminMap[$tid] = [];
+                    $adminMap[$tid][] = $name;
+                }
+            } catch (\Throwable $e) {
+                $adminMap = [];
+            }
+        }
         foreach ($list as &$row) {
             $row['package_name'] = $pkgs[$row['package_id'] ?? 0] ?? '-';
             $ts = $row['expire_time'] ?? null;
             $row['expire_time_text'] = ($ts !== null && $ts > 0) ? date('Y-m-d', (int) $ts) : '永久';
+            $tid = (int) ($row['id'] ?? 0);
+            $names = $adminMap[$tid] ?? [];
+            if (!empty($names)) {
+                $row['admin_names'] = implode(', ', array_slice($names, 0, 5)) . (count($names) > 5 ? ' 等' . count($names) . '人' : '');
+            } else {
+                $row['admin_names'] = '-';
+            }
         }
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
@@ -105,15 +129,32 @@ class Tenant extends Backend
         // 检查是否已存在该租户的管理员
         $existAdmin = AdminModel::where('tenant_id', $tenant->id)->where('username', $adminUsername)->find();
         if (!$existAdmin) {
+            // 根据套餐创建默认角色并分配给管理员
+            $authRuleIds = [];
+            try {
+                $featureCodes = \think\facade\Db::name('tenant_package_feature')
+                    ->where('package_id', (int) $tenant->package_id)
+                    ->where('is_enabled', 1)
+                    ->column('feature_code');
+                if (!empty($featureCodes)) {
+                    $authRuleIds = \think\facade\Db::name('auth_rule')
+                        ->where('status', 1)
+                        ->whereIn('name', $featureCodes)
+                        ->column('id');
+                }
+            } catch (\Throwable $e) {
+                $authRuleIds = [];
+            }
+            $roleId = $this->ensureDefaultRoleForPackage((int) $tenant->package_id);
             AdminModel::create([
                 'tenant_id' => $tenant->id,
                 'pid' => 0,
                 'username' => $adminUsername,
                 'password' => $adminPassword,
-                'salt' => 'fast',
+                'salt' => null,
                 'nickname' => $adminNickname,
-                'role_ids' => '', // 需要租户管理员自己分配角色
-                'data_scope' => 3, // 全部数据权限
+                'role_ids' => (string) ($roleId ?: ''),
+                'data_scope' => 3,
                 'status' => 1,
                 'create_time' => $now,
                 'update_time' => $now,
@@ -171,6 +212,7 @@ class Tenant extends Backend
                 $expire = null;
             }
         }
+        $oldPackageId = (int) ($row['package_id'] ?? 0);
         $row->name = $name;
         $row->domain = $domain;
         $row->package_id = $packageId;
@@ -178,8 +220,70 @@ class Tenant extends Backend
         $row->status = $status;
         $row->update_time = time();
         $row->save();
+        
+        if ($oldPackageId !== $packageId) {
+            $roleId = $this->ensureDefaultRoleForPackage($packageId);
+            if ($roleId) {
+                Db::name('admin')
+                    ->where('tenant_id', $row->id)
+                    ->where(function($q){
+                        $q->whereNull('role_ids')->whereOr('role_ids', '');
+                    })
+                    ->update(['role_ids' => (string) $roleId, 'update_time' => time()]);
+            }
+            (new \app\common\lib\Auth())->clearAllCache();
+        }
         $this->log('edit', '编辑租户:id=' . $id);
         return $this->success('保存成功', ['id' => $id]);
+    }
+    
+    protected function ensureDefaultRoleForPackage(int $packageId): int
+    {
+        if ($packageId <= 0) {
+            return 0;
+        }
+        try {
+            $pkg = TenantPackageModel::find($packageId);
+            if (!$pkg) {
+                return 0;
+            }
+            $features = Db::name('tenant_package_feature')
+                ->where('package_id', $packageId)
+                ->where('is_enabled', 1)
+                ->column('feature_code');
+            $authRuleIds = [];
+            if (!empty($features)) {
+                foreach ($features as $code) {
+                    $idsExact = Db::name('auth_rule')->where('status', 1)->where('name', $code)->column('id');
+                    $idsChildren = Db::name('auth_rule')->where('status', 1)->where('name', 'like', $code . '/%')->column('id');
+                    $authRuleIds = array_merge($authRuleIds, $idsExact, $idsChildren);
+                }
+            }
+            // 保底加入控制台菜单与首页权限
+            $baseIds = Db::name('auth_rule')->where('status', 1)->whereIn('name', ['dashboard','admin/index','admin/index/index'])->column('id');
+            $authRuleIds = array_values(array_unique(array_merge($authRuleIds, $baseIds, [1])));
+            $roleName = '套餐:' . ($pkg['name'] ?? ('#' . $pkg['id'])) . '默认角色';
+            $exist = RoleModel::where('name', $roleName)->find();
+            $rulesStr = implode(',', array_map('strval', $authRuleIds));
+            if ($exist) {
+                $exist->rules = $rulesStr;
+                $exist->status = 1;
+                $exist->update_time = time();
+                $exist->save();
+                return (int) $exist->id;
+            } else {
+                $role = RoleModel::create([
+                    'name' => $roleName,
+                    'rules' => $rulesStr,
+                    'status' => 1,
+                    'create_time' => time(),
+                    'update_time' => time(),
+                ]);
+                return (int) ($role->id ?? 0);
+            }
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     public function del(): Response

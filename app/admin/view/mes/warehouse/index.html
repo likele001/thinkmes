@@ -8,7 +8,7 @@
         <div class="tab-pane active" id="t-list">
             <div class="widget-body nopadding">
                 <div id="toolbar" class="toolbar">
-                    <a href="{:url('admin/mes/warehouse/add')}" class="btn btn-primary btn-xs">
+                    <a href="{:url('/admin/mes/warehouse/add')}" class="btn btn-primary btn-xs">
                         <i class="fa fa-plus"></i> {:__('添加')}
                     </a>
                     <button type="button" class="btn btn-default btn-refresh btn-xs">
@@ -16,8 +16,8 @@
                     </button>
                 </div>
                 <table id="table" class="table table-striped table-bordered table-hover table-nowrap"
-                       data-operate-edit="{:url('admin/mes/warehouse/edit')}"
-                       data-operate-del="{:url('admin/mes/warehouse/del')}">
+                       data-operate-edit="{:url('/admin/mes/warehouse/edit')}"
+                       data-operate-del="{:url('/admin/mes/warehouse/del')}">
                 </table>
             </div>
         </div>

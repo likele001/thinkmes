@@ -18,6 +18,9 @@
     var Controller = {
         index: function () {
             var $table = $('#table');
+            if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
+                return;
+            }
             $table.bootstrapTable({
                 url: indexUrl,
                 pk: 'id',

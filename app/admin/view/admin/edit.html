@@ -39,12 +39,12 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">角色</label>
                 <div class="col-sm-6">
-                    <select name="role_ids" class="form-control">
-                        <option value="">请选择</option>
+                    <select name="role_ids[]" class="form-control" multiple>
                         {volist name="roles" id="r"}
-                        <option value="{$r.id}" {if condition="$data.role_ids == $r.id"}selected{/if}>{$r.name}</option>
+                        <option value="{$r.id}" {if condition="in_array($r.id, $roleIdsArr)"}selected{/if}>{$r.name}</option>
                         {/volist}
                     </select>
+                    <small class="text-muted">可多选；保存后将合并为逗号分隔的角色ID</small>
                 </div>
             </div>
             <div class="form-group row">

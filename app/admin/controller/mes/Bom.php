@@ -42,8 +42,15 @@ class Bom extends Backend
 
         $tenantId = $this->getTenantId();
         $query = BomModel::with(['product', 'model'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         if ($bomNo !== '') {
             $query->where('bom_no', 'like', '%' . $bomNo . '%');
@@ -78,12 +85,16 @@ class Bom extends Backend
             
             $params['creator_id'] = $this->auth->id ?? 0;
             $params['creator_name'] = $this->auth->username ?? '';
+            
+            // 填充默认值，避免数据库 NOT NULL 约束导致失败
+            $params['bom_name'] = $params['bom_name'] ?? '未命名BOM';
+            $params['approver_name'] = $params['approver_name'] ?? '';
 
             try {
                 $bom = BomModel::create($params);
                 return $this->success('添加成功', ['id' => $bom->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
 
@@ -124,7 +135,7 @@ class Bom extends Backend
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -176,7 +187,7 @@ class Bom extends Backend
             return $this->success('删除成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 
@@ -245,7 +256,7 @@ class Bom extends Backend
             $bomItem = BomItemModel::create($params);
             return $this->success('添加成功', ['id' => $bomItem->id]);
         } catch (\Exception $e) {
-            return $this->error('添加失败：' . $e->getMessage());
+            return $this->error('添加失败');
         }
     }
 
@@ -276,7 +287,7 @@ class Bom extends Backend
             $bomItem->save($params);
             return $this->success('更新成功');
         } catch (\Exception $e) {
-            return $this->error('更新失败：' . $e->getMessage());
+            return $this->error('更新失败');
         }
     }
 
@@ -304,7 +315,7 @@ class Bom extends Backend
             $bomItem->delete();
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 
@@ -345,7 +356,7 @@ class Bom extends Backend
 
             return $this->success($approve == 1 ? '审核通过' : '已退回');
         } catch (\Exception $e) {
-            return $this->error('操作失败：' . $e->getMessage());
+            return $this->error('操作失败');
         }
     }
 }

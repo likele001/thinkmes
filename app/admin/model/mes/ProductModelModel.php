@@ -13,6 +13,7 @@ class ProductModelModel extends Model
         'tenant_id'   => 'integer',
         'product_id'  => 'integer',
         'status'      => 'integer',
+        'stock'       => 'decimal',
         'create_time' => 'integer',
         'update_time' => 'integer',
     ];

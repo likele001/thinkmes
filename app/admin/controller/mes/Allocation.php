@@ -33,8 +33,15 @@ class Allocation extends Backend
         
         $tenantId = $this->getTenantId();
         $query = AllocationModel::with(['order', 'model.product', 'process'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
         
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -75,6 +82,10 @@ class Allocation extends Backend
             $params['create_time'] = time();
             $params['update_time'] = time();
             
+            // 填充默认值，避免数据库 NOT NULL 约束导致失败
+            $params['qr_content'] = $params['qr_content'] ?? '';
+            $params['qr_image'] = $params['qr_image'] ?? '';
+            
             Db::startTrans();
             try {
                 $allocation = AllocationModel::create($params);
@@ -86,7 +97,7 @@ class Allocation extends Backend
                 return $this->success('添加成功', ['id' => $allocation->id]);
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
         
@@ -136,7 +147,7 @@ class Allocation extends Backend
                 $allocation->save($params);
                 return $this->success('保存成功', ['id' => $allocation->id]);
             } catch (\Exception $e) {
-                return $this->error('保存失败：' . $e->getMessage());
+                return $this->error('保存失败');
             }
         }
         
@@ -207,7 +218,7 @@ class Allocation extends Backend
             return $this->success('删除成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 
@@ -223,7 +234,7 @@ class Allocation extends Backend
             $this->doGenerateQrcode($id, $tenantId);
             return $this->success('二维码生成成功');
         } catch (\Exception $e) {
-            return $this->error('二维码生成失败：' . $e->getMessage());
+            return $this->error('二维码生成失败');
         }
     }
 
@@ -374,7 +385,7 @@ class Allocation extends Backend
                 return $this->success("批量分配成功，共分配 {$successCount} 条任务");
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('批量分配失败：' . $e->getMessage());
+                return $this->error('批量分配失败');
             }
         }
         

@@ -20,8 +20,7 @@
     window.AdminLTEOptions.iframe = false;
     </script>
     {include file="common/meta" /}
-    <!-- 先加载 jQuery，确保页面内联脚本可以使用 $ -->
-    <script src="/assets/lib/jquery/jquery.min.js"></script>
+    <!-- 基础库统一在 common/script-iframe 中加载 -->
     <script>
     // 检测是否真的在 iframe 中
     // 如果不在 iframe 中但 URL 有 iframe=1 参数，说明是直接访问，应该跳转到完整页面
@@ -112,7 +111,7 @@
     </section>
     <section class="content">
         <div class="container-fluid">
-            {$__CONTENT__|raw}
+            {$__CONTENT__|default=''|raw}
         </div>
     </section>
     {include file="common/script-iframe" /}

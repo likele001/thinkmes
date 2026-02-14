@@ -29,8 +29,15 @@ class ProductModel extends Backend
         
         $tenantId = $this->getTenantId();
         $query = ProductModelModel::with('product')
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
         
         // 搜索条件
         $search = trim((string) $this->request->get('search'));
@@ -80,7 +87,7 @@ class ProductModel extends Backend
                 $model = ProductModelModel::create($params);
                 return $this->success('添加成功', ['id' => $model->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败：' . $e->getMessage());
+                return $this->error('添加失败');
             }
         }
         
@@ -114,7 +121,7 @@ class ProductModel extends Backend
                 $model->save($params);
                 return $this->success('保存成功', ['id' => $model->id]);
             } catch (\Exception $e) {
-                return $this->error('保存失败：' . $e->getMessage());
+                return $this->error('保存失败');
             }
         }
         
@@ -150,7 +157,7 @@ class ProductModel extends Backend
                 ->delete();
             return $this->success('删除成功');
         } catch (\Exception $e) {
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 }

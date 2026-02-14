@@ -145,31 +145,10 @@ class Register extends Backend
                 return $this->error('创建租户失败');
             }
 
-            // 获取套餐对应的MES功能，创建租户默认角色
-            $packageFeatures = TenantPackageFeatureModel::where('package_id', $packageId)
-                ->where('is_enabled', 1)
-                ->column('feature_code');
-
-            // 根据feature_code查找对应的auth_rule ID
-            if (!empty($packageFeatures)) {
-                $authRuleIds = Db::name('auth_rule')
-                    ->where('status', 1)
-                    ->whereIn('name', $packageFeatures)
-                    ->column('id');
-            } else {
-                $authRuleIds = [];
-            }
-
-            // 创建租户默认角色（包含套餐所有权限）
-            $role = RoleModel::create([
-                'name' => $tenant->name . '管理员',
-                'rules' => implode(',', $authRuleIds),
-                'status' => 1,
-                'create_time' => time(),
-                'update_time' => time(),
-            ]);
-            if (!$role) {
-                return $this->error('创建角色失败');
+            // 获取或创建套餐对应的永久默认角色
+            $roleId = $this->ensureDefaultRoleForPackage($packageId);
+            if (!$roleId) {
+                return $this->error('默认角色生成失败');
             }
 
             // 创建管理员并绑定 tenant_id
@@ -182,7 +161,7 @@ class Register extends Backend
                 'salt'         => '', // 登录时使用 password_verify，不需要 salt
                 'avatar'       => '/assets/img/avatar.png',
                 'tenant_id'    => $tenant->id, // 绑定租户
-                'role_ids'     => (string) $role->id, // 分配角色
+                'role_ids'     => (string) $roleId, // 分配套餐永久角色
                 'data_scope'   => 3, // 全部数据权限
                 'status'       => 1, // 启用状态
                 'create_time'   => time(),
@@ -221,6 +200,53 @@ class Register extends Backend
                 return $this->error('数据已存在，请更换后重试');
             }
             return $this->error('注册失败：' . $msg);
+        }
+    }
+    
+    protected function ensureDefaultRoleForPackage(int $packageId): int
+    {
+        if ($packageId <= 0) {
+            return 0;
+        }
+        try {
+            $pkg = TenantPackageModel::find($packageId);
+            if (!$pkg) {
+                return 0;
+            }
+            $features = Db::name('tenant_package_feature')
+                ->where('package_id', $packageId)
+                ->where('is_enabled', 1)
+                ->column('feature_code');
+            $authRuleIds = [];
+            if (!empty($features)) {
+                $authRuleIds = Db::name('auth_rule')
+                    ->where('status', 1)
+                    ->whereIn('name', $features)
+                    ->column('id');
+            }
+            $baseIds = Db::name('auth_rule')->where('status', 1)->whereIn('name', ['dashboard','admin/index','admin/index/index'])->column('id');
+            $authRuleIds = array_values(array_unique(array_merge($authRuleIds, $baseIds, [1])));
+            $roleName = '套餐:' . ($pkg['name'] ?? ('#' . $pkg['id'])) . '默认角色';
+            $exist = RoleModel::where('name', $roleName)->find();
+            $rulesStr = implode(',', array_map('strval', $authRuleIds));
+            if ($exist) {
+                $exist->rules = $rulesStr;
+                $exist->status = 1;
+                $exist->update_time = time();
+                $exist->save();
+                return (int) $exist->id;
+            } else {
+                $role = RoleModel::create([
+                    'name' => $roleName,
+                    'rules' => $rulesStr,
+                    'status' => 1,
+                    'create_time' => time(),
+                    'update_time' => time(),
+                ]);
+                return (int) ($role->id ?? 0);
+            }
+        } catch (\Throwable $e) {
+            return 0;
         }
     }
 

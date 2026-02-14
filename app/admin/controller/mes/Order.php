@@ -45,8 +45,15 @@ class Order extends Backend
 
         $tenantId = $this->getTenantId();
         $query = OrderModel::with(['orderModels.model.product', 'customer'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         if ($orderNo !== '') {
             $query->where('order_no', 'like', '%' . $orderNo . '%');
@@ -68,15 +75,32 @@ class Order extends Backend
     {
         if ($this->request->isPost()) {
             $params = $this->request->post('row/a');
-            $modelData = $this->request->post('models');
+            $modelData = $this->request->post('models/a');
 
-            if (empty($params) || empty($modelData)) {
+            if (empty($params)) {
                 return $this->error('参数不能为空');
             }
 
-            // 处理JSON格式的型号数据
-            if (is_string($modelData)) {
-                $modelData = json_decode($modelData, true);
+            // 如果 models 是字符串（JSON），尝试解码
+            $models = $this->request->post('models');
+            if (is_string($models)) {
+                $decoded = json_decode($models, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $modelData = $decoded;
+                }
+            }
+
+            if (empty($modelData)) {
+                \think\facade\Db::name('log')->insert([
+                    'tenant_id' => $this->getTenantId(),
+                    'admin_id' => $this->auth->id ?? 0,
+                    'type' => 'error',
+                    'content' => '订单添加失败：型号数据为空',
+                    'url' => $this->request->url(),
+                    'ip' => $this->request->ip(),
+                    'create_time' => time(),
+                ]);
+                return $this->error('型号数据不能为空');
             }
 
             $tenantId = $this->getTenantId();
@@ -99,22 +123,36 @@ class Order extends Backend
                 $params['delivery_time'] = strtotime($params['delivery_time']);
             }
 
+            // 确保必填字段有默认值
+            $params['customer_name'] = $params['customer_name'] ?? '';
+            $params['customer_phone'] = $params['customer_phone'] ?? '';
+            $params['order_name'] = $params['order_name'] ?? '未命名订单';
+
             Db::startTrans();
             try {
+                /** @var OrderModel $order */
                 $order = OrderModel::create($params);
-
-                // 保存订单型号
+                
                 $totalQuantity = 0;
                 foreach ($modelData as $modelItem) {
-                    if (isset($modelItem['model_id']) && isset($modelItem['quantity']) && $modelItem['quantity'] > 0) {
+                    $mid = (int) ($modelItem['model_id'] ?? 0);
+                    $qty = (int) ($modelItem['quantity'] ?? 0);
+                    if ($mid > 0) {
+                        if ($qty <= 0) {
+                            $qty = 1;
+                        }
                         OrderModelModel::create([
                             'tenant_id' => $tenantId,
                             'order_id' => $order->id,
-                            'model_id' => $modelItem['model_id'],
-                            'quantity' => $modelItem['quantity']
+                            'model_id' => $mid,
+                            'quantity' => $qty
                         ]);
-                        $totalQuantity += $modelItem['quantity'];
+                        $totalQuantity += $qty;
                     }
+                }
+
+                if ($totalQuantity == 0) {
+                    throw new \Exception('订单至少需要包含一个型号及有效数量');
                 }
 
                 // 更新订单总数量
@@ -130,6 +168,15 @@ class Order extends Backend
                 return $this->success('添加成功', ['id' => $order->id]);
             } catch (\Exception $e) {
                 Db::rollback();
+                \think\facade\Db::name('log')->insert([
+                    'tenant_id' => $this->getTenantId(),
+                    'admin_id' => $this->auth->id ?? 0,
+                    'type' => 'error',
+                    'content' => '订单添加失败：' . $e->getMessage(),
+                    'url' => $this->request->url(),
+                    'ip' => $this->request->ip(),
+                    'create_time' => time(),
+                ]);
                 return $this->error('添加失败：' . $e->getMessage());
             }
         }
@@ -167,10 +214,14 @@ class Order extends Backend
     {
         $ids = $this->request->param('ids');
         if (empty($ids)) {
+            $ids = $this->request->param('id');
+        }
+        if (empty($ids)) {
             return $this->error('参数错误');
         }
 
         $tenantId = $this->getTenantId();
+        /** @var OrderModel $row */
         $row = OrderModel::where('tenant_id', $tenantId)->find($ids);
         if (!$row) {
             return $this->error('订单不存在');
@@ -244,7 +295,7 @@ class Order extends Backend
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -322,7 +373,7 @@ class Order extends Backend
             return $this->success('删除成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('删除失败：' . $e->getMessage());
+            return $this->error('删除失败');
         }
     }
 
@@ -425,6 +476,7 @@ class Order extends Backend
             ->select();
 
         foreach ($orderMaterials as $om) {
+            /** @var OrderMaterialModel $om */
             if (!$om->material) {
                 continue;
             }
@@ -454,13 +506,13 @@ class Order extends Backend
                         'tenant_id' => $tenantId,
                         'request_no' => PurchaseRequestModel::generateRequestNo(),
                         'material_id' => $material->id,
-                        'supplier_id' => $om->supplier_id,
-                        'required_quantity' => $shortageQty,
-                        'estimated_price' => $om->estimated_price,
-                        'estimated_amount' => $shortageQty * $om->estimated_price,
                         'order_id' => $orderId,
-                        'order_material_id' => $om->id,
-                        'status' => 0, // 待审核
+                        'required_quantity' => $shortageQty,
+                        'estimated_price' => $material->current_price,
+                        'estimated_amount' => $shortageQty * $material->current_price,
+                        'supplier_id' => $material->default_supplier_id,
+                        'status' => 0,
+                        'remark' => '订单需求自动生成'
                     ]);
                 }
             } else {
@@ -478,25 +530,30 @@ class Order extends Backend
     {
         $ids = $this->request->param('ids');
         if (empty($ids)) {
+            $ids = $this->request->param('id');
+        }
+        if (empty($ids)) {
             return $this->error('参数错误');
         }
 
         $tenantId = $this->getTenantId();
+        /** @var OrderModel $order */
         $order = OrderModel::where('tenant_id', $tenantId)->find($ids);
         if (!$order) {
             return $this->error('订单不存在');
         }
 
+        $orderId = (int)$ids;
         // 重新计算物料需求
         OrderMaterialModel::where('tenant_id', $tenantId)
-            ->where('order_id', $ids)
+            ->where('order_id', $orderId)
             ->delete();
-        $this->calculateMaterialsWithCost($ids, $tenantId);
+        $this->calculateMaterialsWithCost($orderId, $tenantId);
 
         // 获取物料需求
         $orderMaterials = OrderMaterialModel::with(['material', 'supplier'])
             ->where('tenant_id', $tenantId)
-            ->where('order_id', $ids)
+            ->where('order_id', $orderId)
             ->select();
 
         // 统计总成本和缺料情况
@@ -504,7 +561,7 @@ class Order extends Backend
         $shortageCount = 0;
         foreach ($orderMaterials as $om) {
             $totalAmount += $om->estimated_amount;
-            if ($om->material && $om->required_quantity > $om->material->stock) {
+            if ($om->material && $om->required_quantity > ($om->material->stock ?? 0)) {
                 $shortageCount++;
             }
         }

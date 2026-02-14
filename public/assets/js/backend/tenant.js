@@ -28,6 +28,7 @@
                     { field: 'domain', title: '绑定域名' },
                     { field: 'package_name', title: '套餐' },
                     { field: 'expire_time_text', title: '到期' },
+                    { field: 'admin_names', title: '管理员' },
                     { field: 'status', title: '状态', formatter: statusFmt },
                     { field: 'id', title: '操作', formatter: operFmt }
                 ],

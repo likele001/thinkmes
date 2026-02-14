@@ -1,0 +1,119 @@
+<?php /*a:1:{s:60:"/www/wwwroot/thinkmes/app/admin/view/mes/material/index.html";i:1771057076;}*/ ?>
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>物料管理</em> 管理生产物料信息</div>
+    </div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
+            <a href="<?php echo htmlentities((string) $config['moduleurl']); ?>/mes/material/add" class="btn btn-success btn-add" title="添加"><i class="fas fa-plus"></i> 添加物料</a>
+            <a href="javascript:;" class="btn btn-success btn-edit btn-disabled disabled" title="编辑"><i class="fas fa-edit"></i> 编辑</a>
+            <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled" title="删除"><i class="fas fa-trash-alt"></i> 删除</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+
+<script>
+$(function() {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var table = $('#table');
+    
+    if (typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) {
+        return;
+    }
+    table.bootstrapTable({
+        url: base + '/mes/material/index',
+        pk: 'id',
+        sortName: 'id',
+        sortOrder: 'desc',
+        columns: [
+            {field: 'id', title: 'ID', width: 80, sortable: true},
+            {field: 'name', title: '物料名称', align: 'left'},
+            {field: 'code', title: '物料编码', align: 'left'},
+            {field: 'unit', title: '单位', width: 80},
+            {field: 'stock', title: '库存', width: 100, align: 'right', formatter: function(value) {
+                return parseFloat(value || 0).toFixed(2);
+            }},
+            {field: 'min_stock', title: '最低库存', width: 100, align: 'right', formatter: function(value) {
+                return parseFloat(value || 0).toFixed(2);
+            }},
+            {field: 'current_price', title: '当前价格', width: 100, align: 'right', formatter: function(value) {
+                return '¥' + parseFloat(value || 0).toFixed(2);
+            }},
+            {field: 'status', title: '状态', width: 100, formatter: function(value) {
+                return value == 'active' ? '<span class="badge badge-success">启用</span>' : '<span class="badge badge-danger">禁用</span>';
+            }},
+            {field: 'create_time', title: '创建时间', width: 180, formatter: function(value) {
+                return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
+            }},
+            {field: 'operate', title: '操作', width: 120, events: {
+                'click .btn-edit': function(e, value, row) {
+                    location.href = base + '/mes/material/edit?id=' + row.id;
+                },
+                'click .btn-del': function(e, value, row) {
+                    if (confirm('确定要删除吗？')) {
+                        $.post(base + '/mes/material/del', {ids: row.id}, function(r) {
+                            if (r.code == 1) {
+                                table.bootstrapTable('refresh');
+                                alert(r.msg || '删除成功');
+                            } else {
+                                alert(r.msg || '删除失败');
+                            }
+                        }, 'json');
+                    }
+                }
+            }, formatter: function(value, row) {
+                return '<a href="' + base + '/mes/material/edit?id=' + row.id + '" class="btn btn-xs btn-success btn-edit">编辑</a> ' +
+                       '<a href="javascript:;" class="btn btn-xs btn-danger btn-del">删除</a>';
+            }}
+        ]
+    });
+    
+    // 刷新
+    $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function() {
+        table.bootstrapTable('refresh');
+    });
+    
+    // 编辑按钮
+    $(document).off('click', '#toolbar .btn-edit').on('click', '#toolbar .btn-edit', function() {
+        var rows = table.bootstrapTable('getSelections');
+        if (rows.length != 1) {
+            alert('请选择一条记录');
+            return;
+        }
+        location.href = base + '/mes/material/edit?id=' + rows[0].id;
+    });
+    
+    // 删除按钮
+    $(document).off('click', '#toolbar .btn-del').on('click', '#toolbar .btn-del', function() {
+        var rows = table.bootstrapTable('getSelections');
+        if (rows.length == 0) {
+            alert('请选择要删除的记录');
+            return;
+        }
+        if (!confirm('确定要删除选中的 ' + rows.length + ' 条记录吗？')) {
+            return;
+        }
+        var ids = rows.map(function(r) { return r.id; });
+        $.post(base + '/mes/material/del', {ids: ids.join(',')}, function(r) {
+            if (r.code == 1) {
+                table.bootstrapTable('refresh');
+                alert(r.msg || '删除成功');
+            } else {
+                alert(r.msg || '删除失败');
+            }
+        }, 'json');
+    });
+    
+    // 表格行选择
+    table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
+        var rows = table.bootstrapTable('getSelections');
+        if (rows.length > 0) {
+            $('.btn-edit, .btn-del').removeClass('disabled btn-disabled');
+        } else {
+            $('.btn-edit, .btn-del').addClass('disabled btn-disabled');
+        }
+    });
+});
+</script>

@@ -13,12 +13,13 @@ class StockLogModel extends Model
     protected $name = 'mes_stock_log';
 
     protected $type = [
-        'tenant_id'       => 'integer',
+        'tenant_id'        => 'integer',
         'material_id'      => 'integer',
+        'product_model_id' => 'integer',
         'warehouse_id'     => 'integer',
         'before_quantity'  => 'float',
-        'change_quantity'   => 'float',
-        'after_quantity'    => 'float',
+        'change_quantity'  => 'float',
+        'after_quantity'   => 'float',
         'operator_id'      => 'integer',
         'create_time'      => 'integer',
     ];
@@ -29,14 +30,24 @@ class StockLogModel extends Model
     public function getBusinessTypeList(): array
     {
         return [
-            'purchase_in'  => '采购入库',
+            'purchase_in'    => '采购入库',
             'production_out' => '生产出库',
-            'check_in'      => '盘点入库',
-            'check_out'     => '盘点出库',
-            'return_in'     => '退货入库',
-            'adjust_in'     => '调整入库',
-            'adjust_out'    => '调整出库',
+            'check_in'       => '盘点入库',
+            'check_out'      => '盘点出库',
+            'return_in'      => '退货入库',
+            'adjust_in'      => '调整入库',
+            'adjust_out'     => '调整出库',
+            'shipment_out'   => '发货出库',
+            'production_in'  => '完工入库',
         ];
+    }
+
+    /**
+     * 关联产品型号
+     */
+    public function productModel()
+    {
+        return $this->belongsTo(ProductModelModel::class, 'product_model_id', 'id');
     }
 
     /**
@@ -65,8 +76,8 @@ class StockLogModel extends Model
             return;
         }
 
-        $beforeQty = $material->stock;
-        $afterQty = $material->stock + $changeQty;
+        $beforeQty = (float)$material->stock;
+        $afterQty = $beforeQty + $changeQty;
 
         // 更新物料库存
         $material->stock = $afterQty;
@@ -74,12 +85,47 @@ class StockLogModel extends Model
 
         // 记录流水
         self::create([
-            'tenant_id'       => $tenantId,
+            'tenant_id'        => $tenantId,
             'material_id'      => $materialId,
+            'product_model_id' => 0,
             'warehouse_id'     => 0,
             'before_quantity'  => $beforeQty,
-            'change_quantity'   => $changeQty,
-            'after_quantity'    => $afterQty,
+            'change_quantity'  => $changeQty,
+            'after_quantity'   => $afterQty,
+            'business_type'    => $businessType,
+            'business_id'      => $businessId,
+            'operator_id'      => $operatorId,
+            'remark'           => $remark,
+            'create_time'      => time(),
+        ]);
+    }
+
+    /**
+     * 记录产品库存变动
+     */
+    public static function logProduct(int $tenantId, int $productModelId, float $changeQty, string $businessType, int $businessId, int $operatorId, string $remark = ''): void
+    {
+        $productModel = ProductModelModel::where('tenant_id', $tenantId)->find($productModelId);
+        if (!$productModel) {
+            return;
+        }
+
+        $beforeQty = (float)$productModel->stock;
+        $afterQty = $beforeQty + $changeQty;
+
+        // 更新产品库存
+        $productModel->stock = $afterQty;
+        $productModel->save();
+
+        // 记录流水
+        self::create([
+            'tenant_id'        => $tenantId,
+            'material_id'      => 0,
+            'product_model_id' => $productModelId,
+            'warehouse_id'     => 0,
+            'before_quantity'  => $beforeQty,
+            'change_quantity'  => $changeQty,
+            'after_quantity'   => $afterQty,
             'business_type'    => $businessType,
             'business_id'      => $businessId,
             'operator_id'      => $operatorId,

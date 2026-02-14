@@ -6,6 +6,7 @@ namespace app\admin\controller\mes;
 use app\admin\controller\Backend;
 use app\admin\model\mes\PurchaseRequestModel;
 use app\admin\model\mes\PurchaseInModel;
+use app\admin\model\mes\StockLogModel;
 use app\admin\model\mes\SupplierModel;
 use app\admin\model\mes\MaterialModel;
 use think\facade\Db;
@@ -37,8 +38,15 @@ class Purchase extends Backend
 
         $tenantId = $this->getTenantId();
         $query = PurchaseRequestModel::with(['material', 'supplier', 'order'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -90,7 +98,7 @@ class Purchase extends Backend
 
             return $this->success('操作成功');
         } catch (\Exception $e) {
-            return $this->error('操作失败：' . $e->getMessage());
+            return $this->error('操作失败');
         }
     }
 
@@ -118,8 +126,15 @@ class Purchase extends Backend
 
         $tenantId = $this->getTenantId();
         $query = PurchaseInModel::with(['material', 'supplier', 'warehouse'])
-            ->where('tenant_id', $tenantId)
             ->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $status = $this->request->get('status');
         if ($status !== '' && $status !== null) {
@@ -164,7 +179,7 @@ class Purchase extends Backend
                     $material->save();
 
                     // 记录库存流水
-                    app\admin\model\mes\StockLogModel::log(
+                    StockLogModel::log(
                         $tenantId,
                         $params['material_id'],
                         $params['in_quantity'],
@@ -189,7 +204,7 @@ class Purchase extends Backend
                 return $this->success('入库成功', ['id' => $inbound->id]);
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('入库失败：' . $e->getMessage());
+                return $this->error('入库失败');
             }
         }
 
@@ -237,7 +252,7 @@ class Purchase extends Backend
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
-                return $this->error('编辑失败：' . $e->getMessage());
+                return $this->error('编辑失败');
             }
         }
 
@@ -280,7 +295,7 @@ class Purchase extends Backend
             return $this->success('确认成功');
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('确认失败：' . $e->getMessage());
+            return $this->error('确认失败');
         }
     }
 

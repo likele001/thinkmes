@@ -28,6 +28,7 @@
                     { field: 'id', title: 'ID', width: 60 },
                     { field: 'username', title: '账号' },
                     { field: 'nickname', title: '昵称' },
+                    { field: 'tenant_name', title: '租户' },
                     { field: 'pid', title: '父级ID', width: 70 },
                     { field: 'data_scope_text', title: '数据权限' },
                     { field: 'role_ids', title: '角色' },

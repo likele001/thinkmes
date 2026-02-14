@@ -9,11 +9,16 @@ use think\facade\Session;
 
 /**
  * RBAC 权限校验（对标 FastAdmin think-auth）
+ * @property int $id 管理员ID
+ * @property string $username 管理员账号
+ * @property string $nickname 管理员昵称
+ * @property string $role_ids 角色ID列表
  */
 class Auth
 {
     protected string $cachePrefix = 'auth_rules:';
     protected int $cacheTtl = 3600;
+    protected array $adminData = [];
 
     public function __construct()
     {
@@ -22,6 +27,12 @@ class Auth
             $this->cachePrefix = $config['cache_prefix'] ?? $this->cachePrefix;
             $this->cacheTtl = (int) ($config['cache_ttl'] ?? $this->cacheTtl);
         }
+        $this->adminData = Session::get('admin_info') ?: [];
+    }
+
+    public function __get($name)
+    {
+        return $this->adminData[$name] ?? null;
     }
 
     /**
@@ -61,7 +72,10 @@ class Auth
         $cacheKey = $this->cachePrefix . $adminId;
         $rules = Cache::get($cacheKey);
         if ($rules !== null && is_array($rules)) {
-            return $rules;
+            if (!empty($rules)) {
+                return $rules;
+            }
+            // 缓存为空数组时，重新评估（避免早期空结果阻挡套餐回退生效）
         }
         $admin = Db::name('admin')->where('id', $adminId)->where('status', 1)->find();
         if (!$admin) {
@@ -69,6 +83,31 @@ class Auth
         }
         $roleIds = array_filter(array_map('intval', explode(',', (string) ($admin['role_ids'] ?? ''))));
         if (empty($roleIds)) {
+            // 回退：租户管理员无角色时，根据套餐功能授予菜单权限
+            try {
+                $tenantId = (int) ($admin['tenant_id'] ?? 0);
+                if ($tenantId > 0) {
+                    $tenant = Db::name('tenant')->where('id', $tenantId)->find();
+                    if ($tenant && isset($tenant['package_id'])) {
+                        $featureCodes = Db::name('tenant_package_feature')
+                            ->where('package_id', (int) $tenant['package_id'])
+                            ->where('is_enabled', 1)
+                            ->column('feature_code');
+                        if (!empty($featureCodes)) {
+                            $names = Db::name('auth_rule')
+                                ->where('status', 1)
+                                ->whereIn('name', $featureCodes)
+                                ->column('name');
+                            $base = ['dashboard', 'admin/index', 'admin/index/index'];
+                            $names = array_values(array_unique(array_merge($base, array_filter(array_map('strval', $names)))));
+                            Cache::set($cacheKey, $names, $this->cacheTtl);
+                            return $names;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore fallback errors
+            }
             Cache::set($cacheKey, [], $this->cacheTtl);
             return [];
         }
@@ -85,6 +124,31 @@ class Auth
         }
         $ruleIds = array_unique($ruleIds);
         if (empty($ruleIds)) {
+            // 角色存在但未配置任何规则，回退到套餐功能
+            try {
+                $tenantId = (int) ($admin['tenant_id'] ?? 0);
+                if ($tenantId > 0) {
+                    $tenant = Db::name('tenant')->where('id', $tenantId)->find();
+                    if ($tenant && isset($tenant['package_id'])) {
+                        $featureCodes = Db::name('tenant_package_feature')
+                            ->where('package_id', (int) $tenant['package_id'])
+                            ->where('is_enabled', 1)
+                            ->column('feature_code');
+                        if (!empty($featureCodes)) {
+                            $names = Db::name('auth_rule')
+                                ->where('status', 1)
+                                ->whereIn('name', $featureCodes)
+                                ->column('name');
+                            $base = ['dashboard', 'admin/index', 'admin/index/index'];
+                            $names = array_values(array_unique(array_merge($base, array_filter(array_map('strval', $names)))));
+                            Cache::set($cacheKey, $names, $this->cacheTtl);
+                            return $names;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
             Cache::set($cacheKey, [], $this->cacheTtl);
             return [];
         }

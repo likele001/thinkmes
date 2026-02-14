@@ -32,15 +32,23 @@
     </div>
 </div>
 <script>
-$(function () {
+document.addEventListener('DOMContentLoaded', function () {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    $('#form-add').attr('action', base + '/tenant_package/add');
-    $('#form-add').on('submit', function (e) {
+    var form = document.getElementById('form-add');
+    form.setAttribute('action', base + '/tenant_package/add');
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
-        $.post($(this).attr('action'), $(this).serialize(), function (r) {
-            alert(r.msg);
+        var action = form.getAttribute('action');
+        var fd = new FormData(form);
+        fetch(action, {
+            method: 'POST',
+            body: fd,
+        }).then(function (res) { return res.json(); }).then(function (r) {
+            alert(r.msg || (r.code === 1 ? '提交成功' : '提交失败'));
             if (r.code === 1) location.href = base + '/tenant_package/index';
-        }, 'json');
+        }).catch(function () {
+            alert('请求失败，请检查网络连接');
+        });
     });
 });
 </script>

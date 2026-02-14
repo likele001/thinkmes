@@ -15,6 +15,14 @@ class CheckAuth
         'admin/index/logout',
         'admin/index/captcha',
         'admin/index/error',  // 无权限提示页，避免二次拦截
+        'admin/register/index',
+        'admin/register/save',
+    ];
+    protected array $loginOnlyList = [
+        'admin/profile/index',
+        'admin/profile/updateprofile',
+        'profile/index',
+        'profile/updateprofile',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -37,8 +45,8 @@ class CheckAuth
             $route = $path;
         }
 
-        // 处理 admin/index 路径，自动重定向到 admin/index/index
-        if ($route === 'admin/index') {
+        // 处理 admin 根路径，自动重定向到 admin/index/index
+        if ($route === 'admin') {
             return redirect((string) url('/admin/index/index'));
         }
 
@@ -64,6 +72,9 @@ class CheckAuth
         $adminId = (int) $admin['id'];
         $superId = (int) (config('auth.super_admin_id') ?? 1);
         if ($adminId === $superId) {
+            return $next($request);
+        }
+        if (in_array($route, $this->loginOnlyList, true)) {
             return $next($request);
         }
 

@@ -302,6 +302,25 @@ class Index extends Backend
         }
         $adminId = (int) $admin['id'];
 
+        // 若租户管理员未分配任何角色，按套餐生成并分配默认角色
+        try {
+            $tenantIdCur = (int) ($admin['tenant_id'] ?? 0);
+            $roleIdsStr = (string) ($admin['role_ids'] ?? '');
+            if ($tenantIdCur > 0 && $roleIdsStr === '') {
+                $pkgId = (int) Db::name('tenant')->where('id', $tenantIdCur)->value('package_id');
+                $roleId = $this->ensureDefaultRoleForPackage($pkgId);
+                if ($roleId > 0) {
+                    Db::name('admin')->where('id', $adminId)->update([
+                        'role_ids' => (string) $roleId,
+                        'update_time' => time(),
+                    ]);
+                    $admin['role_ids'] = (string) $roleId;
+                    Session::set('admin_info', $admin);
+                    (new \app\common\lib\Auth())->clearCache($adminId);
+                }
+            }
+        } catch (\Throwable $e) {}
+
         $auth = new Auth();
         $userRule = $auth->getRuleIds($adminId);
         
@@ -332,6 +351,49 @@ class Index extends Backend
             $v['menutabs'] = 'addtabs="' . ($v['id'] ?? '') . '"';
         }
         
+        // 平台租户（tenant_id=0）补充必要菜单：租户套餐
+        // 某些环境未配置权限规则时，确保平台管理项仍可见
+        if ($this->getTenantId() === 0) {
+            $present = array_map(function($it){ return strtolower($it['name'] ?? ''); }, $ruleList);
+            $need = [
+                ['id' => 'virt_tenant_package', 'name' => 'tenant_package/index', 'title' => '套餐管理', 'icon' => 'fas fa-cubes', 'pid' => 0],
+                ['id' => 'virt_tenant_audit',   'name' => 'tenant_audit/index',   'title' => '租户审核', 'icon' => 'fas fa-user-check', 'pid' => 0],
+            ];
+            foreach ($need as $it) {
+                if (!in_array(strtolower($it['name']), $present, true)) {
+                    $ruleList[] = [
+                        'id'       => $it['id'],
+                        'name'     => $it['name'],
+                        'title'    => $it['title'],
+                        'icon'     => ($it['icon'] ?? '') . ' fa-fw',
+                        'pid'      => (int) ($it['pid'] ?? 0),
+                        'url'      => '/admin/' . $it['name'],
+                        'menuclass'=> '',
+                        'menutabs' => 'addtabs="' . $it['id'] . '"',
+                    ];
+                }
+            }
+        }
+        
+        $presentAll = array_map(function($it){ return strtolower($it['name'] ?? ''); }, $ruleList);
+        $needCommon = [
+            ['id' => 'virt_profile_center', 'name' => 'profile/index', 'title' => '个人中心', 'icon' => 'fas fa-user-cog', 'pid' => 0],
+        ];
+        foreach ($needCommon as $it) {
+            if (!in_array(strtolower($it['name']), $presentAll, true)) {
+                $ruleList[] = [
+                    'id'       => $it['id'],
+                    'name'     => $it['name'],
+                    'title'    => $it['title'],
+                    'icon'     => ($it['icon'] ?? '') . ' fa-fw',
+                    'pid'      => (int) ($it['pid'] ?? 0),
+                    'url'      => '/admin/' . $it['name'],
+                    'menuclass'=> '',
+                    'menutabs' => 'addtabs="' . $it['id'] . '"',
+                ];
+            }
+        }
+        
         // 处理父菜单
         $pidArr = array_unique(array_filter(array_column($ruleList, 'pid')));
         $lastArr = array_unique(array_filter(array_column($ruleList, 'pid')));
@@ -356,7 +418,8 @@ class Index extends Backend
         $tree = [];
         foreach ($list as $item) {
             if ((int) ($item['pid'] ?? 0) === $pid) {
-                $children = $this->buildMenuTree($list, (int) ($item['id'] ?? 0));
+                $curId = $item['id'] ?? 0;
+                $children = is_numeric($curId) ? $this->buildMenuTree($list, (int) $curId) : [];
                 $item['children'] = $children;
                 $item['url'] = $children ? 'javascript:;' : $item['url'];
                 $tree[] = $item;
@@ -365,6 +428,54 @@ class Index extends Backend
         return $tree;
     }
 
+    protected function ensureDefaultRoleForPackage(int $packageId): int
+    {
+        if ($packageId <= 0) {
+            return 0;
+        }
+        try {
+            $pkg = Db::name('tenant_package')->where('id', $packageId)->find();
+            if (!$pkg) {
+                return 0;
+            }
+            $features = Db::name('tenant_package_feature')
+                ->where('package_id', $packageId)
+                ->where('is_enabled', 1)
+                ->column('feature_code');
+            $authRuleIds = [];
+            if (!empty($features)) {
+                foreach ($features as $code) {
+                    $idsExact = Db::name('auth_rule')->where('status', 1)->where('name', $code)->column('id');
+                    $idsChildren = Db::name('auth_rule')->where('status', 1)->where('name', 'like', $code . '/%')->column('id');
+                    $authRuleIds = array_merge($authRuleIds, $idsExact, $idsChildren);
+                }
+            }
+            // 保底加入控制台菜单与首页权限
+            $baseIds = Db::name('auth_rule')->where('status', 1)->whereIn('name', ['dashboard','admin/index','admin/index/index'])->column('id');
+            $authRuleIds = array_values(array_unique(array_merge($authRuleIds, $baseIds, [1])));
+            $roleName = '套餐:' . ($pkg['name'] ?? ('#' . $pkg['id'])) . '默认角色';
+            $exist = \app\admin\model\RoleModel::where('name', $roleName)->find();
+            $rulesStr = implode(',', array_map('strval', $authRuleIds));
+            if ($exist) {
+                $exist->rules = $rulesStr;
+                $exist->status = 1;
+                $exist->update_time = time();
+                $exist->save();
+                return (int) $exist->id;
+            } else {
+                $role = \app\admin\model\RoleModel::create([
+                    'name' => $roleName,
+                    'rules' => $rulesStr,
+                    'status' => 1,
+                    'create_time' => time(),
+                    'update_time' => time(),
+                ]);
+                return (int) ($role->id ?? 0);
+            }
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
 
     public function clearCache(): Response
     {

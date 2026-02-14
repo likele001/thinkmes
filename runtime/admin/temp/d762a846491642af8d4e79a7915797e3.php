@@ -1,0 +1,19 @@
+<?php /*a:1:{s:54:"/www/wwwroot/thinkmes/app/admin/view/config/index.html";i:1769948282;}*/ ?>
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>系统配置</em> 管理站点与系统参数（基本/上传/安全/多语言/缓存）</div>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-3" id="config-tabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" href="javascript:;" data-group="base">基本</a></li>
+            <li class="nav-item"><a class="nav-link" href="javascript:;" data-group="upload">上传</a></li>
+            <li class="nav-item"><a class="nav-link" href="javascript:;" data-group="safe">安全</a></li>
+            <li class="nav-item"><a class="nav-link" href="javascript:;" data-group="lang">多语言</a></li>
+            <li class="nav-item"><a class="nav-link" href="javascript:;" data-group="cache">缓存</a></li>
+        </ul>
+        <div id="config-form"></div>
+        <div class="mt-3">
+            <button type="button" class="btn btn-primary" id="config-save"><i class="fas fa-save"></i> 保存</button>
+        </div>
+    </div>
+</div>

@@ -1,6 +1,6 @@
+<!-- 基础库 -->
 <script src="/assets/lib/jquery/jquery.min.js"></script>
 <script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/lib/bootstrap-table/js/bootstrap-table.min.js"></script>
 <script src="/assets/lib/fontawesome/js/all.min.js"></script>
 <!-- 在 AdminLTE 加载前设置 localStorage 配置，禁用 IFrame 插件 -->
 <script>
@@ -25,6 +25,7 @@ window.AdminLTEOptions.autoIframeMode = false;
 window.AdminLTEOptions.iframe = false;
 </script>
 <script src="/assets/lib/adminlte/js/adminlte.min.js"></script>
+<script src="/assets/lib/bootstrap-table/js/bootstrap-table.min.js"></script>
 <script>
 // 加载后立即禁用 IFrame 插件
 if (typeof AdminLTE !== 'undefined' && AdminLTE.IFrame) {
@@ -36,7 +37,7 @@ $(document).off('init.lte.iframe');
 <script src="/assets/js/backend-loader.js"></script>
 <style>
 /* FastAdmin 标准：标签内容区固定高度，iframe 填满 */
-.tab-addtabs { position: relative; min-height: 500px; height: calc(100vh - 180px); }
+.tab-addtabs { position: relative; min-height: 500px; height: calc(100vh - 240px); }
 .tab-addtabs .tab-pane { display: none; height: 100%; }
 .tab-addtabs .tab-pane.active { display: block; height: 100%; }
 .tab-addtabs .tab-pane iframe { border: none; width: 100%; height: 100%; min-height: 500px; display: block; }
@@ -95,7 +96,8 @@ $(document).off('init.lte.iframe');
     if (typeof jQuery === 'undefined') return;
     var $ = jQuery;
     $(function() {
-        var iframeHeight = Math.max(500, $(window).height() - 180);
+        var footerH = $('.main-footer').outerHeight(true) || 60;
+        var iframeHeight = Math.max(500, $(window).height() - (180 + footerH));
         $(document).addtabs({
             nav: '#nav-addtabs',
             tab: '#tab-addtabs-content',
@@ -105,7 +107,7 @@ $(document).off('init.lte.iframe');
             monitor: 'body'
         });
         $(window).on('resize', function() {
-            var h = Math.max(500, $(window).height() - 180);
+            var h = Math.max(500, $(window).height() - (180 + ($('.main-footer').outerHeight(true) || 60)));
             $('.tab-addtabs .tab-pane iframe').attr('height', h).css('height', h + 'px');
         });
         $(document).on('click', '[data-addtabs-close="all"]', function(e) {

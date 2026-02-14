@@ -37,14 +37,20 @@ class Bi extends Backend
         $todayEnd = strtotime($today . ' 23:59:59');
         
         // 今日报工统计
-        $todayReports = ReportModel::where('tenant_id', $tenantId)
+        $todayReports = ReportModel::where(function($q) use ($tenantId) {
+                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
+                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+            })
             ->where('status', 1)
             ->where('create_time', 'between', [$todayStart, $todayEnd])
             ->field('SUM(quantity) as total_quantity, SUM(wage) as total_wage, COUNT(*) as report_count')
             ->find();
         
         // 订单统计
-        $orderStats = OrderModel::where('tenant_id', $tenantId)
+        $orderStats = OrderModel::where(function($q) use ($tenantId) {
+                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
+                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+            })
             ->field('status, COUNT(*) as count')
             ->group('status')
             ->select();
@@ -55,7 +61,10 @@ class Bi extends Backend
         }
         
         // 生产计划统计
-        $planStats = ProductionPlanModel::where('tenant_id', $tenantId)
+        $planStats = ProductionPlanModel::where(function($q) use ($tenantId) {
+                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
+                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+            })
             ->field('status, COUNT(*) as count')
             ->group('status')
             ->select();
@@ -66,13 +75,19 @@ class Bi extends Backend
         }
         
         // 进行中的分配
-        $activeAllocations = AllocationModel::where('tenant_id', $tenantId)
+        $activeAllocations = AllocationModel::where(function($q) use ($tenantId) {
+                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
+                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+            })
             ->where('status', 1)
             ->whereColumn('completed_quantity', '<', 'quantity')
             ->count();
         
         // 待审核的报工
-        $pendingReports = ReportModel::where('tenant_id', $tenantId)
+        $pendingReports = ReportModel::where(function($q) use ($tenantId) {
+                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
+                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+            })
             ->where('status', 0)
             ->count();
         
@@ -83,7 +98,10 @@ class Bi extends Backend
             $dateStart = strtotime($date . ' 00:00:00');
             $dateEnd = strtotime($date . ' 23:59:59');
             
-            $dayReport = ReportModel::where('tenant_id', $tenantId)
+            $dayReport = ReportModel::where(function($q) use ($tenantId) {
+                    if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
+                    else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+                })
                 ->where('status', 1)
                 ->where('create_time', 'between', [$dateStart, $dateEnd])
                 ->field('SUM(quantity) as quantity, SUM(wage) as wage, COUNT(*) as count')
@@ -134,7 +152,6 @@ class Bi extends Backend
         // 按日期统计生产效率
         $query = ReportModel::alias('r')
             ->join('mes_allocation a', 'r.allocation_id = a.id')
-            ->where('r.tenant_id', $tenantId)
             ->where('r.status', 1)
             ->where('r.create_time', 'between', [$startTime, $endTime])
             ->field('DATE(FROM_UNIXTIME(r.create_time)) as stat_date,
@@ -145,6 +162,14 @@ class Bi extends Backend
                      COUNT(*) as report_count')
             ->group('stat_date')
             ->order('stat_date', 'desc');
+        if ($tenantId > 0) {
+            $query->where('r.tenant_id', $tenantId);
+        } else {
+            $tp = (int) $this->request->get('tenant_id', 0);
+            if ($tp > 0) {
+                $query->where('r.tenant_id', $tp);
+            }
+        }
         
         $total = $query->count();
         $list = $query->select()->toArray();
@@ -171,7 +196,10 @@ class Bi extends Backend
         $endTime = strtotime($endDate . ' 23:59:59');
         
         // 按日期统计质量数据
-        $query = ReportModel::where('tenant_id', $tenantId)
+        $query = ReportModel::where(function($q) use ($tenantId) {
+                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
+                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+            })
             ->where('status', 1)
             ->where('create_time', 'between', [$startTime, $endTime])
             ->field('DATE(FROM_UNIXTIME(create_time)) as stat_date,
@@ -215,13 +243,20 @@ class Bi extends Backend
         // 按订单统计成本
         $query = OrderModel::alias('o')
             ->leftJoin('mes_order_material om', 'o.id = om.order_id')
-            ->where('o.tenant_id', $tenantId)
             ->where('o.create_time', 'between', [$startTime, $endTime])
             ->field('o.id, o.order_no, o.order_name,
                      SUM(om.estimated_amount) as material_cost,
                      (SELECT SUM(wage) FROM mes_wage WHERE order_id = o.id) as labor_cost')
             ->group('o.id')
             ->order('o.id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('o.tenant_id', $tenantId);
+        } else {
+            $tp = (int) $this->request->get('tenant_id', 0);
+            if ($tp > 0) {
+                $query->where('o.tenant_id', $tp);
+            }
+        }
         
         $total = $query->count();
         $list = $query->select()->toArray();
