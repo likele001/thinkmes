@@ -1,0 +1,56 @@
+<div class="card">
+  <div class="card-header">个人资料</div>
+  <div class="card-body">
+    <form id="form-profile" class="form-horizontal" style="max-width:640px;">
+      <div class="form-group">
+        <label class="control-label">用户名</label>
+        <input type="text" class="form-control" id="username" disabled>
+      </div>
+      <div class="form-group">
+        <label class="control-label">昵称</label>
+        <input type="text" class="form-control" name="nickname" id="nickname">
+      </div>
+      <div class="form-group">
+        <label class="control-label">个人介绍</label>
+        <textarea class="form-control" name="introduction" id="introduction" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+$(function(){
+  var tk=localStorage.getItem('token')||'';
+  if(!tk){location.href='/user/login';return;}
+  $.ajax({
+    url:'/api/user/profile',
+    headers:{'Authorization':'Bearer '+tk},
+    success:function(r){
+      if(r.code===1){
+        var u=r.data||{};
+        $('#username').val(u.username||'');
+        $('#nickname').val(u.nickname||'');
+        $('#introduction').val(u.introduction||'');
+      }else{
+        location.href='/user/login';
+      }
+    }
+  });
+  $('#form-profile').on('submit', function(e){
+    e.preventDefault();
+    var data=$(this).serialize();
+    $.ajax({
+      url:'/api/user/updateProfile',
+      type:'POST',
+      headers:{'Authorization':'Bearer '+tk},
+      data:data,
+      success:function(r){
+        alert(r.msg|| (r.code===1?'保存成功':'保存失败'));
+        if(r.code===1){location.href='/user/index';}
+      }
+    });
+  });
+});
+</script>

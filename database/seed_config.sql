@@ -10,5 +10,6 @@ INSERT INTO `fa_config` (`name`, `title`, `value`, `group`, `sort`) VALUES
 ('default_lang', '默认语言', 'zh-cn', 'lang', 0),
 ('cache_driver', '缓存驱动', 'file', 'cache', 0),
 ('upload_max_size', '上传文件大小限制（字节）', '10485760', 'upload', 0),
-('upload_storage', '上传存储方式', 'local', 'upload', 1)
+('upload_storage', '上传存储方式', 'local', 'upload', 1),
+('front_captcha_mode', '前端验证码方式 (Captcha Mode)', 'image', 'safe', 2)
 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `title` = VALUES(`title`);

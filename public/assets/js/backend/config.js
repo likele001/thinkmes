@@ -29,21 +29,53 @@
                 $form.empty().append('<p class="text-muted">加载中...</p>');
                 $.get(base + '/config/index', { group: group }, function (res) {
                     $form.empty();
-                    if (res.code !== 1 || !res.data || !res.data.length) {
+                    var rows = (res.code === 1 && res.data && res.data.length) ? res.data : [];
+                    if (group === 'safe') {
+                        var hasFrontCaptcha = rows.some(function (r) { return r.name === 'front_captcha_mode'; });
+                        if (!hasFrontCaptcha) {
+                            rows.push({
+                                name: 'front_captcha_mode',
+                                title: '前端验证码方式 (Captcha Mode)',
+                                value: 'image',
+                                group: 'safe'
+                            });
+                        }
+                    }
+                    if (!rows.length) {
                         $form.append('<p class="text-muted">暂无配置项，可执行 database/seed_config.sql 初始化。</p>');
                         return;
                     }
-                    res.data.forEach(function (row) {
+                    rows.forEach(function (row) {
                         var name = row.name || '';
-                        var title = row.title || name; // 使用 title，如果没有则回退到 name
+                        var title = row.title || name;
                         var value = (row.value != null && row.value !== undefined) ? String(row.value) : '';
                         var id = 'config_' + name.replace(/[^a-zA-Z0-9_]/g, '_');
-                        $form.append(
-                            '<div class="form-group row mb-2">' +
-                            '<label class="col-sm-2 col-form-label" for="' + id + '">' + title + '</label>' +
-                            '<div class="col-sm-6"><input type="text" class="form-control" id="' + id + '" name="' + name + '" value="' + value.replace(/"/g, '&quot;') + '" data-group="' + (row.group || group) + '"></div>' +
-                            '</div>'
-                        );
+                        if (name === 'front_captcha_mode') {
+                            var options = [
+                                { value: 'image', text: '数字图形验证码 / Image digits' },
+                                { value: 'slider', text: '滑动解锁验证码 / Slider' },
+                                { value: 'off', text: '关闭验证码 / Off' }
+                            ];
+                            var optsHtml = options.map(function (opt) {
+                                var selected = (value === opt.value) ? ' selected' : '';
+                                return '<option value="' + opt.value + '"' + selected + '>' + opt.text + '</option>';
+                            }).join('');
+                            $form.append(
+                                '<div class="form-group row mb-2">' +
+                                '<label class="col-sm-2 col-form-label" for="' + id + '">' + title + '</label>' +
+                                '<div class="col-sm-6"><select class="form-control" id="' + id + '" name="' + name + '" data-group="' + (row.group || group) + '">' +
+                                optsHtml +
+                                '</select></div>' +
+                                '</div>'
+                            );
+                        } else {
+                            $form.append(
+                                '<div class="form-group row mb-2">' +
+                                '<label class="col-sm-2 col-form-label" for="' + id + '">' + title + '</label>' +
+                                '<div class="col-sm-6"><input type="text" class="form-control" id="' + id + '" name="' + name + '" value="' + value.replace(/"/g, '&quot;') + '" data-group="' + (row.group || group) + '"></div>' +
+                                '</div>'
+                            );
+                        }
                     });
                     $form.append('<input type="hidden" name="group" value="' + group + '">');
                 }, 'json');
@@ -60,7 +92,7 @@
             $btnSave.on('click', function () {
                 var group = $form.find('input[name="group"]').val() || 'base';
                 var list = [];
-                $form.find('input.form-control').each(function () {
+                $form.find('input.form-control,select.form-control').each(function () {
                     var $el = $(this);
                     if ($el.attr('name') && $el.attr('name') !== 'group') {
                         list.push({ name: $el.attr('name'), value: $el.val(), group: $el.data('group') || group });

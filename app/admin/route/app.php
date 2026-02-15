@@ -34,6 +34,10 @@ Route::post('tenant/add', 'Tenant/addPost');
 Route::post('tenant/edit', 'Tenant/editPost');
 Route::post('tenant/del', 'Tenant/del');
 
+// 租户小程序配置（租户管理员在后台配置自己的小程序）
+Route::get('tenant/miniapp', 'TenantMiniapp/index');
+Route::post('tenant/miniapp', 'TenantMiniapp/index');
+
 // 租户套餐管理（仅平台超管）
 Route::get('tenant_package/index', 'TenantPackage/index');
 Route::get('tenant_package/add', 'TenantPackage/add');

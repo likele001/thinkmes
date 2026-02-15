@@ -5,6 +5,7 @@ namespace app\index\controller;
 
 use think\facade\View;
 use think\Response;
+use think\facade\Request;
 
 /**
  * 前端 C 端用户：登录、注册、会员中心、个人资料、修改密码、找回密码
@@ -22,8 +23,12 @@ class User
     /**
      * 会员中心首页（需前端根据 token 判断是否已登录，未登录跳转登录页）
      */
-    public function index(): string
+    public function index(): string|Response
     {
+        $token = (string) (Request::cookie('user_token') ?? '');
+        if ($token === '') {
+            return redirect((string) url('user/login'));
+        }
         View::assign('title', '会员中心');
         return $this->fetchWithLayout('user/index');
     }
@@ -34,23 +39,26 @@ class User
     public function login(): string
     {
         View::assign('title', '用户登录');
-        return View::fetch('user/login');
+        return $this->fetchWithLayout('user/login');
     }
 
     /**
-     * 注册页
+     * 注册页：统一跳转到登录页并切换到注册 Tab
      */
-    public function register(): string
+    public function register(): string|Response
     {
-        View::assign('title', '用户注册');
-        return View::fetch('user/register');
+        return redirect((string) url('user/login') . '?tab=register');
     }
 
     /**
      * 个人资料
      */
-    public function profile(): string
+    public function profile(): string|Response
     {
+        $token = (string) (Request::cookie('user_token') ?? '');
+        if ($token === '') {
+            return redirect((string) url('user/login'));
+        }
         View::assign('title', '个人资料');
         return $this->fetchWithLayout('user/profile');
     }
@@ -58,8 +66,12 @@ class User
     /**
      * 修改密码
      */
-    public function changepwd(): string
+    public function changepwd(): string|Response
     {
+        $token = (string) (Request::cookie('user_token') ?? '');
+        if ($token === '') {
+            return redirect((string) url('user/login'));
+        }
         View::assign('title', '修改密码');
         return $this->fetchWithLayout('user/changepwd');
     }
@@ -70,7 +82,7 @@ class User
     public function forgot(): string
     {
         View::assign('title', '找回密码');
-        return View::fetch('user/forgot');
+        return $this->fetchWithLayout('user/forgot');
     }
 
     /**
@@ -79,7 +91,7 @@ class User
     public function resetpwd(): string
     {
         View::assign('title', '重置密码');
-        return View::fetch('user/resetpwd');
+        return $this->fetchWithLayout('user/resetpwd');
     }
 
     /**

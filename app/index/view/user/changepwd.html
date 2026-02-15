@@ -1,48 +1,32 @@
-<div class="card">
-    <div class="card-header"><h3 class="card-title">修改密码</h3></div>
-    <div class="card-body">
-        <form id="changepwd-form">
-            <div class="form-group row">
-                <label class="col-sm-2 col-form-label">原密码</label>
-                <div class="col-sm-6"><input type="password" name="old_password" class="form-control" placeholder="原密码" required></div>
-            </div>
-            <div class="form-group row">
-                <label class="col-sm-2 col-form-label">新密码</label>
-                <div class="col-sm-6"><input type="password" name="new_password" class="form-control" placeholder="新密码（6-32位）" required></div>
-            </div>
-            <div class="form-group row">
-                <label class="col-sm-2 col-form-label">确认新密码</label>
-                <div class="col-sm-6"><input type="password" name="new_password2" class="form-control" placeholder="再输入一次" required></div>
-            </div>
-            <div class="form-group row">
-                <div class="col-sm-6 offset-sm-2">
-                    <button type="submit" class="btn btn-primary">修改</button>
-                </div>
-            </div>
-        </form>
-    </div>
+<div class="card" style="max-width:520px;margin:20px auto;">
+  <div class="card-header">修改密码</div>
+  <div class="card-body">
+    <form id="form-changepwd">
+      <div class="form-group">
+        <label>新密码</label>
+        <input type="password" class="form-control" name="newpassword" placeholder="新密码">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">保存</button>
+    </form>
+  </div>
 </div>
 <script>
 $(function(){
-    if (!window.Frontend || !Frontend.requireLogin()) return;
-    $('#changepwd-form').on('submit', function(e){
-        e.preventDefault();
-        var $f = $(this), $btn = $f.find('button[type=submit]');
-        var np = $f.find('[name=new_password]').val(), np2 = $f.find('[name=new_password2]').val();
-        if (np !== np2) { alert('两次输入的新密码不一致'); return; }
-        if (np.length < 6 || np.length > 32) { alert('新密码长度为 6-32 位'); return; }
-        $btn.prop('disabled', true);
-        var data = { old_password: $f.find('[name=old_password]').val(), new_password: np };
-        Frontend.api('/user/changePassword', { method: 'POST', data: data }).then(function(res){
-            if (res.code === 1) {
-                alert('密码已修改，请重新登录');
-                Frontend.clearAuth();
-                window.location.href = '/index/user/login';
-            } else {
-                alert(res.msg || '修改失败');
-                $btn.prop('disabled', false);
-            }
-        }).catch(function(){ $btn.prop('disabled', false); });
+  var tk=localStorage.getItem('token')||'';
+  if(!tk){location.href='/user/login';return;}
+  $('#form-changepwd').on('submit', function(e){
+    e.preventDefault();
+    var data=$(this).serialize();
+    $.ajax({
+      url:'/api/user/changePassword',
+      type:'POST',
+      headers:{'Authorization':'Bearer '+tk},
+      data:data,
+      success:function(r){
+        alert(r.msg|| (r.code===1?'修改成功':'修改失败'));
+        if(r.code===1){location.href='/user/index';}
+      }
     });
+  });
 });
 </script>

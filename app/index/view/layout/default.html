@@ -1,107 +1,39 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    {include file="common/meta" /}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{$title|default='会员中心'} - 报工系统</title>
+  <script src="/assets/lib/jquery/jquery.min.js"></script>
+  <script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/assets/lib/adminlte/css/adminlte.min.css">
+  <link rel="stylesheet" href="/assets/css/user.css">
+  <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
-<div class="wrapper">
-    <nav class="main-header navbar navbar-expand navbar-white navbar-light border-bottom">
-        <div class="container-fluid">
-            <a href="/" class="navbar-brand"><b>ThinkMes</b></a>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> 首页</a></li>
-                <li class="nav-item" id="user-nav-top">
-                    <!-- 未登录时显示登录/注册；登录后显示昵称+退出 -->
-                </li>
-            </ul>
-        </div>
-    </nav>
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <a href="/index/user/index" class="brand-link text-center">
-            <span class="brand-text font-weight-light">会员中心</span>
-        </a>
-        <div class="sidebar">
-            <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
-                    <li class="nav-item">
-                        <a href="/index/user/index" class="nav-link" id="nav-index">
-                            <i class="nav-icon fas fa-tachometer-alt"></i>
-                            <p>会员中心</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/index/user/profile" class="nav-link" id="nav-profile">
-                            <i class="nav-icon fas fa-user"></i>
-                            <p>个人资料</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/index/user/changepwd" class="nav-link" id="nav-changepwd">
-                            <i class="nav-icon fas fa-key"></i>
-                            <p>修改密码</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="nav-logout">
-                            <i class="nav-icon fas fa-sign-out-alt"></i>
-                            <p>退出</p>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </aside>
-    <div class="content-wrapper">
-        <div class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6"><h1>{$title|default='会员中心'}</h1></div>
-                </div>
-            </div>
-        </div>
-        <section class="content">
-            <div class="container-fluid">
-                {$__CONTENT__|raw}
-            </div>
-        </section>
+<body>
+  <nav class="topbar">
+    <div class="container d-flex align-items-center justify-content-between">
+      <a class="topbar-brand" href="/">报工系统</a>
+      <ul class="nav topbar-nav align-items-center">
+        <li class="nav-item"><a class="nav-link" href="/index/user/index"><i class="fa fa-home me-1"></i>会员中心</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fa fa-user me-1"></i>账号</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/index/user/profile"><i class="fa fa-id-card me-1"></i>个人资料</a></li>
+            <li><a class="dropdown-item" href="/index/user/changepwd"><i class="fa fa-key me-1"></i>修改密码</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/index/user/logout"><i class="fa fa-sign-out-alt me-1"></i>退出</a></li>
+          </ul>
+        </li>
+      </ul>
     </div>
-    <footer class="main-footer text-center"><strong>ThinkMes</strong> 仿 FastAdmin 前端会员</footer>
-</div>
-{include file="common/script" /}
-<script>
-(function(){
-    function initLayout() {
-        if (typeof jQuery === 'undefined') {
-            setTimeout(initLayout, 50);
-            return;
-        }
-        var $ = jQuery;
-        $(function(){
-            var token = window.Frontend && Frontend.getToken();
-            var user = window.Frontend && Frontend.getUser();
-            var $navTop = $('#user-nav-top');
-            if (token && user) {
-                $navTop.html('<a class="nav-link" href="/index/user/index"><i class="far fa-user"></i> ' + (user.nickname || user.username || '') + '</a>');
-            } else {
-                $navTop.html('<a class="nav-link" href="/index/user/login"><i class="fas fa-sign-in-alt"></i> 登录</a> ' +
-                    '<a class="nav-link" href="/index/user/register"><i class="fas fa-user-plus"></i> 注册</a>');
-            }
-            $('#nav-logout').on('click', function(e){
-                e.preventDefault();
-                if (window.Frontend) {
-                    Frontend.api('/user/logout', { method: 'POST', noRedirect: true }).catch(function(){});
-                    Frontend.clearAuth();
-                }
-                window.location.href = '/index/user/login';
-            });
-            var currentPath = window.location.pathname;
-            if (currentPath.indexOf('/user/index') >= 0) $('#nav-index').addClass('active');
-            else if (currentPath.indexOf('/user/profile') >= 0) $('#nav-profile').addClass('active');
-            else if (currentPath.indexOf('/user/changepwd') >= 0) $('#nav-changepwd').addClass('active');
-        });
-    }
-    initLayout();
-})();
-</script>
+  </nav>
+  <div class="container container-main">
+    {$__CONTENT__|raw}
+  </div>
+  <div class="footer">
+    Copyright © 2026 报工系统 All Rights Reserved
+  </div>
 </body>
 </html>

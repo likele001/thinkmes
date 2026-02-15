@@ -1,0 +1,23 @@
+<div class="card" style="max-width:520px;margin:40px auto;">
+  <div class="card-header">找回密码</div>
+  <div class="card-body">
+    <form id="form-forgot">
+      <div class="form-group">
+        <label>邮箱</label>
+        <input type="email" class="form-control" name="email" placeholder="邮箱">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">发送验证码</button>
+    </form>
+  </div>
+</div>
+<script>
+$(function(){
+  $('#form-forgot').on('submit', function(e){
+    e.preventDefault();
+    $.post('/api/user/forgot', $(this).serialize(), function(r){
+      alert(r.msg|| (r.code===1?'已发送验证码':'发送失败'));
+      if(r.code===1){location.href='/user/resetpwd';}
+    }, 'json');
+  });
+});
+</script>

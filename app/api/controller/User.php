@@ -6,7 +6,9 @@ namespace app\api\controller;
 use app\common\controller\BaseController;
 use app\common\model\UserModel;
 use app\api\middleware\UserAuth;
+use app\admin\model\ConfigModel;
 use think\facade\Cache;
+use think\facade\Session;
 use think\Response;
 
 /**
@@ -17,6 +19,16 @@ class User extends BaseController
     /** 找回密码验证码缓存前缀，5 分钟有效 */
     private const FORGOT_CODE_PREFIX = 'user_forgot:';
     private const FORGOT_CODE_TTL = 300;
+
+    protected function getCaptchaMode(): string
+    {
+        $mode = ConfigModel::where('group', 'safe')->where('name', 'front_captcha_mode')->value('value');
+        $mode = is_string($mode) ? strtolower(trim($mode)) : '';
+        if (!in_array($mode, ['image', 'slider', 'off'], true)) {
+            $mode = 'image';
+        }
+        return $mode;
+    }
 
     /**
      * 获取当前租户ID（与 admin 一致：header 或域名解析）
@@ -32,6 +44,23 @@ class User extends BaseController
      */
     public function register(): Response
     {
+        $mode = $this->getCaptchaMode();
+        if ($mode === 'image') {
+            $captchaInput = strtolower(trim((string) $this->request->post('captcha', '')));
+            $captchaStored = strtolower((string) Session::get('user_captcha_register', ''));
+            if ($captchaStored !== '' && $captchaInput === '') {
+                return $this->error('请输入验证码');
+            }
+            if ($captchaStored !== '' && $captchaInput !== $captchaStored) {
+                return $this->error('验证码错误');
+            }
+        } elseif ($mode === 'slider') {
+            $sliderOk = (int) $this->request->post('slider_ok', 0);
+            if ($sliderOk !== 1) {
+                return $this->error('请完成滑动验证');
+            }
+        }
+
         // 检查用户数限制
         $resourceCheck = $this->checkResourceLimit('user');
         if (!$resourceCheck['allowed']) {
@@ -79,6 +108,13 @@ class User extends BaseController
         $user->update_time = $now;
         $user->save();
 
+        if (($mode ?? '') === 'image') {
+            $captchaStored = Session::get('user_captcha_register');
+            if ($captchaStored !== null && $captchaStored !== '') {
+                Session::delete('user_captcha_register');
+            }
+        }
+
         $token = UserAuth::makeToken((int) $user->id, $tenantId);
         $out   = $user->toArray();
         unset($out['password']);
@@ -92,6 +128,23 @@ class User extends BaseController
      */
     public function login(): Response
     {
+        $mode = $this->getCaptchaMode();
+        if ($mode === 'image') {
+            $captchaInput = strtolower(trim((string) $this->request->post('captcha', '')));
+            $captchaStored = strtolower((string) Session::get('user_captcha_login', ''));
+            if ($captchaStored !== '' && $captchaInput === '') {
+                return $this->error('请输入验证码');
+            }
+            if ($captchaStored !== '' && $captchaInput !== $captchaStored) {
+                return $this->error('验证码错误');
+            }
+        } elseif ($mode === 'slider') {
+            $sliderOk = (int) $this->request->post('slider_ok', 0);
+            if ($sliderOk !== 1) {
+                return $this->error('请完成滑动验证');
+            }
+        }
+
         $tenantId = $this->getTenantId();
         $username = trim((string) $this->request->post('username', ''));
         $mobile   = trim((string) $this->request->post('mobile', ''));
@@ -122,11 +175,57 @@ class User extends BaseController
         $user->login_ip   = $this->request->ip();
         $user->save();
 
+        if (($mode ?? '') === 'image') {
+            $captchaStored = Session::get('user_captcha_login');
+            if ($captchaStored !== null && $captchaStored !== '') {
+                Session::delete('user_captcha_login');
+            }
+        }
+
         $token = UserAuth::makeToken((int) $user->id, $tenantId);
         $out   = $user->toArray();
         unset($out['password']);
         $out['token'] = $token;
         return $this->success('登录成功', $out);
+    }
+
+    public function captcha(): Response
+    {
+        $scene = strtolower((string) $this->request->get('scene', 'login'));
+        if ($scene !== 'register') {
+            $scene = 'login';
+        }
+        $code = (string) mt_rand(1000, 9999);
+        Session::set('user_captcha_' . $scene, $code);
+
+        $width = 120;
+        $height = 40;
+        $image = imagecreatetruecolor($width, $height);
+        $bg = imagecolorallocate($image, 248, 250, 252);
+        imagefilledrectangle($image, 0, 0, $width, $height, $bg);
+        $textColor = imagecolorallocate($image, 55, 65, 81);
+        $accent = imagecolorallocate($image, 129, 140, 248);
+        for ($i = 0; $i < 40; $i++) {
+            $x = mt_rand(0, $width);
+            $y = mt_rand(0, $height);
+            imagesetpixel($image, $x, $y, $accent);
+        }
+        imagestring($image, 5, 28, 12, $code, $textColor);
+
+        ob_start();
+        imagepng($image);
+        $data = ob_get_clean();
+
+        return response($data, 200, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
+    }
+
+    public function captchaMode(): Response
+    {
+        $mode = $this->getCaptchaMode();
+        return $this->success('', ['mode' => $mode]);
     }
 
     /**
@@ -136,7 +235,7 @@ class User extends BaseController
     {
         $info = $this->request->userInfo ?? [];
         if (empty($info)) {
-            return $this->error('请先登录', [], 0);
+            return $this->error('请先登录', 0);
         }
         unset($info['password']);
         return $this->success('', $info);
@@ -249,7 +348,7 @@ class User extends BaseController
     {
         $info = $this->request->userInfo ?? [];
         if (empty($info)) {
-            return $this->error('请先登录', [], 401);
+            return $this->error('请先登录', 401);
         }
         $userId   = (int) ($this->request->userId ?? 0);
         $tenantId = (int) ($this->request->tenantId ?? 0);
@@ -298,7 +397,7 @@ class User extends BaseController
     {
         $info = $this->request->userInfo ?? [];
         if (empty($info)) {
-            return $this->error('请先登录', [], 401);
+            return $this->error('请先登录', 401);
         }
         $userId = (int) ($this->request->userId ?? 0);
         $tenantId = (int) ($this->request->tenantId ?? 0);

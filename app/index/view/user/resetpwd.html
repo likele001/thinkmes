@@ -1,0 +1,31 @@
+<div class="card" style="max-width:520px;margin:40px auto;">
+  <div class="card-header">重置密码</div>
+  <div class="card-body">
+    <form id="form-resetpwd">
+      <div class="form-group">
+        <label>邮箱</label>
+        <input type="email" class="form-control" name="email" placeholder="邮箱">
+      </div>
+      <div class="form-group">
+        <label>验证码</label>
+        <input type="text" class="form-control" name="captcha" placeholder="验证码">
+      </div>
+      <div class="form-group">
+        <label>新密码</label>
+        <input type="password" class="form-control" name="newpassword" placeholder="新密码">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">重置</button>
+    </form>
+  </div>
+</div>
+<script>
+$(function(){
+  $('#form-resetpwd').on('submit', function(e){
+    e.preventDefault();
+    $.post('/api/user/resetPassword', $(this).serialize(), function(r){
+      alert(r.msg|| (r.code===1?'重置成功，请登录':'重置失败'));
+      if(r.code===1){location.href='/user/login';}
+    }, 'json');
+  });
+});
+</script>

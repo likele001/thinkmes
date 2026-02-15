@@ -66,6 +66,8 @@ CREATE TABLE `fa_config` (
   `value` text COMMENT '配置值',
   `group` varchar(30) NOT NULL DEFAULT 'base' COMMENT '配置分组：base/upload/safe',
   `sort` int DEFAULT 0 COMMENT '排序',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';

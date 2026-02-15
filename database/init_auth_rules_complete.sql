@@ -16,14 +16,16 @@ INSERT INTO `fa_auth_rule` (`id`, `name`, `title`, `type`, `ismenu`, `status`, `
 (8, 'admin/member/index', '用户管理', 1, 1, 1, 0, 'fas fa-user', 35, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 (9, 'admin/attachment/index', '文件管理', 1, 1, 1, 0, 'fas fa-file-alt', 38, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 (10, 'admin/tenant_package/index', '套餐管理', 1, 1, 1, 0, 'fas fa-box', 16, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(11, 'admin/tenant_order/index', '订单管理', 1, 1, 1, 0, 'fas fa-shopping-cart', 17, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+(11, 'admin/tenant_order/index', '订单管理', 1, 1, 1, 0, 'fas fa-shopping-cart', 17, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(12, 'admin/tenant/miniapp', '租户小程序配置', 1, 1, 1, 0, 'fa fa-mobile', 7, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
 ON DUPLICATE KEY UPDATE 
     `title` = VALUES(`title`), 
     `icon` = VALUES(`icon`), 
     `sort` = VALUES(`sort`), 
     `ismenu` = VALUES(`ismenu`),
     `status` = VALUES(`status`),
-    `type` = VALUES(`type`);
+    `type` = VALUES(`type`),
+    `pid` = VALUES(`pid`);
 
 -- 管理员管理的子规则
 INSERT INTO `fa_auth_rule` (`id`, `name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES

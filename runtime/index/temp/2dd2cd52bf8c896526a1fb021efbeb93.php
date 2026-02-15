@@ -1,0 +1,313 @@
+<?php /*a:1:{s:52:"/www/wwwroot/thinkmes/app/index/view/user/login.html";i:1771138592;}*/ ?>
+<section class="auth-hero">
+<div class="auth-container">
+  <div class="card auth-card">
+  <div class="card-header">
+    <ul class="nav nav-pills auth-tabs" role="tablist">
+      <li class="nav-item"><a class="nav-link active" href="#tab-login" aria-controls="tab-login" role="tab" data-toggle="tab">登录</a></li>
+      <li class="nav-item"><a class="nav-link" href="#tab-register" aria-controls="tab-register" role="tab" data-toggle="tab">注册</a></li>
+    </ul>
+  </div>
+  <div class="card-body">
+    <div class="tab-content">
+      <div role="tabpanel" class="tab-pane active in show" id="tab-login">
+        <form id="form-login">
+          <div class="form-group">
+            <label>账号</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-user"></i></span>
+              <input type="text" class="form-control" name="account" placeholder="邮箱/手机/用户名">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-lock"></i></span>
+              <input type="password" class="form-control" name="password" placeholder="密码">
+            </div>
+          </div>
+          <div class="form-group captcha-block captcha-block-image">
+            <label>验证码</label>
+            <div class="input-group">
+              <input type="text" class="form-control" name="captcha" placeholder="请输入验证码">
+              <span class="input-group-text p-0">
+                <img src="/api/user/captcha?scene=login" class="captcha-img" data-scene="login" alt="验证码" style="cursor:pointer;height:40px;border-radius:0 10px 10px 0;">
+              </span>
+            </div>
+          </div>
+          <div class="form-group captcha-block captcha-block-slider" style="display:none;">
+            <label>滑动验证</label>
+            <div class="slider-captcha" data-scene="login">
+              <div class="slider-track">
+                <div class="slider-fill"></div>
+                <div class="slider-text">按住滑块拖动完成验证</div>
+                <div class="slider-handle"><i class="fa fa-angle-double-right"></i></div>
+              </div>
+              <input type="hidden" name="slider_ok" value="0">
+            </div>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" name="keeplogin" value="1" checked> 保持会话</label>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">登录</button>
+          <div class="text-right" style="margin-top:10px;">
+            <a href="/index/user/forgot">忘记密码？</a>
+          </div>
+        </form>
+      </div>
+      <div role="tabpanel" class="tab-pane" id="tab-register">
+        <form id="form-register">
+          <div class="form-group">
+            <label>用户名</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-user-circle"></i></span>
+              <input type="text" class="form-control" name="username" placeholder="用户名">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>邮箱</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+              <input type="email" class="form-control" name="email" placeholder="邮箱">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-lock"></i></span>
+              <input type="password" class="form-control" name="password" placeholder="密码">
+            </div>
+          </div>
+          <div class="form-group captcha-block captcha-block-image">
+            <label>验证码</label>
+            <div class="input-group">
+              <input type="text" class="form-control" name="captcha" placeholder="请输入验证码">
+              <span class="input-group-text p-0">
+                <img src="/api/user/captcha?scene=register" class="captcha-img" data-scene="register" alt="验证码" style="cursor:pointer;height:40px;border-radius:0 10px 10px 0%;">
+              </span>
+            </div>
+          </div>
+          <div class="form-group captcha-block captcha-block-slider" style="display:none;">
+            <label>滑动验证</label>
+            <div class="slider-captcha" data-scene="register">
+              <div class="slider-track">
+                <div class="slider-fill"></div>
+                <div class="slider-text">按住滑块拖动完成验证</div>
+                <div class="slider-handle"><i class="fa fa-angle-double-right"></i></div>
+              </div>
+              <input type="hidden" name="slider_ok" value="0">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary btn-block">注册</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+</div>
+<script>
+$(function(){
+  function activateTabFromQuery(){
+    var params=new URLSearchParams(location.search);
+    var tab=params.get('tab');
+    if(tab==='register'){
+      $('.nav.nav-pills li').removeClass('active');
+      $('.nav.nav-pills .nav-link').removeClass('active');
+      $('.nav.nav-pills a[href="#tab-register"]').parent().addClass('active');
+      $('.nav.nav-pills a[href="#tab-register"]').addClass('active');
+      $('.tab-pane').removeClass('active in show');
+      $('#tab-register').addClass('active in show');
+    }else{
+      $('.nav.nav-pills li').removeClass('active');
+      $('.nav.nav-pills .nav-link').removeClass('active');
+      $('.nav.nav-pills a[href="#tab-login"]').parent().addClass('active');
+      $('.nav.nav-pills a[href="#tab-login"]').addClass('active');
+      $('.tab-pane').removeClass('active in show');
+      $('#tab-login').addClass('active in show');
+    }
+  }
+  activateTabFromQuery();
+  $('.nav.nav-pills a').on('click', function(e){
+    e.preventDefault();
+    $('.nav.nav-pills li').removeClass('active');
+    $('.nav.nav-pills .nav-link').removeClass('active');
+    $(this).parent().addClass('active');
+    $(this).addClass('active');
+    $('.tab-pane').removeClass('active in show');
+    $($(this).attr('href')).addClass('active in show');
+  });
+  $('#form-login').on('submit', function(e){
+    e.preventDefault();
+    var $form = $(this);
+    var account = $.trim($form.find('input[name="account"]').val() || '');
+    var password = $form.find('input[name="password"]').val() || '';
+    var payload = {};
+    if(/^1\d{10}$/.test(account)){
+      payload.mobile = account;
+    }else{
+      payload.username = account;
+    }
+    payload.password = password;
+    var keeplogin = $form.find('input[name="keeplogin"]:checked').val();
+    if(keeplogin){
+      payload.keeplogin = keeplogin;
+    }
+    var captcha = $form.find('input[name="captcha"]').val();
+    if(captcha){
+      payload.captcha = captcha;
+    }
+    var sliderOk = $form.find('input[name="slider_ok"]').val();
+    if(sliderOk){
+      payload.slider_ok = sliderOk;
+    }
+    $.post('/api/user/login', payload, function(r){
+      if(r.code===1){
+        var tk = r.data && r.data.token ? r.data.token : '';
+        localStorage.setItem('token', tk);
+        document.cookie = 'user_token='+tk+'; path=/; max-age=2592000';
+        location.href = '/index/user/index';
+      }else{
+        alert(r.msg||'登录失败');
+        if(frontCaptchaMode === 'slider'){
+          $('#tab-login .slider-captcha').each(function(){
+            var fn = $(this).data('resetSlider');
+            if(typeof fn === 'function'){
+              fn();
+            }
+          });
+        }
+      }
+    }, 'json');
+  });
+  $('#form-register').on('submit', function(e){
+    e.preventDefault();
+    var data = $(this).serialize();
+    $.post('/api/user/register', data, function(r){
+      if(r.code===1){
+        alert('注册成功，请登录');
+        $('.nav.nav-pills li').removeClass('active');
+        $('.nav.nav-pills .nav-link').removeClass('active');
+        $('.nav.nav-pills a[href="#tab-login"]').parent().addClass('active');
+        $('.nav.nav-pills a[href="#tab-login"]').addClass('active');
+        $('.tab-pane').removeClass('active in show');
+        $('#tab-login').addClass('active in show');
+      }else{
+        alert(r.msg||'注册失败');
+        if(frontCaptchaMode === 'slider'){
+          $('#tab-register .slider-captcha').each(function(){
+            var fn = $(this).data('resetSlider');
+            if(typeof fn === 'function'){
+              fn();
+            }
+          });
+        }
+      }
+    }, 'json');
+  });
+  var frontCaptchaMode = 'image';
+  function refreshCaptcha(scene){
+    scene = scene || 'login';
+    if(frontCaptchaMode !== 'image'){
+      return;
+    }
+    $('.captcha-img[data-scene="'+scene+'"]').attr('src','/api/user/captcha?scene='+scene+'&t='+(new Date().getTime()));
+  }
+  $('.captcha-img').on('click', function(){
+    var scene = $(this).data('scene') || 'login';
+    refreshCaptcha(scene);
+  });
+  function applyCaptchaMode(mode){
+    frontCaptchaMode = mode || 'image';
+    if(frontCaptchaMode === 'slider'){
+      $('.captcha-block-image').hide();
+      $('.captcha-block-slider').show();
+    }else if(frontCaptchaMode === 'off'){
+      $('.captcha-block-image').hide();
+      $('.captcha-block-slider').hide();
+    }else{
+      $('.captcha-block-slider').hide();
+      $('.captcha-block-image').show();
+      refreshCaptcha('login');
+      refreshCaptcha('register');
+    }
+  }
+  function initSliderCaptcha(){
+    $('.slider-captcha').each(function(){
+      var $wrap = $(this);
+      var $track = $wrap.find('.slider-track');
+      var $handle = $wrap.find('.slider-handle');
+      var $fill = $wrap.find('.slider-fill');
+      var $text = $wrap.find('.slider-text');
+      var $input = $wrap.find('input[name="slider_ok"]');
+      var dragging = false;
+      var startX = 0;
+      var startLeft = 0;
+      var maxLeft = 0;
+      function reset(){
+        dragging = false;
+        $handle.css('left','0px');
+        $fill.css('width','0px');
+        $text.text('按住滑块拖动完成验证');
+        $wrap.removeClass('slider-success');
+        $input.val('0');
+      }
+      function done(){
+        dragging = false;
+        $wrap.addClass('slider-success');
+        $text.text('验证通过');
+        $input.val('1');
+      }
+      $handle.on('mousedown touchstart', function(e){
+        if($wrap.hasClass('slider-success')){
+          return;
+        }
+        dragging = true;
+        var ev = e.type === 'touchstart' ? e.originalEvent.touches[0] : e;
+        startX = ev.clientX;
+        startLeft = parseInt($handle.css('left')) || 0;
+        maxLeft = $track.width() - $handle.outerWidth();
+        e.preventDefault();
+      });
+      $(document).on('mousemove.slider touchmove.slider', function(e){
+        if(!dragging){
+          return;
+        }
+        var ev = e.type === 'touchmove' ? e.originalEvent.touches[0] : e;
+        var dx = ev.clientX - startX;
+        var newLeft = startLeft + dx;
+        if(newLeft < 0){
+          newLeft = 0;
+        }
+        if(newLeft > maxLeft){
+          newLeft = maxLeft;
+        }
+        $handle.css('left', newLeft + 'px');
+        $fill.css('width', (newLeft + $handle.outerWidth()) + 'px');
+        if(newLeft >= maxLeft){
+          done();
+        }
+      });
+      $(document).on('mouseup.slider touchend.slider', function(){
+        if(!dragging){
+          return;
+        }
+        if(!$wrap.hasClass('slider-success')){
+          reset();
+        }
+        dragging = false;
+      });
+      $wrap.data('resetSlider', reset);
+    });
+  }
+  $.getJSON('/api/user/captchaMode', function(r){
+    var mode = r && r.data && r.data.mode ? r.data.mode : 'image';
+    applyCaptchaMode(mode);
+    if(mode === 'slider'){
+      initSliderCaptcha();
+    }
+  }).fail(function(){
+    applyCaptchaMode('image');
+  });
+});
+</script>

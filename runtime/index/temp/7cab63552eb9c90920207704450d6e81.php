@@ -1,0 +1,124 @@
+<?php /*a:1:{s:52:"/www/wwwroot/thinkmes/app/index/view/user/index.html";i:1771124582;}*/ ?>
+<div class="container-main">
+  <div class="member-layout">
+    <div class="member-left">
+      <div class="card">
+        <div class="card-body">
+          <ul class="nav nav-pills flex-column">
+            <li class="nav-item"><a class="nav-link" href="/index/user/index"><i class="fa fa-user-circle mr-2"></i>会员中心</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/user/profile"><i class="fa fa-user mr-2"></i>个人资料</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/user/changepwd"><i class="fa fa-key mr-2"></i>修改密码</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/user/logout"><i class="fa fa-sign-out-alt mr-2"></i>退出</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="member-right">
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="avatar-circle" id="avatar">U</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <strong id="nickname">-</strong>
+                <span id="intro" style="color:#666;"></span>
+              </div>
+              <div style="color:#666;margin-top:6px;">余额 <span id="balance">0.00</span> ｜ 积分 <span id="score">0</span></div>
+              <div style="color:#666;margin-top:6px;">登录时间 <span id="logintime">-</span> ｜ 最近登录 <span id="lastlog">-</span></div>
+            </div>
+            <div>
+              <a class="btn btn-primary" href="/index/user/profile"><i class="fa fa-pencil"></i> 个人资料</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin:0 -6px;">
+        <div class="col-md-4" style="padding:0 6px;">
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3 id="metric-today-report">0</h3>
+              <p>今日报工数量</p>
+            </div>
+            <div class="icon">
+              <i class="fa fa-list-alt"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4" style="padding:0 6px;">
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3 id="metric-today-wage">0</h3>
+              <p>今日工资总额</p>
+            </div>
+            <div class="icon">
+              <i class="fa fa-cny"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4" style="padding:0 6px;">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3 id="metric-pending">0</h3>
+              <p>待确认报工</p>
+            </div>
+            <div class="icon">
+              <i class="fa fa-clock"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:10px;">
+        <div class="card-header">我的报工任务</div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>订单号</th><th>产品名称</th><th>型号</th><th>工序</th><th>分配数量</th><th>已报数量</th><th>待报数量</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="task-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function fmt(t){if(!t)return '-';var d=new Date(t*1000);var y=d.getFullYear(),m=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2),hh=('0'+d.getHours()).slice(-2),mm=('0'+d.getMinutes()).slice(-2);return y+'-'+m+'-'+dd+' '+hh+':'+mm;}
+$(function(){
+  var tk = localStorage.getItem('token')||'';
+  if(!tk){location.href='/index/user/login';return;}
+  $.ajax({
+    url:'/api/user/profile',
+    headers:{'Authorization':'Bearer '+tk},
+    success:function(r){
+      if(r.code===1){
+        var u=r.data||{};
+        $('#nickname').text(u.nickname||u.username||'-');
+        $('#intro').text(u.introduction||'');
+        $('#balance').text((u.money||0).toFixed? (u.money||0).toFixed(2):(u.money||0));
+        $('#score').text(u.score||0);
+        $('#logintime').text(fmt(u.logintime||u.login_time||0));
+        $('#lastlog').text(fmt(u.prevlogintime||u.prev_login_time||0));
+        $('#avatar').text(((u.nickname||u.username||'U').substr(0,1)||'U').toUpperCase());
+      }else{
+        location.href='/index/user/login';
+      }
+    }
+  });
+  var demo=[
+    {order_no:'ORD20250101',product_name:'样例产品A',model_name:'M-1001',process_name:'打样',assign_qty:2,reported_qty:0,pending_qty:2},
+    {order_no:'ORD20250102',product_name:'样例产品B',model_name:'M-2001',process_name:'裁剪',assign_qty:10,reported_qty:2,pending_qty:8},
+  ];
+  var html='';
+  demo.forEach(function(it){
+    html+='<tr><td>'+it.order_no+'</td><td>'+it.product_name+'</td><td>'+it.model_name+'</td><td>'+it.process_name+'</td><td>'+it.assign_qty+'</td><td>'+it.reported_qty+'</td><td>'+it.pending_qty+'</td><td><a class=\"btn btn-primary btn-xs\" href=\"javascript:void(0)\">去报工</a></td></tr>';
+  });
+  $('#task-list').html(html);
+  $('#metric-today-report').text(0);
+  $('#metric-today-wage').text(0);
+  $('#metric-pending').text(demo.reduce(function(a,b){return a+(b.pending_qty||0);},0));
+});
+</script>

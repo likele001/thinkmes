@@ -54,3 +54,38 @@ CREATE TABLE `fa_user` (
   KEY `idx_mobile` (`tenant_id`,`mobile`),
   KEY `idx_email` (`tenant_id`,`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='C端用户表';
+
+-- 租户小程序配置表（支持租户隔离的小程序登录）
+DROP TABLE IF EXISTS `fa_tenant_miniapp`;
+CREATE TABLE `fa_tenant_miniapp` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `tenant_id` int unsigned NOT NULL COMMENT '租户ID',
+  `type` varchar(20) NOT NULL DEFAULT 'wechat' COMMENT '小程序类型：wechat 等',
+  `name` varchar(50) NOT NULL DEFAULT '' COMMENT '小程序名称',
+  `app_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'AppID',
+  `app_secret` varchar(100) NOT NULL DEFAULT '' COMMENT 'AppSecret',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：1启用 0禁用',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_tenant_type` (`tenant_id`,`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租户小程序配置表';
+
+-- 用户小程序绑定表（按租户隔离）
+DROP TABLE IF EXISTS `fa_user_miniapp`;
+CREATE TABLE `fa_user_miniapp` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `tenant_id` int unsigned NOT NULL COMMENT '租户ID',
+  `user_id` int unsigned NOT NULL COMMENT '用户ID',
+  `type` varchar(20) NOT NULL DEFAULT 'wechat' COMMENT '小程序类型：wechat 等',
+  `app_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'AppID',
+  `openid` varchar(64) NOT NULL DEFAULT '' COMMENT 'OpenID',
+  `unionid` varchar(64) NOT NULL DEFAULT '' COMMENT 'UnionID',
+  `session_key` varchar(128) NOT NULL DEFAULT '' COMMENT '最近一次 code2session 的 session_key',
+  `last_login_time` int NOT NULL DEFAULT 0 COMMENT '最近登录时间',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_tenant_type_openid` (`tenant_id`,`type`,`openid`),
+  KEY `idx_tenant_user_type` (`tenant_id`,`user_id`,`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户小程序绑定表';
