@@ -10,3 +10,5 @@ Route::get('user/profile', 'User/profile');
 Route::get('user/changepwd', 'User/changepwd');
 Route::get('user/forgot', 'User/forgot');
 Route::get('user/resetpwd', 'User/resetpwd');
+Route::get('worker/scan', 'Worker/scan');
+Route::get('trace/query', 'Trace/query');

@@ -7,6 +7,7 @@ use app\common\controller\BaseController;
 use app\common\model\UserModel;
 use app\api\middleware\UserAuth;
 use app\admin\model\ConfigModel;
+use app\admin\model\TenantModel;
 use think\facade\Cache;
 use think\facade\Session;
 use think\Response;
@@ -238,6 +239,23 @@ class User extends BaseController
             return $this->error('请先登录', 0);
         }
         unset($info['password']);
+
+        $tenantId = (int) ($this->request->tenantId ?? 0);
+        if ($tenantId > 0) {
+            try {
+                $tenant = TenantModel::find($tenantId);
+                if ($tenant) {
+                    $tenantArr = $tenant->toArray();
+                    $companyName = (string) ($tenantArr['company_name'] ?? '');
+                    $name = (string) ($tenantArr['name'] ?? '');
+                    $info['tenant_id'] = $tenantId;
+                    $info['tenant_name'] = $name;
+                    $info['tenant_company_name'] = $companyName !== '' ? $companyName : $name;
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
         return $this->success('', $info);
     }
 

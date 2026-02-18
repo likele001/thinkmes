@@ -1,4 +1,4 @@
-<?php /*a:1:{s:52:"/www/wwwroot/thinkmes/app/index/view/user/login.html";i:1771138592;}*/ ?>
+<?php /*a:1:{s:52:"/www/wwwroot/thinkmes/app/index/view/user/login.html";i:1771299307;}*/ ?>
 <section class="auth-hero">
 <div class="auth-container">
   <div class="card auth-card">
@@ -57,6 +57,7 @@
       </div>
       <div role="tabpanel" class="tab-pane" id="tab-register">
         <form id="form-register">
+          <input type="hidden" name="tenant_id" value="">
           <div class="form-group">
             <label>用户名</label>
             <div class="input-group">
@@ -108,6 +109,11 @@
 </div>
 <script>
 $(function(){
+  function getTenantFromQuery(){
+    var params = new URLSearchParams(location.search);
+    var tid = params.get('tenant_id') || params.get('tenant') || '';
+    return tid || '';
+  }
   function activateTabFromQuery(){
     var params=new URLSearchParams(location.search);
     var tab=params.get('tab');
@@ -126,6 +132,10 @@ $(function(){
       $('.tab-pane').removeClass('active in show');
       $('#tab-login').addClass('active in show');
     }
+  }
+  var tenantFromQuery = getTenantFromQuery();
+  if(tenantFromQuery){
+    $('#tab-register input[name="tenant_id"]').val(tenantFromQuery);
   }
   activateTabFromQuery();
   $('.nav.nav-pills a').on('click', function(e){
@@ -161,6 +171,9 @@ $(function(){
     if(sliderOk){
       payload.slider_ok = sliderOk;
     }
+    if(tenantFromQuery){
+      payload.tenant_id = tenantFromQuery;
+    }
     $.post('/api/user/login', payload, function(r){
       if(r.code===1){
         var tk = r.data && r.data.token ? r.data.token : '';
@@ -182,6 +195,9 @@ $(function(){
   });
   $('#form-register').on('submit', function(e){
     e.preventDefault();
+    if(tenantFromQuery){
+      $('#tab-register input[name="tenant_id"]').val(tenantFromQuery);
+    }
     var data = $(this).serialize();
     $.post('/api/user/register', data, function(r){
       if(r.code===1){

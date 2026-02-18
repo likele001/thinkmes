@@ -88,8 +88,11 @@ class Index extends Backend
             return redirect((string) url('/admin/index/index'));
         }
 
+        $loginCaptcha = ConfigModel::where('group', 'safe')->where('name', 'login_captcha')->value('value');
+        $loginCaptchaOn = $loginCaptcha === '1' || $loginCaptcha === 'true';
         View::assign('title', '后台登录');
         View::assign('url', $this->request->get('url', 'admin/index/index'));
+        View::assign('loginCaptchaOn', $loginCaptchaOn);
         return View::fetch('index/login');
     }
 
@@ -101,10 +104,30 @@ class Index extends Backend
 
     public function captcha(): Response
     {
-        // 简单验证码占位，可替换为 think-captcha 扩展
         $code = (string) mt_rand(1000, 9999);
         Session::set('captcha', $code);
-        return response($code, 200, ['Content-Type' => 'text/plain']);
+        $width = 120;
+        $height = 40;
+        $image = imagecreatetruecolor($width, $height);
+        $bg = imagecolorallocate($image, 248, 250, 252);
+        imagefilledrectangle($image, 0, 0, $width, $height, $bg);
+        $textColor = imagecolorallocate($image, 55, 65, 81);
+        $accent = imagecolorallocate($image, 129, 140, 248);
+        for ($i = 0; $i < 40; $i++) {
+            $x = mt_rand(0, $width);
+            $y = mt_rand(0, $height);
+            imagesetpixel($image, $x, $y, $accent);
+        }
+        imagestring($image, 5, 28, 12, $code, $textColor);
+
+        ob_start();
+        imagepng($image);
+        $data = ob_get_clean();
+
+        return response($data, 200, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
     }
 
     public function errorPage(): string

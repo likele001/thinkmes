@@ -11,9 +11,18 @@
                     <select name="row[order_id]" class="form-control" id="order_id" required>
                         <option value="">请选择订单</option>
                         {volist name="orderList" id="vo"}
-                        <option value="{$key}" {eq name="key" value="$data.order_id"}selected{/eq}>{$vo}</option>
+                        <option value="{$key}" {if $data.order_id == $key}selected{/if}>{$vo}</option>
                         {/volist}
                     </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">产品型号 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[model_id]" class="form-control" id="model_id" data-selected="{$data.model_id|default=''}" required>
+                        <option value="">请先选择订单</option>
+                    </select>
+                    <small class="form-text text-muted">选择订单后自动加载该订单的型号</small>
                 </div>
             </div>
             <div class="form-group row">
@@ -31,13 +40,13 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">计划开始时间</label>
                 <div class="col-sm-6">
-                    <input type="datetime-local" name="row[planned_start_time]" class="form-control" value="{if condition='$data.planned_start_time'}{$data.planned_start_time|date='Y-m-d\TH:i',###}{/if}">
+                    <input type="datetime-local" name="row[planned_start_time]" class="form-control" value="{$data.planned_start_time ? date('Y-m-d\TH:i', $data.planned_start_time) : ''}">
                 </div>
             </div>
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">计划结束时间</label>
                 <div class="col-sm-6">
-                    <input type="datetime-local" name="row[planned_end_time]" class="form-control" value="{if condition='$data.planned_end_time'}{$data.planned_end_time|date='Y-m-d\TH:i',###}{/if}">
+                    <input type="datetime-local" name="row[planned_end_time]" class="form-control" value="{$data.planned_end_time ? date('Y-m-d\TH:i', $data.planned_end_time) : ''}">
                 </div>
             </div>
             <div class="form-group row">
@@ -66,49 +75,3 @@
         </form>
     </div>
 </div>
-
-<script>
-(function() {
-    function initForm() {
-        if (typeof jQuery === 'undefined') {
-            setTimeout(initForm, 50);
-            return;
-        }
-        var $ = jQuery;
-        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-        $('#form-edit').attr('action', base + '/mes/production_plan/edit');
-        $('#form-edit').on('submit', function (e) {
-            e.preventDefault();
-            // 转换datetime-local为时间戳
-            var startTime = $('input[name="row[planned_start_time]"]').val();
-            var endTime = $('input[name="row[planned_end_time]"]').val();
-            if (startTime) {
-                $('input[name="row[planned_start_time]"]').val(Math.floor(new Date(startTime).getTime() / 1000));
-            }
-            if (endTime) {
-                $('input[name="row[planned_end_time]"]').val(Math.floor(new Date(endTime).getTime() / 1000));
-            }
-            $.post($(this).attr('action') + '?id=' + $('input[name="row[id]"]').val(), $(this).serialize(), function (r) {
-                if (r && r.msg) {
-                    alert(r.msg);
-                }
-                if (r && r.code === 1) {
-                    location.href = base + '/mes/production_plan/index';
-                }
-            }, 'json').fail(function(xhr) {
-                try {
-                    var r = JSON.parse(xhr.responseText);
-                    alert(r.msg || '操作失败');
-                } catch(e) {
-                    alert('操作失败');
-                }
-            });
-        });
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initForm);
-    } else {
-        initForm();
-    }
-})();
-</script>

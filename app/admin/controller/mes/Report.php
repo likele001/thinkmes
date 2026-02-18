@@ -7,6 +7,7 @@ use app\admin\controller\Backend;
 use app\admin\model\mes\ReportModel;
 use app\admin\model\mes\AllocationModel;
 use app\admin\model\mes\ProcessPriceModel;
+use app\admin\model\mes\TraceCodeModel;
 use app\admin\model\mes\WageModel;
 use app\admin\model\mes\StockLogModel;
 use app\admin\model\mes\ProductModelModel;
@@ -135,10 +136,36 @@ class Report extends Backend
                 $data['quantity'] = ceil($workHours / 1); // 示例：1小时=1件
             }
 
+            $reportedQty = (int) Db::name('mes_report')
+                ->where('tenant_id', $tenantId)
+                ->where('allocation_id', $allocation->id)
+                ->sum('quantity');
+            $remainingQty = (int) $allocation->quantity - $reportedQty;
+            if ($remainingQty < 0) {
+                $remainingQty = 0;
+            }
+            if (($data['quantity'] ?? 0) > $remainingQty) {
+                return $this->error(
+                    '报工数量不能超过待报数量，已报：' . $reportedQty .
+                    '，分配：' . (int) $allocation->quantity .
+                    '，本次报工：' . (int) $data['quantity']
+                );
+            }
+
             Db::startTrans();
             try {
                 $report = ReportModel::create($data);
-                
+                if ($workType === 'piece' && is_array($itemNos) && $itemNos) {
+                    TraceCodeModel::where('tenant_id', $tenantId)
+                        ->where('allocation_id', $allocation->id)
+                        ->whereIn('item_no', $itemNos)
+                        ->update([
+                            'report_id' => $report->id,
+                            'user_id' => $allocation->user_id,
+                            'update_time' => time(),
+                        ]);
+                }
+
                 // 更新分配完成数量
                 $allocation->completed_quantity += $data['quantity'];
                 $allocation->completed_quantity = max(0, $allocation->completed_quantity); // 确保非负

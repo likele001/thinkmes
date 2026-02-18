@@ -1,0 +1,56 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">查看分工 - {$plan.plan_name|default=''}</h3>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <strong>计划编码：</strong>{$plan.plan_code|default=''}　
+            <strong>订单：</strong>{$plan.order.order_no|default=''}　
+            <strong>计划数量：</strong>{$plan.total_quantity|default=0}　
+            <strong>完成数量：</strong>{$plan.completed_quantity|default=0}
+        </div>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>工序名称</th>
+                    <th>员工姓名</th>
+                    <th>分配数量</th>
+                    <th>已完成数量</th>
+                    <th>剩余数量</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {if $allocations->isEmpty()}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">尚未为该生产计划分配工序</td>
+                </tr>
+                {else/}
+                {volist name="allocations" id="a"}
+                <tr>
+                    <td>{$a.process.name|default='-'}</td>
+                    <td>{$a.user.nickname|default='-'}</td>
+                    <td>{$a.quantity|default=0}</td>
+                    <td>{$a.completed_quantity|default=0}</td>
+                    <td>{:max(0, (int)$a['quantity'] - (int)$a['completed_quantity'])}</td>
+                    <td>
+                        {switch $a.status}
+                        {case 0}<span class="badge badge-secondary">待开始</span>{/case}
+                        {case 1}<span class="badge badge-primary">进行中</span>{/case}
+                        {case 2}<span class="badge badge-success">已完成</span>{/case}
+                        {default /}<span class="badge badge-secondary">未知</span>
+                        {/switch}
+                    </td>
+                    <td>{:isset($a['create_time']) && $a['create_time'] ? date('Y-m-d H:i:s', $a['create_time']) : ''}</td>
+                </tr>
+                {/volist}
+                {/if}
+            </tbody>
+        </table>
+        <div class="mt-3">
+            <a href="{$config.moduleurl}/mes/production_plan/index" class="btn btn-default">返回计划列表</a>
+        </div>
+    </div>
+</div>
+

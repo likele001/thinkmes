@@ -1,4 +1,4 @@
-<?php /*a:1:{s:52:"/www/wwwroot/thinkmes/app/index/view/user/index.html";i:1771124582;}*/ ?>
+<?php /*a:1:{s:52:"/www/wwwroot/thinkmes/app/index/view/user/index.html";i:1771376662;}*/ ?>
 <div class="container-main">
   <div class="member-layout">
     <div class="member-left">
@@ -23,6 +23,7 @@
                 <strong id="nickname">-</strong>
                 <span id="intro" style="color:#666;"></span>
               </div>
+              <div style="color:#666;margin-top:6px;">所属企业 <span id="tenant-name">-</span></div>
               <div style="color:#666;margin-top:6px;">余额 <span id="balance">0.00</span> ｜ 积分 <span id="score">0</span></div>
               <div style="color:#666;margin-top:6px;">登录时间 <span id="logintime">-</span> ｜ 最近登录 <span id="lastlog">-</span></div>
             </div>
@@ -98,6 +99,7 @@ $(function(){
         var u=r.data||{};
         $('#nickname').text(u.nickname||u.username||'-');
         $('#intro').text(u.introduction||'');
+        $('#tenant-name').text(u.tenant_company_name||u.tenant_name||'-');
         $('#balance').text((u.money||0).toFixed? (u.money||0).toFixed(2):(u.money||0));
         $('#score').text(u.score||0);
         $('#logintime').text(fmt(u.logintime||u.login_time||0));
@@ -108,17 +110,32 @@ $(function(){
       }
     }
   });
-  var demo=[
-    {order_no:'ORD20250101',product_name:'样例产品A',model_name:'M-1001',process_name:'打样',assign_qty:2,reported_qty:0,pending_qty:2},
-    {order_no:'ORD20250102',product_name:'样例产品B',model_name:'M-2001',process_name:'裁剪',assign_qty:10,reported_qty:2,pending_qty:8},
-  ];
-  var html='';
-  demo.forEach(function(it){
-    html+='<tr><td>'+it.order_no+'</td><td>'+it.product_name+'</td><td>'+it.model_name+'</td><td>'+it.process_name+'</td><td>'+it.assign_qty+'</td><td>'+it.reported_qty+'</td><td>'+it.pending_qty+'</td><td><a class=\"btn btn-primary btn-xs\" href=\"javascript:void(0)\">去报工</a></td></tr>';
+  $.ajax({
+    url:'/api/worker/dashboard',
+    headers:{'Authorization':'Bearer '+tk},
+    success:function(r){
+      if(r.code!==1){return;}
+      var data=r.data||{};
+      var m=data.metrics||{};
+      $('#metric-today-report').text(m.today_report_quantity||0);
+      $('#metric-today-wage').text((m.today_wage||0).toFixed? (m.today_wage||0).toFixed(2):(m.today_wage||0));
+      $('#metric-pending').text(m.pending_reports||0);
+      var list=data.tasks||[];
+      var html='';
+      list.forEach(function(it){
+        html+='<tr>'
+          +'<td>'+(it.order_no||'')+'</td>'
+          +'<td>'+(it.product_name||'')+'</td>'
+          +'<td>'+(it.model_name||'')+'</td>'
+          +'<td>'+(it.process_name||'')+'</td>'
+          +'<td>'+(it.assign_qty||0)+'</td>'
+          +'<td>'+(it.reported_qty||0)+'</td>'
+          +'<td>'+(it.pending_qty||0)+'</td>'
+          +'<td><a class="btn btn-primary btn-xs" href="/index/worker/scan?allocation_id='+(it.allocation_id||0)+'">去报工</a></td>'
+          +'</tr>';
+      });
+      $('#task-list').html(html||'<tr><td colspan="8" class="text-center">暂无任务</td></tr>');
+    }
   });
-  $('#task-list').html(html);
-  $('#metric-today-report').text(0);
-  $('#metric-today-wage').text(0);
-  $('#metric-pending').text(demo.reduce(function(a,b){return a+(b.pending_qty||0);},0));
 });
 </script>

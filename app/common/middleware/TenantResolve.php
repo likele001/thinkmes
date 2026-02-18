@@ -29,13 +29,39 @@ class TenantResolve
             // 忽略 session 读取错误，继续下面的解析逻辑
         }
 
-        // 2. 再尝试从请求头读取（X-Tenant-Id），便于 API 或代理传入
+        // 2. 其次尝试从查询参数解析（employee 注册/登录等场景专用）
+        $paramTenantId = $request->param('tenant_id');
+        if ($paramTenantId !== null && $paramTenantId !== '') {
+            $tenantId = max(0, (int) $paramTenantId);
+        } else {
+            $paramTenant = trim((string) $request->param('tenant', ''));
+            if ($paramTenant !== '') {
+                try {
+                    $row = Db::name('tenant')->where('status', 1)
+                        ->where(function ($q) use ($paramTenant) {
+                            $q->where('id', (int) $paramTenant)
+                                ->whereOr('name', $paramTenant);
+                        })
+                        ->find();
+                    if ($row && isset($row['id'])) {
+                        $tenantId = (int) $row['id'];
+                        if (isset($row['expire_time']) && $row['expire_time'] !== null && $row['expire_time'] > 0 && $row['expire_time'] < time()) {
+                            $tenantId = 0;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    $tenantId = 0;
+                }
+            }
+        }
+
+        // 3. 若仍未解析到，再尝试从请求头读取（X-Tenant-Id），便于 API 或代理传入
         $host = $request->host();
         $headerTenant = $request->header('X-Tenant-Id');
-        if ($headerTenant !== null && $headerTenant !== '') {
+        if ($tenantId === 0 && $headerTenant !== null && $headerTenant !== '') {
             $tenantId = max(0, (int) $headerTenant);
-        } elseif ($host && $host !== 'localhost' && $host !== '127.0.0.1') {
-            // 3. 最后回退到域名解析（保留原有逻辑）
+        } elseif ($tenantId === 0 && $host && $host !== 'localhost' && $host !== '127.0.0.1') {
+            // 4. 最后回退到域名解析（保留原有逻辑）
             try {
                 $row = Db::name('tenant')->where('status', 1)
                     ->where(function ($q) use ($host) {

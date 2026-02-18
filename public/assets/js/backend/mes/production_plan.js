@@ -7,6 +7,9 @@
     var addUrl = base + '/mes/production_plan/add';
     var editUrl = base + '/mes/production_plan/edit';
     var delUrl = base + '/mes/production_plan/del';
+    var allocationsUrl = base + '/mes/production_plan/allocations';
+    var progressStatsUrl = base + '/mes/production_plan/progressStats';
+    var progressUrl = base + '/mes/production_plan/progress';
 
     function statusFmt(v) {
         var statusMap = {0: '待开始', 1: '进行中', 2: '已完成', 3: '已暂停'};
@@ -19,8 +22,16 @@
     }
 
     function operFmt(value, row) {
-        return '<a href="' + editUrl + '?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit">编辑</a> ' +
-            '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
+        var html = '';
+        if (row.order_id && row.model_id) {
+            html += '<a href="' + base + '/mes/allocation/batch?order_id=' + row.order_id + '&plan_id=' + row.id + '" class="btn btn-xs btn-success btn-allocate"><i class="fas fa-tasks"></i> 分配工序</a> ';
+            html += '<a href="' + allocationsUrl + '?id=' + row.id + '" class="btn btn-xs btn-info btn-allocations"><i class="fas fa-list"></i> 查看分工</a> ';
+            html += '<a href="' + progressStatsUrl + '?id=' + row.id + '" class="btn btn-xs btn-warning btn-progress-stats"><i class="fas fa-chart-bar"></i> 进度统计</a> ';
+            html += '<a href="' + progressUrl + '?id=' + row.id + '" class="btn btn-xs btn-secondary btn-progress"><i class="fas fa-chart-line"></i> 生产进度</a> ';
+        }
+        html += '<a href="' + editUrl + '?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit"><i class="fas fa-edit"></i> 编辑</a> ' +
+            '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '"><i class="fas fa-trash-alt"></i> 删除</a>';
+        return html;
     }
 
     var Controller = {
@@ -45,6 +56,7 @@
                     {field: 'plan_name', title: '计划名称', align: 'left'},
                     {field: 'order.order_no', title: '订单号', align: 'left'},
                     {field: 'model.product.name', title: '产品', align: 'left'},
+                    {field: 'model.name', title: '产品型号', align: 'left'},
                     {field: 'total_quantity', title: '计划数量', width: 100, align: 'right'},
                     {field: 'completed_quantity', title: '完成数量', width: 100, align: 'right'},
                     {field: 'progress', title: '完成进度', width: 120, formatter: progressFmt},
@@ -133,11 +145,15 @@
         api: {
             initOrderModelSelect: function () {
                 var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-                // 订单选择变化时加载型号
-                $('#order_id').off('change').on('change', function() {
-                    var orderId = $(this).val();
+                var $order = $('#order_id');
+                var $model = $('#model_id');
+                if ($order.length === 0 || $model.length === 0) {
+                    return;
+                }
+                function loadModels(selectedId) {
+                    var orderId = $order.val();
                     if (!orderId) {
-                        $('#model_id').html('<option value="">请先选择订单</option>');
+                        $model.html('<option value="">请先选择订单</option>');
                         return;
                     }
                     $.get(base + '/mes/production_plan/getOrderModels', {order_id: orderId}, function(r) {
@@ -146,12 +162,22 @@
                             $.each(r.data, function(i, item) {
                                 html += '<option value="' + item.id + '">' + item.name + ' (数量: ' + item.quantity + ')</option>';
                             });
-                            $('#model_id').html(html);
+                            $model.html(html);
+                            var target = selectedId || $model.data('selected');
+                            if (target) {
+                                $model.val(String(target));
+                            }
                         } else {
-                            $('#model_id').html('<option value="">该订单暂无型号</option>');
+                            $model.html('<option value="">该订单暂无型号</option>');
                         }
                     }, 'json');
+                }
+                $order.off('change').on('change', function() {
+                    loadModels('');
                 });
+                if ($order.val()) {
+                    loadModels('');
+                }
             },
             bindevent: function () {
                 var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
@@ -165,15 +191,6 @@
                         if (url.indexOf('?ids=') === -1 && form.attr('id') === 'form-edit') {
                             var id = $('input[name="row[id]"]').val();
                             if (id) url += '?ids=' + id;
-                        }
-                        // 转换datetime-local为时间戳
-                        var startTime = $('input[name="row[planned_start_time]"]').val();
-                        var endTime = $('input[name="row[planned_end_time]"]').val();
-                        if (startTime) {
-                            $('input[name="row[planned_start_time]"]').val(Math.floor(new Date(startTime).getTime() / 1000));
-                        }
-                        if (endTime) {
-                            $('input[name="row[planned_end_time]"]').val(Math.floor(new Date(endTime).getTime() / 1000));
                         }
                         $.post(url, $(this).serialize(), function (r) {
                             if (r && r.msg) {

@@ -6,9 +6,11 @@ namespace app\admin\controller\mes;
 use app\admin\controller\Backend;
 use app\admin\model\mes\AllocationModel;
 use app\admin\model\mes\OrderModel;
+use app\admin\model\mes\ProductionPlanModel;
 use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\ProcessModel;
 use app\admin\model\mes\AllocationQrcodeModel;
+use app\admin\model\mes\TraceCodeModel;
 use app\common\model\UserModel;
 use think\facade\Db;
 use think\facade\View;
@@ -53,6 +55,11 @@ class Allocation extends Backend
             $query->where('order_id', (int) $orderId);
         }
         
+        $modelId = $this->request->get('model_id');
+        if ($modelId) {
+            $query->where('model_id', (int) $modelId);
+        }
+        
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
         
@@ -89,8 +96,7 @@ class Allocation extends Backend
             Db::startTrans();
             try {
                 $allocation = AllocationModel::create($params);
-                
-                // 生成二维码
+                $this->createTraceItems($allocation, $tenantId);
                 $this->doGenerateQrcode($allocation->id, $tenantId);
                 
                 Db::commit();
@@ -116,8 +122,9 @@ class Allocation extends Backend
             ->where('status', 1)
             ->column('name', 'id');
         
-        // 获取员工列表（从用户表）
-        $userList = UserModel::where('status', 'normal')
+        // 获取员工列表（当前租户下的前端会员）
+        $userList = UserModel::where('tenant_id', $tenantId)
+            ->where('status', 1)
             ->column('nickname', 'id');
         
         View::assign('orderList', $orderList);
@@ -129,7 +136,14 @@ class Allocation extends Backend
 
     public function edit(): string|Response
     {
-        $id = (int) $this->request->get('id');
+        $idParam = $this->request->param('ids');
+        if ($idParam === null || $idParam === '') {
+            $idParam = $this->request->param('id');
+        }
+        if ($idParam === null || $idParam === '') {
+            return $this->error('参数错误');
+        }
+        $id = (int) $idParam;
         if ($this->request->isPost()) {
             $params = $this->request->post('row/a');
             if (empty($params)) {
@@ -140,6 +154,40 @@ class Allocation extends Backend
             $allocation = AllocationModel::where('tenant_id', $tenantId)->find($id);
             if (!$allocation) {
                 return $this->error('记录不存在');
+            }
+
+            $quantity = isset($params['quantity']) ? (int) $params['quantity'] : (int) $allocation->quantity;
+            if ($quantity <= 0) {
+                return $this->error('分配数量必须大于0');
+            }
+
+            $orderId = isset($params['order_id']) ? (int) $params['order_id'] : (int) $allocation->order_id;
+            $modelId = (int) $allocation->model_id;
+            $planId = (int) $allocation->plan_id;
+
+            if ($planId > 0 && $modelId > 0) {
+                $plan = ProductionPlanModel::where('tenant_id', $tenantId)->find($planId);
+                if (!$plan) {
+                    return $this->error('对应的生产计划不存在');
+                }
+                if ((int) $plan->order_id !== $orderId) {
+                    return $this->error('分配的订单与生产计划不匹配');
+                }
+
+                $otherAllocated = (int) AllocationModel::where('tenant_id', $tenantId)
+                    ->where('order_id', $orderId)
+                    ->where('plan_id', $planId)
+                    ->where('model_id', $modelId)
+                    ->where('id', '<>', $allocation->id)
+                    ->sum('quantity');
+
+                $remaining = (int) $plan->total_quantity - $otherAllocated;
+                if ($remaining <= 0) {
+                    return $this->error('该计划下该型号已全部分配，无法继续分配');
+                }
+                if ($quantity > $remaining) {
+                    return $this->error('分配数量不能超过生产计划数量，当前计划剩余可分配数量为：' . $remaining);
+                }
             }
             
             $params['update_time'] = time();
@@ -152,7 +200,9 @@ class Allocation extends Backend
         }
         
         $tenantId = $this->getTenantId();
-        $data = AllocationModel::where('tenant_id', $tenantId)->find($id);
+        $data = AllocationModel::with(['model.product'])
+            ->where('tenant_id', $tenantId)
+            ->find($id);
         if (!$data) {
             return $this->error('记录不存在');
         }
@@ -171,8 +221,9 @@ class Allocation extends Backend
             ->where('status', 1)
             ->column('name', 'id');
         
-        // 获取员工列表
-        $userList = UserModel::where('status', 'normal')
+        // 获取员工列表（当前租户下的前端会员）
+        $userList = UserModel::where('tenant_id', $tenantId)
+            ->where('status', 1)
             ->column('nickname', 'id');
         
         View::assign('orderList', $orderList);
@@ -250,6 +301,8 @@ class Allocation extends Backend
         if (!$allocation) {
             throw new \Exception('分工分配不存在');
         }
+        
+        $this->createTraceItems($allocation, $tenantId);
         
         // 生成二维码内容（URL格式）
         $domain = $this->request->domain();
@@ -338,54 +391,137 @@ class Allocation extends Backend
     {
         if ($this->request->isPost()) {
             $orderId = (int) $this->request->post('order_id');
-            $allocations = $this->request->post('allocations');
-            
-            if (!$orderId || !$allocations) {
-                return $this->error('参数不完整');
+            $planId = (int) $this->request->post('plan_id', 0);
+
+            // 优先按数组方式获取（支持 allocations[0][field] 这种提交）
+            $allocations = $this->request->post('allocations/a');
+            if (!$allocations) {
+                // 兼容前端以 JSON 字符串形式提交的场景
+                $allocationsRaw = $this->request->post('allocations');
+                if (is_string($allocationsRaw) && $allocationsRaw !== '') {
+                    $decoded = json_decode($allocationsRaw, true);
+                    if (is_array($decoded)) {
+                        $allocations = $decoded;
+                    }
+                }
             }
-            
-            // 处理JSON格式
-            if (is_string($allocations)) {
-                $allocations = json_decode($allocations, true);
-            }
-            
-            if (!is_array($allocations)) {
+
+            if (!$orderId || !$allocations || !is_array($allocations)) {
                 return $this->error('分配数据格式错误');
             }
             
             $tenantId = $this->getTenantId();
-            $successCount = 0;
-            
+
+            if ($planId > 0) {
+                $plan = ProductionPlanModel::where('tenant_id', $tenantId)->find($planId);
+                if (!$plan) {
+                    return $this->error('对应的生产计划不存在');
+                }
+                if ((int) $plan->order_id !== $orderId) {
+                    return $this->error('分配的订单与生产计划不匹配');
+                }
+            }
+
             Db::startTrans();
             try {
+                // 按“型号 + 工序”统计本次新增的有效分配数量
+                $quantityByModelProcess = [];
+                $validCount = 0;
+
                 foreach ($allocations as $item) {
                     if (empty($item['model_id']) || empty($item['process_id']) || empty($item['user_id']) || empty($item['quantity'])) {
                         continue;
                     }
-                    
-                    $allocation = AllocationModel::create([
+
+                    $modelId = (int) $item['model_id'];
+                    $processId = (int) $item['process_id'];
+                    $qty = (int) $item['quantity'];
+                    if ($qty <= 0) {
+                        continue;
+                    }
+
+                    $key = $modelId . ':' . $processId;
+                    if (!isset($quantityByModelProcess[$key])) {
+                        $quantityByModelProcess[$key] = 0;
+                    }
+                    $quantityByModelProcess[$key] += $qty;
+                    $validCount++;
+                }
+
+                if ($validCount === 0) {
+                    Db::rollback();
+                    return $this->error('没有有效的分配记录，请检查是否选择了型号、工序、员工及数量');
+                }
+
+                // 校验：每个“型号+工序”的分配数量不能超过该订单该型号的数量
+                foreach ($quantityByModelProcess as $key => $addQty) {
+                    list($modelId, $processId) = explode(':', $key);
+                    $modelId = (int) $modelId;
+                    $processId = (int) $processId;
+
+                    $orderModelQty = Db::name('mes_order_model')
+                        ->where('tenant_id', $tenantId)
+                        ->where('order_id', $orderId)
+                        ->where('model_id', $modelId)
+                        ->value('quantity');
+                    if ($orderModelQty === null) {
+                        $orderModelQty = Db::name('mes_order_model')
+                            ->where('order_id', $orderId)
+                            ->where('model_id', $modelId)
+                            ->value('quantity');
+                    }
+                    if ($orderModelQty === null) {
+                        Db::rollback();
+                        return $this->error('该订单中不存在所选产品型号');
+                    }
+
+                    // 已分配数量按“订单+型号+工序”统计
+                    $allocatedOrder = (int) AllocationModel::where('tenant_id', $tenantId)
+                        ->where('order_id', $orderId)
+                        ->where('model_id', $modelId)
+                        ->where('process_id', $processId)
+                        ->sum('quantity');
+
+                    $orderRemaining = (int) $orderModelQty - $allocatedOrder;
+                    if ($orderRemaining <= 0) {
+                        Db::rollback();
+                        return $this->error('该订单下该型号在该工序已全部分配，无法继续分配');
+                    }
+                    if ($addQty > $orderRemaining) {
+                        Db::rollback();
+                        return $this->error('分配数量不能超过订单该型号在该工序的数量，当前剩余可分配数量为：' . $orderRemaining);
+                    }
+                }
+
+                $successCount = 0;
+                foreach ($allocations as $item) {
+                    if (empty($item['model_id']) || empty($item['process_id']) || empty($item['user_id']) || empty($item['quantity'])) {
+                        continue;
+                    }
+
+                    $data = [
                         'tenant_id' => $tenantId,
                         'order_id' => $orderId,
-                        'model_id' => $item['model_id'],
-                        'process_id' => $item['process_id'],
-                        'user_id' => $item['user_id'],
-                        'quantity' => $item['quantity'],
+                        'model_id' => (int) $item['model_id'],
+                        'process_id' => (int) $item['process_id'],
+                        'user_id' => (int) $item['user_id'],
+                        'quantity' => (int) $item['quantity'],
                         'allocation_code' => AllocationModel::generateAllocationCode(),
                         'status' => 0,
                         'create_time' => time(),
                         'update_time' => time(),
-                    ]);
-                    
-                    // 生成二维码
+                    ];
+                    $allocation = AllocationModel::create($data);
+                    $this->createTraceItems($allocation, $tenantId);
                     $this->doGenerateQrcode($allocation->id, $tenantId);
                     $successCount++;
                 }
-                
+
                 Db::commit();
                 return $this->success("批量分配成功，共分配 {$successCount} 条任务");
             } catch (\Exception $e) {
                 Db::rollback();
-                return $this->error('批量分配失败');
+                return $this->error('批量分配失败: ' . $e->getMessage());
             }
         }
         
@@ -404,14 +540,100 @@ class Allocation extends Backend
             ->where('status', 1)
             ->column('name', 'id');
         
-        // 获取员工列表
-        $userList = UserModel::where('status', 'normal')
+        // 获取员工列表（当前租户下的前端会员）
+        $userList = UserModel::where('tenant_id', $tenantId)
+            ->where('status', 1)
             ->column('nickname', 'id');
+        
+        $orderIdParam = (int) $this->request->get('order_id', 0);
+        $planIdParam = (int) $this->request->get('plan_id', 0);
         
         View::assign('orderList', $orderList);
         View::assign('processList', $processList ?: []);
         View::assign('userList', $userList ?: []);
+        View::assign('order_id', $orderIdParam);
+        View::assign('plan_id', $planIdParam);
         View::assign('title', '批量分工分配');
         return $this->fetchWithLayout('mes/allocation/batch');
+    }
+
+    protected function createTraceItems(AllocationModel $allocation, int $tenantId): void
+    {
+        $quantity = (int) $allocation->quantity;
+        if ($quantity <= 0) {
+            return;
+        }
+
+        $order = OrderModel::where('tenant_id', $tenantId)->find($allocation->order_id);
+        $model = ProductModelModel::with(['product'])->where('tenant_id', $tenantId)->find($allocation->model_id);
+        $process = ProcessModel::where('tenant_id', $tenantId)->find($allocation->process_id);
+        if (!$order || !$model || !$process) {
+            return;
+        }
+
+        $orderLabel = $order->order_no ?: ($order->order_name ?: '');
+        $productName = '';
+        if (isset($model->product) && $model->product) {
+            $productName = $model->product->name ?? '';
+        }
+        $modelName = $model->name ?? '';
+        $modelCode = $model->model_code ?? '';
+        $fullModel = $productName ? ($productName . ' - ' . $modelName) : $modelName;
+        if ($modelCode) {
+            $fullModel .= ' (' . $modelCode . ')';
+        }
+        $prefix = $orderLabel . '-' . $fullModel . '-' . $process->name . '-';
+
+        $existingForAllocation = TraceCodeModel::where('tenant_id', $tenantId)
+            ->where('allocation_id', $allocation->id)
+            ->column('item_no');
+        $alreadyCount = count($existingForAllocation);
+        if ($alreadyCount >= $quantity) {
+            return;
+        }
+
+        $need = $quantity - $alreadyCount;
+
+        $existingNos = TraceCodeModel::where('tenant_id', $tenantId)
+            ->where('order_id', $allocation->order_id)
+            ->where('model_id', $allocation->model_id)
+            ->where('process_id', $allocation->process_id)
+            ->column('item_no');
+
+        $items = [];
+        $current = 1;
+        $existingSet = $existingNos ? array_flip($existingNos) : [];
+        while (count($items) < $need) {
+            $itemNo = $prefix . str_pad((string) $current, 4, '0', STR_PAD_LEFT);
+            if (!isset($existingSet[$itemNo])) {
+                $items[] = $itemNo;
+                $existingSet[$itemNo] = true;
+            }
+            $current++;
+        }
+
+        $now = time();
+        $rows = [];
+        foreach ($items as $itemNo) {
+            $rows[] = [
+                'tenant_id' => $tenantId,
+                'trace_code' => TraceCodeModel::generateTraceCode(),
+                'report_id' => 0,
+                'allocation_id' => $allocation->id,
+                'order_id' => $allocation->order_id,
+                'model_id' => $allocation->model_id,
+                'process_id' => $allocation->process_id,
+                'user_id' => $allocation->user_id,
+                'item_no' => $itemNo,
+                'qrcode_image' => '',
+                'qrcode_url' => '',
+                'scan_count' => 0,
+                'status' => 1,
+                'create_time' => $now,
+                'update_time' => $now,
+            ];
+        }
+
+        TraceCodeModel::insertAll($rows);
     }
 }

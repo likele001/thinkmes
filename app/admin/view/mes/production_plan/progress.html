@@ -1,0 +1,642 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">生产进度跟踪 - 大屏仪表板</h3>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <form class="form-inline" method="get">
+                <div class="form-group mr-2 mb-2">
+                    <label class="mr-1">订单：</label>
+                    <select name="order_id" class="form-control" style="width: 150px;">
+                        <option value="">全部订单</option>
+                        {foreach $orderList as $id => $name}
+                        <option value="{$id}" {if $filters.order_id == $id}selected{/if}>{$name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="form-group mr-2 mb-2">
+                    <label class="mr-1">生产计划：</label>
+                    <select name="plan_id" class="form-control" style="width: 150px;">
+                        <option value="">全部计划</option>
+                        {foreach $planList as $id => $name}
+                        <option value="{$id}" {if $filters.plan_id == $id}selected{/if}>{$name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="form-group mr-2 mb-2">
+                    <label class="mr-1">工序：</label>
+                    <select name="process_id" class="form-control" style="width: 120px;">
+                        <option value="">全部工序</option>
+                        {foreach $processList as $id => $name}
+                        <option value="{$id}" {if $filters.process_id == $id}selected{/if}>{$name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="form-group mr-2 mb-2">
+                    <label class="mr-1">员工：</label>
+                    <select name="user_id" class="form-control" style="width: 120px;">
+                        <option value="">全部员工</option>
+                        {foreach $userList as $id => $name}
+                        <option value="{$id}" {if $filters.user_id == $id}selected{/if}>{$name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary mb-2 mr-2"><i class="fas fa-search"></i> 筛选</button>
+                <a href="{$config.moduleurl}/mes/production_plan/progress" class="btn btn-default mb-2"><i class="fas fa-sync-alt"></i> 重置</a>
+            </form>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="stats-card blue">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3><i class="fas fa-file-alt"></i> 总订单数</h3>
+                        <h1 style="font-size: 3em; margin: 0;">{$overallStats.total_orders|default=0}</h1>
+                        <p>活跃订单数量</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <i class="fas fa-file-alt" style="font-size: 4em; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card green">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3><i class="fas fa-calendar-alt"></i> 总计划数</h3>
+                        <h1 style="font-size: 3em; margin: 0;">{$overallStats.total_plans|default=0}</h1>
+                        <p>生产计划总数</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <i class="fas fa-calendar-alt" style="font-size: 4em; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card orange">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3><i class="fas fa-tasks"></i> 小工单数</h3>
+                        <h1 style="font-size: 3em; margin: 0;">{$overallStats.total_allocations|default=0}</h1>
+                        <p>分配任务总数</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <i class="fas fa-tasks" style="font-size: 4em; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card purple">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3><i class="fas fa-cubes"></i> 总数量</h3>
+                        <h1 style="font-size: 3em; margin: 0;">{$overallStats.total_quantity|default=0}</h1>
+                        <p>计划生产总量</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <i class="fas fa-cubes" style="font-size: 4em; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card red">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3><i class="fas fa-check-circle"></i> 已完成</h3>
+                        <h1 style="font-size: 3em; margin: 0;">{$overallStats.completed_quantity|default=0}</h1>
+                        <p>实际完成数量</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <i class="fas fa-check-circle" style="font-size: 4em; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card aqua">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3><i class="fas fa-percent"></i> 完成率</h3>
+                        <h1 style="font-size: 3em; margin: 0;">{$overallStats.overall_completion_rate|default=0}%</h1>
+                        <p>整体完成进度</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <div class="progress-ring">
+                            <div id="completionChart" style="width: 120px; height: 120px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="chart-container large-chart">
+                <h4><i class="fas fa-chart-bar"></i> 整体生产进度</h4>
+                <div id="overallProgressChart" style="width: 100%; height: 300px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h4><i class="fas fa-chart-pie"></i> 工序完成率分布</h4>
+                <div id="processPieChart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="chart-container large-chart">
+                <h4><i class="fas fa-users"></i> 员工完成率排行</h4>
+                <div id="employeeRankingChart" style="width: 100%; height: 300px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h4><i class="fas fa-chart-line"></i> 订单进度对比</h4>
+                <div id="orderProgressChart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="nav-tabs-custom">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#tab-orders" data-toggle="tab"><i class="fas fa-file-alt"></i> 按订单统计</a></li>
+                    <li><a href="#tab-products" data-toggle="tab"><i class="fas fa-cube"></i> 按产品统计</a></li>
+                    <li><a href="#tab-processes" data-toggle="tab"><i class="fas fa-cogs"></i> 按工序统计</a></li>
+                    <li><a href="#tab-employees" data-toggle="tab"><i class="fas fa-users"></i> 按员工统计</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab-orders">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>订单名称</th>
+                                    <th>订单编号</th>
+                                    <th>计划数</th>
+                                    <th>总数量</th>
+                                    <th>已完成</th>
+                                    <th>完成率</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {foreach $orderStats as $order}
+                                <tr>
+                                    <td>{$order.order_name}</td>
+                                    <td>{$order.order_no}</td>
+                                    <td><span class="badge bg-primary">{$order.total_plans}</span></td>
+                                    <td>{$order.total_quantity}</td>
+                                    <td>{$order.completed_quantity}</td>
+                                    <td>
+                                        <div class="progress progress-xs">
+                                            <div class="progress-bar bg-success" style="width: {$order.completion_rate}%"></div>
+                                        </div>
+                                        <span class="text-muted">{$order.completion_rate}%</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-xs btn-info" data-action="showOrderDetails" data-order-id="{$order.order_id}">
+                                            <i class="fas fa-eye"></i> 查看详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="tab-products">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>产品名称</th>
+                                    <th>计划数</th>
+                                    <th>总数量</th>
+                                    <th>已完成</th>
+                                    <th>完成率</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {foreach $productStats as $product}
+                                <tr>
+                                    <td><strong>{$product.product_name}</strong></td>
+                                    <td>{$product.total_plans}</td>
+                                    <td>{$product.total_quantity}</td>
+                                    <td>{$product.completed_quantity}</td>
+                                    <td>
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar bg-primary" style="width: {$product.completion_rate}%"></div>
+                                        </div>
+                                        <span class="text-muted">{$product.completion_rate}%</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-xs btn-info" data-action="showProductDetails" data-product-id="{$product.product_id}">
+                                            <i class="fas fa-eye"></i> 查看详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="tab-processes">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>工序名称</th>
+                                    <th>小工单数</th>
+                                    <th>总数量</th>
+                                    <th>已完成</th>
+                                    <th>完成率</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {foreach $processStats as $process}
+                                <tr>
+                                    <td>{$process.process_name}</td>
+                                    <td><span class="badge bg-warning">{$process.total_allocations}</span></td>
+                                    <td>{$process.total_quantity}</td>
+                                    <td>{$process.completed_quantity}</td>
+                                    <td>
+                                        <div class="progress progress-xs">
+                                            <div class="progress-bar bg-success" style="width: {$process.completion_rate}%"></div>
+                                        </div>
+                                        <span class="text-muted">{$process.completion_rate}%</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-xs btn-info" data-action="showProcessDetails" data-process-name="{$process.process_name}">
+                                            <i class="fas fa-eye"></i> 查看详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="tab-employees">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>员工姓名</th>
+                                    <th>小工单数</th>
+                                    <th>总数量</th>
+                                    <th>已完成</th>
+                                    <th>完成率</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {foreach $employeeStats as $employee}
+                                <tr>
+                                    <td>{$employee.user_name}</td>
+                                    <td><span class="badge bg-purple">{$employee.total_allocations}</span></td>
+                                    <td>{$employee.total_quantity}</td>
+                                    <td>{$employee.completed_quantity}</td>
+                                    <td>
+                                        <div class="progress progress-xs">
+                                            <div class="progress-bar bg-success" style="width: {$employee.completion_rate}%"></div>
+                                        </div>
+                                        <span class="text-muted">{$employee.completion_rate}%</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-xs btn-info" data-action="showEmployeeDetails" data-user-id="{$employee.user_id}">
+                                            <i class="fas fa-eye"></i> 查看详情
+                                        </button>
+                                    </td>
+                                </tr>
+                                {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="detailModalTitle">详情</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="completion-rate" data-rate="{$overallStats.overall_completion_rate|default=0}" style="display:none;"></div>
+<div id="total-quantity" data-value="{$overallStats.total_quantity|default=0}" style="display:none;"></div>
+<div id="completed-quantity" data-value="{$overallStats.completed_quantity|default=0}" style="display:none;"></div>
+
+{foreach $processStats as $process}
+<div class="process-data" data-name="{$process.process_name}" data-rate="{$process.completion_rate|default=0}" style="display:none;"></div>
+{/foreach}
+
+{foreach $employeeStats as $employee}
+<div class="employee-data" data-name="{$employee.user_name}" data-rate="{$employee.completion_rate|default=0}" style="display:none;"></div>
+{/foreach}
+
+{foreach $orderStats as $order}
+<div class="order-data" data-name="{$order.order_name}" data-rate="{$order.completion_rate|default=0}" style="display:none;"></div>
+{/foreach}
+
+{foreach $productStats as $product}
+<div class="product-data" data-id="{$product.product_id}" data-name="{$product.product_name}" data-rate="{$product.completion_rate|default=0}" style="display:none;"></div>
+{/foreach}
+
+<style>
+.stats-card {
+    color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.stats-card.blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.stats-card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.stats-card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.stats-card.purple { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.stats-card.red { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.stats-card.aqua { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+.chart-container {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.progress-ring {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+}
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.large-chart {
+    grid-column: span 2;
+}
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .large-chart {
+        grid-column: span 1;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+(function () {
+    if (typeof echarts === 'undefined') {
+        return;
+    }
+    var completionDom = document.getElementById('completionChart');
+    if (!completionDom) {
+        return;
+    }
+    var completionChart = echarts.init(completionDom);
+    var completionRate = parseInt($('#completion-rate').data('rate')) || 0;
+    var remainingRate = 100 - completionRate;
+    completionChart.setOption({
+        series: [{
+            type: 'pie',
+            radius: ['60%', '80%'],
+            label: { show: false },
+            labelLine: { show: false },
+            data: [
+                {value: completionRate, name: '已完成', itemStyle: {color: '#4CAF50'}},
+                {value: remainingRate, name: '未完成', itemStyle: {color: '#E0E0E0'}}
+            ]
+        }]
+    });
+
+    var overallChart = echarts.init(document.getElementById('overallProgressChart'));
+    var totalQuantity = parseInt($('#total-quantity').data('value')) || 0;
+    var completedQuantity = parseInt($('#completed-quantity').data('value')) || 0;
+    var remainingQuantity = totalQuantity - completedQuantity;
+    overallChart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        xAxis: [{ type: 'category', data: ['总数量', '已完成', '剩余'] }],
+        yAxis: [{ type: 'value' }],
+        series: [{
+            name: '数量',
+            type: 'bar',
+            barWidth: '60%',
+            data: [
+                {value: totalQuantity, itemStyle: {color: '#2196F3'}},
+                {value: completedQuantity, itemStyle: {color: '#4CAF50'}},
+                {value: remainingQuantity, itemStyle: {color: '#FF9800'}}
+            ]
+        }]
+    });
+
+    var processChart = echarts.init(document.getElementById('processPieChart'));
+    var processData = [];
+    $('.process-data').each(function () {
+        var name = $(this).data('name');
+        var rate = parseInt($(this).data('rate')) || 0;
+        processData.push({value: rate, name: name});
+    });
+    processChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c}% ({d}%)' },
+        legend: { orient: 'vertical', left: 'left' },
+        series: [{
+            name: '完成率',
+            type: 'pie',
+            radius: '50%',
+            data: processData
+        }]
+    });
+
+    var employeeChart = echarts.init(document.getElementById('employeeRankingChart'));
+    var employeeLabels = [];
+    var employeeData = [];
+    $('.employee-data').each(function () {
+        employeeLabels.push($(this).data('name'));
+        employeeData.push(parseInt($(this).data('rate')) || 0);
+    });
+    employeeChart.setOption({
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        xAxis: { type: 'value', boundaryGap: [0, 0.01] },
+        yAxis: { type: 'category', data: employeeLabels },
+        series: [{
+            name: '完成率',
+            type: 'bar',
+            data: employeeData,
+            itemStyle: { color: '#4CAF50' }
+        }]
+    });
+
+    var orderChart = echarts.init(document.getElementById('orderProgressChart'));
+    var orderLabels = [];
+    var orderData = [];
+    $('.order-data').each(function () {
+        orderLabels.push($(this).data('name'));
+        orderData.push(parseInt($(this).data('rate')) || 0);
+    });
+    orderChart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        xAxis: { type: 'category', boundaryGap: false, data: orderLabels },
+        yAxis: { type: 'value' },
+        series: [{
+            name: '完成率',
+            type: 'line',
+            smooth: true,
+            data: orderData
+        }]
+    });
+
+    $(document).on('click', '[data-action]', function (e) {
+        e.preventDefault();
+        var action = $(this).data('action');
+        var base = "{$config.moduleurl}/mes/production_plan";
+        if (action === 'showOrderDetails') {
+            var orderId = $(this).data('order-id');
+            $('#detailModalTitle').text('订单详情');
+            $('#detailModalBody').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>');
+            $('#detailModal').modal('show');
+            $.get(base + '/getOrderDetails', {order_id: orderId}, function (r) {
+                if (r.code === 1) {
+                    var data = r.data;
+                    var html = '';
+                    html += '<h5>订单信息</h5>';
+                    html += '<p><strong>订单编号：</strong>' + (data.order.order_no || '') + '</p>';
+                    html += '<h5>生产计划详情</h5>';
+                    html += '<div class="table-responsive"><table class="table table-bordered table-striped">';
+                    html += '<thead><tr><th>计划编号</th><th>计划名称</th><th>总数量</th></tr></thead><tbody>';
+                    $.each(data.plans, function (_, plan) {
+                        html += '<tr>';
+                        html += '<td>' + plan.plan_code + '</td>';
+                        html += '<td>' + plan.plan_name + '</td>';
+                        html += '<td>' + plan.total_quantity + '</td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    $('#detailModalBody').html(html);
+                } else {
+                    $('#detailModalBody').html('<div class="alert alert-danger">' + (r.msg || '获取失败') + '</div>');
+                }
+            }, 'json');
+        } else if (action === 'showProductDetails') {
+            var productId = $(this).data('product-id');
+            $('#detailModalTitle').text('产品详情');
+            $('#detailModalBody').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>');
+            $('#detailModal').modal('show');
+            $.get(base + '/getProductDetails', {product_id: productId}, function (r) {
+                if (r.code === 1) {
+                    var data = r.data;
+                    var html = '';
+                    html += '<h5>产品信息</h5>';
+                    html += '<p><strong>产品名称：</strong>' + (data.product.name || '') + '</p>';
+                    html += '<h5>型号进度</h5>';
+                    html += '<div class="table-responsive"><table class="table table-bordered table-striped">';
+                    html += '<thead><tr><th>型号名称</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody>';
+                    $.each(data.models, function (_, model) {
+                        html += '<tr>';
+                        html += '<td>' + model.model_name + '</td>';
+                        html += '<td>' + model.total_quantity + '</td>';
+                        html += '<td>' + model.completed_quantity + '</td>';
+                        html += '<td>' + model.completion_rate + '%</td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    $('#detailModalBody').html(html);
+                } else {
+                    $('#detailModalBody').html('<div class="alert alert-danger">' + (r.msg || '获取失败') + '</div>');
+                }
+            }, 'json');
+        } else if (action === 'showProcessDetails') {
+            var processName = $(this).data('process-name');
+            $('#detailModalTitle').text('工序详情 - ' + processName);
+            $('#detailModalBody').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>');
+            $('#detailModal').modal('show');
+            $.get(base + '/getProcessDetails', {process_name: processName}, function (r) {
+                if (r.code === 1) {
+                    var data = r.data;
+                    var html = '';
+                    html += '<h5>工序信息</h5>';
+                    html += '<p><strong>工序名称：</strong>' + (data.process.name || '') + '</p>';
+                    html += '<h5>分配记录</h5>';
+                    html += '<div class="table-responsive"><table class="table table-bordered table-striped">';
+                    html += '<thead><tr><th>订单</th><th>产品</th><th>型号</th><th>员工</th><th>分配数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody>';
+                    $.each(data.allocations, function (_, a) {
+                        html += '<tr>';
+                        html += '<td>' + a.order_name + '</td>';
+                        html += '<td>' + a.product_name + '</td>';
+                        html += '<td>' + a.model_name + '</td>';
+                        html += '<td>' + a.employee_name + '</td>';
+                        html += '<td>' + a.allocated_quantity + '</td>';
+                        html += '<td>' + a.completed_quantity + '</td>';
+                        html += '<td>' + a.completion_rate + '%</td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    $('#detailModalBody').html(html);
+                } else {
+                    $('#detailModalBody').html('<div class="alert alert-danger">' + (r.msg || '获取失败') + '</div>');
+                }
+            }, 'json');
+        } else if (action === 'showEmployeeDetails') {
+            var userId = $(this).data('user-id');
+            $('#detailModalTitle').text('员工详情');
+            $('#detailModalBody').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>');
+            $('#detailModal').modal('show');
+            $.get(base + '/getEmployeeDetails', {user_id: userId}, function (r) {
+                if (r.code === 1) {
+                    var data = r.data;
+                    var html = '';
+                    html += '<h5>员工信息</h5>';
+                    html += '<p><strong>姓名：</strong>' + (data.user.nickname || '') + '</p>';
+                    html += '<h5>工作分配记录</h5>';
+                    html += '<div class="table-responsive"><table class="table table-bordered table-striped">';
+                    html += '<thead><tr><th>订单</th><th>产品</th><th>型号</th><th>工序</th><th>分配数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody>';
+                    $.each(data.allocations, function (_, a) {
+                        html += '<tr>';
+                        html += '<td>' + a.order_name + '</td>';
+                        html += '<td>' + a.product_name + '</td>';
+                        html += '<td>' + a.model_name + '</td>';
+                        html += '<td>' + a.process_name + '</td>';
+                        html += '<td>' + a.allocated_quantity + '</td>';
+                        html += '<td>' + a.completed_quantity + '</td>';
+                        html += '<td>' + a.completion_rate + '%</td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    $('#detailModalBody').html(html);
+                } else {
+                    $('#detailModalBody').html('<div class="alert alert-danger">' + (r.msg || '获取失败') + '</div>');
+                }
+            }, 'json');
+        }
+    });
+
+    $(window).on('resize', function () {
+        completionChart.resize();
+        overallChart.resize();
+        processChart.resize();
+        employeeChart.resize();
+        orderChart.resize();
+    });
+})();
+</script>

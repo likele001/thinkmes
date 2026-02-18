@@ -7,6 +7,10 @@
         <input type="text" class="form-control" id="username" disabled>
       </div>
       <div class="form-group">
+        <label class="control-label">所属企业</label>
+        <input type="text" class="form-control" id="tenant-name" disabled>
+      </div>
+      <div class="form-group">
         <label class="control-label">昵称</label>
         <input type="text" class="form-control" name="nickname" id="nickname">
       </div>
@@ -31,6 +35,7 @@ $(function(){
       if(r.code===1){
         var u=r.data||{};
         $('#username').val(u.username||'');
+        $('#tenant-name').val(u.tenant_company_name||u.tenant_name||'-');
         $('#nickname').val(u.nickname||'');
         $('#introduction').val(u.introduction||'');
       }else{

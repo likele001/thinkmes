@@ -1,0 +1,88 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">进度统计 - {$plan.plan_name|default=''}</h3>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <strong>计划编码：</strong>{$plan.plan_code|default=''}　
+            <strong>订单：</strong>{$plan.order.order_no|default=''}　
+            <strong>计划数量：</strong>{$plan.total_quantity|default=0}　
+            <strong>已报工数量：</strong>{$stats.total_reported|default=0}　
+            <strong>完成率：</strong>
+            {if $plan.total_quantity>0}
+            {:round(($stats['total_reported']/$plan['total_quantity'])*100,1)}%
+            {else/}
+            0%
+            {/if}
+        </div>
+
+        <h5>按工序统计</h5>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>工序名称</th>
+                    <th>分配数量</th>
+                    <th>已报工数量</th>
+                    <th>工时</th>
+                    <th>完成率</th>
+                </tr>
+            </thead>
+            <tbody>
+                {if empty($stats.process_stats)}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">暂无工序分配数据</td>
+                </tr>
+                {else/}
+                {volist name="stats.process_stats" id="p"}
+                <tr>
+                    <td>{$key}</td>
+                    <td>{$p.allocated|default=0}</td>
+                    <td>{$p.reported|default=0}</td>
+                    <td>{$p.hours|default=0}</td>
+                    <td>{$p.completion_rate|default=0}%</td>
+                </tr>
+                {/volist}
+                {/if}
+            </tbody>
+        </table>
+
+        <h5 class="mt-4">按员工统计</h5>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>员工姓名</th>
+                    <th>分配数量</th>
+                    <th>已报工数量</th>
+                    <th>工时</th>
+                    <th>工资</th>
+                    <th>完成率</th>
+                    <th>效率(件/小时)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {if empty($stats.worker_stats)}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">暂无员工报工数据</td>
+                </tr>
+                {else/}
+                {volist name="stats.worker_stats" id="w"}
+                <tr>
+                    <td>{$key}</td>
+                    <td>{$w.allocated|default=0}</td>
+                    <td>{$w.reported|default=0}</td>
+                    <td>{$w.hours|default=0}</td>
+                    <td>{:sprintf('%.2f', $w['wage'] ?? 0)}</td>
+                    <td>{$w.completion_rate|default=0}%</td>
+                    <td>{$w.efficiency|default=0}</td>
+                </tr>
+                {/volist}
+                {/if}
+            </tbody>
+        </table>
+
+        <div class="mt-3">
+            <a href="{$config.moduleurl}/mes/production_plan/index" class="btn btn-default">返回计划列表</a>
+        </div>
+    </div>
+</div>
+

@@ -142,6 +142,13 @@ Route::group('mes', function () {
     Route::get('production_plan/add', 'mes.ProductionPlan/add');
     Route::get('production_plan/edit', 'mes.ProductionPlan/edit');
     Route::get('production_plan/getOrderModels', 'mes.ProductionPlan/getOrderModels');
+    Route::get('production_plan/allocations', 'mes.ProductionPlan/allocations');
+    Route::get('production_plan/progressStats', 'mes.ProductionPlan/progressStats');
+    Route::get('production_plan/progress', 'mes.ProductionPlan/progress');
+    Route::get('production_plan/getOrderDetails', 'mes.ProductionPlan/getOrderDetails');
+    Route::get('production_plan/getProductDetails', 'mes.ProductionPlan/getProductDetails');
+    Route::get('production_plan/getProcessDetails', 'mes.ProductionPlan/getProcessDetails');
+    Route::get('production_plan/getEmployeeDetails', 'mes.ProductionPlan/getEmployeeDetails');
     Route::get('production_plan/index', 'mes.ProductionPlan/index');
     Route::get('production_plan', 'mes.ProductionPlan/index');
     Route::post('production_plan/add', 'mes.ProductionPlan/add');

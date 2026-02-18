@@ -1,4 +1,4 @@
-<?php /*a:1:{s:57:"/www/wwwroot/thinkmes/app/admin/view/mes/order/index.html";i:1771069398;}*/ ?>
+<?php /*a:1:{s:57:"/www/wwwroot/thinkmes/app/admin/view/mes/order/index.html";i:1771069526;}*/ ?>
 <div class="card panel-intro">
     <div class="card-header">
         <div class="panel-lead"><em>订单管理</em> 管理工厂生产订单信息</div>
@@ -23,6 +23,16 @@
     var $ = window.jQuery;
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var $table = $('#table');
+    function fmtTime(v) {
+        if (v === null || v === undefined || v === '') return '';
+        var n = Number(v);
+        if (!isNaN(n) && isFinite(n)) {
+            return new Date((n > 1e12 ? n : n * 1000)).toLocaleString('zh-CN');
+        }
+        var s = String(v).trim();
+        var d = new Date(s.replace(' ', 'T'));
+        return isNaN(d.getTime()) ? s : d.toLocaleString('zh-CN');
+    }
     if (typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) {
         return;
     }
@@ -53,12 +63,8 @@
                 var classMap = {0: 'secondary', 1: 'primary', 2: 'success', 3: 'danger'};
                 return '<span class="badge badge-' + (classMap[value] || 'secondary') + '">' + (statusMap[value] || '未知') + '</span>';
             }},
-            {field: 'delivery_time', title: '交货时间', width: 180, formatter: function(value) {
-                return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
-            }},
-            {field: 'create_time', title: '创建时间', width: 180, formatter: function(value) {
-                return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
-            }},
+            {field: 'delivery_time', title: '交货时间', width: 180, formatter: fmtTime},
+            {field: 'create_time', title: '创建时间', width: 180, formatter: fmtTime},
             {field: 'operate', title: '操作', width: 150, events: {
                 'click .btn-edit': function(e, value, row) {
                     location.href = base + '/mes/order/edit?id=' + row.id;

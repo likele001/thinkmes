@@ -3,13 +3,27 @@
     var indexUrl = base + '/tenant/index';
     var editUrl = base + '/tenant/edit';
     var delUrl = base + '/tenant/del';
-
     var orderAddUrl = base + '/tenant_order/add';
+    var frontBase = window.location.origin || '';
     function statusFmt(v) { return v == 1 ? '<span class="badge badge-success">正常</span>' : '<span class="badge badge-danger">禁用</span>'; }
     function operFmt(v, row) {
         var html = '<a class="btn btn-xs btn-primary" href="' + editUrl + '?id=' + v + '">编辑</a> ';
         html += '<a class="btn btn-xs btn-info" href="' + orderAddUrl + '?tenant_id=' + v + '" title="创建订单"><i class="fas fa-shopping-cart"></i> 订单</a> ';
         html += '<button class="btn btn-xs btn-danger" data-id="' + v + '" type="button">删除</button>';
+        return html;
+    }
+
+    function portalFmt(v, row) {
+        var id = v || row.id || 0;
+        if (!id) {
+            return '-';
+        }
+        var loginUrl = frontBase + '/index/user/login?tenant_id=' + id;
+        var registerUrl = frontBase + '/index/user/login?tenant_id=' + id + '&tab=register';
+        var html = '<div class="text-left" style="min-width:200px;font-size:12px;line-height:1.6;">';
+        html += '<div>登录：<a href="' + loginUrl + '" target="_blank">' + loginUrl + '</a></div>';
+        html += '<div>注册：<a href="' + registerUrl + '" target="_blank">' + registerUrl + '</a></div>';
+        html += '</div>';
         return html;
     }
 
@@ -29,6 +43,7 @@
                     { field: 'package_name', title: '套餐' },
                     { field: 'expire_time_text', title: '到期' },
                     { field: 'admin_names', title: '管理员' },
+                    { field: 'id', title: '前端报工入口', formatter: portalFmt },
                     { field: 'status', title: '状态', formatter: statusFmt },
                     { field: 'id', title: '操作', formatter: operFmt }
                 ],

@@ -24,25 +24,21 @@ class TraceCodeModel extends Model
         'update_time'    => 'integer',
     ];
 
-    // 关联报工记录
     public function report()
     {
         return $this->belongsTo(ReportModel::class, 'report_id', 'id');
     }
 
-    // 关联分工分配
     public function allocation()
     {
         return $this->belongsTo(AllocationModel::class, 'allocation_id', 'id');
     }
 
-    // 关联订单
     public function order()
     {
         return $this->belongsTo(OrderModel::class, 'order_id', 'id');
     }
 
-    // 生成追溯码
     public static function generateTraceCode(): string
     {
         return 'TRACE' . date('YmdHis') . rand(10000, 99999);

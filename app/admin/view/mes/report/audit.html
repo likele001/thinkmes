@@ -1,0 +1,150 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">审核报工</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-audit" method="post" action="{$config.moduleurl}/mes/report/audit">
+            <input type="hidden" name="ids" value="{$ids|default=''}">
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>产品</th>
+                        <th>型号</th>
+                        <th>工序</th>
+                        <th>类型</th>
+                        <th>数量/工时</th>
+                        <th>工资</th>
+                        <th>报工时间</th>
+                        <th>图片</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {if $reports->isEmpty()}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">暂无报工记录</td>
+                    </tr>
+                    {else/}
+                    {volist name="reports" id="r"}
+                    <tr>
+                        <td>{$r.allocation.order.order_no|default=''}</td>
+                        <td>{$r.allocation.model.product.name|default=''}</td>
+                        <td>{$r.allocation.model.name|default=''}</td>
+                        <td>{$r.allocation.process.name|default=''}</td>
+                        <td>
+                            {if $r.work_type == 'piece'}
+                            <span class="badge badge-primary">计件</span>
+                            {else/}
+                            <span class="badge badge-info">计时</span>
+                            {/if}
+                        </td>
+                        <td>
+                            {if $r.work_type == 'piece'}
+                            {$r.quantity|default=0}
+                            {else/}
+                            {$r.work_hours|default=0}
+                            {/if}
+                        </td>
+                        <td>¥{$r.wage|default=0}</td>
+                        <td>
+                            {if $r.create_time}
+                            {:date('Y-m-d H:i:s', $r.create_time)}
+                            {/if}
+                        </td>
+                        <td>
+                            {php}
+                            $imgs = [];
+                            if (!empty($r['remark'])) {
+                                $tmp = json_decode($r['remark'], true);
+                                if (is_array($tmp)) {
+                                    if (isset($tmp['images']) && is_array($tmp['images'])) {
+                                        if (\think\helper\Arr::isAssoc($tmp['images'])) {
+                                            foreach ($tmp['images'] as $kv) {
+                                                if (is_array($kv)) {
+                                                    foreach ($kv as $u) {
+                                                        if ($u) $imgs[] = $u;
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            $imgs = $tmp['images'];
+                                        }
+                                    }
+                                }
+                            }
+                            {/php}
+                            {if empty($imgs)}
+                            <span class="text-muted">无</span>
+                            {else/}
+                            {foreach $imgs as $u}
+                            <a href="{$u}" target="_blank">
+                                <img src="{$u}" style="height:40px;border-radius:3px;margin-right:4px;margin-bottom:4px;">
+                            </a>
+                            {/foreach}
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {/if}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-group">
+                <label>审核结果</label>
+                <div>
+                    <label class="radio-inline mr-3">
+                        <input type="radio" name="status" value="1" {if $status=='1'}checked{/if}> 通过
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="status" value="2" {if $status=='2'}checked{/if}> 拒绝
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>质检结果</label>
+                <div>
+                    <label class="radio-inline mr-3">
+                        <input type="radio" name="quality_status" value="1" checked> 合格
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="quality_status" value="0"> 不合格
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>拒绝原因</label>
+                <textarea name="audit_reason" class="form-control" rows="2" placeholder="若选择拒绝，请填写拒绝原因"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>审核备注</label>
+                <textarea name="audit_notes" class="form-control" rows="2" placeholder="可选，补充说明"></textarea>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">提交审核</button>
+                <a href="{$config.moduleurl}/mes/report/index" class="btn btn-default">返回列表</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+$(function () {
+    $('#form-audit').on('submit', function (e) {
+        e.preventDefault();
+        var form = $(this);
+        $.post(form.attr('action'), form.serialize(), function (r) {
+            alert(r.msg || (r.code === 1 ? '操作成功' : '操作失败'));
+            if (r.code === 1) {
+                location.href = '{$config.moduleurl}/mes/report/index';
+            }
+        }, 'json');
+    });
+});
+</script>
+

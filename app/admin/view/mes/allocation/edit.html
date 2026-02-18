@@ -17,6 +17,12 @@
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-sm-2 col-form-label">产品型号</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" value="{$data.model.full_name|default=''}" disabled>
+                </div>
+            </div>
+            <div class="form-group row">
                 <label class="col-sm-2 col-form-label">工序 <span class="text-danger">*</span></label>
                 <div class="col-sm-6">
                     <select name="row[process_id]" class="form-control" id="process_id" required>
@@ -57,7 +63,7 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">备注</label>
                 <div class="col-sm-6">
-                    <textarea name="row[remark]" class="form-control" rows="3" placeholder="请输入备注">{$data.remark}</textarea>
+                    <textarea name="row[remark]" class="form-control" rows="3" placeholder="请输入备注">{$data.remark|default=''}</textarea>
                 </div>
             </div>
             <div class="form-group row">

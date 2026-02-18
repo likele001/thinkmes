@@ -19,6 +19,35 @@
         return html;
     }
 
+    function imageFmt(v, row) {
+        var remark = row.remark || '';
+        if (!remark) return '-';
+        var imgs = [];
+        try {
+            var obj = JSON.parse(remark);
+            if (obj && Array.isArray(obj.images)) {
+                imgs = obj.images;
+            } else if (obj && obj.images && typeof obj.images === 'object') {
+                Object.keys(obj.images).forEach(function (k) {
+                    var arr = obj.images[k] || [];
+                    if (Array.isArray(arr)) {
+                        arr.forEach(function (u) {
+                            if (u) imgs.push(u);
+                        });
+                    }
+                });
+            }
+        } catch (e) {}
+        if (!imgs.length) return '-';
+        var first = imgs[0];
+        var more = imgs.length - 1;
+        var html = '<a href="' + first + '" target="_blank"><img src="' + first + '" style="height:40px;border-radius:3px;"></a>';
+        if (more > 0) {
+            html += ' <span class="badge bg-secondary">+' + more + '</span>';
+        }
+        return html;
+    }
+
     var Controller = {
         index: function () {
             var $table = $('#table');
@@ -36,6 +65,7 @@
                     { field: 'work_type', title: '工作类型', width: 100 },
                     { field: 'quantity', title: '数量', width: 100 },
                     { field: 'work_hours', title: '工时', width: 100 },
+                    { field: 'remark', title: '图片', width: 140, formatter: imageFmt },
                     { field: 'wage', title: '工资', width: 100 },
                     { field: 'status', title: '状态', width: 100, formatter: statusFmt },
                     { field: 'create_time', title: '创建时间', width: 150 },

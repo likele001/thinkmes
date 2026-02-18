@@ -188,6 +188,11 @@ class Order extends Backend
             ->where('tenant_id', $tenantId)
             ->where('status', 1)
             ->select();
+        if ($models->isEmpty()) {
+            $models = ProductModelModel::with('product')
+                ->where('status', 1)
+                ->select();
+        }
         foreach ($models as $model) {
             $displayName = $model->product->name . ' - ' . $model->name;
             if ($model->model_code) {
@@ -229,15 +234,14 @@ class Order extends Backend
 
         if ($this->request->isPost()) {
             $params = $this->request->post('row/a');
-            $modelData = $this->request->post('models');
+            $modelData = $this->request->post('models/a');
 
-            if (empty($params) || empty($modelData)) {
+            if (empty($params)) {
                 return $this->error('参数不能为空');
             }
 
-            // 处理JSON格式的型号数据
-            if (is_string($modelData)) {
-                $modelData = json_decode($modelData, true);
+            if (empty($modelData)) {
+                return $this->error('型号数据不能为空');
             }
 
             // 如果选择了客户ID，自动填充客户信息
@@ -268,14 +272,19 @@ class Order extends Backend
                 // 保存新的订单型号
                 $totalQuantity = 0;
                 foreach ($modelData as $modelItem) {
-                    if (isset($modelItem['model_id']) && isset($modelItem['quantity']) && $modelItem['quantity'] > 0) {
+                    $mid = (int) ($modelItem['model_id'] ?? 0);
+                    $qty = (int) ($modelItem['quantity'] ?? 0);
+                    if ($mid > 0) {
+                        if ($qty <= 0) {
+                            $qty = 1;
+                        }
                         OrderModelModel::create([
                             'tenant_id' => $tenantId,
                             'order_id' => $ids,
-                            'model_id' => $modelItem['model_id'],
-                            'quantity' => $modelItem['quantity']
+                            'model_id' => $mid,
+                            'quantity' => $qty,
                         ]);
-                        $totalQuantity += $modelItem['quantity'];
+                        $totalQuantity += $qty;
                     }
                 }
 
@@ -286,16 +295,16 @@ class Order extends Backend
                 OrderMaterialModel::where('tenant_id', $tenantId)
                     ->where('order_id', $ids)
                     ->delete();
-                $this->calculateMaterialsWithCost($ids, $tenantId);
+                $this->calculateMaterialsWithCost((int) $ids, $tenantId);
 
                 // 自动检查库存并生成采购申请
-                $this->autoGeneratePurchaseRequests($ids, $tenantId);
+                $this->autoGeneratePurchaseRequests((int) $ids, $tenantId);
 
                 Db::commit();
                 return $this->success('编辑成功', ['id' => $row->id]);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 Db::rollback();
-                return $this->error('编辑失败');
+                return $this->error('编辑失败: ' . $e->getMessage());
             }
         }
 
@@ -305,6 +314,11 @@ class Order extends Backend
             ->where('tenant_id', $tenantId)
             ->where('status', 1)
             ->select();
+        if ($models->isEmpty()) {
+            $models = ProductModelModel::with('product')
+                ->where('status', 1)
+                ->select();
+        }
         foreach ($models as $model) {
             $displayName = $model->product->name . ' - ' . $model->name;
             if ($model->model_code) {

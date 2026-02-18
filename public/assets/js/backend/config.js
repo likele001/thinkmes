@@ -68,6 +68,23 @@
                                 '</select></div>' +
                                 '</div>'
                             );
+                        } else if (name === 'login_captcha') {
+                            var onOffOptions = [
+                                { value: '0', text: '关闭' },
+                                { value: '1', text: '开启' }
+                            ];
+                            var onOffHtml = onOffOptions.map(function (opt) {
+                                var selected2 = (value === opt.value) ? ' selected' : '';
+                                return '<option value="' + opt.value + '"' + selected2 + '>' + opt.text + '</option>';
+                            }).join('');
+                            $form.append(
+                                '<div class="form-group row mb-2">' +
+                                '<label class="col-sm-2 col-form-label" for="' + id + '">' + title + '</label>' +
+                                '<div class="col-sm-6"><select class="form-control" id="' + id + '" name="' + name + '" data-group="' + (row.group || group) + '">' +
+                                onOffHtml +
+                                '</select></div>' +
+                                '</div>'
+                            );
                         } else {
                             $form.append(
                                 '<div class="form-group row mb-2">' +

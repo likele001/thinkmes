@@ -29,3 +29,10 @@ Route::post('miniapp/bind', 'Miniapp/bind')->middleware(\app\api\middleware\User
 
 // C端用户：文件上传（需登录）
 Route::post('common/upload', 'Common/upload')->middleware(\app\api\middleware\UserAuth::class);
+
+// 员工报工相关接口（需登录，按租户隔离）
+Route::get('worker/dashboard', 'Worker/dashboard')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/taskInfo', 'Worker/taskInfo')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('worker/report', 'Worker/report')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/reports', 'Worker/reports')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/wages', 'Worker/wages')->middleware(\app\api\middleware\UserAuth::class);

@@ -1,4 +1,4 @@
-<?php /*a:1:{s:54:"/www/wwwroot/thinkmes/app/index/view/user/profile.html";i:1771112051;}*/ ?>
+<?php /*a:1:{s:54:"/www/wwwroot/thinkmes/app/index/view/user/profile.html";i:1771376677;}*/ ?>
 <div class="card">
   <div class="card-header">个人资料</div>
   <div class="card-body">
@@ -6,6 +6,10 @@
       <div class="form-group">
         <label class="control-label">用户名</label>
         <input type="text" class="form-control" id="username" disabled>
+      </div>
+      <div class="form-group">
+        <label class="control-label">所属企业</label>
+        <input type="text" class="form-control" id="tenant-name" disabled>
       </div>
       <div class="form-group">
         <label class="control-label">昵称</label>
@@ -32,6 +36,7 @@ $(function(){
       if(r.code===1){
         var u=r.data||{};
         $('#username').val(u.username||'');
+        $('#tenant-name').val(u.tenant_company_name||u.tenant_name||'-');
         $('#nickname').val(u.nickname||'');
         $('#introduction').val(u.introduction||'');
       }else{

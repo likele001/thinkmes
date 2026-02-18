@@ -31,6 +31,16 @@
                         <div class="input-group-text"><i class="fas fa-lock"></i></div>
                     </div>
                 </div>
+                {if isset($loginCaptchaOn) && $loginCaptchaOn}
+                <div class="input-group mb-3">
+                    <input type="text" name="captcha" class="form-control" placeholder="验证码" autocomplete="off">
+                    <div class="input-group-append">
+                        <span class="input-group-text p-0">
+                            <img src="{:url('index/captcha')}" class="captcha-img" alt="验证码" style="cursor:pointer;height:38px;border-radius:0 0.25rem 0.25rem 0;">
+                        </span>
+                    </div>
+                </div>
+                {/if}
                 <div class="row">
                     <div class="col-8">
                         <div class="icheck-primary">
@@ -50,18 +60,36 @@
 <script src="/assets/lib/jquery/jquery.min.js"></script>
 <script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
-$('#login-form').on('submit', function(e){
-    e.preventDefault();
-    var $f = $(this), $btn = $f.find('button[type=submit]');
-    $btn.prop('disabled', true);
-    $.post($f.attr('action'), $f.serialize(), function(res){
-        if(res.code === 1){
-            window.location.href = (res.data && res.data.url) ? res.data.url : (window.location.origin + '/admin/index/index');
-        } else {
-            alert(res.msg || '登录失败');
+function refreshAdminCaptcha() {
+    var $img = $('.captcha-img');
+    if ($img.length) {
+        var src = $img.attr('src').split('?')[0];
+        $img.attr('src', src + '?t=' + Date.now());
+    }
+}
+$(function(){
+    $('.captcha-img').on('click', function(){
+        refreshAdminCaptcha();
+    });
+    refreshAdminCaptcha();
+    $('#login-form').on('submit', function(e){
+        e.preventDefault();
+        var $f = $(this), $btn = $f.find('button[type=submit]');
+        $btn.prop('disabled', true);
+        $.post($f.attr('action'), $f.serialize(), function(res){
+            if(res.code === 1){
+                window.location.href = (res.data && res.data.url) ? res.data.url : (window.location.origin + '/admin/index/index');
+            } else {
+                alert(res.msg || '登录失败');
+                refreshAdminCaptcha();
+                $btn.prop('disabled', false);
+            }
+        }, 'json').fail(function(){
+            alert('请求失败');
+            refreshAdminCaptcha();
             $btn.prop('disabled', false);
-        }
-    }, 'json').fail(function(){ alert('请求失败'); $btn.prop('disabled', false); });
+        });
+    });
 });
 </script>
 </body>

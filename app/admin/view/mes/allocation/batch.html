@@ -10,11 +10,12 @@
                     <select name="order_id" class="form-control" id="order_id" required>
                         <option value="">请选择订单</option>
                         {volist name="orderList" id="vo"}
-                        <option value="{$key}">{$vo}</option>
+                        <option value="{$key}"{if isset($order_id) && $order_id == $key} selected{/if}>{$vo}</option>
                         {/volist}
                     </select>
                 </div>
             </div>
+            <input type="hidden" name="plan_id" id="plan_id" value="{$plan_id|default=''}">
             <div id="allocation-container" style="display: none;">
                 <div class="form-group row">
                     <div class="col-sm-12">
@@ -43,7 +44,7 @@
             </div>
             <div class="form-group row">
                 <div class="col-sm-8 offset-sm-2">
-                    <button type="submit" class="btn btn-primary">批量分配</button>
+                    <button type="button" id="btn-submit-batch" class="btn btn-primary">批量分配</button>
                     <a href="{$config.moduleurl}/mes/allocation/index" class="btn btn-default">返回</a>
                 </div>
             </div>
@@ -91,6 +92,11 @@
             }, 'json');
         });
         
+        var initialOrderId = $('#order_id').val();
+        if (initialOrderId) {
+            $('#order_id').trigger('change');
+        }
+        
         // 获取工序和员工列表（从页面中提取）
         {volist name="processList" id="vo"}
         processList[{$key}] = '{$vo}';
@@ -137,10 +143,9 @@
             $(this).closest('tr').remove();
         });
         
-        // 表单提交
+        // 点击按钮提交（避免表单submit触发其他全局事件导致提交两次）
         $('#form-batch').attr('action', base + '/mes/allocation/batch');
-        $('#form-batch').on('submit', function (e) {
-            e.preventDefault();
+        $('#btn-submit-batch').off('click').on('click', function () {
             var allocations = [];
             $('#allocation-tbody tr').each(function() {
                 var modelId = $(this).find('select[name*="[model_id]"]').val();
@@ -162,8 +167,9 @@
                 return;
             }
             
-            $.post($(this).attr('action'), {
+            $.post($('#form-batch').attr('action'), {
                 order_id: $('#order_id').val(),
+                plan_id: $('#plan_id').val(),
                 allocations: JSON.stringify(allocations)
             }, function (r) {
                 if (r && r.msg) {
