@@ -11,6 +11,7 @@ use app\admin\model\mes\TraceCodeModel;
 use app\admin\model\mes\WageModel;
 use app\admin\model\mes\StockLogModel;
 use app\admin\model\mes\ProductModelModel;
+use app\admin\model\mes\ReportMediaModel;
 use think\facade\Db;
 use think\facade\View;
 use think\Response;
@@ -41,7 +42,7 @@ class Report extends Backend
         $status = $this->request->get('status');
 
         $tenantId = $this->getTenantId();
-        $query = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process'])
+        $query = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'media'])
             ->order('id', 'desc');
         if ($tenantId > 0) {
             $query->where('tenant_id', $tenantId);
@@ -57,9 +58,31 @@ class Report extends Backend
         }
 
         $total = $query->count();
-        $list = $query->page($page, $limit)->select()->toArray();
+        $list = $query->page($page, $limit)->select();
 
-        return $this->success('', ['total' => $total, 'list' => $list]);
+        $rows = [];
+        foreach ($list as $report) {
+            $row = $report->toArray();
+            $images = [];
+            $videos = [];
+            if ($report->relationLoaded('media')) {
+                foreach ($report->media as $m) {
+                    if ($m['type'] === 'image') {
+                        $images[] = (string)$m['url'];
+                    } elseif ($m['type'] === 'video') {
+                        $videos[] = (string)$m['url'];
+                    }
+                }
+            }
+            $images = array_values(array_unique($images));
+            $videos = array_values(array_unique($videos));
+            $row['image_cover'] = $images ? $images[0] : '';
+            $row['image_count'] = count($images);
+            $row['video_count'] = count($videos);
+            $rows[] = $row;
+        }
+
+        return $this->success('', ['total' => $total, 'list' => $rows]);
     }
 
     /**
@@ -331,19 +354,39 @@ class Report extends Backend
     {
         $ids = $this->request->get('ids');
         $status = $this->request->get('status', '1');
-        
+
         if (empty($ids)) {
-            return $this->error('参数错误');
+            return $this->error('请选择要审核的记录');
+        }
+
+        $rawIds = $ids;
+        $idsArr = [];
+        if (is_array($rawIds)) {
+            $idsArr = $rawIds;
+        } elseif (is_string($rawIds)) {
+            $rawIds = trim($rawIds);
+            if ($rawIds !== '') {
+                if ($rawIds[0] === '[') {
+                    $tmp = json_decode($rawIds, true);
+                    if (is_array($tmp)) {
+                        $idsArr = $tmp;
+                    }
+                }
+                if (!$idsArr) {
+                    $idsArr = preg_split('/[^\d]+/', $rawIds, -1, PREG_SPLIT_NO_EMPTY);
+                }
+            }
+        }
+        $idsArr = array_values(array_unique(array_filter(array_map('intval', (array)$idsArr), function ($v) {
+            return $v > 0;
+        })));
+        if (empty($idsArr)) {
+            return $this->error('请选择要审核的记录');
         }
 
         $tenantId = $this->getTenantId();
-        $idsArr = is_array($ids) ? $ids : explode(',', $ids);
-        $idsArr = array_filter($idsArr, 'is_numeric');
-        if (empty($idsArr)) {
-            return $this->error('参数错误，ID必须为数字');
-        }
 
-        $reports = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'user'])
+        $reports = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'user', 'media'])
             ->where('tenant_id', $tenantId)
             ->whereIn('id', $idsArr)
             ->select();
@@ -363,8 +406,21 @@ class Report extends Backend
             $report->setAttr('worker_name', $workerName);
 
             $remark = (string)($report['remark'] ?? '');
-            $report->setAttr('image_urls', $this->extractReportImages($remark));
-            $report->setAttr('audit_videos', $this->extractReportVideos($remark));
+            $imageUrls = $this->extractReportImages($remark);
+            $videoUrls = $this->extractReportVideos($remark);
+            if ($report->relationLoaded('media')) {
+                foreach ($report->media as $m) {
+                    if ($m['type'] === 'image') {
+                        $imageUrls[] = (string)$m['url'];
+                    } elseif ($m['type'] === 'video') {
+                        $videoUrls[] = (string)$m['url'];
+                    }
+                }
+            }
+            $imageUrls = array_values(array_unique($imageUrls));
+            $videoUrls = array_values(array_unique($videoUrls));
+            $report->setAttr('image_urls', $imageUrls);
+            $report->setAttr('audit_videos', $videoUrls);
 
             $ct = $report['create_time'] ?? null;
             if ($ct) {
@@ -383,6 +439,108 @@ class Report extends Backend
         View::assign('status', $status);
         View::assign('title', '审核报工');
         return $this->fetchWithLayout('mes/report/audit');
+    }
+
+    /**
+     * 报工审核详情（只读）
+     */
+    public function detail(): string|Response
+    {
+        $ids = $this->request->get('ids');
+        if (empty($ids)) {
+            return $this->error('参数错误');
+        }
+
+        $rawIds = $ids;
+        $idsArr = [];
+        if (is_array($rawIds)) {
+            $idsArr = $rawIds;
+        } elseif (is_string($rawIds)) {
+            $rawIds = trim($rawIds);
+            if ($rawIds !== '') {
+                if ($rawIds[0] === '[') {
+                    $tmp = json_decode($rawIds, true);
+                    if (is_array($tmp)) {
+                        $idsArr = $tmp;
+                    }
+                }
+                if (!$idsArr) {
+                    $idsArr = preg_split('/[^\d]+/', $rawIds, -1, PREG_SPLIT_NO_EMPTY);
+                }
+            }
+        }
+        $idsArr = array_values(array_unique(array_filter(array_map('intval', (array)$idsArr), function ($v) {
+            return $v > 0;
+        })));
+        if (empty($idsArr)) {
+            return $this->error('参数错误');
+        }
+
+        $tenantId = $this->getTenantId();
+        $reports = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'user', 'media'])
+            ->where('tenant_id', $tenantId)
+            ->whereIn('id', $idsArr)
+            ->select();
+
+        $statusMap = [0 => '待审核', 1 => '已通过', 2 => '已拒绝'];
+        $qualityMap = [1 => '合格', 2 => '不合格', 0 => '不合格'];
+
+        foreach ($reports as $report) {
+            $workerName = '';
+            $user = $report->user;
+            if ($user) {
+                if (!empty($user['nickname'])) {
+                    $workerName = (string)$user['nickname'];
+                } elseif (!empty($user['username'])) {
+                    $workerName = (string)$user['username'];
+                } elseif (!empty($user['mobile'])) {
+                    $workerName = (string)$user['mobile'];
+                }
+            }
+            $report->setAttr('worker_name', $workerName);
+
+            $remark = (string)($report['remark'] ?? '');
+            $imageUrls = $this->extractReportImages($remark);
+            $videoUrls = $this->extractReportVideos($remark);
+            if ($report->relationLoaded('media')) {
+                foreach ($report->media as $m) {
+                    if ($m['type'] === 'image') {
+                        $imageUrls[] = (string)$m['url'];
+                    } elseif ($m['type'] === 'video') {
+                        $videoUrls[] = (string)$m['url'];
+                    }
+                }
+            }
+            $imageUrls = array_values(array_unique($imageUrls));
+            $videoUrls = array_values(array_unique($videoUrls));
+            $report->setAttr('image_urls', $imageUrls);
+            $report->setAttr('audit_videos', $videoUrls);
+
+            $ct = $report['create_time'] ?? null;
+            if ($ct) {
+                if (is_numeric($ct)) {
+                    $report->setAttr('create_time_text', date('Y-m-d H:i:s', (int)$ct));
+                } else {
+                    $report->setAttr('create_time_text', (string)$ct);
+                }
+            } else {
+                $report->setAttr('create_time_text', '');
+            }
+
+            $at = $report['audit_time'] ?? null;
+            if ($at) {
+                $report->setAttr('audit_time_text', date('Y-m-d H:i:s', (int)$at));
+            } else {
+                $report->setAttr('audit_time_text', '');
+            }
+
+            $report->setAttr('status_text', $statusMap[$report['status']] ?? '未知');
+            $report->setAttr('quality_text', $qualityMap[$report['quality_status']] ?? '');
+        }
+
+        View::assign('reports', $reports);
+        View::assign('title', '报工审核详情');
+        return $this->fetchWithLayout('mes/report/detail');
     }
 
     /**
@@ -423,7 +581,7 @@ class Report extends Backend
             }
         }
 
-        // 参数校验
+        // 参数校验与 ID 解析
         if (empty($ids) || !in_array((string)$status, ['1', '2']) || !in_array($qualityStatus, [0, 1])) {
             return $this->auditRespond(false, '参数错误：状态只能是1(通过)/2(拒绝)，质检状态只能是0(不合格)/1(合格)');
         }
@@ -433,12 +591,33 @@ class Report extends Backend
             return $this->auditRespond(false, '拒绝审核必须填写拒绝原因');
         }
 
-        $tenantId = $this->getTenantId();
-        $idsArr = is_array($ids) ? $ids : explode(',', $ids);
-        $idsArr = array_filter($idsArr, 'is_numeric'); // 过滤非数字ID
-        if (empty($idsArr)) {
-            return $this->auditRespond(false, '参数错误，ID必须为数字');
+        // 更宽松地解析 IDs，支持逗号分隔 / 数组 / JSON 字符串
+        $rawIds = $ids;
+        $idsArr = [];
+        if (is_array($rawIds)) {
+            $idsArr = $rawIds;
+        } elseif (is_string($rawIds)) {
+            $rawIds = trim($rawIds);
+            if ($rawIds !== '') {
+                if ($rawIds[0] === '[') {
+                    $tmp = json_decode($rawIds, true);
+                    if (is_array($tmp)) {
+                        $idsArr = $tmp;
+                    }
+                }
+                if (!$idsArr) {
+                    $idsArr = preg_split('/[^\d]+/', $rawIds, -1, PREG_SPLIT_NO_EMPTY);
+                }
+            }
         }
+        $idsArr = array_values(array_unique(array_filter(array_map('intval', (array)$idsArr), function ($v) {
+            return $v > 0;
+        })));
+        if (empty($idsArr)) {
+            return $this->auditRespond(false, '请选择要审核的记录');
+        }
+
+        $tenantId = $this->getTenantId();
 
         $adminId = $this->auth->id ?? 0;
         $success = 0;
@@ -464,43 +643,31 @@ class Report extends Backend
                 $report->quality_status = $qualityStatus;
 
                 if ($auditImages || $auditVideos) {
-                    $remarkRaw = (string) ($report->remark ?? '');
-                    $remarkArr = [];
-                    if ($remarkRaw !== '') {
-                        $tmpRemark = json_decode($remarkRaw, true);
-                        if (is_array($tmpRemark)) {
-                            $remarkArr = $tmpRemark;
-                        } else {
-                            $remarkArr['remark_raw'] = $remarkRaw;
+                    foreach ($auditImages as $u) {
+                        if (!$u) {
+                            continue;
                         }
+                        ReportMediaModel::create([
+                            'tenant_id'   => $tenantId,
+                            'report_id'   => $report->id,
+                            'type'        => 'image',
+                            'scene'       => 'audit',
+                            'url'         => (string)$u,
+                            'create_time' => time(),
+                        ]);
                     }
-
-                    if ($auditImages) {
-                        $cleanImgs = [];
-                        foreach ($auditImages as $u) {
-                            if ($u) {
-                                $cleanImgs[] = (string) $u;
-                            }
+                    foreach ($auditVideos as $u) {
+                        if (!$u) {
+                            continue;
                         }
-                        if ($cleanImgs) {
-                            $remarkArr['audit_images'] = $cleanImgs;
-                        }
-                    }
-
-                    if ($auditVideos) {
-                        $cleanVids = [];
-                        foreach ($auditVideos as $u) {
-                            if ($u) {
-                                $cleanVids[] = (string) $u;
-                            }
-                        }
-                        if ($cleanVids) {
-                            $remarkArr['audit_videos'] = $cleanVids;
-                        }
-                    }
-
-                    if ($remarkArr) {
-                        $report->remark = json_encode($remarkArr, JSON_UNESCAPED_UNICODE);
+                        ReportMediaModel::create([
+                            'tenant_id'   => $tenantId,
+                            'report_id'   => $report->id,
+                            'type'        => 'video',
+                            'scene'       => 'audit',
+                            'url'         => (string)$u,
+                            'create_time' => time(),
+                        ]);
                     }
                 }
 
@@ -519,11 +686,6 @@ class Report extends Backend
                             $adminId,
                             '完工入库：报工审核通过'
                         );
-                        
-                        // 更新工资记录状态为待发放
-                        WageModel::where('report_id', $report->id)
-                            ->where('tenant_id', $tenantId)
-                            ->update(['status' => 1]);
                     }
                 }
 
@@ -538,7 +700,7 @@ class Report extends Backend
             return $this->auditRespond(true, $msg);
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->auditRespond(false, '审核失败');
+            return $this->auditRespond(false, '审核失败：' . $e->getMessage());
         }
     }
 
@@ -655,23 +817,38 @@ class Report extends Backend
             if (isset($tmp['audit_videos']) && is_array($tmp['audit_videos'])) {
                 foreach ($tmp['audit_videos'] as $u) {
                     if ($u) {
-                        $videos[] = (string) $u;
+                        $videos[] = (string)$u;
                     }
                 }
             } elseif (isset($tmp['videos']) && is_array($tmp['videos'])) {
                 foreach ($tmp['videos'] as $u) {
                     if ($u) {
-                        $videos[] = (string) $u;
+                        $videos[] = (string)$u;
+                    }
+                }
+            } else {
+                foreach ($tmp as $k => $v) {
+                    if (stripos((string)$k, 'video') === false) {
+                        continue;
+                    }
+                    if (is_array($v)) {
+                        foreach ($v as $u) {
+                            if ($u) {
+                                $videos[] = (string)$u;
+                            }
+                        }
+                    } elseif ($v) {
+                        $videos[] = (string)$v;
                     }
                 }
             }
         }
 
         if (!$videos) {
-            if (preg_match_all('@https?://[^\s"\'<>]+@', $remark, $m)) {
+            if (preg_match_all('@(?:https?://|/)[^\s"\'<>]+\.(mp4|mov|m4v|webm|ogg|avi)(\?|#|$)@i', $remark, $m)) {
                 foreach ($m[0] as $u) {
-                    if ($u && preg_match('/\.(mp4|mov|m4v|webm|ogg|avi)(\?|#|$)/i', $u)) {
-                        $videos[] = (string) $u;
+                    if ($u) {
+                        $videos[] = (string)$u;
                     }
                 }
             }

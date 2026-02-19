@@ -94,6 +94,20 @@ Route::get('config/index', 'Config/index');
 Route::get('config/group', 'Config/group');
 Route::post('config/save', 'Config/save');
 
+// 插件管理
+Route::get('addon/index', 'Addon/index');
+Route::get('addon/detail', 'Addon/detail');
+Route::get('addon/config', 'Addon/config');
+Route::post('addon/install', 'Addon/install');
+Route::post('addon/uninstall', 'Addon/uninstall');
+Route::post('addon/enable', 'Addon/enable');
+Route::post('addon/disable', 'Addon/disable');
+
+// 云存储配置快捷入口
+Route::get('cloudstorage/index', function () {
+    return redirect((string) url('addon/config', ['name' => 'cloudstorage']));
+});
+
 // 操作日志
 Route::get('log/index', 'Log/index');
 Route::get('log/export', 'Log/export');
@@ -205,6 +219,7 @@ Route::group('mes', function () {
     Route::get('report/add', 'mes.Report/add');
     Route::get('report/edit', 'mes.Report/edit');
     Route::get('report/audit_page', 'mes.Report/audit_page');
+    Route::get('report/detail', 'mes.Report/detail');
     Route::get('report/index', 'mes.Report/index');
     Route::get('report', 'mes.Report/index');
     Route::post('report/add', 'mes.Report/add');

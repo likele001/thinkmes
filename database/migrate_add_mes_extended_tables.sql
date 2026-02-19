@@ -121,6 +121,21 @@ CREATE TABLE `fa_mes_trace_code` (
   KEY `idx_item_no` (`item_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='溯源码表';
 
+-- 报工图片/视频表
+DROP TABLE IF EXISTS `fa_mes_report_media`;
+CREATE TABLE `fa_mes_report_media` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `tenant_id` int unsigned NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `report_id` int unsigned NOT NULL DEFAULT 0 COMMENT '报工ID',
+  `type` varchar(20) NOT NULL DEFAULT 'image' COMMENT '类型：image图片 video视频',
+  `scene` varchar(20) NOT NULL DEFAULT 'report' COMMENT '场景：report报工 audit审核',
+  `url` varchar(255) NOT NULL DEFAULT '' COMMENT '媒体URL',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_tenant` (`tenant_id`),
+  KEY `idx_report` (`report_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报工图片视频表';
+
 -- 补充分工分配表字段（检查字段是否存在，不存在则添加）
 -- 注意：需要手动检查字段是否存在，这里提供ALTER语句
 -- ALTER TABLE `fa_mes_allocation` 

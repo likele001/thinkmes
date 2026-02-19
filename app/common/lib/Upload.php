@@ -12,12 +12,21 @@ class Upload
     /** @var int 单文件最大字节 */
     protected int $maxSize;
     /** @var array 允许扩展名 */
-    protected array $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip'];
+    protected array $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'mp4', 'mov', 'avi', 'wmv', 'mkv', 'flv'];
 
     public function __construct()
     {
         $conf = config('upload', []);
-        $this->maxSize = (int) ($conf['max_size'] ?? 2097152);
+        $dbMax = null;
+        try {
+            $val = Db::name('config')->where('name', 'upload_max_size')->value('value');
+            if ($val !== null && $val !== '') {
+                $dbMax = (int) $val;
+            }
+        } catch (\Throwable $e) {
+            $dbMax = null;
+        }
+        $this->maxSize = $dbMax && $dbMax > 0 ? $dbMax : (int) ($conf['max_size'] ?? 52428800);
     }
 
     /**
@@ -42,7 +51,6 @@ class Upload
         if (!in_array($ext, $this->allowedExt, true)) {
             return '不允许的文件类型';
         }
-        $dir = 'uploads/' . date('Ymd') . '/';
         $saveName = date('His') . '_' . uniqid() . '.' . $ext;
         $root = app()->getRootPath() . 'public/uploads/';
         $subDir = date('Ymd') . '/';
@@ -55,8 +63,8 @@ class Upload
             return '上传失败:' . $e->getMessage();
         }
         $path = $subDir . $saveName;
-        $url = $request->domain() . '/uploads/' . date('Ymd') . '/' . $saveName;
-        $storage = $this->isOss() ? 'oss' : 'local';
+        $storage = 'local';
+        $url = $request->domain() . '/uploads/' . $path;
         Db::name('upload')->insert([
             'admin_id' => $adminId,
             'url' => $url,
@@ -77,7 +85,18 @@ class Upload
         if (!$file || !$file->isValid()) {
             return '请选择分片文件';
         }
-        $chunkSize = (int) (config('upload.chunk_size') ?? 2097152);
+        $chunkSize = 0;
+        try {
+            $val = Db::name('config')->where('name', 'upload_chunk_size')->value('value');
+            if ($val !== null && $val !== '') {
+                $chunkSize = (int) $val;
+            }
+        } catch (\Throwable $e) {
+            $chunkSize = 0;
+        }
+        if ($chunkSize <= 0) {
+            $chunkSize = (int) (config('upload.chunk_size') ?? 2097152);
+        }
         if ($file->getSize() > $chunkSize * 2) {
             return '分片过大';
         }
@@ -141,15 +160,17 @@ class Upload
         if (is_dir($dir)) {
             @rmdir($dir);
         }
-        $url = $request->domain() . '/uploads/' . $subDir . $saveName;
+        $storage = 'local';
+        $path = $subDir . $saveName;
+        $url = $request->domain() . '/uploads/' . $path;
         Db::name('upload')->insert([
             'admin_id' => $adminId,
             'url' => $url,
             'size' => $size,
             'mime_type' => '',
-            'storage' => $this->isOss() ? 'oss' : 'local',
+            'storage' => $storage,
             'create_time' => time(),
         ]);
-        return ['url' => $url, 'path' => $subDir . $saveName];
+        return ['url' => $url, 'path' => $path];
     }
 }

@@ -1,0 +1,8 @@
+{
+    "name": "cloudstorage",
+    "title": "云存储插件",
+    "version": "1.0.0",
+    "description": "整合阿里云OSS、腾讯云COS、七牛云、又拍云等云存储服务，用于统一接管上传钩子。",
+    "hooks": ["upload_after"]
+}
+

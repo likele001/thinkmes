@@ -273,18 +273,23 @@ class Auth
 
         // 读取管理员当前拥有的权限节点
         $admin = Session::get('admin_info');
-        $userRule = $this->getRuleList((int) $admin['id']);
+        $adminId = (int) ($admin['id'] ?? 0);
+        $tenantId = (int) ($admin['tenant_id'] ?? 0);
+        $userRule = $this->getRuleList($adminId);
         $selected = $referer = [];
         $refererUrl = Session::get('referer');
         
         // 读取所有菜单项
         $ruleList = Db::name('auth_rule')->where('status', 1)->where('ismenu', 1)->order('sort', 'desc')->order('id')->select()->toArray();
         
-        // 过滤菜单项，只保留用户有权限的
+        // 过滤菜单项，只保留用户有权限的（平台租户不过滤，普通租户支持 * 通配）
         foreach ($ruleList as $k => &$v) {
-            if (!in_array(strtolower($v['name'] ?? ''), $userRule)) {
-                unset($ruleList[$k]);
-                continue;
+            if ($tenantId !== 0) {
+                $nameLower = strtolower($v['name'] ?? '');
+                if (!in_array('*', $userRule, true) && !in_array($nameLower, $userRule, true)) {
+                    unset($ruleList[$k]);
+                    continue;
+                }
             }
             $v['icon'] = ($v['icon'] ?? '') . ' fa-fw';
             $v['url'] = isset($v['url']) && $v['url'] ? $v['url'] : '/admin/' . ($v['name'] ?? '');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\admin\model\mes;
 
 use app\common\model\BaseModel as Model;
+use app\admin\model\mes\ReportMediaModel;
 
 /**
  * 报工模型
@@ -53,5 +54,13 @@ class ReportModel extends Model
     public function user()
     {
         return $this->belongsTo(\app\common\model\UserModel::class, 'user_id', 'id');
+    }
+
+    /**
+     * 关联报工媒体（图片/视频）
+     */
+    public function media()
+    {
+        return $this->hasMany(ReportMediaModel::class, 'report_id', 'id');
     }
 }

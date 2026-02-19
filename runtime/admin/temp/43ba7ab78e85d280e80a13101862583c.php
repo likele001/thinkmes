@@ -1,9 +1,51 @@
-<?php /*a:1:{s:58:"/www/wwwroot/thinkmes/app/admin/view/attachment/index.html";i:1769948916;}*/ ?>
+<?php /*a:1:{s:58:"/www/wwwroot/thinkmes/app/admin/view/attachment/index.html";i:1771478081;}*/ ?>
 <div class="card panel-intro">
     <div class="card-header">
         <div class="panel-lead"><em>文件管理</em> 上传附件列表与删除</div>
     </div>
     <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="card upload-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-cloud-upload-alt mr-2"></i>文件上传</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-area" id="fileUploadArea">
+                            <input type="file" id="fileInput" style="display:none;">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">点击或拖拽文件到此处上传</div>
+                            <div class="upload-note">支持常见图片、文档压缩包，单文件大小受系统限制。</div>
+                        </div>
+                        <div class="file-preview" id="filePreview">
+                            <div class="preview-card">
+                                <img src="" alt="预览图" class="preview-img d-none" id="filePreviewImg">
+                                <video controls class="preview-video d-none" id="filePreviewVideo"></video>
+                                <div class="preview-info">
+                                    <div class="preview-name" id="fileName"></div>
+                                    <div class="preview-size" id="fileSize"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="upload-progress" id="fileProgress">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" id="fileProgressBar" role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+                        </div>
+                        <div class="upload-actions" id="fileActions">
+                            <button type="button" class="btn btn-primary btn-sm" id="fileUploadBtn">
+                                <i class="fas fa-upload mr-1"></i>上传
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm ml-2" id="fileResetBtn">
+                                <i class="fas fa-times mr-1"></i>重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="toolbar" class="toolbar mb-2">
             <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
         </div>

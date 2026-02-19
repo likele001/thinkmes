@@ -73,10 +73,18 @@
             var li, a;
             if (hasChild) {
                 li = $('<li class="nav-item has-treeview"></li>');
+                var firstChild = it.children && it.children.length ? it.children[0] : null;
+                var childHref = firstChild && firstChild.url && firstChild.url !== '#' && firstChild.url !== 'javascript:;' ?
+                    firstChild.url :
+                    href;
+                var addtabsIdParent = (it.id ? ('m' + it.id) : ((it.name || '').replace(/[\/\.]/g, '_').replace(/^_+|_+$/g, '') || ('tab_' + Math.random().toString(36).slice(2, 8))));
                 a = $('<a href="#" class="nav-link"></a>').html(
                     '<i class="nav-icon ' + iconClass + '"></i>' +
                     '<p>' + title + '<i class="right fas fa-angle-left"></i></p>'
                 );
+                if (childHref && childHref !== '#' && childHref !== 'javascript:;') {
+                    a.attr('addtabs', addtabsIdParent).attr('url', childHref).attr('title', title);
+                }
                 li.append(a);
                 var sub = $('<ul class="nav nav-treeview"></ul>');
                 renderMenu(it.children, sub);
@@ -140,6 +148,22 @@
                 if (typeof $ !== 'undefined' && $.fn.tree) {
                     $menu.tree();
                 }
+                // 兼容有子菜单的一级导航：点击一级导航也能打开页面
+                $(document).off('click.faSidebarParent', '#menu-tree .has-treeview > a[addtabs]').on('click.faSidebarParent', '#menu-tree .has-treeview > a[addtabs]', function (e) {
+                    var $this = $(this);
+                    var url = $this.attr('url') || '';
+                    if (!url || url.indexOf('javascript:') === 0) {
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var id = $this.attr('addtabs') || ('tab_' + Math.random().toString(36).slice(2, 8));
+                    var title = $this.attr('title') || $.trim($this.text());
+                    var $tmp = $('<a href="#" style="display:none;"></a>').attr('addtabs', id).attr('url', url).attr('title', title);
+                    $('body').append($tmp);
+                    $tmp.trigger('click');
+                    $tmp.remove();
+                });
             } else {
                 fallbackMenu();
             }

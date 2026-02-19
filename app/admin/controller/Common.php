@@ -21,6 +21,7 @@ class Common extends Backend
         $upload = new Upload();
         $result = $upload->handle($this->request, $adminId);
         if (is_array($result) && isset($result['url'])) {
+            Hook::trigger('upload_after', [&$result]);
             return $this->success('上传成功', $result);
         }
         return $this->error(is_string($result) ? $result : '上传失败');
@@ -56,7 +57,7 @@ class Common extends Backend
         $upload = new Upload();
         $result = $upload->mergeChunks($this->request, $adminId);
         if (is_array($result) && isset($result['url'])) {
-            Hook::trigger('upload_after', [$result]);
+            Hook::trigger('upload_after', [&$result]);
             return $this->success('上传成功', $result);
         }
         return $this->error(is_string($result) ? $result : '合并失败');

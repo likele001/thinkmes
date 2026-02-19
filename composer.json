@@ -25,7 +25,11 @@
         "topthink/think-orm": "^3.0|^4.0",
         "topthink/think-filesystem": "^2.0|^3.0",
         "topthink/think-multi-app": "^1.1",
-        "topthink/think-view": "^2.0"
+        "topthink/think-view": "^2.0",
+        "aliyuncs/oss-sdk-php": "^2.7",
+        "qcloud/cos-sdk-v5": "^2.6",
+        "qiniu/php-sdk": "^7.14",
+        "upyun/sdk": "^2.2"
     },
     "require-dev": {
         "topthink/think-dumper": "^1.0",

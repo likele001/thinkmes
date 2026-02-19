@@ -131,7 +131,16 @@
             <div class="form-group">
                 <label>审核图片</label>
                 <div>
-                    <input type="file" id="audit-images-input" class="form-control" accept="image/*" multiple>
+                    <div class="upload-area border border-dashed rounded p-3 text-center mb-2"
+                         id="audit-images-area"
+                         style="border-style:dashed;cursor:pointer;background:#f8f9fa;">
+                        <input type="file" id="audit-images-input" accept="image/*" multiple style="display:none;">
+                        <div class="upload-icon mb-2">
+                            <i class="fas fa-image fa-2x text-muted"></i>
+                        </div>
+                        <div class="upload-text">点击或拖拽图片到此处上传</div>
+                        <div class="upload-note text-muted small">支持多张图片，建议用于质检说明</div>
+                    </div>
                     <input type="hidden" name="audit_images" id="audit-images">
                     <div id="audit-images-preview" class="mt-2 d-flex flex-wrap"></div>
                 </div>
@@ -140,7 +149,16 @@
             <div class="form-group">
                 <label>审核视频</label>
                 <div>
-                    <input type="file" id="audit-videos-input" class="form-control" accept="video/*" multiple>
+                    <div class="upload-area border border-dashed rounded p-3 text-center mb-2"
+                         id="audit-videos-area"
+                         style="border-style:dashed;cursor:pointer;background:#f8f9fa;">
+                        <input type="file" id="audit-videos-input" accept="video/*" multiple style="display:none;">
+                        <div class="upload-icon mb-2">
+                            <i class="fas fa-video fa-2x text-muted"></i>
+                        </div>
+                        <div class="upload-text">点击或拖拽视频到此处上传</div>
+                        <div class="upload-note text-muted small">支持多段短视频，便于记录质检过程</div>
+                    </div>
                     <input type="hidden" name="audit_videos" id="audit-videos">
                     <div id="audit-videos-preview" class="mt-2 d-flex flex-wrap"></div>
                 </div>

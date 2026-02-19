@@ -41,6 +41,26 @@
                             });
                         }
                     }
+                    if (group === 'upload') {
+                        var hasUploadMax = rows.some(function (r) { return r.name === 'upload_max_size'; });
+                        if (!hasUploadMax) {
+                            rows.push({
+                                name: 'upload_max_size',
+                                title: '上传文件大小限制（字节）',
+                                value: '52428800',
+                                group: 'upload'
+                            });
+                        }
+                        var hasChunkSize = rows.some(function (r) { return r.name === 'upload_chunk_size'; });
+                        if (!hasChunkSize) {
+                            rows.push({
+                                name: 'upload_chunk_size',
+                                title: '分片大小（字节）',
+                                value: '2097152',
+                                group: 'upload'
+                            });
+                        }
+                    }
                     if (!rows.length) {
                         $form.append('<p class="text-muted">暂无配置项，可执行 database/seed_config.sql 初始化。</p>');
                         return;

@@ -20,53 +20,21 @@
     }
 
     function imageFmt(v, row) {
-        var remark = row.remark || '';
-        if (!remark) return '-';
-        var imgs = [];
-        var videos = [];
-        try {
-            var obj = JSON.parse(remark);
-            if (obj) {
-                if (obj.images) {
-                    if (Array.isArray(obj.images)) {
-                        obj.images.forEach(function (u) {
-                            if (u) imgs.push(u);
-                        });
-                    } else if (typeof obj.images === 'object') {
-                        Object.keys(obj.images).forEach(function (k) {
-                            var arr = obj.images[k] || [];
-                            if (Array.isArray(arr)) {
-                                arr.forEach(function (u) {
-                                    if (u) imgs.push(u);
-                                });
-                            }
-                        });
-                    }
-                }
-                if (Array.isArray(obj.audit_images)) {
-                    obj.audit_images.forEach(function (u) {
-                        if (u) imgs.push(u);
-                    });
-                }
-                if (Array.isArray(obj.audit_videos)) {
-                    obj.audit_videos.forEach(function (u) {
-                        if (u) videos.push(u);
-                    });
-                }
-            }
-        } catch (e) {}
-        if (!imgs.length && !videos.length) return '-';
+        var cover = row.image_cover || '';
+        var imgCount = row.image_count || 0;
+        var videoCount = row.video_count || 0;
+        if (!cover && !videoCount) {
+            return '-';
+        }
         var html = '';
-        if (imgs.length) {
-            var first = imgs[0];
-            var more = imgs.length - 1;
-            html += '<a href="' + first + '" target="_blank"><img src="' + first + '" style="height:40px;border-radius:3px;"></a>';
-            if (more > 0) {
-                html += ' <span class="badge bg-secondary">图+' + more + '</span>';
+        if (cover) {
+            html += '<a href="' + cover + '" target="_blank"><img src="' + cover + '" style="height:40px;border-radius:3px;"></a>';
+            if (imgCount > 1) {
+                html += ' <span class="badge bg-secondary">图+' + (imgCount - 1) + '</span>';
             }
         }
-        if (videos.length) {
-            html += ' <span class="badge bg-info">视+' + videos.length + '</span>';
+        if (videoCount > 0) {
+            html += ' <span class="badge bg-info">视+' + videoCount + '</span>';
         }
         return html;
     }
@@ -88,7 +56,7 @@
                     { field: 'work_type', title: '工作类型', width: 100 },
                     { field: 'quantity', title: '数量', width: 100 },
                     { field: 'work_hours', title: '工时', width: 100 },
-                    { field: 'remark', title: '图片', width: 140, formatter: imageFmt },
+                    { field: 'image_cover', title: '图片', width: 140, formatter: imageFmt },
                     { field: 'wage', title: '工资', width: 100 },
                     { field: 'status', title: '状态', width: 100, formatter: statusFmt },
                     { field: 'create_time', title: '创建时间', width: 150 },
@@ -108,7 +76,7 @@
                 }, 'json');
             });
         },
-        audit: function () {
+        audit_page: function () {
             var form = $('#form-audit');
             if (!form.length) {
                 return;
@@ -121,6 +89,8 @@
             var videoHidden = $('#audit-videos');
             var imagePreview = $('#audit-images-preview');
             var videoPreview = $('#audit-videos-preview');
+            var imageArea = $('#audit-images-area');
+            var videoArea = $('#audit-videos-area');
 
             var auditImages = [];
             var auditVideos = [];
@@ -195,6 +165,62 @@
                             alert('上传失败');
                         }
                     });
+                });
+            }
+
+            if (imageArea.length) {
+                imageArea.on('click', function (e) {
+                    if (imageInput.length && e.target === imageInput[0]) {
+                        return;
+                    }
+                    imageInput.trigger('click');
+                });
+                imageArea.on('dragover', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    imageArea.addClass('drag-over');
+                });
+                imageArea.on('dragleave dragend', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    imageArea.removeClass('drag-over');
+                });
+                imageArea.on('drop', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    imageArea.removeClass('drag-over');
+                    var dt = e.originalEvent.dataTransfer;
+                    if (dt && dt.files) {
+                        uploadFiles(dt.files, 'image');
+                    }
+                });
+            }
+
+            if (videoArea.length) {
+                videoArea.on('click', function (e) {
+                    if (videoInput.length && e.target === videoInput[0]) {
+                        return;
+                    }
+                    videoInput.trigger('click');
+                });
+                videoArea.on('dragover', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    videoArea.addClass('drag-over');
+                });
+                videoArea.on('dragleave dragend', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    videoArea.removeClass('drag-over');
+                });
+                videoArea.on('drop', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    videoArea.removeClass('drag-over');
+                    var dt = e.originalEvent.dataTransfer;
+                    if (dt && dt.files) {
+                        uploadFiles(dt.files, 'video');
+                    }
                 });
             }
 

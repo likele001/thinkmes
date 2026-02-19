@@ -1,0 +1,152 @@
+<div class="card card-outline card-info">
+    <div class="card-header">
+        <h3 class="card-title">报工审核详情</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive mb-3">
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>订单号</th>
+                    <th>产品</th>
+                    <th>型号</th>
+                    <th>员工</th>
+                    <th>产品编号</th>
+                    <th>工序</th>
+                    <th>类型</th>
+                    <th>数量/工时</th>
+                    <th>工资</th>
+                    <th>报工时间</th>
+                    <th>审核状态</th>
+                    <th>质检结果</th>
+                </tr>
+                </thead>
+                <tbody>
+                {if $reports->isEmpty()}
+                <tr>
+                    <td colspan="12" class="text-center text-muted">暂无报工记录</td>
+                </tr>
+                {else/}
+                {volist name="reports" id="r"}
+                <tr>
+                    <td>{$r.allocation.order.order_no|default=''}</td>
+                    <td>{$r.allocation.model.product.name|default=''}</td>
+                    <td>{$r.allocation.model.name|default=''}</td>
+                    <td>{$r.worker_name|default=''}</td>
+                    <td>
+                        {php}
+                        $itemText = '';
+                        $rawNos = $r['item_nos'] ?? '';
+                        if ($rawNos) {
+                            $tmpNos = json_decode($rawNos, true);
+                            if (is_array($tmpNos)) {
+                                $itemText = implode('<br>', array_map('htmlspecialchars', $tmpNos));
+                            } else {
+                                $itemText = htmlspecialchars((string)$rawNos, ENT_QUOTES, 'UTF-8');
+                            }
+                        }
+                        echo $itemText ?: '-';
+                        {/php}
+                    </td>
+                    <td>{$r.allocation.process.name|default=''}</td>
+                    <td>
+                        {if $r.work_type == 'piece'}
+                        <span class="badge badge-primary">计件</span>
+                        {else/}
+                        <span class="badge badge-info">计时</span>
+                        {/if}
+                    </td>
+                    <td>
+                        {if $r.work_type == 'piece'}
+                        {$r.quantity|default=0}
+                        {else/}
+                        {$r.work_hours|default=0}
+                        {/if}
+                    </td>
+                    <td>¥{$r.wage|default=0}</td>
+                    <td>{$r.create_time_text|default=''}</td>
+                    <td>
+                        {if $r.status == 1}
+                        <span class="badge badge-success">已通过</span>
+                        {elseif $r.status == 2/}
+                        <span class="badge badge-danger">已拒绝</span>
+                        {else/}
+                        <span class="badge badge-warning">待审核</span>
+                        {/if}
+                    </td>
+                    <td>
+                        {if $r.quality_status == 1}
+                        <span class="badge badge-success">合格</span>
+                        {elseif $r.quality_status == 2/}
+                        <span class="badge badge-danger">不合格</span>
+                        {else/}
+                        <span class="badge badge-secondary">未质检</span>
+                        {/if}
+                    </td>
+                </tr>
+                {/volist}
+                {/if}
+                </tbody>
+            </table>
+        </div>
+
+        {if !$reports->isEmpty()}
+        {volist name="reports" id="r"}
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>审核信息（ID: {$r.id}）</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>审核状态：{$r.status_text|default=''}</p>
+                        <p>质检结果：{$r.quality_text|default=''}</p>
+                        <p>审核时间：{$r.audit_time_text|default=''}</p>
+                        <p>审核人ID：{$r.audit_user_id|default=0}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p>拒绝原因：{$r.audit_reason|default=''}</p>
+                        <p>审核备注：{$r.audit_notes|default=''}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>相关图片</label>
+                        <div>
+                            {if empty($r.image_urls)}
+                            <span class="text-muted">无</span>
+                            {else/}
+                            {foreach $r.image_urls as $u}
+                            <a href="{$u}" target="_blank">
+                                <img src="{$u}" style="height:60px;border-radius:3px;margin-right:4px;margin-bottom:4px;">
+                            </a>
+                            {/foreach}
+                            {/if}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label>相关视频</label>
+                        <div>
+                            {if empty($r.audit_videos)}
+                            <span class="text-muted">无</span>
+                            {else/}
+                            {foreach $r.audit_videos as $v}
+                            <video controls preload="metadata" style="width:200px;border-radius:4px;margin-right:8px;margin-bottom:8px;">
+                                <source src="{$v}">
+                            </video>
+                            {/foreach}
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {/volist}
+        {/if}
+
+        <div class="form-group">
+            <a href="{$config.moduleurl}/mes/report/index" class="btn btn-default">返回列表</a>
+        </div>
+    </div>
+</div>
+

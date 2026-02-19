@@ -19,10 +19,18 @@ class CheckAuth
         'admin/register/save',
     ];
     protected array $loginOnlyList = [
+        // 个人中心：任何已登录管理员可访问
         'admin/profile/index',
         'admin/profile/updateprofile',
         'profile/index',
         'profile/updateprofile',
+        // 通用上传接口：只要已登录即可使用（具体页面权限由业务控制）
+        'admin/common/upload',
+        'admin/common/uploadchunk',
+        'admin/common/mergechunks',
+        'common/upload',
+        'common/uploadchunk',
+        'common/mergechunks',
     ];
 
     public function handle(Request $request, Closure $next): Response

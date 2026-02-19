@@ -1,0 +1,57 @@
+<section class="content">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">插件配置 - {$name|default=''}</h3>
+        </div>
+        <div class="card-body">
+            <form id="form-addon-config" method="post" action="{:url('addon/config',['name'=>$name,'tenant_id'=>$tenantId])}">
+                {if condition="$name=='cloudstorage'"}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>配置作用租户</label>
+                            <select name="tenant_id" class="form-control">
+                                <option value="0" {if condition="$tenantId==0"}selected{/if}>平台默认</option>
+                            </select>
+                            <small class="form-text text-muted">不同租户可单独配置云存储，未配置时使用平台默认。</small>
+                        </div>
+                    </div>
+                </div>
+                {/if}
+                <div class="row">
+                    {if condition="!empty($schema)"}
+                    {volist name="schema" id="item"}
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>{$item.title|default=$item.name}</label>
+                            {php}$fieldName = $item['name'];$type = $item['type'] ?? 'text';$value = $values[$fieldName] ?? ($item['default'] ?? '');{/php}
+                            {if condition="$type=='select'"}
+                            <select name="config[{$fieldName}]" class="form-control">
+                                {volist name="item.options" id="opt"}
+                                <option value="{$opt.value}" {if condition="$opt.value==$value"}selected{/if}>{$opt.label}</option>
+                                {/volist}
+                            </select>
+                            {elseif condition="$type=='textarea'"/}
+                            <textarea name="config[{$fieldName}]" class="form-control" rows="4">{$value}</textarea>
+                            {else/}
+                            <input type="text" name="config[{$fieldName}]" value="{$value}" class="form-control">
+                            {/if}
+                            {if condition="!empty($item.description)"}
+                            <small class="form-text text-muted">{$item.description}</small>
+                            {/if}
+                        </div>
+                    </div>
+                    {/volist}
+                    {else/}
+                    <div class="col-12">
+                        <p class="text-muted mb-0">当前插件未定义配置项。</p>
+                    </div>
+                    {/if}
+                </div>
+                <div class="form-group mt-3">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>

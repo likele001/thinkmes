@@ -1,0 +1,21 @@
+<?php /*a:1:{s:57:"/www/wwwroot/thinkmes/app/admin/view/auth_rule/index.html";i:1770106100;}*/ ?>
+<div class="card panel-intro">
+    <div class="card-header">
+        <h5 class="mb-1">菜单规则</h5>
+        <p class="text-muted small mb-0">菜单规则通常对应一个控制器的方法，同时菜单栏数据也从规则中获取</p>
+    </div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <button type="button" class="btn btn-default btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i></button>
+            <a href="<?php echo url('auth_rule/add'); ?>" class="btn btn-success btn-add"><i class="fas fa-plus"></i> 添加</a>
+            <button type="button" class="btn btn-primary btn-edit" title="编辑选中"><i class="fas fa-edit"></i> 编辑</button>
+            <button type="button" class="btn btn-danger btn-del" title="删除选中"><i class="fas fa-trash-alt"></i> 删除</button>
+            <button type="button" class="btn btn-default btn-more" disabled title="更多"><i class="fas fa-ellipsis-h"></i> 更多</button>
+            <a href="<?php echo url('auth_rule/index'); ?>" class="btn btn-danger btn-showall"><i class="fas fa-list"></i> 显示全部</a>
+        </div>
+        <table id="tree-table" class="table table-bordered table-hover table-sm">
+            <thead><tr><th width="36"><input type="checkbox" id="check-all" title="全选"></th><th width="50">ID</th><th>标题</th><th width="80">图标</th><th>规则</th><th width="70">权重</th><th width="70">状态</th><th width="60">菜单</th><th width="200">操作</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>

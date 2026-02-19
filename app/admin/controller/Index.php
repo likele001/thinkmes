@@ -346,16 +346,20 @@ class Index extends Backend
 
         $auth = new Auth();
         $userRule = $auth->getRuleIds($adminId);
+        $tenantIdCur = $this->getTenantId();
         
         // 读取所有菜单项
         $model = new AuthRuleModel();
         $ruleList = $model->where('status', 1)->where('ismenu', 1)->order('sort', 'desc')->order('id')->select()->toArray();
         
-        // 过滤菜单项，只保留用户有权限的
+        // 过滤菜单项，只保留用户有权限的（平台租户不过滤，普通租户支持 * 通配）
         foreach ($ruleList as $k => &$v) {
-            if (!in_array(strtolower($v['name'] ?? ''), $userRule)) {
-                unset($ruleList[$k]);
-                continue;
+            if ($tenantIdCur !== 0) {
+                $nameLower = strtolower($v['name'] ?? '');
+                if (!in_array('*', $userRule, true) && !in_array($nameLower, $userRule, true)) {
+                    unset($ruleList[$k]);
+                    continue;
+                }
             }
             $v['icon'] = ($v['icon'] ?? '') . ' fa-fw';
             // URL生成：根据name生成正确的URL

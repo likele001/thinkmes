@@ -1,0 +1,38 @@
+<section class="content">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">插件详情</h3>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-2">名称</dt>
+                <dd class="col-sm-10">{$info.name|default=''}</dd>
+                <dt class="col-sm-2">标题</dt>
+                <dd class="col-sm-10">{$info.title|default=''}</dd>
+                <dt class="col-sm-2">版本</dt>
+                <dd class="col-sm-10">{$info.version|default=''}</dd>
+                <dt class="col-sm-2">描述</dt>
+                <dd class="col-sm-10">{$info.description|default=''}</dd>
+                <dt class="col-sm-2">钩子</dt>
+                <dd class="col-sm-10">
+                    {if condition="!empty($info.hooks)"}
+                    {volist name="info.hooks" id="h"}
+                    <span class="badge badge-info mr-1">{$h}</span>
+                    {/volist}
+                    {else/}
+                    <span class="text-muted">无</span>
+                    {/if}
+                </dd>
+                <dt class="col-sm-2">状态</dt>
+                <dd class="col-sm-10">
+                    {if condition="$info.enabled==1"}
+                    <span class="badge badge-success">已启用</span>
+                    {else/}
+                    <span class="badge badge-secondary">未启用</span>
+                    {/if}
+                </dd>
+            </dl>
+        </div>
+    </div>
+</section>
+
