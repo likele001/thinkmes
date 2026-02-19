@@ -1,10 +1,11 @@
+<?php /*a:1:{s:58:"/www/wwwroot/thinkmes/app/admin/view/mes/report/audit.html";i:1771463564;}*/ ?>
 <div class="card card-outline card-primary">
     <div class="card-header">
         <h3 class="card-title">审核报工</h3>
     </div>
     <div class="card-body">
-        <form id="form-audit" method="post" action="{$config.moduleurl}/mes/report/audit">
-            <input type="hidden" name="ids" value="{$ids|default=''}">
+        <form id="form-audit" method="post" action="<?php echo htmlentities((string) $config['moduleurl']); ?>/mes/report/audit">
+            <input type="hidden" name="ids" value="<?php echo htmlentities((string) (isset($ids) && ($ids !== '')?$ids:'')); ?>">
             <div class="table-responsive mb-3">
                 <table class="table table-bordered table-striped">
                     <thead>
@@ -24,19 +25,18 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {if $reports->isEmpty()}
+                    <?php if($reports->isEmpty()): ?>
                     <tr>
                         <td colspan="12" class="text-center text-muted">暂无报工记录</td>
                     </tr>
-                    {else/}
-                    {volist name="reports" id="r"}
+                    <?php else: if(is_array($reports) || $reports instanceof \think\Collection || $reports instanceof \think\Paginator): $i = 0; $__LIST__ = $reports;if( count($__LIST__)==0 ) : echo "" ;else: foreach($__LIST__ as $key=>$r): $mod = ($i % 2 );++$i;?>
                     <tr>
-                        <td>{$r.allocation.order.order_no|default=''}</td>
-                        <td>{$r.allocation.model.product.name|default=''}</td>
-                        <td>{$r.allocation.model.name|default=''}</td>
-                        <td>{$r.worker_name|default=''}</td>
+                        <td><?php echo htmlentities((string) (isset($r['allocation']['order']['order_no']) && ($r['allocation']['order']['order_no'] !== '')?$r['allocation']['order']['order_no']:'')); ?></td>
+                        <td><?php echo htmlentities((string) (isset($r['allocation']['model']['product']['name']) && ($r['allocation']['model']['product']['name'] !== '')?$r['allocation']['model']['product']['name']:'')); ?></td>
+                        <td><?php echo htmlentities((string) (isset($r['allocation']['model']['name']) && ($r['allocation']['model']['name'] !== '')?$r['allocation']['model']['name']:'')); ?></td>
+                        <td><?php echo htmlentities((string) (isset($r['worker_name']) && ($r['worker_name'] !== '')?$r['worker_name']:'')); ?></td>
                         <td>
-                            {php}
+                            <?php 
                             $itemText = '';
                             $rawNos = $r['item_nos'] ?? '';
                             if ($rawNos) {
@@ -48,48 +48,45 @@
                                 }
                             }
                             echo $itemText ?: '-';
-                            {/php}
+                             ?>
                         </td>
-                        <td>{$r.allocation.process.name|default=''}</td>
+                        <td><?php echo htmlentities((string) (isset($r['allocation']['process']['name']) && ($r['allocation']['process']['name'] !== '')?$r['allocation']['process']['name']:'')); ?></td>
                         <td>
-                            {if $r.work_type == 'piece'}
+                            <?php if($r['work_type'] == 'piece'): ?>
                             <span class="badge badge-primary">计件</span>
-                            {else/}
+                            <?php else: ?>
                             <span class="badge badge-info">计时</span>
-                            {/if}
+                            <?php endif; ?>
                         </td>
                         <td>
-                            {if $r.work_type == 'piece'}
-                            {$r.quantity|default=0}
-                            {else/}
-                            {$r.work_hours|default=0}
-                            {/if}
+                            <?php if($r['work_type'] == 'piece'): ?>
+                            <?php echo htmlentities((string) (isset($r['quantity']) && ($r['quantity'] !== '')?$r['quantity']:0)); else: ?>
+                            <?php echo htmlentities((string) (isset($r['work_hours']) && ($r['work_hours'] !== '')?$r['work_hours']:0)); ?>
+                            <?php endif; ?>
                         </td>
-                        <td>¥{$r.wage|default=0}</td>
-                        <td>{$r.create_time_text|default=''}</td>
+                        <td>¥<?php echo htmlentities((string) (isset($r['wage']) && ($r['wage'] !== '')?$r['wage']:0)); ?></td>
+                        <td><?php echo htmlentities((string) (isset($r['create_time_text']) && ($r['create_time_text'] !== '')?$r['create_time_text']:'')); ?></td>
                         <td>
-                            {if empty($r.image_urls)}
+                            <?php if(empty($r['image_urls'])): ?>
                             <span class="text-muted">无</span>
-                            {else/}
-                            {foreach $r.image_urls as $u}
-                            <a href="{$u}" target="_blank">
-                                <img src="{$u}" style="height:40px;border-radius:3px;margin-right:4px;margin-bottom:4px;">
+                            <?php else: foreach($r['image_urls'] as $u): ?>
+                            <a href="<?php echo htmlentities((string) $u); ?>" target="_blank">
+                                <img src="<?php echo htmlentities((string) $u); ?>" style="height:40px;border-radius:3px;margin-right:4px;margin-bottom:4px;">
                             </a>
-                            {/foreach}
-                            {/if}
+                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </td>
                         <td>
-                            {if empty($r.audit_videos)}
+                            <?php if(empty($r['audit_videos'])): ?>
                             <span class="text-muted">无</span>
-                            {else/}
-                            {foreach $r.audit_videos as $v}
-                            <a href="{$v}" target="_blank" class="btn btn-xs btn-outline-secondary mr-1">视频</a>
-                            {/foreach}
-                            {/if}
+                            <?php else: foreach($r['audit_videos'] as $v): ?>
+                            <a href="<?php echo htmlentities((string) $v); ?>" target="_blank" class="btn btn-xs btn-outline-secondary mr-1">视频</a>
+                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </td>
                     </tr>
-                    {/volist}
-                    {/if}
+                    <?php endforeach; endif; else: echo "" ;endif; ?>
+                    <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -98,10 +95,10 @@
                 <label>审核结果</label>
                 <div>
                     <label class="radio-inline mr-3">
-                        <input type="radio" name="status" value="1" {if $status=='1'}checked{/if}> 通过
+                        <input type="radio" name="status" value="1" <?php if($status=='1'): ?>checked<?php endif; ?>> 通过
                     </label>
                     <label class="radio-inline">
-                        <input type="radio" name="status" value="2" {if $status=='2'}checked{/if}> 拒绝
+                        <input type="radio" name="status" value="2" <?php if($status=='2'): ?>checked<?php endif; ?>> 拒绝
                     </label>
                 </div>
             </div>
@@ -148,7 +145,7 @@
 
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">提交审核</button>
-                <a href="{$config.moduleurl}/mes/report/index" class="btn btn-default">返回列表</a>
+                <a href="<?php echo htmlentities((string) $config['moduleurl']); ?>/mes/report/index" class="btn btn-default">返回列表</a>
             </div>
         </form>
     </div>

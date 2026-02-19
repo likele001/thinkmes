@@ -223,7 +223,8 @@ class Worker extends BaseController
             $itemNos = (array) $itemNos;
         }
 
-        $images = $this->request->post('images');
+        $rawImages = $this->request->post('images');
+        $images = $rawImages;
         if (is_string($images) && $images !== '') {
             $decoded = json_decode($images, true);
             if (is_array($decoded)) {
@@ -304,6 +305,9 @@ class Worker extends BaseController
 
         if ($images) {
             $data['remark'] = json_encode(['images' => $images], JSON_UNESCAPED_UNICODE);
+        } elseif (is_string($rawImages) && $rawImages !== '') {
+            // JSON解析失败但前端确实传了images参数时，至少保留原始字符串，避免remark为空
+            $data['remark'] = json_encode(['images_raw' => $rawImages], JSON_UNESCAPED_UNICODE);
         }
 
         Db::startTrans();

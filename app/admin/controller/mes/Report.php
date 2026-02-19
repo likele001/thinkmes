@@ -338,16 +338,45 @@ class Report extends Backend
 
         $tenantId = $this->getTenantId();
         $idsArr = is_array($ids) ? $ids : explode(',', $ids);
-        // 过滤非数字ID
         $idsArr = array_filter($idsArr, 'is_numeric');
         if (empty($idsArr)) {
             return $this->error('参数错误，ID必须为数字');
         }
 
-        $reports = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process'])
+        $reports = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'user'])
             ->where('tenant_id', $tenantId)
             ->whereIn('id', $idsArr)
             ->select();
+
+        foreach ($reports as $report) {
+            $workerName = '';
+            $user = $report->user;
+            if ($user) {
+                if (!empty($user['nickname'])) {
+                    $workerName = (string)$user['nickname'];
+                } elseif (!empty($user['username'])) {
+                    $workerName = (string)$user['username'];
+                } elseif (!empty($user['mobile'])) {
+                    $workerName = (string)$user['mobile'];
+                }
+            }
+            $report->setAttr('worker_name', $workerName);
+
+            $remark = (string)($report['remark'] ?? '');
+            $report->setAttr('image_urls', $this->extractReportImages($remark));
+            $report->setAttr('audit_videos', $this->extractReportVideos($remark));
+
+            $ct = $report['create_time'] ?? null;
+            if ($ct) {
+                if (is_numeric($ct)) {
+                    $report->setAttr('create_time_text', date('Y-m-d H:i:s', (int)$ct));
+                } else {
+                    $report->setAttr('create_time_text', (string)$ct);
+                }
+            } else {
+                $report->setAttr('create_time_text', '');
+            }
+        }
 
         View::assign('reports', $reports);
         View::assign('ids', implode(',', $idsArr));
@@ -362,7 +391,7 @@ class Report extends Backend
     public function audit(): Response
     {
         if (!$this->request->isPost()) {
-            return $this->error('非法请求');
+            return $this->auditRespond(false, '非法请求');
         }
 
         $ids = $this->request->post('ids');
@@ -371,21 +400,44 @@ class Report extends Backend
         $auditNotes = trim($this->request->post('audit_notes', ''));
         $qualityStatus = (int) $this->request->post('quality_status', 1);
 
+        $auditImagesRaw = $this->request->post('audit_images', '');
+        $auditVideosRaw = $this->request->post('audit_videos', '');
+
+        $auditImages = [];
+        if (is_array($auditImagesRaw)) {
+            $auditImages = $auditImagesRaw;
+        } elseif (is_string($auditImagesRaw) && $auditImagesRaw !== '') {
+            $tmp = json_decode($auditImagesRaw, true);
+            if (is_array($tmp)) {
+                $auditImages = $tmp;
+            }
+        }
+
+        $auditVideos = [];
+        if (is_array($auditVideosRaw)) {
+            $auditVideos = $auditVideosRaw;
+        } elseif (is_string($auditVideosRaw) && $auditVideosRaw !== '') {
+            $tmpv = json_decode($auditVideosRaw, true);
+            if (is_array($tmpv)) {
+                $auditVideos = $tmpv;
+            }
+        }
+
         // 参数校验
         if (empty($ids) || !in_array((string)$status, ['1', '2']) || !in_array($qualityStatus, [0, 1])) {
-            return $this->error('参数错误：状态只能是1(通过)/2(拒绝)，质检状态只能是0(不合格)/1(合格)');
+            return $this->auditRespond(false, '参数错误：状态只能是1(通过)/2(拒绝)，质检状态只能是0(不合格)/1(合格)');
         }
         $status = (int) $status;
         // 拒绝审核必须填写原因
         if ($status == 2 && empty($reason)) {
-            return $this->error('拒绝审核必须填写拒绝原因');
+            return $this->auditRespond(false, '拒绝审核必须填写拒绝原因');
         }
 
         $tenantId = $this->getTenantId();
         $idsArr = is_array($ids) ? $ids : explode(',', $ids);
         $idsArr = array_filter($idsArr, 'is_numeric'); // 过滤非数字ID
         if (empty($idsArr)) {
-            return $this->error('参数错误，ID必须为数字');
+            return $this->auditRespond(false, '参数错误，ID必须为数字');
         }
 
         $adminId = $this->auth->id ?? 0;
@@ -410,6 +462,48 @@ class Report extends Backend
                 $report->audit_reason = $reason;
                 $report->audit_notes = $auditNotes;
                 $report->quality_status = $qualityStatus;
+
+                if ($auditImages || $auditVideos) {
+                    $remarkRaw = (string) ($report->remark ?? '');
+                    $remarkArr = [];
+                    if ($remarkRaw !== '') {
+                        $tmpRemark = json_decode($remarkRaw, true);
+                        if (is_array($tmpRemark)) {
+                            $remarkArr = $tmpRemark;
+                        } else {
+                            $remarkArr['remark_raw'] = $remarkRaw;
+                        }
+                    }
+
+                    if ($auditImages) {
+                        $cleanImgs = [];
+                        foreach ($auditImages as $u) {
+                            if ($u) {
+                                $cleanImgs[] = (string) $u;
+                            }
+                        }
+                        if ($cleanImgs) {
+                            $remarkArr['audit_images'] = $cleanImgs;
+                        }
+                    }
+
+                    if ($auditVideos) {
+                        $cleanVids = [];
+                        foreach ($auditVideos as $u) {
+                            if ($u) {
+                                $cleanVids[] = (string) $u;
+                            }
+                        }
+                        if ($cleanVids) {
+                            $remarkArr['audit_videos'] = $cleanVids;
+                        }
+                    }
+
+                    if ($remarkArr) {
+                        $report->remark = json_encode($remarkArr, JSON_UNESCAPED_UNICODE);
+                    }
+                }
+
                 $report->save();
 
                 // 如果审核通过且质检合格，增加成品库存
@@ -441,10 +535,153 @@ class Report extends Backend
             if ($fail > 0) {
                 $msg .= "，失败：{$fail} 条（可能是记录不存在或已审核）";
             }
-            return $this->success($msg);
+            return $this->auditRespond(true, $msg);
         } catch (\Exception $e) {
             Db::rollback();
-            return $this->error('审核失败');
+            return $this->auditRespond(false, '审核失败');
         }
+    }
+
+    protected function auditRespond(bool $ok, string $msg): Response
+    {
+        if ($this->request->isAjax()) {
+            return $ok ? $this->success($msg) : $this->error($msg);
+        }
+
+        $base = rtrim($this->request->root(), '/');
+        if ($ok) {
+            $target = $base . '/mes/report/index';
+            $script = 'alert(' . json_encode($msg, JSON_UNESCAPED_UNICODE) . ');window.location.href=' . json_encode($target, JSON_UNESCAPED_UNICODE) . ';';
+        } else {
+            $script = 'alert(' . json_encode($msg, JSON_UNESCAPED_UNICODE) . ');window.history.back();';
+        }
+
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>审核结果</title></head><body><script>'
+            . $script
+            . '</script></body></html>';
+
+        return Response::create($html, 'html');
+    }
+
+    protected function extractReportImages(string $remark): array
+    {
+        $remark = trim($remark);
+        if ($remark === '') {
+            return [];
+        }
+
+        $rawRemark = $remark;
+        $imgs = [];
+
+        $tmp = json_decode($rawRemark, true);
+        if (is_array($tmp)) {
+            $imgSource = null;
+
+            if (isset($tmp['images']) && is_array($tmp['images'])) {
+                $imgSource = $tmp['images'];
+            } elseif (isset($tmp['images_raw'])) {
+                $raw = $tmp['images_raw'];
+                $inner = null;
+                if (is_string($raw)) {
+                    $inner = json_decode($raw, true);
+                    if (!is_array($inner)) {
+                        $rawDecoded = html_entity_decode($raw, ENT_QUOTES, 'UTF-8');
+                        $inner = json_decode($rawDecoded, true);
+                        if (!is_array($inner)) {
+                            $raw = $rawDecoded;
+                        }
+                    }
+                } elseif (is_array($raw)) {
+                    $inner = $raw;
+                }
+                if (is_array($inner)) {
+                    $imgSource = $inner;
+                }
+            } else {
+                $imgSource = $tmp;
+            }
+
+            if (!empty($imgSource)) {
+                if (\think\helper\Arr::isAssoc($imgSource)) {
+                    foreach ($imgSource as $kv) {
+                        if (is_array($kv)) {
+                            foreach ($kv as $u) {
+                                if ($u) {
+                                    $imgs[] = (string) $u;
+                                }
+                            }
+                        } elseif ($kv) {
+                            $imgs[] = (string) $kv;
+                        }
+                    }
+                } else {
+                    foreach ($imgSource as $u) {
+                        if ($u) {
+                            $imgs[] = (string) $u;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!$imgs) {
+            if (preg_match_all('@https?://[^\s"\'<>]+@', $rawRemark, $m)) {
+                foreach ($m[0] as $u) {
+                    if ($u) {
+                        $imgs[] = (string) $u;
+                    }
+                }
+            }
+        }
+
+        if (!$imgs) {
+            return [];
+        }
+
+        $imgs = array_values(array_unique($imgs));
+        return $imgs;
+    }
+
+    protected function extractReportVideos(string $remark): array
+    {
+        $remark = trim($remark);
+        if ($remark === '') {
+            return [];
+        }
+
+        $videos = [];
+        $tmp = json_decode($remark, true);
+        if (is_array($tmp)) {
+            if (isset($tmp['audit_videos']) && is_array($tmp['audit_videos'])) {
+                foreach ($tmp['audit_videos'] as $u) {
+                    if ($u) {
+                        $videos[] = (string) $u;
+                    }
+                }
+            } elseif (isset($tmp['videos']) && is_array($tmp['videos'])) {
+                foreach ($tmp['videos'] as $u) {
+                    if ($u) {
+                        $videos[] = (string) $u;
+                    }
+                }
+            }
+        }
+
+        if (!$videos) {
+            if (preg_match_all('@https?://[^\s"\'<>]+@', $remark, $m)) {
+                foreach ($m[0] as $u) {
+                    if ($u && preg_match('/\.(mp4|mov|m4v|webm|ogg|avi)(\?|#|$)/i', $u)) {
+                        $videos[] = (string) $u;
+                    }
+                }
+            }
+        }
+
+        if (!$videos) {
+            return [];
+        }
+
+        $videos = array_values(array_unique($videos));
+        return $videos;
     }
 }
