@@ -170,7 +170,7 @@
             $.post($('#form-batch').attr('action'), {
                 order_id: $('#order_id').val(),
                 plan_id: $('#plan_id').val(),
-                allocations: JSON.stringify(allocations)
+                allocations: allocations
             }, function (r) {
                 if (r && r.msg) {
                     alert(r.msg);

@@ -5,10 +5,10 @@
     <div class="card-body">
         <div class="row mb-3">
             <div class="col-md-4">
-                <input type="date" class="form-control" id="start_date" value="{php}echo date('Y-m-01');{/php}">
+                <input type="date" class="form-control" id="start_date" value="{$default_start|default=''}">
             </div>
             <div class="col-md-4">
-                <input type="date" class="form-control" id="end_date" value="{php}echo date('Y-m-d');{/php}">
+                <input type="date" class="form-control" id="end_date" value="{$default_end|default=''}">
             </div>
             <div class="col-md-4">
                 <button type="button" class="btn btn-primary" id="btn-query">查询</button>

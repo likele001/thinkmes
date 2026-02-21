@@ -1,0 +1,36 @@
+<view class="container" wx:if="{{info}}">
+  <view class="card">
+    <view class="task-name">{{info.product_name}} - {{info.model_name}}</view>
+    <view class="text-muted">{{info.order_name || info.order_no}} · {{info.process_name}}</view>
+    <view class="task-qty">待报 <text class="text-primary">{{info.pending_qty}}</text> / 分配 {{info.assign_qty}}</view>
+  </view>
+  <view class="card">
+    <view class="form-label">报工方式</view>
+    <radio-group bindchange="switchWorkType">
+      <label><radio value="piece" checked="{{workType==='piece'}}"/> 按件</label>
+      <label><radio value="hour" checked="{{workType==='hour'}}"/> 按工时</label>
+    </radio-group>
+  </view>
+  <view class="card" wx:if="{{workType==='piece' && info.item_nos && info.item_nos.length}}">
+    <view class="form-label">选择产品编号</view>
+    <view class="item-nos">
+      <view class="item-no {{selectedItems.indexOf(item)>=0 ? 'active' : ''}}" wx:for="{{info.item_nos}}" wx:key="*this" data-no="{{item}}" bindtap="toggleItem">{{item}}</view>
+    </view>
+  </view>
+  <view class="card" wx:if="{{workType==='hour'}}">
+    <view class="form-label">工时（小时）</view>
+    <input type="digit" placeholder="请输入工时" value="{{workHours}}" bindinput="inputHours"/>
+  </view>
+  <view class="card">
+    <view class="form-label">报工图片（选填）</view>
+    <view class="images">
+      <view class="img-wrap" wx:for="{{images}}" wx:key="*this">
+        <image src="{{item}}" mode="aspectFill" class="thumb"/>
+        <view class="del" data-idx="{{index}}" bindtap="removeImage">×</view>
+      </view>
+      <view class="add-img" wx:if="{{images.length < 3}}" bindtap="chooseImage">+ 添加</view>
+    </view>
+  </view>
+  <button class="btn-primary" loading="{{submitting}}" bindtap="submit">提交报工</button>
+</view>
+<view class="container" wx:else>加载中...</view>

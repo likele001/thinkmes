@@ -169,23 +169,24 @@
             }
 
             if (imageArea.length) {
-                imageArea.on('click', function (e) {
+                imageArea.off('.auditImages');
+                imageArea.on('click.auditImages', function (e) {
                     if (imageInput.length && e.target === imageInput[0]) {
                         return;
                     }
                     imageInput.trigger('click');
                 });
-                imageArea.on('dragover', function (e) {
+                imageArea.on('dragover.auditImages', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     imageArea.addClass('drag-over');
                 });
-                imageArea.on('dragleave dragend', function (e) {
+                imageArea.on('dragleave.auditImages dragend.auditImages', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     imageArea.removeClass('drag-over');
                 });
-                imageArea.on('drop', function (e) {
+                imageArea.on('drop.auditImages', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     imageArea.removeClass('drag-over');
@@ -197,23 +198,24 @@
             }
 
             if (videoArea.length) {
-                videoArea.on('click', function (e) {
+                videoArea.off('.auditVideos');
+                videoArea.on('click.auditVideos', function (e) {
                     if (videoInput.length && e.target === videoInput[0]) {
                         return;
                     }
                     videoInput.trigger('click');
                 });
-                videoArea.on('dragover', function (e) {
+                videoArea.on('dragover.auditVideos', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     videoArea.addClass('drag-over');
                 });
-                videoArea.on('dragleave dragend', function (e) {
+                videoArea.on('dragleave.auditVideos dragend.auditVideos', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     videoArea.removeClass('drag-over');
                 });
-                videoArea.on('drop', function (e) {
+                videoArea.on('drop.auditVideos', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     videoArea.removeClass('drag-over');

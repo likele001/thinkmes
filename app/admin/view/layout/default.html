@@ -74,11 +74,11 @@
         </div>
     </aside>
     <div class="content-wrapper">
-        <div class="content-header border-bottom bg-light py-2 px-3">
+        <div class="content-header border-bottom bg-light py-2 px-3 content-header-addtabs">
             <div class="d-flex align-items-center flex-nowrap">
-                <div class="dropdown mr-2">
-                    <button class="btn btn-danger btn-sm dropdown-toggle" type="button" data-toggle="dropdown"><i class="fas fa-times"></i> 关闭</button>
-                    <ul class="dropdown-menu">
+                <div class="dropdown mr-2" id="addtabs-close-dropdown">
+                    <button class="btn btn-danger btn-sm dropdown-toggle" type="button" id="addtabs-close-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-times"></i> 关闭</button>
+                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="addtabs-close-btn">
                         <li><a class="dropdown-item" href="javascript:;" data-addtabs-close="all"><i class="fas fa-times-circle mr-2"></i> 关闭全部</a></li>
                         <li><a class="dropdown-item" href="javascript:;" data-addtabs-close="other"><i class="fas fa-times mr-2"></i> 关闭其他</a></li>
                     </ul>
@@ -86,14 +86,12 @@
                 <ul class="nav nav-addtabs flex-nowrap overflow-auto flex-grow-1 mb-0" id="nav-addtabs" role="tablist" style="min-width:0;">
                     {if isset($fixedmenu) && $fixedmenu}
                     <li role="presentation" id="tab_{$fixedmenu.id}" class="{:isset($referermenu) && $referermenu ? '' : 'active'}">
-                        <a href="#con_{$fixedmenu.id}" node-id="{$fixedmenu.id}" aria-controls="{$fixedmenu.id}" role="tab" data-toggle="tab">{$fixedmenu.title|default='首页'}</a>
-                        <i class="close-tab fa fa-remove"></i>
+                        <a href="#con_{$fixedmenu.id}" node-id="{$fixedmenu.id}" aria-controls="{$fixedmenu.id}" role="tab" data-toggle="tab">{$fixedmenu.title|default='首页'} <i class="close-tab fa fa-remove" title="关闭"></i></a>
                     </li>
                     {/if}
                     {if isset($referermenu) && $referermenu}
                     <li role="presentation" id="tab_{$referermenu.id}" class="active">
-                        <a href="#con_{$referermenu.id}" node-id="{$referermenu.id}" aria-controls="{$referermenu.id}" role="tab" data-toggle="tab">{$referermenu.title|default=$referermenu.id}</a>
-                        <i class="close-tab fa fa-remove"></i>
+                        <a href="#con_{$referermenu.id}" node-id="{$referermenu.id}" aria-controls="{$referermenu.id}" role="tab" data-toggle="tab">{$referermenu.title|default=$referermenu.id} <i class="close-tab fa fa-remove" title="关闭"></i></a>
                     </li>
                     {/if}
                 </ul>

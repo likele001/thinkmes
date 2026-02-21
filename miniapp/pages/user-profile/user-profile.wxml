@@ -1,0 +1,14 @@
+<view class="container">
+  <view class="card" wx:if="{{userInfo}}">
+    <view class="profile-row">
+      <text class="label">昵称</text>
+      <text>{{userInfo.nickname || userInfo.username || '-'}}</text>
+    </view>
+  </view>
+  <view class="card">
+    <view class="menu-item" bindtap="goAdmin">进入管理端</view>
+  </view>
+  <view class="card">
+    <button class="btn-logout" bindtap="logout">退出登录</button>
+  </view>
+</view>

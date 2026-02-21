@@ -63,22 +63,70 @@ class Report extends Backend
         $rows = [];
         foreach ($list as $report) {
             $row = $report->toArray();
+
+            $orderNo = '';
+            $productName = '';
+            $modelName = '';
+            $itemNosText = '';
+
+            $allocation = $report->allocation;
+            if ($allocation) {
+                $order = $allocation->order;
+                if ($order) {
+                    $orderNo = (string) ($order['order_no'] ?? '');
+                }
+                $model = $allocation->model;
+                if ($model) {
+                    $modelName = (string) ($model['name'] ?? '');
+                    $product = $model->product;
+                    if ($product) {
+                        $productName = (string) ($product['name'] ?? '');
+                    }
+                }
+            }
+
+            $rawNos = $report['item_nos'] ?? '';
+            if ($rawNos) {
+                $tmpNos = json_decode((string) $rawNos, true);
+                if (is_array($tmpNos)) {
+                    $safeNos = [];
+                    foreach ($tmpNos as $n) {
+                        if ($n === '' || $n === null || $n === false) {
+                            continue;
+                        }
+                        $safeNos[] = (string) $n;
+                    }
+                    $itemNosText = implode(', ', $safeNos);
+                } else {
+                    $itemNosText = (string) $rawNos;
+                }
+            }
+
             $images = [];
             $videos = [];
-            if ($report->relationLoaded('media')) {
-                foreach ($report->media as $m) {
-                    if ($m['type'] === 'image') {
-                        $images[] = (string)$m['url'];
-                    } elseif ($m['type'] === 'video') {
-                        $videos[] = (string)$m['url'];
-                    }
+            $mediaList = $report->media ?? [];
+            foreach ($mediaList as $m) {
+                $url = $this->normalizeMediaUrl($m['url'] ?? '');
+                if (!$url) {
+                    continue;
+                }
+                if (($m['type'] ?? '') === 'image') {
+                    $images[] = $url;
+                } elseif (($m['type'] ?? '') === 'video') {
+                    $videos[] = $url;
                 }
             }
             $images = array_values(array_unique($images));
             $videos = array_values(array_unique($videos));
+
+            $row['order_no'] = $orderNo;
+            $row['product_name'] = $productName;
+            $row['model_name'] = $modelName;
+            $row['item_nos_text'] = $itemNosText;
             $row['image_cover'] = $images ? $images[0] : '';
             $row['image_count'] = count($images);
             $row['video_count'] = count($videos);
+
             $rows[] = $row;
         }
 
@@ -120,43 +168,40 @@ class Report extends Backend
             }
             
             $itemNos = $params['item_nos'] ?? [];
-            // 过滤item_nos中的空值
             if (is_array($itemNos)) {
-                $itemNos = array_filter($itemNos, function($item) {
+                $itemNos = array_filter($itemNos, function ($item) {
                     return $item !== '' && $item !== null && $item !== false;
                 });
-                $itemNos = array_values($itemNos); // 重置索引
+                $itemNos = array_values($itemNos);
             }
 
-            $data = [
-                'tenant_id' => $tenantId,
+            $baseData = [
+                'tenant_id'     => $tenantId,
                 'allocation_id' => $allocation->id,
-                'user_id' => $allocation->user_id,
-                'work_type' => $workType,
-                'remark' => trim($params['remark'] ?? ''),
-                'status' => 0, // 初始待审核状态
+                'user_id'       => $allocation->user_id,
+                'work_type'     => $workType,
+                'remark'        => trim($params['remark'] ?? ''),
+                'status'        => 0,
             ];
 
-            // 计件处理
-            if ($workType == 'piece') {
-                $quantity = is_array($itemNos) ? count($itemNos) : max(0, (int) $itemNos);
-                if ($quantity <= 0) {
+            $needQty = 0;
+            $workHours = 0.0;
+
+            if ($workType === 'piece') {
+                $qty = is_array($itemNos) ? count($itemNos) : max(0, (int) $itemNos);
+                if ($qty <= 0) {
                     return $this->error('计件数量必须大于0');
                 }
-                $data['quantity'] = $quantity;
-                $data['item_nos'] = is_array($itemNos) ? json_encode($itemNos, JSON_UNESCAPED_UNICODE) : $itemNos;
-                $data['wage'] = $quantity * $processPrice->price;
-            } 
-            // 计时处理
-            else {
+                $needQty = $qty;
+            } else {
                 $workHours = isset($params['work_hours']) ? (float) $params['work_hours'] : 0;
                 if ($workHours <= 0) {
                     return $this->error('计时工时必须大于0');
                 }
-                $data['work_hours'] = $workHours;
-                $data['wage'] = $workHours * $processPrice->time_price;
-                // 计时工时报工按工时折算数量（可根据业务调整折算规则）
-                $data['quantity'] = ceil($workHours / 1); // 示例：1小时=1件
+                $needQty = (int) ceil($workHours / 1);
+                $baseData['work_hours'] = $workHours;
+                $baseData['wage'] = $workHours * (float) $processPrice->time_price;
+                $baseData['quantity'] = $needQty;
             }
 
             $reportedQty = (int) Db::name('mes_report')
@@ -167,30 +212,83 @@ class Report extends Backend
             if ($remainingQty < 0) {
                 $remainingQty = 0;
             }
-            if (($data['quantity'] ?? 0) > $remainingQty) {
+            if ($needQty > $remainingQty) {
                 return $this->error(
                     '报工数量不能超过待报数量，已报：' . $reportedQty .
                     '，分配：' . (int) $allocation->quantity .
-                    '，本次报工：' . (int) $data['quantity']
+                    '，本次报工：' . (int) $needQty
                 );
             }
 
             Db::startTrans();
             try {
-                $report = ReportModel::create($data);
-                if ($workType === 'piece' && is_array($itemNos) && $itemNos) {
-                    TraceCodeModel::where('tenant_id', $tenantId)
-                        ->where('allocation_id', $allocation->id)
-                        ->whereIn('item_no', $itemNos)
-                        ->update([
-                            'report_id' => $report->id,
-                            'user_id' => $allocation->user_id,
-                            'update_time' => time(),
+                $totalQty = 0;
+                $lastReportId = 0;
+
+                if ($workType === 'piece') {
+                    $price = (float) $processPrice->price;
+                    foreach ((array) $itemNos as $no) {
+                        if ($no === '' || $no === null || $no === false) {
+                            continue;
+                        }
+                        $rowData = $baseData;
+                        $rowData['quantity'] = 1;
+                        $rowData['wage'] = $price;
+                        $rowData['item_nos'] = json_encode([(string) $no], JSON_UNESCAPED_UNICODE);
+                        $report = ReportModel::create($rowData);
+                        $lastReportId = (int) $report->id;
+
+                        TraceCodeModel::where('tenant_id', $tenantId)
+                            ->where('allocation_id', $allocation->id)
+                            ->whereIn('item_no', [(string) $no])
+                            ->update([
+                                'report_id'   => $report->id,
+                                'user_id'     => $allocation->user_id,
+                                'update_time' => time(),
+                            ]);
+
+                        WageModel::create([
+                            'tenant_id'     => $tenantId,
+                            'user_id'       => $allocation->user_id,
+                            'report_id'     => $report->id,
+                            'allocation_id' => $allocation->id,
+                            'work_type'     => $workType,
+                            'quantity'      => 1,
+                            'work_hours'    => 0,
+                            'unit_price'    => $price,
+                            'total_wage'    => $price,
+                            'work_date'     => date('Y-m-d'),
+                            'create_time'   => time(),
+                            'status'        => 0,
                         ]);
+
+                        $totalQty += 1;
+                    }
+                } else {
+                    $rowData = $baseData;
+                    $rowData['wage'] = $baseData['wage'] ?? ($workHours * (float) $processPrice->time_price);
+                    $report = ReportModel::create($rowData);
+                    $lastReportId = (int) $report->id;
+
+                    WageModel::create([
+                        'tenant_id'     => $tenantId,
+                        'user_id'       => $allocation->user_id,
+                        'report_id'     => $report->id,
+                        'allocation_id' => $allocation->id,
+                        'work_type'     => $workType,
+                        'quantity'      => $needQty,
+                        'work_hours'    => $workHours,
+                        'unit_price'    => (float) $processPrice->time_price,
+                        'total_wage'    => $rowData['wage'],
+                        'work_date'     => date('Y-m-d'),
+                        'create_time'   => time(),
+                        'status'        => 0,
+                    ]);
+
+                    $totalQty = $needQty;
                 }
 
-                // 更新分配完成数量
-                $allocation->completed_quantity += $data['quantity'];
+                $allocation->completed_quantity += $totalQty;
                 $allocation->completed_quantity = max(0, $allocation->completed_quantity); // 确保非负
                 if ($allocation->completed_quantity >= $allocation->quantity) {
                     $allocation->status = 2; // 已完成
@@ -199,24 +297,8 @@ class Report extends Backend
                 }
                 $allocation->save();
 
-                // 保存工资记录
-                WageModel::create([
-                    'tenant_id' => $tenantId,
-                    'user_id' => $allocation->user_id,
-                    'report_id' => $report->id,
-                    'allocation_id' => $allocation->id,
-                    'work_type' => $workType,
-                    'quantity' => $data['quantity'],
-                    'work_hours' => $data['work_hours'] ?? 0,
-                    'unit_price' => $workType == 'piece' ? $processPrice->price : $processPrice->time_price,
-                    'total_wage' => $data['wage'],
-                    'work_date' => date('Y-m-d'),
-                    'create_time' => time(),
-                    'status' => 0, // 待结算
-                ]);
-
                 Db::commit();
-                return $this->success('报工成功', ['id' => $report->id]);
+                return $this->success('报工成功', ['id' => $lastReportId]);
             } catch (\Exception $e) {
                 Db::rollback();
                 return $this->error('报工失败');
@@ -408,13 +490,16 @@ class Report extends Backend
             $remark = (string)($report['remark'] ?? '');
             $imageUrls = $this->extractReportImages($remark);
             $videoUrls = $this->extractReportVideos($remark);
-            if ($report->relationLoaded('media')) {
-                foreach ($report->media as $m) {
-                    if ($m['type'] === 'image') {
-                        $imageUrls[] = (string)$m['url'];
-                    } elseif ($m['type'] === 'video') {
-                        $videoUrls[] = (string)$m['url'];
-                    }
+            $mediaList = $report->media ?? [];
+            foreach ($mediaList as $m) {
+                $url = $this->normalizeMediaUrl($m['url'] ?? '');
+                if (!$url) {
+                    continue;
+                }
+                if (($m['type'] ?? '') === 'image') {
+                    $imageUrls[] = $url;
+                } elseif (($m['type'] ?? '') === 'video' && (($m['scene'] ?? '') === 'audit' || ($m['scene'] ?? '') === '')) {
+                    $videoUrls[] = $url;
                 }
             }
             $imageUrls = array_values(array_unique($imageUrls));
@@ -432,6 +517,7 @@ class Report extends Backend
             } else {
                 $report->setAttr('create_time_text', '');
             }
+            $report->setAttr('item_nos_display', $this->formatItemNosForDisplay($report['item_nos'] ?? ''));
         }
 
         View::assign('reports', $reports);
@@ -502,13 +588,16 @@ class Report extends Backend
             $remark = (string)($report['remark'] ?? '');
             $imageUrls = $this->extractReportImages($remark);
             $videoUrls = $this->extractReportVideos($remark);
-            if ($report->relationLoaded('media')) {
-                foreach ($report->media as $m) {
-                    if ($m['type'] === 'image') {
-                        $imageUrls[] = (string)$m['url'];
-                    } elseif ($m['type'] === 'video') {
-                        $videoUrls[] = (string)$m['url'];
-                    }
+            $mediaList = $report->media ?? [];
+            foreach ($mediaList as $m) {
+                $url = $this->normalizeMediaUrl($m['url'] ?? '');
+                if (!$url) {
+                    continue;
+                }
+                if (($m['type'] ?? '') === 'image') {
+                    $imageUrls[] = $url;
+                } elseif (($m['type'] ?? '') === 'video' && (($m['scene'] ?? '') === 'audit' || ($m['scene'] ?? '') === '')) {
+                    $videoUrls[] = $url;
                 }
             }
             $imageUrls = array_values(array_unique($imageUrls));
@@ -536,11 +625,30 @@ class Report extends Backend
 
             $report->setAttr('status_text', $statusMap[$report['status']] ?? '未知');
             $report->setAttr('quality_text', $qualityMap[$report['quality_status']] ?? '');
+            $report->setAttr('item_nos_display', $this->formatItemNosForDisplay($report['item_nos'] ?? ''));
         }
 
         View::assign('reports', $reports);
         View::assign('title', '报工审核详情');
         return $this->fetchWithLayout('mes/report/detail');
+    }
+
+    /**
+     * 将 item_nos（JSON 或字符串）格式化为模板可安全输出的显示文本（用 <br> 分隔）
+     */
+    protected function formatItemNosForDisplay(string $rawNos): string
+    {
+        if ($rawNos === '') {
+            return '';
+        }
+        $tmpNos = json_decode($rawNos, true);
+        if (is_array($tmpNos)) {
+            $parts = array_map(function ($v) {
+                return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+            }, $tmpNos);
+            return implode('<br>', $parts);
+        }
+        return htmlspecialchars($rawNos, ENT_QUOTES, 'UTF-8');
     }
 
     /**
@@ -568,6 +676,13 @@ class Report extends Backend
             $tmp = json_decode($auditImagesRaw, true);
             if (is_array($tmp)) {
                 $auditImages = $tmp;
+            } else {
+                $parts = preg_split('/[\s,]+/', $auditImagesRaw, -1, PREG_SPLIT_NO_EMPTY);
+                if ($parts) {
+                    foreach ($parts as $u) {
+                        $auditImages[] = (string) $u;
+                    }
+                }
             }
         }
 
@@ -578,6 +693,13 @@ class Report extends Backend
             $tmpv = json_decode($auditVideosRaw, true);
             if (is_array($tmpv)) {
                 $auditVideos = $tmpv;
+            } else {
+                $parts = preg_split('/[\s,]+/', $auditVideosRaw, -1, PREG_SPLIT_NO_EMPTY);
+                if ($parts) {
+                    foreach ($parts as $u) {
+                        $auditVideos[] = (string) $u;
+                    }
+                }
             }
         }
 
@@ -644,7 +766,8 @@ class Report extends Backend
 
                 if ($auditImages || $auditVideos) {
                     foreach ($auditImages as $u) {
-                        if (!$u) {
+                        $url = $this->normalizeMediaUrl($u);
+                        if (!$url) {
                             continue;
                         }
                         ReportMediaModel::create([
@@ -652,12 +775,13 @@ class Report extends Backend
                             'report_id'   => $report->id,
                             'type'        => 'image',
                             'scene'       => 'audit',
-                            'url'         => (string)$u,
+                            'url'         => $url,
                             'create_time' => time(),
                         ]);
                     }
                     foreach ($auditVideos as $u) {
-                        if (!$u) {
+                        $url = $this->normalizeMediaUrl($u);
+                        if (!$url) {
                             continue;
                         }
                         ReportMediaModel::create([
@@ -665,7 +789,7 @@ class Report extends Backend
                             'report_id'   => $report->id,
                             'type'        => 'video',
                             'scene'       => 'audit',
-                            'url'         => (string)$u,
+                            'url'         => $url,
                             'create_time' => time(),
                         ]);
                     }
@@ -673,19 +797,60 @@ class Report extends Backend
 
                 $report->save();
 
-                // 如果审核通过且质检合格，增加成品库存
-                if ($status == 1 && $qualityStatus == 1 && $report->quantity > 0) {
+                $allocation = null;
+                if ($status == 1 && $qualityStatus == 1) {
                     $allocation = AllocationModel::where('tenant_id', $tenantId)->find($report->allocation_id);
-                    if ($allocation && $allocation->model_id > 0) {
+                    if ($allocation && $report->quantity > 0 && $allocation->model_id > 0) {
                         StockLogModel::logProduct(
                             $tenantId,
-                            (int)$allocation->model_id,
-                            (float)$report->quantity,
+                            (int) $allocation->model_id,
+                            (float) $report->quantity,
                             'production_in',
                             $report->id,
                             $adminId,
                             '完工入库：报工审核通过'
                         );
+                    }
+
+                    if ($allocation && $report->work_type === 'piece') {
+                        $existsTrace = TraceCodeModel::where('tenant_id', $tenantId)
+                            ->where('report_id', $report->id)
+                            ->find();
+                        if (!$existsTrace) {
+                            $traceCode = TraceCodeModel::generateTraceCode();
+                            $domain = $this->request->domain();
+                            $qrUrl = $domain . '/index/trace/query?code=' . $traceCode;
+
+                            $itemNo = '';
+                            $rawNos = $report->item_nos ?? '';
+                            if (is_string($rawNos) && $rawNos !== '') {
+                                $tmpNos = json_decode($rawNos, true);
+                                if (is_array($tmpNos) && $tmpNos) {
+                                    $first = reset($tmpNos);
+                                    if ($first !== '' && $first !== null && $first !== false) {
+                                        $itemNo = (string) $first;
+                                    }
+                                } else {
+                                    $itemNo = $rawNos;
+                                }
+                            }
+
+                            TraceCodeModel::create([
+                                'tenant_id'    => $tenantId,
+                                'trace_code'   => $traceCode,
+                                'report_id'    => $report->id,
+                                'allocation_id'=> $allocation->id ?? 0,
+                                'order_id'     => $allocation->order_id ?? 0,
+                                'model_id'     => $allocation->model_id ?? 0,
+                                'process_id'   => $allocation->process_id ?? 0,
+                                'user_id'      => $report->user_id,
+                                'item_no'      => $itemNo,
+                                'qrcode_url'   => $qrUrl,
+                                'status'       => 1,
+                                'create_time'  => time(),
+                                'update_time'  => time(),
+                            ]);
+                        }
                     }
                 }
 
@@ -723,6 +888,70 @@ class Report extends Backend
             . '</script></body></html>';
 
         return Response::create($html, 'html');
+    }
+
+    protected function normalizeMediaUrl($val): string
+    {
+        if (is_array($val)) {
+            $flat = [];
+            foreach ($val as $v) {
+                if (is_array($v)) {
+                    foreach ($v as $vv) {
+                        if ($vv !== '' && $vv !== null && $vv !== false) {
+                            $flat[] = (string) $vv;
+                        }
+                    }
+                } elseif ($v !== '' && $v !== null && $v !== false) {
+                    $flat[] = (string) $v;
+                }
+            }
+            if ($flat) {
+                return $flat[0];
+            }
+            return '';
+        }
+
+        $url = trim((string) $val);
+        if ($url === '') {
+            return '';
+        }
+
+        $decoded = html_entity_decode($url, ENT_QUOTES, 'UTF-8');
+        if ($decoded !== '' && $decoded !== $url) {
+            $url = $decoded;
+        }
+
+        $url = trim($url, " \t\n\r\0\x0B\"'");
+
+        $first = $url[0] ?? '';
+        if ($first === '[' || $first === '{') {
+            $tmp = json_decode($url, true);
+            if (is_array($tmp)) {
+                $flat = [];
+                foreach ($tmp as $v) {
+                    if (is_array($v)) {
+                        foreach ($v as $vv) {
+                            if ($vv !== '' && $vv !== null && $vv !== false) {
+                                $flat[] = (string) $vv;
+                            }
+                        }
+                    } elseif ($v !== '' && $v !== null && $v !== false) {
+                        $flat[] = (string) $v;
+                    }
+                }
+                if ($flat) {
+                    return $flat[0];
+                }
+            } elseif (is_string($tmp) && $tmp !== '') {
+                return trim($tmp);
+            }
+        }
+
+        if (preg_match('@https?://[^\s"\'<>]+@', $url, $m)) {
+            return $m[0];
+        }
+
+        return $url;
     }
 
     protected function extractReportImages(string $remark): array
@@ -860,5 +1089,26 @@ class Report extends Backend
 
         $videos = array_values(array_unique($videos));
         return $videos;
+    }
+
+    /**
+     * 一键修复报工媒体URL（去除多余JSON/HTML转义，只留纯URL）
+     * 仅限当前租户，访问一次即可；后续新数据在写入时已自动清洗
+     */
+    public function fixMediaUrl(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $list = ReportMediaModel::where('tenant_id', $tenantId)->select();
+        $fixed = 0;
+        foreach ($list as $media) {
+            $old = (string) ($media['url'] ?? '');
+            $new = $this->normalizeMediaUrl($old);
+            if ($new !== '' && $new !== $old) {
+                $media->url = $new;
+                $media->save();
+                $fixed++;
+            }
+        }
+        return $this->success('媒体URL修复完成，共处理 ' . $fixed . ' 条');
     }
 }

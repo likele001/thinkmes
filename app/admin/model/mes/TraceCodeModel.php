@@ -11,10 +11,12 @@ class TraceCodeModel extends Model
     
     protected $type = [
         'tenant_id'      => 'integer',
+        'code_type'      => 'integer',
         'report_id'      => 'integer',
         'allocation_id'  => 'integer',
         'order_id'       => 'integer',
         'model_id'       => 'integer',
+        'route_id'       => 'integer',
         'process_id'     => 'integer',
         'user_id'        => 'integer',
         'scan_count'     => 'integer',
@@ -37,6 +39,16 @@ class TraceCodeModel extends Model
     public function order()
     {
         return $this->belongsTo(OrderModel::class, 'order_id', 'id');
+    }
+
+    public function model()
+    {
+        return $this->belongsTo(ProductModelModel::class, 'model_id', 'id');
+    }
+
+    public function process()
+    {
+        return $this->belongsTo(ProcessModel::class, 'process_id', 'id');
     }
 
     public static function generateTraceCode(): string

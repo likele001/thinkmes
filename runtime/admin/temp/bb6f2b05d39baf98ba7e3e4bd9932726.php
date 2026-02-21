@@ -1,4 +1,4 @@
-<?php /*a:1:{s:58:"/www/wwwroot/thinkmes/app/admin/view/mes/report/index.html";i:1771493554;}*/ ?>
+<?php /*a:1:{s:58:"/www/wwwroot/thinkmes/app/admin/view/mes/report/index.html";i:1771559328;}*/ ?>
 <div class="card panel-intro">
     <div class="card-header">
         <div class="panel-lead"><em>报工管理</em> 管理生产报工记录</div>
@@ -69,8 +69,10 @@
             columns: [
                 {field: 'state', checkbox: true, width: 40},
                 {field: 'id', title: 'ID', width: 80, sortable: true},
-                {field: 'allocation.order.order_no', title: '订单号', align: 'left'},
-                {field: 'allocation.model.product.name', title: '产品', align: 'left'},
+                {field: 'order_no', title: '订单号', align: 'left'},
+                {field: 'product_name', title: '产品', align: 'left'},
+                {field: 'model_name', title: '型号', align: 'left'},
+                {field: 'item_nos_text', title: '编号', align: 'left'},
                 {field: 'allocation.process.name', title: '工序', align: 'left'},
                 {field: 'work_type', title: '工作类型', width: 100, formatter: function(value) {
                     return value == 'piece' ? '<span class="badge badge-primary">计件</span>' : '<span class="badge badge-info">计时</span>';

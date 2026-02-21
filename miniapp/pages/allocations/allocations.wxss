@@ -1,0 +1,2 @@
+.title { font-weight: bold; margin-bottom: 8rpx; }
+.empty, .no-more { text-align: center; color: #999; padding: 32rpx; }

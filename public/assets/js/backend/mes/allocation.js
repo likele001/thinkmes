@@ -25,6 +25,16 @@
             '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
     }
 
+    function modelFmt(value, row) {
+        var model = row.model || {};
+        var name = model.name || '';
+        var code = model.model_code || '';
+        if (code) {
+            return name + ' (' + code + ')';
+        }
+        return name;
+    }
+
     var Controller = {
         index: function () {
             var $table = $('#table');
@@ -46,6 +56,7 @@
                     {field: 'allocation_code', title: '分配编码', align: 'left'},
                     {field: 'order.order_no', title: '订单号', align: 'left'},
                     {field: 'model.product.name', title: '产品', align: 'left'},
+                    {field: 'model.name', title: '产品型号', align: 'left', formatter: modelFmt},
                     {field: 'process.name', title: '工序', align: 'left'},
                     {field: 'quantity', title: '分配数量', width: 100, align: 'right'},
                     {field: 'completed_quantity', title: '完成数量', width: 100, align: 'right'},

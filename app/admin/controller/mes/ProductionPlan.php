@@ -84,7 +84,7 @@ class ProductionPlan extends Backend
             return $this->error('生产计划不存在');
         }
 
-        $allocations = AllocationModel::with(['process', 'user'])
+        $allocations = AllocationModel::with(['process', 'user', 'model.product', 'order'])
             ->where('tenant_id', $tenantId)
             ->where(function ($q) use ($plan) {
                 $q->where('plan_id', $plan->id)

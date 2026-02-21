@@ -1,0 +1,12 @@
+<view class="container">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <view class="row">
+      <text class="title">报工 #{{item.id}}</text>
+      <text class="status {{item.status===1?'pass':'pending'}}">{{item.status===1?'已通过':(item.status===2?'已拒绝':'待审核')}}</text>
+    </view>
+    <view class="text-muted">数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</view>
+    <view class="btn-wrap"><button size="mini" type="primary" data-id="{{item.id}}" bindtap="goAudit" wx:if="{{item.status===0}}">审核</button></view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无报工</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

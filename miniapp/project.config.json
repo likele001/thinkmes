@@ -1,0 +1,16 @@
+{
+  "description": "MES 工作台（员工端 + 租户管理端 整合）",
+  "packOptions": { "ignore": [] },
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "2.19.4",
+  "appid": "请填写你的小程序 AppID",
+  "projectname": "mes-miniapp",
+  "condition": {}
+}

@@ -214,6 +214,7 @@ DROP TABLE IF EXISTS `fa_mes_allocation`;
 CREATE TABLE `fa_mes_allocation` (
   `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '分配ID',
   `tenant_id` int unsigned NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `plan_id` int unsigned DEFAULT NULL COMMENT '生产计划ID',
   `order_id` int unsigned NOT NULL DEFAULT 0 COMMENT '订单ID',
   `model_id` int unsigned NOT NULL DEFAULT 0 COMMENT '型号ID',
   `process_id` int unsigned NOT NULL DEFAULT 0 COMMENT '工序ID',
@@ -225,6 +226,7 @@ CREATE TABLE `fa_mes_allocation` (
   `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_tenant` (`tenant_id`),
+  KEY `idx_plan` (`plan_id`),
   KEY `idx_order` (`order_id`),
   KEY `idx_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分工分配表';

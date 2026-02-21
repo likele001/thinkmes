@@ -138,6 +138,8 @@ class Bi extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
+            View::assign('default_start', date('Y-m-01'));
+            View::assign('default_end', date('Y-m-d'));
             View::assign('title', '生产效率报表');
             return $this->fetchWithLayout('mes/bi/production_efficiency');
         }
@@ -184,6 +186,8 @@ class Bi extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
+            View::assign('default_start', date('Y-m-01'));
+            View::assign('default_end', date('Y-m-d'));
             View::assign('title', '质量分析报表');
             return $this->fetchWithLayout('mes/bi/quality_analysis');
         }
@@ -229,6 +233,8 @@ class Bi extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
+            View::assign('default_start', date('Y-m-01'));
+            View::assign('default_end', date('Y-m-d'));
             View::assign('title', '成本分析报表');
             return $this->fetchWithLayout('mes/bi/cost_analysis');
         }

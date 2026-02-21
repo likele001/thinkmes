@@ -1,0 +1,9 @@
+<view class="container">
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goAudit">
+    <view class="title">{{item.allocation && item.allocation.model ? (item.allocation.model.product ? item.allocation.model.product.name + ' - ' : '') + item.allocation.model.name : ''}}</view>
+    <view class="text-muted">数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</view>
+    <view class="audit-tip">点击审核</view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无待审核</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

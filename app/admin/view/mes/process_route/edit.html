@@ -1,0 +1,81 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">编辑工艺路线</h3>
+    </div>
+    <div class="card-body">
+        <form id="edit-form" class="form-horizontal" method="post" action="">
+            <input type="hidden" name="row[id]" value="{$row.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">产品型号</label>
+                <div class="col-sm-6">
+                    <select name="row[model_id]" class="form-control">
+                        <option value="">请选择产品型号</option>
+                        {foreach $modelList as $id => $name}
+                        <option value="{$id}" {if $row.model_id == $id}selected{/if}>{$name}</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">路线名称</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" name="row[route_name]" value="{$row.route_name}" placeholder="请输入路线名称">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">路线编码</label>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" name="row[route_code]" value="{$row.route_code}" placeholder="可留空保留原值">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">路线类型</label>
+                <div class="col-sm-4">
+                    <select name="row[route_type]" class="form-control">
+                        {foreach $routeTypeList as $k => $v}
+                        <option value="{$k}" {if $row.route_type == $k}selected{/if}>{$v}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="is_default" name="row[is_default]" {if $row.is_default}checked{/if}>
+                        <label class="form-check-label" for="is_default">
+                            设为该型号默认路线
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">状态</label>
+                <div class="col-sm-4">
+                    <select name="row[status]" class="form-control">
+                        {foreach $statusList as $k => $v}
+                        <option value="{$k}" {if $row.status == $k}selected{/if}>{$v}</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">工艺步骤 JSON</label>
+                <div class="col-sm-8">
+                    <textarea class="form-control" rows="8" name="row[steps_json]" placeholder='例如：[{"step_no":1,"process_id":1,"group_no":1,"is_optional":0}]'>{$row.steps_json}</textarea>
+                    <small class="form-text text-muted">暂时使用 JSON 格式维护步骤，后续可升级为可视化编辑。</small>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">备注</label>
+                <div class="col-sm-8">
+                    <textarea class="form-control" rows="3" name="row[remark]" placeholder="可填写说明信息">{$row.remark}</textarea>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="reset" class="btn btn-default">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+

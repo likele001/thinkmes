@@ -69,9 +69,11 @@
             }
         });
 
-        navobj.on('click', '.close-tab', function () {
-            var id = $(this).prev("a").attr("aria-controls");
-            _close(id);
+        navobj.on('click', '.close-tab', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var id = $(this).closest('a').attr("aria-controls") || $(this).prev("a").attr("aria-controls");
+            if (id) _close(id);
             return false;
         });
         navobj.on('dblclick', 'li[role=presentation]', function () {
@@ -115,12 +117,12 @@
 
             //如果TAB不存在，创建一个新的TAB
             if (tabitem.length === 0) {
-                //创建新TAB的title
-                tabitem = $('<li role="presentation" id="' + tabid + '"><a href="#' + conid + '" node-id="' + opts.id + '" aria-controls="' + id + '" role="tab" data-toggle="tab">' + opts.title + '</a></li>');
-                //是否允许关闭
+                //创建新TAB的title（关闭叉放在 a 内，与标题同一行显示）
+                var tabLinkHtml = opts.title;
                 if (options.close && $("li", navobj).length > 0) {
-                    tabitem.append(' <i class="close-tab fa fa-remove"></i>');
+                    tabLinkHtml += ' <i class="close-tab fa fa-remove" title="关闭"></i>';
                 }
+                tabitem = $('<li role="presentation" id="' + tabid + '"><a href="#' + conid + '" node-id="' + opts.id + '" aria-controls="' + id + '" role="tab" data-toggle="tab">' + tabLinkHtml + '</a></li>');
                 if (conitem.length === 0) {
                     //创建新TAB的内容
                     conitem = $('<div role="tabpanel" class="tab-pane" id="' + conid + '"></div>');

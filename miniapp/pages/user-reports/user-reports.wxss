@@ -1,0 +1,5 @@
+.row { display: flex; justify-content: space-between; align-items: center; }
+.title { font-weight: bold; }
+.status.pass { color: #07c160; }
+.status.pending { color: #fa9d3b; }
+.empty, .no-more { text-align: center; color: #999; padding: 32rpx; }

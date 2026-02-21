@@ -1,0 +1,25 @@
+<view class="container">
+  <view class="card metrics" wx:if="{{!loading}}">
+    <view class="row">
+      <text class="label">今日报工</text>
+      <text class="value">{{metrics.today_report_quantity}} 件</text>
+    </view>
+    <view class="row">
+      <text class="label">今日工资</text>
+      <text class="value text-primary">¥ {{metrics.today_wage}}</text>
+    </view>
+    <view class="row" wx:if="{{metrics.pending_reports > 0}}">
+      <text class="label">待审核</text>
+      <text class="value">{{metrics.pending_reports}} 条</text>
+    </view>
+  </view>
+  <view class="card" wx:if="{{loading}}">加载中...</view>
+  <view class="section-title">我的任务</view>
+  <view class="card task-item" wx:for="{{tasks}}" wx:key="allocation_id" data-id="{{item.allocation_id}}" data-pending="{{item.pending_qty}}" bindtap="goTask">
+    <view class="task-name">{{item.product_name}} - {{item.model_name}}</view>
+    <view class="text-muted">{{item.order_name || item.order_no}} · {{item.process_name}}</view>
+    <view class="task-qty">已报 {{item.reported_qty}} / 分配 {{item.assign_qty}} · 待报 <text class="text-primary">{{item.pending_qty}}</text></view>
+  </view>
+  <view class="empty" wx:if="{{!loading && tasks.length === 0}}">暂无任务</view>
+  <view class="link-admin" bindtap="goAdmin">进入管理端 →</view>
+</view>

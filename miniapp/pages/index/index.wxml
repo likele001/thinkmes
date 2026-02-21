@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="header" wx:if="{{adminInfo}}">
+    <view class="welcome">管理端</view>
+    <view class="admin-name">{{adminInfo.nickname || adminInfo.username || ''}}</view>
+  </view>
+
+  <view class="card stats" wx:if="{{dashboard && !loading}}">
+    <view class="stats-title">今日概览</view>
+    <view class="stats-row">
+      <view class="stats-item">
+        <text class="num">{{dashboard.today && dashboard.today.quantity ? dashboard.today.quantity : 0}}</text>
+        <text class="label">今日报工量</text>
+      </view>
+      <view class="stats-item">
+        <text class="num">{{dashboard.pending_reports || 0}}</text>
+        <text class="label">待审核</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="menu-grid">
+    <view class="menu-item" bindtap="goOrders">
+      <view class="menu-icon">📋</view>
+      <text class="menu-text">订单管理</text>
+    </view>
+    <view class="menu-item" bindtap="goAllocations">
+      <view class="menu-icon">🔧</view>
+      <text class="menu-text">分工管理</text>
+    </view>
+    <view class="menu-item" bindtap="goReports">
+      <view class="menu-icon">✅</view>
+      <text class="menu-text">报工审核</text>
+    </view>
+    <view class="menu-item" bindtap="goActiveReports">
+      <view class="menu-icon">⚡</view>
+      <text class="menu-text">待审核报工</text>
+    </view>
+    <view class="menu-item" bindtap="switchToUser">
+      <view class="menu-icon">👷</view>
+      <text class="menu-text">切换员工端</text>
+    </view>
+    <view class="menu-item" bindtap="logout">
+      <view class="menu-icon">🔒</view>
+      <text class="menu-text">退出登录</text>
+    </view>
+  </view>
+</view>

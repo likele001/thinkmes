@@ -35,10 +35,11 @@ window.AdminLTEOptions.iframe = false;
 .panel-lead em { font-style: normal; font-weight: 600; margin-right: 8px; }
 .toolbar .btn { margin-right: 6px; }
 
-/* FastAdmin 布局：内容区占满剩余高度，供 addtabs 使用 */
+/* FastAdmin 布局：内容区占满剩余高度；不把 content-wrapper 拉满整行，避免盖住侧栏 */
+body.layout-fixed { overflow-x: hidden !important; }
 .wrapper { display: flex !important; flex-direction: column !important; min-height: 100vh !important; }
-.content-wrapper { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; width: 100% !important; }
-.content-wrapper > .content { flex: 1 !important; min-height: 0 !important; overflow: hidden !important; width: 100% !important; }
+.layout-fixed .content-wrapper { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; min-width: 0 !important; }
+.content-wrapper > .content { flex: 1 !important; min-height: 0 !important; overflow: hidden !important; min-width: 0 !important; }
 </style>
 <script type="text/javascript">
     var Config = {:json_encode($config ?? [], 256)};

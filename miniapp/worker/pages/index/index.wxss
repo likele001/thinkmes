@@ -1,0 +1,8 @@
+.metrics .row { display: flex; justify-content: space-between; padding: 16rpx 0; }
+.metrics .label { color: #666; }
+.metrics .value { font-weight: bold; }
+.section-title { font-size: 30rpx; padding: 24rpx 0 16rpx; color: #333; }
+.task-item { margin-bottom: 24rpx; }
+.task-name { font-weight: bold; margin-bottom: 8rpx; }
+.task-qty { margin-top: 12rpx; font-size: 26rpx; }
+.empty { text-align: center; color: #999; padding: 60rpx; }

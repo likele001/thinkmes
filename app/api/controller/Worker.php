@@ -239,14 +239,13 @@ class Worker extends BaseController
             if (empty($itemNos)) {
                 return $this->error('请选择要报工的产品编号');
             }
-            $quantity = count($itemNos);
         } else {
             if ($workHours <= 0) {
                 return $this->error('工时必须大于0');
             }
         }
 
-        $increaseQty = $workType === 'piece' ? $quantity : (int) ceil($workHours);
+        $increaseQty = $workType === 'piece' ? count($itemNos) : (int) ceil($workHours);
 
         if ($increaseQty <= 0) {
             return $this->error('报工数量必须大于0');
@@ -278,56 +277,111 @@ class Worker extends BaseController
             return $this->error('工序工资未设置');
         }
 
-        $data = [
-            'tenant_id' => $tenantId,
-            'allocation_id' => $allocationId,
-            'user_id' => $userId,
-            'work_type' => $workType,
-            'status' => 0,
+        $baseData = [
+            'tenant_id'      => $tenantId,
+            'allocation_id'  => $allocationId,
+            'user_id'        => $userId,
+            'work_type'      => $workType,
+            'status'         => 0,
             'quality_status' => 0,
-            'create_time' => time(),
-            'update_time' => time(),
+            'create_time'    => time(),
+            'update_time'    => time(),
         ];
 
-        if ($workType === 'piece') {
-            $data['quantity'] = $quantity;
-            $data['work_hours'] = 0;
-            $data['wage'] = $quantity * (float) $processPrice->price;
-        } else {
-            $data['work_hours'] = $workHours;
-            $data['quantity'] = (int) ceil($workHours);
-            $data['wage'] = $workHours * (float) $processPrice->time_price;
-        }
-
-        if ($workType === 'piece' && $itemNos) {
-            $data['item_nos'] = json_encode($itemNos, JSON_UNESCAPED_UNICODE);
-        }
-
-        if ($images) {
-            $data['remark'] = json_encode(['images' => $images], JSON_UNESCAPED_UNICODE);
-        } elseif (is_string($rawImages) && $rawImages !== '') {
-            // JSON解析失败但前端确实传了images参数时，至少保留原始字符串，避免remark为空
-            $data['remark'] = json_encode(['images_raw' => $rawImages], JSON_UNESCAPED_UNICODE);
+        if ($workType === 'hour') {
+            $baseData['work_hours'] = $workHours;
+            $baseData['quantity'] = (int) ceil($workHours);
+            $baseData['wage'] = $workHours * (float) $processPrice->time_price;
         }
 
         Db::startTrans();
         try {
-            $report = ReportModel::create($data);
+            $totalQty = 0;
+            $lastReportId = 0;
 
-            if ($workType === 'piece' && $itemNos) {
-                TraceCodeModel::where('tenant_id', $tenantId)
-                    ->where('allocation_id', $allocationId)
-                    ->where('status', 1)
-                    ->where('report_id', 0)
-                    ->whereIn('item_no', $itemNos)
-                    ->update([
-                        'report_id' => $report->id,
-                        'user_id' => $userId,
-                        'update_time' => time(),
+            if ($workType === 'piece') {
+                $price = (float) $processPrice->price;
+                foreach ((array) $itemNos as $no) {
+                    if ($no === '' || $no === null || $no === false) {
+                        continue;
+                    }
+
+                    $rowData = $baseData;
+                    $rowData['quantity'] = 1;
+                    $rowData['work_hours'] = 0;
+                    $rowData['wage'] = $price;
+                    $rowData['item_nos'] = json_encode([(string) $no], JSON_UNESCAPED_UNICODE);
+
+                    $imagesForItem = [];
+                    if (is_array($images)) {
+                        if (isset($images[$no]) && is_array($images[$no])) {
+                            $imagesForItem = $images[$no];
+                        } elseif (isset($images['images']) && is_array($images['images'])) {
+                            $imagesForItem = $images['images'];
+                        }
+                    }
+                    if ($imagesForItem) {
+                        $rowData['remark'] = json_encode(['images' => $imagesForItem], JSON_UNESCAPED_UNICODE);
+                    } elseif (is_string($rawImages) && $rawImages !== '') {
+                        $rowData['remark'] = json_encode(['images_raw' => $rawImages], JSON_UNESCAPED_UNICODE);
+                    }
+
+                    $report = ReportModel::create($rowData);
+                    $lastReportId = (int) $report->id;
+
+                    TraceCodeModel::where('tenant_id', $tenantId)
+                        ->where('allocation_id', $allocationId)
+                        ->where('status', 1)
+                        ->where('report_id', 0)
+                        ->whereIn('item_no', [(string) $no])
+                        ->update([
+                            'report_id'   => $report->id,
+                            'user_id'     => $userId,
+                            'update_time' => time(),
+                        ]);
+
+                    WageModel::create([
+                        'tenant_id'     => $tenantId,
+                        'user_id'       => $userId,
+                        'report_id'     => $report->id,
+                        'allocation_id' => $allocation->id,
+                        'work_type'     => $workType,
+                        'quantity'      => 1,
+                        'work_hours'    => 0,
+                        'unit_price'    => $price,
+                        'total_wage'    => $price,
+                        'work_date'     => date('Y-m-d'),
+                        'create_time'   => time(),
+                        'status'        => 0,
                     ]);
+
+                    $totalQty += 1;
+                }
+            } else {
+                $rowData = $baseData;
+                $rowData['wage'] = $baseData['wage'] ?? ($workHours * (float) $processPrice->time_price);
+                $report = ReportModel::create($rowData);
+                $lastReportId = (int) $report->id;
+
+                WageModel::create([
+                    'tenant_id'     => $tenantId,
+                    'user_id'       => $userId,
+                    'report_id'     => $report->id,
+                    'allocation_id' => $allocation->id,
+                    'work_type'     => $workType,
+                    'quantity'      => $baseData['quantity'] ?? (int) ceil($workHours),
+                    'work_hours'    => $baseData['work_hours'] ?? $workHours,
+                    'unit_price'    => (float) $processPrice->time_price,
+                    'total_wage'    => $rowData['wage'],
+                    'work_date'     => date('Y-m-d'),
+                    'create_time'   => time(),
+                    'status'        => 0,
+                ]);
+
+                $totalQty = $baseData['quantity'] ?? (int) ceil($workHours);
             }
 
-            $allocation->completed_quantity += $data['quantity'];
+            $allocation->completed_quantity += $totalQty;
             if ($allocation->completed_quantity < 0) {
                 $allocation->completed_quantity = 0;
             }
@@ -338,23 +392,8 @@ class Worker extends BaseController
             }
             $allocation->save();
 
-            WageModel::create([
-                'tenant_id' => $tenantId,
-                'user_id' => $userId,
-                'report_id' => $report->id,
-                'allocation_id' => $allocation->id,
-                'work_type' => $workType,
-                'quantity' => $data['quantity'],
-                'work_hours' => $data['work_hours'] ?? 0,
-                'unit_price' => $workType === 'piece' ? (float) $processPrice->price : (float) $processPrice->time_price,
-                'total_wage' => $data['wage'],
-                'work_date' => date('Y-m-d'),
-                'create_time' => time(),
-                'status' => 0,
-            ]);
-
             Db::commit();
-            return $this->success('报工成功', ['id' => $report->id]);
+            return $this->success('报工成功', ['id' => $lastReportId]);
         } catch (\Throwable $e) {
             Db::rollback();
             return $this->error('报工失败');
@@ -413,5 +452,40 @@ class Worker extends BaseController
         $list = $query->page($page, $limit)->select()->toArray();
 
         return $this->success('', ['total' => $total, 'list' => $list]);
+    }
+
+    /**
+     * 上传报工图片（前端报工小程序用，参考 Userex uploadImage）
+     * POST file 或 image，返回 { url }
+     */
+    public function uploadImage(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $userId = $this->getUserId();
+        if ($tenantId <= 0 || $userId <= 0) {
+            return $this->error('未识别租户或用户');
+        }
+
+        $file = $this->request->file('file') ?? $this->request->file('image');
+        if (!$file || !$file->isValid()) {
+            return $this->error('请选择图片');
+        }
+        $ext = strtolower(pathinfo($file->getOriginalName(), PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+            return $this->error('仅支持 jpg/png/gif/webp');
+        }
+        $relDir = 'uploads/baogong/' . date('Y-m-d') . '/';
+        $root = app()->getRootPath();
+        $fullDir = $root . 'public/' . $relDir;
+        if (!is_dir($fullDir)) {
+            @mkdir($fullDir, 0755, true);
+        }
+        $filename = uniqid() . '_' . $userId . '.' . $ext;
+        $info = $file->move($fullDir, $filename);
+        if (!$info) {
+            return $this->error('上传失败');
+        }
+        $url = '/' . $relDir . $filename;
+        return $this->success('上传成功', ['url' => $url]);
     }
 }

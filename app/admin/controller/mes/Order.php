@@ -502,32 +502,30 @@ class Order extends Backend
             // 检查是否缺料
             if ($currentStock < $requiredQty) {
                 $shortageQty = $requiredQty - $currentStock;
-
-                // 更新订单物料需求状态
-                $om->stock_status = 1; // 缺料
+                $om->stock_status = 1;
                 $om->save();
 
-                // 检查24小时内是否已有采购申请
                 $recentRequest = PurchaseRequestModel::where('tenant_id', $tenantId)
-                    ->where('material_id', $material->id)
-                    ->where('status', '<', 2) // 未完成状态
-                    ->where('create_time', '>', time() - 86400) // 24小时内
+                    ->where('order_material_id', $om->id)
+                    ->where('status', '<', 2)
                     ->find();
 
                 if (!$recentRequest && $om->supplier_id) {
-                    // 创建采购申请
                     PurchaseRequestModel::create([
                         'tenant_id' => $tenantId,
                         'request_no' => PurchaseRequestModel::generateRequestNo(),
                         'material_id' => $material->id,
                         'order_id' => $orderId,
+                        'order_material_id' => $om->id,
                         'required_quantity' => $shortageQty,
                         'estimated_price' => $material->current_price,
                         'estimated_amount' => $shortageQty * $material->current_price,
-                        'supplier_id' => $material->default_supplier_id,
+                        'supplier_id' => $om->supplier_id ?: $material->default_supplier_id,
                         'status' => 0,
                         'remark' => '订单需求自动生成'
                     ]);
+                    $om->purchase_status = 1;
+                    $om->save();
                 }
             } else {
                 // 库存充足
@@ -558,11 +556,6 @@ class Order extends Backend
         }
 
         $orderId = (int)$ids;
-        // 重新计算物料需求
-        OrderMaterialModel::where('tenant_id', $tenantId)
-            ->where('order_id', $orderId)
-            ->delete();
-        $this->calculateMaterialsWithCost($orderId, $tenantId);
 
         // 获取物料需求
         $orderMaterials = OrderMaterialModel::with(['material', 'supplier'])
@@ -570,12 +563,15 @@ class Order extends Backend
             ->where('order_id', $orderId)
             ->select();
 
-        // 统计总成本和缺料情况
+        // 统计总成本和缺料情况，并为每条物料计算缺料数供模板使用
         $totalAmount = 0;
         $shortageCount = 0;
         foreach ($orderMaterials as $om) {
             $totalAmount += $om->estimated_amount;
-            if ($om->material && $om->required_quantity > ($om->material->stock ?? 0)) {
+            $stock = $om->material ? (int)($om->material->getData('stock') ?? 0) : 0;
+            $shortage = max(0, $om->required_quantity - $stock);
+            $om->setAttr('shortage', $shortage);
+            if ($shortage > 0) {
                 $shortageCount++;
             }
         }

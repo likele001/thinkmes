@@ -208,7 +208,6 @@ ADD COLUMN `shipment_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '发货�
 ADD COLUMN `shipment_status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '发货状态：0未发货 1部分发货 2已发货' AFTER `shipment_id`,
 ADD COLUMN `production_progress` decimal(5,2) NOT NULL DEFAULT '0.00' COMMENT '生产进度(%)' AFTER `total_quantity`;
 
--- 为 fa_mes_allocation 添加二维码字段
 ALTER TABLE `fa_mes_allocation`
 ADD COLUMN `qr_content` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码内容' AFTER `status`,
 ADD COLUMN `qr_image` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码图片' AFTER `qr_content`;
@@ -216,3 +215,30 @@ ADD COLUMN `qr_image` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码图片'
 -- 为 fa_mes_material 添加仓库字段
 ALTER TABLE `fa_mes_material`
 ADD COLUMN `warehouse_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '默认仓库ID' AFTER `default_supplier_id`;
+
+-- 工艺路线主表
+DROP TABLE IF EXISTS `fa_mes_process_route`;
+CREATE TABLE `fa_mes_process_route` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '路线ID',
+  `tenant_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '租户ID',
+  `product_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '产品ID',
+  `model_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '型号ID',
+  `route_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '路线名称',
+  `route_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '路线编码',
+  `route_type` tinyint(4) NOT NULL DEFAULT '1' COMMENT '路线类型：1标准路线 2备选路线 3临时路线',
+  `status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '状态：0草稿 1审核中 2已发布 3已归档',
+  `is_default` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否默认路线',
+  `steps_json` mediumtext COLLATE utf8mb4_unicode_ci COMMENT '工艺步骤定义(JSON)',
+  `remark` text COLLATE utf8mb4_unicode_ci COMMENT '备注',
+  `create_time` int(11) NOT NULL DEFAULT '0' COMMENT '创建时间',
+  `update_time` int(11) NOT NULL DEFAULT '0' COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_route_code` (`route_code`),
+  KEY `idx_tenant` (`tenant_id`),
+  KEY `idx_model` (`tenant_id`,`model_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='工艺路线表';
+
+-- 为溯源码表添加类型与工艺路线字段
+ALTER TABLE `fa_mes_trace_code`
+ADD COLUMN `code_type` tinyint(4) NOT NULL DEFAULT '0' COMMENT '编码类型：0过程码 1成品码' AFTER `trace_code`,
+ADD COLUMN `route_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '工艺路线ID' AFTER `model_id`;

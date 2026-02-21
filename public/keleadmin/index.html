@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="KeleAdmin - 基于 ThinkPHP 的多租户后台管理框架，内置 MES 制造执行系统，开箱即用。">
+    <title>KeleAdmin - 多租户后台与 MES 一体化框架</title>
+    <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="#" class="logo">
+                <span class="logo-icon">K</span>
+                <span class="logo-text">KeleAdmin</span>
+            </a>
+            <nav class="nav" id="nav">
+                <a href="#features">特性</a>
+                <a href="#tech">技术栈</a>
+                <a href="#mes">MES</a>
+                <a href="/keleadmin/dos.html">文档</a>
+                <a href="/index/tenant_register" class="btn btn-ghost">租户注册</a>
+                <a href="/admin" class="btn btn-ghost">进入后台</a>
+            </nav>
+            <button class="menu-toggle" aria-label="菜单" id="menuToggle"></button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-bg"></div>
+            <div class="container hero-inner">
+                <h1 class="hero-title">
+                    <span class="hero-title-main">KeleAdmin</span>
+                    <span class="hero-title-sub">多租户后台 · MES 一体化</span>
+                </h1>
+                <p class="hero-desc">
+                    基于 ThinkPHP 8 的后台管理框架，内置权限、多租户、套餐与完整 MES 制造执行系统。<br>
+                    从订单、计划、分配到报工、工资、追溯、仓储，形成完整业务闭环。
+                </p>
+                <div class="hero-actions">
+                    <a href="/admin" class="btn btn-primary">进入后台</a>
+                    <a href="/index/tenant_register" class="btn btn-outline">申请租户</a>
+                    <a href="#features" class="btn btn-outline">了解特性</a>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="container">
+                <h2 class="section-title">框架特性</h2>
+                <div class="row features-grid">
+                    <div class="col-sm-6 col-lg-6 mb-4">
+                        <article class="feature-card feature-card--wide">
+                            <span class="feature-icon"><i class="fas fa-building"></i></span>
+                            <h3>多租户</h3>
+                            <p>租户注册、审核、套餐与功能授权，按租户隔离数据与权限。</p>
+                        </article>
+                    </div>
+                    <div class="col-sm-6 col-lg-6 mb-4">
+                        <article class="feature-card feature-card--wide">
+                            <span class="feature-icon"><i class="fas fa-key"></i></span>
+                            <h3>权限规则</h3>
+                            <p>菜单与权限树、角色授权，支持按租户分配可见菜单。</p>
+                        </article>
+                    </div>
+                    <div class="col-sm-6 col-lg-6 mb-4">
+                        <article class="feature-card feature-card--wide">
+                            <span class="feature-icon"><i class="fas fa-industry"></i></span>
+                            <h3>MES 制造执行</h3>
+                            <p>订单、BOM、计划、分配、报工、工资、追溯、仓储、采购、质检、发货、售后、BI。</p>
+                        </article>
+                    </div>
+                    <div class="col-sm-6 col-lg-6 mb-4">
+                        <article class="feature-card feature-card--wide">
+                            <span class="feature-icon"><i class="fas fa-mobile-alt"></i></span>
+                            <h3>小程序支持</h3>
+                            <p>员工端报工、管理端看板，同一小程序双身份，租户小程序配置对接。</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tech" id="tech">
+            <div class="container">
+                <h2 class="section-title">技术栈</h2>
+                <ul class="tech-list">
+                    <li><span class="tech-label">后端</span> ThinkPHP 8</li>
+                    <li><span class="tech-label">前端</span> Bootstrap 5 · CoreUI · Bootstrap Table</li>
+                    <li><span class="tech-label">数据库</span> MySQL</li>
+                    <li><span class="tech-label">多应用</span> think-multi-app</li>
+                    <li><span class="tech-label">扩展</span> 插件机制 · 云存储等</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="mes" id="mes">
+            <div class="container">
+                <h2 class="section-title">MES 业务闭环</h2>
+                <p class="section-desc">订单 → 计划 → 分配 → 报工 → 审核 → 工资 / 追溯 / 入库 → 发货 → 售后，与物料、采购、库存、质检贯通。</p>
+                <div class="mes-flow flex-wrap justify-content-center">
+                    <div class="mes-step">订单</div>
+                    <div class="mes-arrow">→</div>
+                    <div class="mes-step">计划</div>
+                    <div class="mes-arrow">→</div>
+                    <div class="mes-step">分配</div>
+                    <div class="mes-arrow">→</div>
+                    <div class="mes-step">报工</div>
+                    <div class="mes-arrow">→</div>
+                    <div class="mes-step">审核</div>
+                    <div class="mes-arrow">→</div>
+                    <div class="mes-step">工资/追溯</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <h2 class="section-title">立即使用</h2>
+                <p class="section-desc">登录后台或申请租户，即可使用完整 MES 与多租户能力。</p>
+                <a href="/admin" class="btn btn-primary btn-lg me-3">进入 KeleAdmin 后台</a>
+                <a href="/index/tenant_register" class="btn btn-outline btn-lg">申请租户</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-inner d-flex flex-wrap align-items-center justify-content-between">
+                <span class="logo-text">KeleAdmin</span>
+                <span class="footer-copy">© 2025 KeleAdmin. 多租户后台与 MES 一体化框架.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            var toggle = document.getElementById('menuToggle');
+            var nav = document.getElementById('nav');
+            if (toggle && nav) {
+                toggle.addEventListener('click', function () {
+                    nav.classList.toggle('open');
+                    toggle.classList.toggle('open');
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

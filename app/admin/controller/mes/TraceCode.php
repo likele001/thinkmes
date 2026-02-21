@@ -29,6 +29,7 @@ class TraceCode extends Backend
         
         $tenantId = $this->getTenantId();
         $query = TraceCodeModel::with(['order', 'model.product', 'process', 'report'])
+            ->where('code_type', 1)
             ->order('id', 'desc');
         if ($tenantId > 0) {
             $query->where('tenant_id', $tenantId);
@@ -88,17 +89,18 @@ class TraceCode extends Backend
             $traceCode = TraceCodeModel::generateTraceCode();
             $allocation = $report->allocation;
             
-            // 生成二维码URL
             $domain = $this->request->domain();
             $qrUrl = $domain . '/index/trace/query?code=' . $traceCode;
             
             $trace = TraceCodeModel::create([
                 'tenant_id' => $tenantId,
                 'trace_code' => $traceCode,
+                'code_type' => 1,
                 'report_id' => $reportId,
                 'allocation_id' => $allocation->id ?? 0,
                 'order_id' => $allocation->order_id ?? 0,
                 'model_id' => $allocation->model_id ?? 0,
+                'route_id' => 0,
                 'process_id' => $allocation->process_id ?? 0,
                 'user_id' => $report->user_id,
                 'item_no' => $report->item_nos ?? '',
@@ -159,10 +161,12 @@ class TraceCode extends Backend
                 TraceCodeModel::create([
                     'tenant_id' => $tenantId,
                     'trace_code' => $traceCode,
+                    'code_type' => 1,
                     'report_id' => $reportId,
                     'allocation_id' => $allocation->id ?? 0,
                     'order_id' => $allocation->order_id ?? 0,
                     'model_id' => $allocation->model_id ?? 0,
+                    'route_id' => 0,
                     'process_id' => $allocation->process_id ?? 0,
                     'user_id' => $report->user_id,
                     'item_no' => $report->item_nos ?? '',

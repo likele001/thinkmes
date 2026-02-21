@@ -152,6 +152,15 @@ Route::group('mes', function () {
     Route::post('process_price/del', 'mes.ProcessPrice/del');
     Route::post('process_price/batch', 'mes.ProcessPrice/batch');
 
+    // 工艺路线管理
+    Route::get('process_route/add', 'mes.ProcessRoute/add');
+    Route::get('process_route/edit', 'mes.ProcessRoute/edit');
+    Route::get('process_route/index', 'mes.ProcessRoute/index');
+    Route::get('process_route', 'mes.ProcessRoute/index');
+    Route::post('process_route/add', 'mes.ProcessRoute/add');
+    Route::post('process_route/edit', 'mes.ProcessRoute/edit');
+    Route::post('process_route/del', 'mes.ProcessRoute/del');
+
     // 生产计划管理（先定义具体路由，避免被通用路由匹配）
     Route::get('production_plan/add', 'mes.ProductionPlan/add');
     Route::get('production_plan/edit', 'mes.ProductionPlan/edit');

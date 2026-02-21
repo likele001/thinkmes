@@ -1,0 +1,9 @@
+<view class="container" wx:if="{{detail}}">
+  <view class="card">
+    <view class="row"><text class="label">订单名称</text><text>{{detail.order_name || detail.order_no}}</text></view>
+    <view class="row"><text class="label">客户</text><text>{{detail.customer_name || '-'}}</text></view>
+    <view class="row"><text class="label">数量</text><text>{{detail.total_quantity}}</text></view>
+  </view>
+</view>
+<view class="container" wx:else-if="{{!loading}}">暂无数据</view>
+<view class="container" wx:else>加载中...</view>

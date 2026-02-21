@@ -59,9 +59,8 @@
                     <td>{$vo.required_quantity}</td>
                     <td>{$vo.material.stock|default=0}</td>
                     <td>
-                        {php}$shortage = max(0, $vo.required_quantity - ($vo.material->stock ?? 0));{/php}
-                        {if $shortage > 0}
-                        <span class="text-danger">{$shortage}</span>
+                        {if $vo.shortage > 0}
+                        <span class="text-danger">{$vo.shortage}</span>
                         {else}
                         0
                         {/if}

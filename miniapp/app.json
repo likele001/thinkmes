@@ -1,0 +1,47 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/user-index/user-index",
+    "pages/user-task/user-task",
+    "pages/user-reports/user-reports",
+    "pages/user-wages/user-wages",
+    "pages/user-profile/user-profile",
+    "pages/index/index",
+    "pages/orders/orders",
+    "pages/order-detail/order-detail",
+    "pages/allocations/allocations",
+    "pages/reports/reports",
+    "pages/active-reports/active-reports",
+    "pages/audit/audit"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1989fa",
+    "navigationBarTitleText": "MES工作台",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#1989fa",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/user-index/user-index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/user-reports/user-reports",
+        "text": "报工记录"
+      },
+      {
+        "pagePath": "pages/user-wages/user-wages",
+        "text": "我的工资"
+      },
+      {
+        "pagePath": "pages/user-profile/user-profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

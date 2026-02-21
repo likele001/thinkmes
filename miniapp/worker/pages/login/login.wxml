@@ -1,0 +1,5 @@
+<view class="container login-page">
+  <view class="logo">员工报工</view>
+  <view class="tip">请使用微信授权登录</view>
+  <button class="btn-primary" type="primary" loading="{{loading}}" bindtap="doLogin">微信一键登录</button>
+</view>

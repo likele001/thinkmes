@@ -112,15 +112,18 @@ $(document).off('init.lte.iframe');
         });
         $(document).on('click', '[data-addtabs-close="all"]', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             var $nav = $('#nav-addtabs');
             var $tab = $('#tab-addtabs-content');
             $nav.find('li[role="presentation"]').not('#tab_index').remove();
             $tab.find('.tab-pane').not('#con_index').remove();
             $nav.find('#tab_index').addClass('active');
             $tab.find('#con_index').addClass('active');
+            $('#addtabs-close-dropdown').removeClass('show').find('.dropdown-menu').removeClass('show');
         });
         $(document).on('click', '[data-addtabs-close="other"]', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             var $nav = $('#nav-addtabs');
             var $tab = $('#tab-addtabs-content');
             var $activeLi = $nav.find('li.active').first();
@@ -128,6 +131,37 @@ $(document).off('init.lte.iframe');
             var conId = activeId ? 'con_' + activeId.replace('tab_', '') : 'con_index';
             $nav.find('li[role="presentation"]').each(function() { if (!$(this).is($activeLi)) $(this).remove(); });
             $tab.find('.tab-pane').not('#' + conId).remove();
+            $('#addtabs-close-dropdown').removeClass('show').find('.dropdown-menu').removeClass('show');
+        });
+        /* 关闭下拉：若 Bootstrap 未绑定，则手动响应点击展开/收起 */
+        $(document).on('click', '#addtabs-close-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var $dd = $('#addtabs-close-dropdown');
+            var $menu = $dd.find('.dropdown-menu');
+            if ($dd.hasClass('show')) {
+                $dd.removeClass('show');
+                $menu.removeClass('show');
+            } else {
+                $dd.addClass('show');
+                $menu.addClass('show');
+            }
+            return false;
+        });
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#addtabs-close-dropdown').length) {
+                $('#addtabs-close-dropdown').removeClass('show').find('.dropdown-menu').removeClass('show');
+            }
+        });
+
+        /* 收缩侧栏悬停展开时，同步右推顶栏和内容区，避免侧栏盖住右侧 */
+        $(document).on('mouseenter', '.main-sidebar', function() {
+            if ($('body').hasClass('sidebar-collapse')) {
+                $('body').addClass('sidebar-hover-expand');
+            }
+        });
+        $(document).on('mouseleave', '.main-sidebar', function() {
+            $('body').removeClass('sidebar-hover-expand');
         });
     });
 })();

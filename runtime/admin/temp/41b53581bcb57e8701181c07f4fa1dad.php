@@ -1,4 +1,4 @@
-<?php /*a:1:{s:58:"/www/wwwroot/thinkmes/app/admin/view/mes/report/audit.html";i:1771478303;}*/ ?>
+<?php /*a:1:{s:58:"/www/wwwroot/thinkmes/app/admin/view/mes/report/audit.html";i:1771556051;}*/ ?>
 <div class="card card-outline card-primary">
     <div class="card-header">
         <h3 class="card-title">审核报工</h3>
@@ -10,6 +10,7 @@
                 <table class="table table-bordered table-striped">
                     <thead>
                     <tr>
+                        <th>报工ID</th>
                         <th>订单号</th>
                         <th>产品</th>
                         <th>型号</th>
@@ -27,10 +28,11 @@
                     <tbody>
                     <?php if($reports->isEmpty()): ?>
                     <tr>
-                        <td colspan="12" class="text-center text-muted">暂无报工记录</td>
+                        <td colspan="13" class="text-center text-muted">暂无报工记录</td>
                     </tr>
                     <?php else: if(is_array($reports) || $reports instanceof \think\Collection || $reports instanceof \think\Paginator): $i = 0; $__LIST__ = $reports;if( count($__LIST__)==0 ) : echo "" ;else: foreach($__LIST__ as $key=>$r): $mod = ($i % 2 );++$i;?>
                     <tr>
+                        <td><?php echo htmlentities((string) $r['id']); ?></td>
                         <td><?php echo htmlentities((string) (isset($r['allocation']['order']['order_no']) && ($r['allocation']['order']['order_no'] !== '')?$r['allocation']['order']['order_no']:'')); ?></td>
                         <td><?php echo htmlentities((string) (isset($r['allocation']['model']['product']['name']) && ($r['allocation']['model']['product']['name'] !== '')?$r['allocation']['model']['product']['name']:'')); ?></td>
                         <td><?php echo htmlentities((string) (isset($r['allocation']['model']['name']) && ($r['allocation']['model']['name'] !== '')?$r['allocation']['model']['name']:'')); ?></td>

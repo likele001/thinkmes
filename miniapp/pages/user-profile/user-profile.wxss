@@ -1,0 +1,4 @@
+.profile-row { padding: 24rpx 0; }
+.label { color: #666; margin-right: 16rpx; }
+.menu-item { padding: 24rpx 0; color: #1989fa; }
+.btn-logout { background: #fff; color: #666; border: 2rpx solid #eee; }

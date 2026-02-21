@@ -1,7 +1,6 @@
 <?php
 use think\facade\Route;
 
-// 前端 C 端用户：登录、注册、会员中心
 Route::get('user/login', 'User/login');
 Route::get('user/register', 'User/register');
 Route::get('user/logout', 'User/logout');
@@ -12,3 +11,5 @@ Route::get('user/forgot', 'User/forgot');
 Route::get('user/resetpwd', 'User/resetpwd');
 Route::get('worker/scan', 'Worker/scan');
 Route::get('trace/query', 'Trace/query');
+Route::get('trace/detail', 'Trace/detail');
+Route::get('trace.html', 'Trace/detail');

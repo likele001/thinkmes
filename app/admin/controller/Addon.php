@@ -307,10 +307,24 @@ class Addon extends Backend
                 $values = json_decode((string) $row['value'], true) ?: [];
             }
         }
+        // 组装表单项供模板使用，避免模板内写 PHP
+        $formFields = [];
+        foreach ($schema as $item) {
+            $fieldName = $item['name'] ?? '';
+            $type = $item['type'] ?? 'text';
+            $value = $values[$fieldName] ?? ($item['default'] ?? '');
+            $formFields[] = [
+                'name'        => $fieldName,
+                'title'       => $item['title'] ?? $fieldName,
+                'type'        => $type,
+                'value'       => $value,
+                'options'     => $item['options'] ?? [],
+                'description' => $item['description'] ?? '',
+            ];
+        }
         View::assign('name', $name);
         View::assign('tenantId', $tenantId);
-        View::assign('schema', $schema);
-        View::assign('values', $values);
+        View::assign('formFields', $formFields);
         View::assign('title', '插件配置');
         return $this->fetchWithLayout('addon/config');
     }

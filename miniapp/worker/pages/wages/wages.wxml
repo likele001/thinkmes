@@ -1,0 +1,18 @@
+<view class="container">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <view class="row">
+      <text class="label">日期</text>
+      <text>{{item.work_date}}</text>
+    </view>
+    <view class="row">
+      <text class="label">数量</text>
+      <text>{{item.quantity}}</text>
+    </view>
+    <view class="row">
+      <text class="label">工资</text>
+      <text class="text-primary">¥ {{item.total_wage}}</text>
+    </view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无工资记录</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

@@ -1,0 +1,12 @@
+<view class="container">
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
+    <view class="row">
+      <text class="title">{{item.order_name || item.order_no}}</text>
+      <text class="status">状态{{item.status}}</text>
+    </view>
+    <view class="text-muted">客户：{{item.customer_name || '-'}}</view>
+    <view class="text-muted">数量：{{item.total_quantity || 0}}</view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无订单</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

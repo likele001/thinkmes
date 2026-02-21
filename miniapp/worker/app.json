@@ -1,0 +1,42 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/index/index",
+    "pages/task/task",
+    "pages/report/report",
+    "pages/reports/reports",
+    "pages/wages/wages"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1989fa",
+    "navigationBarTitleText": "员工报工",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "color": "#666",
+    "selectedColor": "#1989fa",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "工作台",
+        "iconPath": "assets/tab-home.png",
+        "selectedIconPath": "assets/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/reports/reports",
+        "text": "报工记录",
+        "iconPath": "assets/tab-list.png",
+        "selectedIconPath": "assets/tab-list-active.png"
+      },
+      {
+        "pagePath": "pages/wages/wages",
+        "text": "我的工资",
+        "iconPath": "assets/tab-wage.png",
+        "selectedIconPath": "assets/tab-wage-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

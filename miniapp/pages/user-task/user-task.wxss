@@ -1,0 +1,11 @@
+.task-name { font-weight: bold; margin-bottom: 8rpx; }
+.form-label { margin-bottom: 16rpx; color: #666; }
+radio-group label { display: block; padding: 12rpx 0; }
+.item-nos { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.item-no { padding: 16rpx 24rpx; border: 2rpx solid #ddd; border-radius: 8rpx; }
+.item-no.active { border-color: #1989fa; background: #e8f4ff; color: #1989fa; }
+.images { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.thumb { width: 160rpx; height: 160rpx; border-radius: 8rpx; }
+.img-wrap { position: relative; }
+.del { position: absolute; top: 0; right: 0; width: 44rpx; height: 44rpx; background: rgba(0,0,0,0.5); color: #fff; text-align: center; line-height: 44rpx; border-radius: 0 8rpx 0 0; }
+.add-img { width: 160rpx; height: 160rpx; border: 2rpx dashed #ccc; border-radius: 8rpx; text-align: center; line-height: 160rpx; color: #999; }

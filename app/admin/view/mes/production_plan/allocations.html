@@ -12,6 +12,10 @@
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
+                    <th>分配编码</th>
+                    <th>订单号</th>
+                    <th>产品</th>
+                    <th>产品型号</th>
                     <th>工序名称</th>
                     <th>员工姓名</th>
                     <th>分配数量</th>
@@ -29,6 +33,16 @@
                 {else/}
                 {volist name="allocations" id="a"}
                 <tr>
+                    <td>{$a.allocation_code|default='-'}</td>
+                    <td>{$a.order.order_no|default='-'}</td>
+                    <td>{$a.model.product.name|default='-'}</td>
+                    <td>
+                        {if isset($a.model)}
+                        {$a.model.name|default=''}{if $a.model.model_code} ({$a.model.model_code}){/if}
+                        {else /}
+                        -
+                        {/if}
+                    </td>
                     <td>{$a.process.name|default='-'}</td>
                     <td>{$a.user.nickname|default='-'}</td>
                     <td>{$a.quantity|default=0}</td>
@@ -42,7 +56,11 @@
                         {default /}<span class="badge badge-secondary">未知</span>
                         {/switch}
                     </td>
-                    <td>{:isset($a['create_time']) && $a['create_time'] ? date('Y-m-d H:i:s', $a['create_time']) : ''}</td>
+                    <td>
+                        {if isset($a.create_time) && $a.create_time}
+                        {$a.create_time|date='Y-m-d H:i:s'}
+                        {/if}
+                    </td>
                 </tr>
                 {/volist}
                 {/if}
@@ -53,4 +71,3 @@
         </div>
     </div>
 </div>
-

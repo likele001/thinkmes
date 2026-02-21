@@ -1,0 +1,2 @@
+.row { display: flex; justify-content: space-between; padding: 16rpx 0; }
+.label { color: #666; }

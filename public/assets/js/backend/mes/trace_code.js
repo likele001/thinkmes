@@ -11,8 +11,11 @@
     }
 
     function operFmt(value, row) {
-        return '<a href="javascript:;" class="btn btn-xs btn-primary btn-aftersales" title="创建售后">售后</a> ' +
-            '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
+        var detailUrl = '/index/trace/detail?code=' + encodeURIComponent(row.trace_code || '');
+        var btnDetail = '<a href="' + detailUrl + '" target="_blank" class="btn btn-xs btn-info" title="查看详情">详情</a> ';
+        var btnAfter = '<a href="javascript:;" class="btn btn-xs btn-primary btn-aftersales" title="创建售后">售后</a> ';
+        var btnDel = '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
+        return btnDetail + btnAfter + btnDel;
     }
 
     var Controller = {
@@ -34,6 +37,14 @@
                     {checkbox: true},
                     {field: 'id', title: 'ID', width: 80, sortable: true},
                     {field: 'trace_code', title: '追溯码', align: 'left'},
+                    {field: 'qrcode_url', title: '二维码', align: 'center', formatter: function(value, row) {
+                        var url = value || (row.trace_code ? (location.origin + '/index/trace/detail?code=' + encodeURIComponent(row.trace_code)) : '');
+                        if (!url) {
+                            return '-';
+                        }
+                        return '<a href="' + url + '" target="_blank"><img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' +
+                            encodeURIComponent(url) + '" style="width:60px;height:60px;border-radius:4px;"></a>';
+                    }},
                     {field: 'item_no', title: '产品编号', align: 'left'},
                     {field: 'order.order_no', title: '订单号', align: 'left'},
                     {field: 'model.product.name', title: '产品', align: 'left'},

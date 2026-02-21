@@ -87,11 +87,25 @@ class Purchase extends Backend
                 }
 
                 if ($status == 1) {
-                    // 审核通过，状态改为已审核
                     $request->status = 1;
+                    if ($request->order_material_id) {
+                        $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)
+                            ->find($request->order_material_id);
+                        if ($om) {
+                            $om->purchase_status = 1;
+                            $om->save();
+                        }
+                    }
                 } else {
-                    // 驳回，状态改为已取消
                     $request->status = 3;
+                    if ($request->order_material_id) {
+                        $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)
+                            ->find($request->order_material_id);
+                        if ($om) {
+                            $om->purchase_status = 0;
+                            $om->save();
+                        }
+                    }
                 }
                 $request->save();
             }
@@ -190,13 +204,22 @@ class Purchase extends Backend
                     );
                 }
 
-                // 更新采购申请状态
                 if (!empty($params['purchase_request_id'])) {
                     $request = PurchaseRequestModel::where('tenant_id', $tenantId)
                         ->find($params['purchase_request_id']);
                     if ($request) {
-                        $request->status = 2; // 已采购
+                        $request->status = 2;
                         $request->save();
+
+                        if ($request->order_material_id) {
+                            $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)
+                                ->find($request->order_material_id);
+                            if ($om) {
+                                $om->purchase_status = 2;
+                                $om->stock_status = 0;
+                                $om->save();
+                            }
+                        }
                     }
                 }
 

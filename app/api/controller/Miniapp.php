@@ -22,12 +22,41 @@ class Miniapp extends BaseController
     }
 
     /**
+     * 根据小程序 AppID 获取租户配置（用于小程序启动时确定 tenant_id）
+     * GET: appid=xxx 或 POST appid
+     * 返回 tenant_id、name（来自后台「租户小程序配置」）
+     */
+    public function getConfig(): Response
+    {
+        $appId = trim((string) ($this->request->get('appid', '') ?: $this->request->post('appid', '')));
+        if ($appId === '') {
+            return $this->error('appid 不能为空');
+        }
+        $row = TenantMiniappModel::where('app_id', $appId)
+            ->where('type', 'wechat')
+            ->where('status', 1)
+            ->field('tenant_id,name')
+            ->find();
+        if (!$row) {
+            return $this->error('未找到该小程序对应的租户配置，请在后台「租户小程序配置」中填写本小程序的 AppID');
+        }
+        return $this->success('', [
+            'tenant_id' => (int) $row->tenant_id,
+            'name'      => (string) ($row->name ?? ''),
+        ]);
+    }
+
+    /**
      * 小程序登录（自动注册或关联用户）
-     * POST: code, [nickname, avatar]
+     * POST: code, [tenant_id], [nickname, avatar]
+     * tenant_id 可由小程序先调 getConfig 根据 appid 获得
      */
     public function login(): Response
     {
-        $tenantId = $this->getTenantId();
+        $tenantId = (int) $this->request->post('tenant_id', 0);
+        if ($tenantId <= 0) {
+            $tenantId = $this->getTenantId();
+        }
         if ($tenantId <= 0) {
             return $this->error('未识别租户');
         }

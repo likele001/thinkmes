@@ -1,0 +1,20 @@
+<view class="container" wx:if="{{detail}}">
+  <view class="card">
+    <view class="row"><text class="label">报工ID</text><text>{{detail.id}}</text></view>
+    <view class="row"><text class="label">数量</text><text>{{detail.quantity}}</text></view>
+    <view class="row"><text class="label">工资</text><text>¥{{detail.wage || '0'}}</text></view>
+  </view>
+  <view class="card">
+    <view class="form-label">审核结果</view>
+    <radio-group bindchange="radioChange">
+      <label><radio value="1" checked="{{status===1}}"/> 通过</label>
+      <label><radio value="2" checked="{{status===2}}"/> 拒绝</label>
+    </radio-group>
+  </view>
+  <view class="card" wx:if="{{status===2}}">
+    <view class="form-label">拒绝原因（选填）</view>
+    <textarea placeholder="请输入原因" value="{{auditReason}}" bindinput="inputReason" class="textarea"/>
+  </view>
+  <button class="btn-primary" loading="{{submitting}}" bindtap="submit">提交审核</button>
+</view>
+<view class="container" wx:else-if="{{!detail}}">加载中...</view>

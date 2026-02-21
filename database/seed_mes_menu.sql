@@ -270,6 +270,26 @@ ON DUPLICATE KEY UPDATE
     `title` = VALUES(`title`),
     `pid` = @allocation_pid;
 
+-- 工艺路线菜单
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/process_route', '工艺路线', 1, 1, 1, @mes_pid, 'fa fa-road', 8, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @process_route_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/process_route' LIMIT 1);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/process_route/index', '路线列表', 2, 0, 1, @process_route_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/process_route/add', '添加路线', 2, 0, 1, @process_route_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/process_route/edit', '编辑路线', 2, 0, 1, @process_route_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/process_route/del', '删除路线', 2, 0, 1, @process_route_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @process_route_pid;
+
 -- 工资管理菜单
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
 VALUES ('mes/wage', '工资管理', 1, 1, 1, @mes_pid, 'fa fa-yen-sign', 7, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())

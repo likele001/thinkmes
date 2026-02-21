@@ -1,0 +1,9 @@
+<view class="container">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <view class="title">{{item.model && item.model.product ? item.model.product.name : ''}} - {{item.model ? item.model.name : ''}}</view>
+    <view class="text-muted">订单：{{item.order && item.order.order_name ? item.order.order_name : item.order_no}}</view>
+    <view class="text-muted">工序：{{item.process ? item.process.name : ''}} · 数量 {{item.quantity}}</view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无分工</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

@@ -196,6 +196,51 @@ body.sidebar-mini:not(.sidebar-collapse) .main-sidebar .nav-sidebar .nav-link i:
     display: none !important;
 }
 
+/* ========== 收缩侧栏悬停展开时：显示完整菜单文字与子菜单 ========== */
+body.sidebar-hover-expand .main-sidebar .nav-sidebar .nav-link span,
+body.sidebar-hover-expand .main-sidebar .nav-sidebar .nav-link p {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+    left: auto !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.sidebar-hover-expand .main-sidebar .nav-sidebar .nav-link {
+    justify-content: flex-start !important;
+    padding: 8px 12px 8px 15px !important;
+    text-align: left !important;
+}
+
+body.sidebar-hover-expand .main-sidebar .nav-sidebar .nav-link i:not(.right) {
+    margin-right: 8px !important;
+}
+
+body.sidebar-hover-expand .main-sidebar .nav-sidebar .nav-link .right {
+    display: inline-block !important;
+}
+
+body.sidebar-hover-expand .main-sidebar .nav-sidebar .nav-treeview {
+    display: block !important;
+}
+
+body.sidebar-hover-expand .main-sidebar .brand-link .brand-text {
+    display: inline !important;
+}
+
+body.sidebar-hover-expand .main-sidebar .brand-link {
+    padding: 1rem !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+}
+
 /* 折叠状态下品牌链接样式 */
 .sidebar-collapse .main-sidebar .brand-link,
 .sidebar-mini.sidebar-collapse .main-sidebar .brand-link {
@@ -204,15 +249,29 @@ body.sidebar-mini:not(.sidebar-collapse) .main-sidebar .nav-sidebar .nav-link i:
     text-align: center !important;
 }
 
-/* AdminLTE 3 侧边栏宽度设置 */
-/* 默认展开状态 */
-.main-sidebar {
+/* AdminLTE 3 侧栏与内容区互不遮挡：侧栏固定左侧，内容区始终留出左侧宽度 */
+/* 侧栏：固定定位贴左，不占文档流，避免被内容盖住 */
+.layout-fixed .main-sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
     width: 250px !important;
+    max-width: 250px !important;
+    z-index: 1030 !important;
+    transition: width 0.3s ease-in-out !important;
 }
 
-.content-wrapper,
-.main-footer {
+/* 顶栏、内容区、页脚：必须留出侧栏宽度，否则会与侧栏重叠 */
+.layout-fixed .main-header {
     margin-left: 250px !important;
+    transition: margin-left 0.3s ease-in-out !important;
+}
+
+.layout-fixed .content-wrapper,
+.layout-fixed .main-footer {
+    margin-left: 250px !important;
+    transition: margin-left 0.3s ease-in-out !important;
 }
 
 /* 保证标签页内容区有高度，避免 iframe 空白 */
@@ -238,26 +297,51 @@ body.sidebar-mini:not(.sidebar-collapse) .main-sidebar .nav-sidebar .nav-link i:
     display: block !important;
 }
 
-/* 折叠状态（sidebar-collapse 或 sidebar-mini + sidebar-collapse） */
-.sidebar-collapse .main-sidebar,
-.sidebar-mini.sidebar-collapse .main-sidebar {
+/* 折叠状态：侧栏收窄，内容区左外边距同步收窄 */
+.layout-fixed.sidebar-collapse .main-sidebar,
+.layout-fixed.sidebar-mini.sidebar-collapse .main-sidebar {
     width: 4.6rem !important;
+    max-width: 4.6rem !important;
 }
 
-.sidebar-collapse .content-wrapper,
-.sidebar-collapse .main-footer,
-.sidebar-mini.sidebar-collapse .content-wrapper,
-.sidebar-mini.sidebar-collapse .main-footer {
+.layout-fixed.sidebar-collapse .main-header,
+.layout-fixed.sidebar-mini.sidebar-collapse .main-header {
     margin-left: 4.6rem !important;
 }
 
-/* 确保 sidebar-mini 单独使用时也正确显示 */
-.sidebar-mini:not(.sidebar-collapse) .main-sidebar {
-    width: 250px !important;
+.layout-fixed.sidebar-collapse .content-wrapper,
+.layout-fixed.sidebar-collapse .main-footer,
+.layout-fixed.sidebar-mini.sidebar-collapse .content-wrapper,
+.layout-fixed.sidebar-mini.sidebar-collapse .main-footer {
+    margin-left: 4.6rem !important;
 }
 
-.sidebar-mini:not(.sidebar-collapse) .content-wrapper,
-.sidebar-mini:not(.sidebar-collapse) .main-footer {
+/* 收缩状态下鼠标悬停侧栏时，AdminLTE 会展开侧栏；同步把顶栏和内容区右推，避免被盖住 */
+.layout-fixed.sidebar-collapse.sidebar-hover-expand .main-header,
+.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-header {
+    margin-left: 250px !important;
+}
+.layout-fixed.sidebar-collapse.sidebar-hover-expand .content-wrapper,
+.layout-fixed.sidebar-collapse.sidebar-hover-expand .main-footer,
+.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .content-wrapper,
+.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-footer {
+    margin-left: 250px !important;
+}
+.layout-fixed.sidebar-collapse.sidebar-hover-expand .main-sidebar,
+.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-sidebar {
+    width: 250px !important;
+    max-width: 250px !important;
+}
+
+/* 展开状态：确保 sidebar-mini 未折叠时也是 250px */
+.layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-sidebar {
+    width: 250px !important;
+    max-width: 250px !important;
+}
+
+.layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-header,
+.layout-fixed.sidebar-mini:not(.sidebar-collapse) .content-wrapper,
+.layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-footer {
     margin-left: 250px !important;
 }
 
@@ -430,26 +514,42 @@ body.layout-top-nav .nav-link:hover {
 }
 
 /* ========== Tab 标签页样式（FastAdmin 风格） ========== */
+/* 关闭下拉所在区域不裁剪，保证下拉菜单可见 */
+.content-header-addtabs {
+    overflow: visible !important;
+}
+.content-header-addtabs .dropdown-menu {
+    z-index: 1050 !important;
+}
+
 .nav-addtabs {
     border-bottom: 1px solid #dee2e6;
     white-space: nowrap;
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: stretch;
 }
 
+/* 每个标签：标题与关闭叉在同一行（叉已放在 a 内） */
 .nav-addtabs > li {
     margin-bottom: -1px;
-    float: left;
     margin-right: 2px;
+    display: inline-block !important;
+    flex-shrink: 0;
+    float: none !important;
 }
 
 .nav-addtabs > li > a {
-    padding: 8px 15px;
+    padding: 8px 10px 8px 15px;
     border: 1px solid transparent;
     border-radius: 4px 4px 0 0;
     color: #495057;
     background-color: transparent;
-    display: block;
+    display: inline-block !important;
     text-decoration: none;
     cursor: pointer;
+    line-height: 1.4;
+    white-space: nowrap !important;
 }
 
 .nav-addtabs > li > a:hover {
@@ -466,11 +566,16 @@ body.layout-top-nav .nav-link:hover {
     font-weight: 600;
 }
 
+/* 关闭叉在 a 内，与标题同一行、垂直居中 */
 .nav-addtabs .close-tab {
-    margin-left: 8px;
+    margin-left: 6px;
+    padding: 0 2px;
     cursor: pointer;
     opacity: 0.5;
-    font-size: 14px;
+    font-size: 12px;
+    line-height: 1;
+    vertical-align: middle;
+    display: inline-block !important;
 }
 
 .nav-addtabs .close-tab:hover {

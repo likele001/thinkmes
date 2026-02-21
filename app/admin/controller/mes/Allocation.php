@@ -393,21 +393,24 @@ class Allocation extends Backend
             $orderId = (int) $this->request->post('order_id');
             $planId = (int) $this->request->post('plan_id', 0);
 
-            // 优先按数组方式获取（支持 allocations[0][field] 这种提交）
             $allocations = $this->request->post('allocations/a');
             if (!$allocations) {
-                // 兼容前端以 JSON 字符串形式提交的场景
-                $allocationsRaw = $this->request->post('allocations');
-                if (is_string($allocationsRaw) && $allocationsRaw !== '') {
-                    $decoded = json_decode($allocationsRaw, true);
+                $allocationsParam = $this->request->post('allocations');
+                if (is_string($allocationsParam) && $allocationsParam !== '') {
+                    $decoded = json_decode($allocationsParam, true);
                     if (is_array($decoded)) {
                         $allocations = $decoded;
                     }
+                } elseif (is_array($allocationsParam) && $allocationsParam) {
+                    $allocations = $allocationsParam;
                 }
             }
 
-            if (!$orderId || !$allocations || !is_array($allocations)) {
-                return $this->error('分配数据格式错误');
+            if (!$orderId) {
+                return $this->error('请选择订单');
+            }
+            if (!$allocations || !is_array($allocations)) {
+                return $this->error('没有有效的分配记录，请检查是否选择了型号、工序、员工及数量');
             }
             
             $tenantId = $this->getTenantId();
@@ -429,14 +432,26 @@ class Allocation extends Backend
                 $validCount = 0;
 
                 foreach ($allocations as $item) {
-                    if (empty($item['model_id']) || empty($item['process_id']) || empty($item['user_id']) || empty($item['quantity'])) {
-                        continue;
+                    if (!is_array($item)) {
+                        $tmp = json_decode((string)$item, true);
+                        if (is_array($tmp)) {
+                            $item = $tmp;
+                        } else {
+                            continue;
+                        }
                     }
 
-                    $modelId = (int) $item['model_id'];
-                    $processId = (int) $item['process_id'];
-                    $qty = (int) $item['quantity'];
-                    if ($qty <= 0) {
+                    $modelIdRaw   = $item['model_id']   ?? null;
+                    $processIdRaw = $item['process_id'] ?? null;
+                    $userIdRaw    = $item['user_id']    ?? null;
+                    $qtyRaw       = $item['quantity']   ?? null;
+
+                    $modelId   = is_array($modelIdRaw)   ? (int) reset($modelIdRaw)   : (int) $modelIdRaw;
+                    $processId = is_array($processIdRaw) ? (int) reset($processIdRaw) : (int) $processIdRaw;
+                    $userId    = is_array($userIdRaw)    ? (int) reset($userIdRaw)    : (int) $userIdRaw;
+                    $qty       = is_array($qtyRaw)       ? (int) reset($qtyRaw)       : (int) $qtyRaw;
+
+                    if ($modelId <= 0 || $processId <= 0 || $userId <= 0 || $qty <= 0) {
                         continue;
                     }
 
@@ -495,17 +510,37 @@ class Allocation extends Backend
 
                 $successCount = 0;
                 foreach ($allocations as $item) {
-                    if (empty($item['model_id']) || empty($item['process_id']) || empty($item['user_id']) || empty($item['quantity'])) {
+                    if (!is_array($item)) {
+                        $tmp = json_decode((string)$item, true);
+                        if (is_array($tmp)) {
+                            $item = $tmp;
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    $modelIdRaw   = $item['model_id']   ?? null;
+                    $processIdRaw = $item['process_id'] ?? null;
+                    $userIdRaw    = $item['user_id']    ?? null;
+                    $qtyRaw       = $item['quantity']   ?? null;
+
+                    $modelId   = is_array($modelIdRaw)   ? (int) reset($modelIdRaw)   : (int) $modelIdRaw;
+                    $processId = is_array($processIdRaw) ? (int) reset($processIdRaw) : (int) $processIdRaw;
+                    $userId    = is_array($userIdRaw)    ? (int) reset($userIdRaw)    : (int) $userIdRaw;
+                    $qty       = is_array($qtyRaw)       ? (int) reset($qtyRaw)       : (int) $qtyRaw;
+
+                    if ($modelId <= 0 || $processId <= 0 || $userId <= 0 || $qty <= 0) {
                         continue;
                     }
 
                     $data = [
                         'tenant_id' => $tenantId,
                         'order_id' => $orderId,
-                        'model_id' => (int) $item['model_id'],
-                        'process_id' => (int) $item['process_id'],
-                        'user_id' => (int) $item['user_id'],
-                        'quantity' => (int) $item['quantity'],
+                        'plan_id' => $planId,
+                        'model_id' => $modelId,
+                        'process_id' => $processId,
+                        'user_id' => $userId,
+                        'quantity' => $qty,
                         'allocation_code' => AllocationModel::generateAllocationCode(),
                         'status' => 0,
                         'create_time' => time(),
@@ -618,10 +653,12 @@ class Allocation extends Backend
             $rows[] = [
                 'tenant_id' => $tenantId,
                 'trace_code' => TraceCodeModel::generateTraceCode(),
+                'code_type' => 0,
                 'report_id' => 0,
                 'allocation_id' => $allocation->id,
                 'order_id' => $allocation->order_id,
                 'model_id' => $allocation->model_id,
+                'route_id' => 0,
                 'process_id' => $allocation->process_id,
                 'user_id' => $allocation->user_id,
                 'item_no' => $itemNo,
