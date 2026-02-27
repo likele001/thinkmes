@@ -1,0 +1,247 @@
+<?php /*a:1:{s:55:"/www/wwwroot/thinkmes/app/admin/view/mes/bom/items.html";i:1771667156;}*/ ?>
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">BOM明细管理</h3>
+        <div class="card-tools">
+            <a href="<?php echo htmlentities((string) $config['moduleurl']); ?>/mes/bom/index" class="btn btn-default btn-sm"><i class="fas fa-arrow-left"></i> 返回BOM列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <th width="90">BOM编号</th>
+                        <td><?php echo htmlentities((string) (isset($bom['bom_no']) && ($bom['bom_no'] !== '')?$bom['bom_no']:'')); ?></td>
+                    </tr>
+                    <tr>
+                        <th>产品</th>
+                        <td><?php echo htmlentities((string) (isset($bom['product_name']) && ($bom['product_name'] !== '')?$bom['product_name']:'')); ?><?php echo htmlentities((string) (isset($bom['product']['name']) && ($bom['product']['name'] !== '')?$bom['product']['name']:'')); ?></td>
+                    </tr>
+                    <tr>
+                        <th>产品型号</th>
+                        <td><?php echo htmlentities((string) (isset($bom['model_name']) && ($bom['model_name'] !== '')?$bom['model_name']:'')); ?><?php echo htmlentities((string) (isset($bom['model']['name']) && ($bom['model']['name'] !== '')?$bom['model']['name']:'')); ?></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <th width="90">版本号</th>
+                        <td><?php echo htmlentities((string) (isset($bom['version']) && ($bom['version'] !== '')?$bom['version']:'')); ?></td>
+                    </tr>
+                    <tr>
+                        <th>基准数量</th>
+                        <td><?php echo htmlentities((string) (isset($bom['base_quantity']) && ($bom['base_quantity'] !== '')?$bom['base_quantity']:'1')); ?></td>
+                    </tr>
+                    <tr>
+                        <th>状态</th>
+                        <td>
+                            <?php switch((isset($bom['status']) && ($bom['status'] !== '')?$bom['status']:0)): case "2": ?><span class="badge badge-success">已发布</span><?php break; case "1": ?><span class="badge badge-warning">审核中</span><?php break; case "3": ?><span class="badge badge-danger">已废弃</span><?php break; default: ?><span class="badge badge-secondary">草稿</span>
+                            <?php endswitch; ?>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div id="toolbar" class="toolbar mb-2">
+            <button type="button" class="btn btn-primary btn-add-item"><i class="fas fa-plus"></i> 添加物料</button>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+
+        <div class="modal fade" id="item-modal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">BOM明细</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="item-form" class="form-horizontal">
+                            <input type="hidden" name="id" value="">
+                            <input type="hidden" name="bom_id" value="<?php echo htmlentities((string) $bom['id']); ?>">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">物料<span class="text-danger">*</span></label>
+                                <div class="col-sm-7">
+                                    <select name="material_id" class="form-control" required>
+                                        <option value="">请选择物料</option>
+                                        <?php if(is_array($materialList) || $materialList instanceof \think\Collection || $materialList instanceof \think\Paginator): $i = 0; $__LIST__ = $materialList;if( count($__LIST__)==0 ) : echo "" ;else: foreach($__LIST__ as $key=>$name): $mod = ($i % 2 );++$i;?>
+                                        <option value="<?php echo htmlentities((string) $key); ?>"><?php echo htmlentities((string) $name); ?></option>
+                                        <?php endforeach; endif; else: echo "" ;endif; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">用量<span class="text-danger">*</span></label>
+                                <div class="col-sm-7">
+                                    <input type="number" step="0.0001" min="0" name="quantity" class="form-control" placeholder="例如：4 表示 1 件成品用 4 个" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">损耗率(%)</label>
+                                <div class="col-sm-7">
+                                    <input type="number" step="0.01" min="0" name="loss_rate" class="form-control" placeholder="例如：2 表示损耗 2%">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">供应商</label>
+                                <div class="col-sm-7">
+                                    <select name="supplier_id" class="form-control">
+                                        <option value="">可不选</option>
+                                        <?php if(is_array($supplierList) || $supplierList instanceof \think\Collection || $supplierList instanceof \think\Paginator): $i = 0; $__LIST__ = $supplierList;if( count($__LIST__)==0 ) : echo "" ;else: foreach($__LIST__ as $key=>$sname): $mod = ($i % 2 );++$i;?>
+                                        <option value="<?php echo htmlentities((string) $key); ?>"><?php echo htmlentities((string) $sname); ?></option>
+                                        <?php endforeach; endif; else: echo "" ;endif; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">层级</label>
+                                <div class="col-sm-7">
+                                    <input type="number" name="level" class="form-control" min="1" value="1">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">排序号</label>
+                                <div class="col-sm-7">
+                                    <input type="number" name="sequence" class="form-control" min="1" value="1">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary btn-save-item">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(arguments.callee, 50);
+        return;
+    }
+    var $ = jQuery;
+    $(function () {
+        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        var bomId = parseInt('<?php echo htmlentities((string) (isset($bom['id']) && ($bom['id'] !== '')?$bom['id']:"0")); ?>', 10) || 0;
+        var table = $('#table');
+
+        if (typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) {
+            return;
+        }
+
+        function materialFmt(value, row) {
+            if (row.material && row.material.name) {
+                return row.material.name;
+            }
+            return value || '-';
+        }
+
+        function supplierFmt(value, row) {
+            if (row.supplier && row.supplier.name) {
+                return row.supplier.name;
+            }
+            return value || '-';
+        }
+
+        table.bootstrapTable({
+            url: base + '/mes/bom/items',
+            queryParams: function (params) {
+                params.ids = bomId;
+                return params;
+            },
+            sidePagination: 'server',
+            pagination: false,
+            columns: [
+                { field: 'id', title: 'ID', width: 60 },
+                { field: 'level', title: '层级', width: 80 },
+                { field: 'sequence', title: '排序', width: 80 },
+                { field: 'material_id', title: '物料', formatter: materialFmt },
+                { field: 'quantity', title: '用量' },
+                { field: 'loss_rate', title: '损耗率(%)', formatter: function (v) { return v ? (v + '%') : '0%'; } },
+                { field: 'supplier_id', title: '供应商', formatter: supplierFmt },
+                { field: 'id', title: '操作', width: 140, formatter: function (v, row) {
+                    return '<button type="button" class="btn btn-xs btn-success btn-edit-item" data-id="' + row.id + '">编辑</button> ' +
+                           '<button type="button" class="btn btn-xs btn-danger btn-del-item" data-id="' + row.id + '">删除</button>';
+                }}
+            ],
+            responseHandler: function (res) {
+                return {
+                    total: (res.data && res.data.total) ? res.data.total : 0,
+                    rows: (res.data && res.data.list) ? res.data.list : []
+                };
+            }
+        });
+
+        function openModal(row) {
+            var form = $('#item-form')[0];
+            form.reset();
+            $('#item-form input[name="id"]').val(row && row.id ? row.id : '');
+            $('#item-form select[name="material_id"]').val(row && row.material_id ? row.material_id : '');
+            $('#item-form input[name="quantity"]').val(row && row.quantity ? row.quantity : '');
+            $('#item-form input[name="loss_rate"]').val(row && row.loss_rate ? row.loss_rate : '');
+            $('#item-form select[name="supplier_id"]').val(row && row.supplier_id ? row.supplier_id : '');
+            $('#item-form input[name="level"]').val(row && row.level ? row.level : 1);
+            $('#item-form input[name="sequence"]').val(row && row.sequence ? row.sequence : 1);
+            $('#item-modal').modal('show');
+        }
+
+        $(document).off('click', '.btn-add-item').on('click', '.btn-add-item', function () {
+            openModal(null);
+        });
+
+        $(document).off('click', '#table .btn-edit-item').on('click', '#table .btn-edit-item', function () {
+            var id = $(this).data('id');
+            var row = table.bootstrapTable('getData').find(function (r) { return r.id === id; });
+            if (!row) return;
+            openModal(row);
+        });
+
+        $(document).off('click', '#table .btn-del-item').on('click', '#table .btn-del-item', function () {
+            var id = $(this).data('id');
+            if (!id || !confirm('确定要删除该物料明细吗？')) return;
+            $.post(base + '/mes/bom/deleteItem', { id: id }, function (r) {
+                alert((r && r.msg) || (r && r.code === 1 ? '删除成功' : '删除失败'));
+                if (r && r.code === 1) {
+                    table.bootstrapTable('refresh');
+                }
+            }, 'json');
+        });
+
+        $(document).off('click', '.btn-save-item').on('click', '.btn-save-item', function () {
+            var form = $('#item-form');
+            var materialId = form.find('select[name="material_id"]').val();
+            var qty = form.find('input[name="quantity"]').val();
+            if (!materialId) {
+                alert('请选择物料');
+                return;
+            }
+            if (!qty || parseFloat(qty) <= 0) {
+                alert('请填写大于 0 的用量');
+                return;
+            }
+            var data = form.serializeArray();
+            var payload = {};
+            data.forEach(function (item) {
+                payload[item.name] = item.value;
+            });
+            var id = payload.id || '';
+            var url = id ? (base + '/mes/bom/updateItem') : (base + '/mes/bom/addItem');
+            $.post(url, payload, function (r) {
+                alert((r && r.msg) || (r && r.code === 1 ? '保存成功' : '保存失败'));
+                if (r && r.code === 1) {
+                    $('#item-modal').modal('hide');
+                    table.bootstrapTable('refresh');
+                }
+            }, 'json');
+        });
+    });
+})();
+</script>

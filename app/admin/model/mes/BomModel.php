@@ -57,4 +57,20 @@ class BomModel extends Model
     {
         return $this->hasMany(BomItemModel::class, 'bom_id', 'id');
     }
+
+    /**
+     * 关联产品
+     */
+    public function product()
+    {
+        return $this->belongsTo(ProductModel::class, 'product_id', 'id');
+    }
+
+    /**
+     * 关联产品型号
+     */
+    public function model()
+    {
+        return $this->belongsTo(ProductModelModel::class, 'model_id', 'id');
+    }
 }

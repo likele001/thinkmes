@@ -1,0 +1,94 @@
+<?php /*a:1:{s:51:"/www/wwwroot/thinkmes/app/admin/view/role/edit.html";i:1770106247;}*/ ?>
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑角色</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="id" value="<?php echo htmlentities((string) (isset($data['id']) && ($data['id'] !== '')?$data['id']:0)); ?>">
+            <input type="hidden" name="rules" id="input-rules" value="<?php echo htmlentities((string) (isset($data['rules']) && ($data['rules'] !== '')?$data['rules']:'')); ?>">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">角色名称</label>
+                <div class="col-sm-6"><input type="text" name="name" class="form-control" value="<?php echo htmlentities((string) (isset($data['name']) && ($data['name'] !== '')?$data['name']:'')); ?>" required></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">权限</label>
+                <div class="col-sm-8">
+                    <div class="border rounded p-3 bg-light" style="max-height:400px;overflow:auto">
+                        <label class="mb-2"><input type="checkbox" id="rule-check-all"> 全选</label>
+                        <div id="rule-tree" class="rule-tree ml-2"></div>
+                    </div>
+                    <small class="text-muted">勾选该角色可访问的菜单与权限节点</small>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="status" class="form-control">
+                        <option value="1" <?php if($data['status'] == 1): ?>selected<?php endif; ?>>正常</option>
+                        <option value="0" <?php if($data['status'] == 0): ?>selected<?php endif; ?>>禁用</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="<?php echo url('role/index'); ?>" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script type="application/json" id="rules-tree-data"><?php echo $rulesJson; ?></script>
+<script>
+(function() {
+    function initRoleEdit() {
+        if (typeof jQuery === 'undefined') {
+            setTimeout(initRoleEdit, 50);
+            return;
+        }
+        var $ = jQuery;
+        $(function () {
+            var rulesTreeDataEl = document.getElementById('rules-tree-data');
+            var rulesTree = rulesTreeDataEl ? JSON.parse(rulesTreeDataEl.textContent) : [];
+            var selectedIds = ($('#input-rules').val() || '').split(',').filter(Boolean).map(function(s){ return s.trim(); });
+
+            function renderTree(items, level) {
+                level = level || 0;
+                var html = '<ul class="list-unstyled mb-0" style="padding-left:' + (level * 18) + 'px">';
+                (items || []).forEach(function (it) {
+                    var checked = selectedIds.indexOf(String(it.id)) >= 0 ? ' checked' : '';
+                    var icon = (it.icon && it.icon.trim()) ? '<i class="' + it.icon.trim() + ' mr-1 text-muted"></i>' : '';
+                    html += '<li class="mb-1"><label class="mb-0 font-weight-normal">';
+                    html += '<input type="checkbox" class="rule-check" value="' + it.id + '"' + checked + '> ' + icon + (it.title || it.name || '') + '</label>';
+                    if (it.children && it.children.length) html += renderTree(it.children, level + 1);
+                    html += '</li>';
+                });
+                html += '</ul>';
+                return html;
+            }
+            $('#rule-tree').html(renderTree(rulesTree));
+
+            function collectRules() {
+                var ids = [];
+                $('#rule-tree .rule-check:checked').each(function () { ids.push($(this).val()); });
+                $('#input-rules').val(ids.join(','));
+            }
+            $('#rule-tree').on('change', '.rule-check', collectRules);
+            $('#rule-check-all').on('change', function () {
+                $('#rule-tree .rule-check').prop('checked', $(this).prop('checked'));
+                collectRules();
+            });
+
+            $('#form-edit').attr('action', (typeof Config !== 'undefined' && Config.moduleurl) ? (Config.moduleurl + '/role/edit') : '/admin/role/edit');
+            $('#form-edit').on('submit', function (e) {
+                e.preventDefault();
+                collectRules();
+                $.post($(this).attr('action'), $(this).serialize(), function (r) {
+                    alert(r.msg);
+                    if (r.code === 1) location.href = (typeof Config !== 'undefined' && Config.table_index_url) ? Config.table_index_url : '/admin/role/index';
+                }, 'json');
+            });
+        });
+    }
+    initRoleEdit();
+})();
+</script>

@@ -13,3 +13,7 @@ Route::get('worker/scan', 'Worker/scan');
 Route::get('trace/query', 'Trace/query');
 Route::get('trace/detail', 'Trace/detail');
 Route::get('trace.html', 'Trace/detail');
+
+Route::get('customer/login', 'Customer/login');
+Route::get('customer/index', 'Customer/index');
+Route::get('customer/orders', 'Customer/orders');

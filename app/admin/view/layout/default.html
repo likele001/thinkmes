@@ -3,7 +3,6 @@
 <head>
     <script>window.AdminLTEOptions = window.AdminLTEOptions || {}; window.AdminLTEOptions.autoIframeMode = false;</script>
     {include file="common/meta" /}
-    <!-- 基础库统一在 common/script 中加载 -->
     <script>
     (function() {
         try {
@@ -59,17 +58,11 @@
         </ul>
     </nav>
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <a href="{:url('index/index')}" class="brand-link"><span class="brand-text font-weight-light">Keleadmin</span></a>
+        <a href="{:url('index/index')}" class="brand-link"><span class="brand-text font-weight-light">KeleAdmin</span></a>
         <div class="sidebar">
             <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" data-widget="treeview" role="menu" id="menu-tree">
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" addtabs="index" url="{:url('index/index')}" title="首页">
-                            <i class="nav-icon fas fa-tachometer-alt"></i>
-                            <p>首页</p>
-                        </a>
-                    </li>
-                </ul>
+                <!-- 轻量菜单：仅根据后端权限数据渲染，无 treeview，点击直接生效 -->
+                <ul class="sidebar-menu" id="menu-tree" role="menu"></ul>
             </nav>
         </div>
     </aside>
@@ -115,8 +108,8 @@
         </div>
     </div>
     <footer class="main-footer">
-        <strong>keleadmin</strong> thinkmes 后台
-        <div class="float-right d-none d-sm-inline">Powered by <a href="https://adminlte.io/">AdminLTE 3</a></div>
+        <strong>KeleAdmin</strong> thinkmes 后台
+        <div class="float-right d-none d-sm-inline">AdminLTE 3</div>
     </footer>
 </div>
 {include file="common/script" /}

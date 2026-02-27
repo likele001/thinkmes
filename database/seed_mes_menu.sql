@@ -127,6 +127,26 @@ ON DUPLICATE KEY UPDATE
     `title` = VALUES(`title`),
     `pid` = @customer_pid;
 
+-- 客户产品配置管理菜单
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/customer_product', '客户产品配置', 1, 1, 1, @mes_pid, 'fa fa-list', 10, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @customer_product_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/customer_product' LIMIT 1);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/customer_product/index', '配置列表', 2, 0, 1, @customer_product_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/customer_product/add', '添加配置', 2, 0, 1, @customer_product_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/customer_product/edit', '编辑配置', 2, 0, 1, @customer_product_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/customer_product/del', '删除配置', 2, 0, 1, @customer_product_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @customer_product_pid;
+
 -- 8. 插入工序管理菜单
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
 VALUES ('mes/process', '工序管理', 1, 1, 1, @mes_pid, 'fa fa-cogs', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())

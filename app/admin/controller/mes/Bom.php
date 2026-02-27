@@ -90,6 +90,13 @@ class Bom extends Backend
             $params['bom_name'] = $params['bom_name'] ?? '未命名BOM';
             $params['approver_name'] = $params['approver_name'] ?? '';
 
+            if (empty($params['product_id']) && !empty($params['model_id'])) {
+                $model = ProductModelModel::where('tenant_id', $tenantId)->find((int) $params['model_id']);
+                if ($model) {
+                    $params['product_id'] = $model->product_id;
+                }
+            }
+
             try {
                 $bom = BomModel::create($params);
                 return $this->success('添加成功', ['id' => $bom->id]);
@@ -105,6 +112,28 @@ class Bom extends Backend
             ->column('name', 'id');
         View::assign('productList', $productList);
 
+        $modelList = [];
+        $models = ProductModelModel::with('product')
+            ->where('tenant_id', $tenantId)
+            ->where('status', 1)
+            ->select();
+        if ($models->isEmpty()) {
+            $models = ProductModelModel::with('product')
+                ->where('status', 1)
+                ->select();
+        }
+        foreach ($models as $model) {
+            $productName = $model->product->name ?? '';
+            $modelName = $model->name ?? '';
+            $modelCode = $model->model_code ?? '';
+            $displayName = $productName ? ($productName . ' - ' . $modelName) : $modelName;
+            if ($modelCode) {
+                $displayName .= ' (' . $modelCode . ')';
+            }
+            $modelList[$model->id] = $displayName;
+        }
+        View::assign('modelList', $modelList);
+
         View::assign('title', '添加BOM');
         return $this->fetchWithLayout('mes/bom/add');
     }
@@ -115,6 +144,9 @@ class Bom extends Backend
     public function edit(): string|Response
     {
         $ids = $this->request->param('ids');
+        if (empty($ids)) {
+            $ids = $this->request->param('id');
+        }
         if (empty($ids)) {
             return $this->error('参数错误');
         }
@@ -144,6 +176,28 @@ class Bom extends Backend
             ->where('status', 1)
             ->column('name', 'id');
         View::assign('productList', $productList);
+
+        $modelList = [];
+        $models = ProductModelModel::with('product')
+            ->where('tenant_id', $tenantId)
+            ->where('status', 1)
+            ->select();
+        if ($models->isEmpty()) {
+            $models = ProductModelModel::with('product')
+                ->where('status', 1)
+                ->select();
+        }
+        foreach ($models as $model) {
+            $productName = $model->product->name ?? '';
+            $modelName = $model->name ?? '';
+            $modelCode = $model->model_code ?? '';
+            $displayName = $productName ? ($productName . ' - ' . $modelName) : $modelName;
+            if ($modelCode) {
+                $displayName .= ' (' . $modelCode . ')';
+            }
+            $modelList[$model->id] = $displayName;
+        }
+        View::assign('modelList', $modelList);
 
         View::assign('row', $row);
         View::assign('title', '编辑BOM');
@@ -197,6 +251,9 @@ class Bom extends Backend
     public function items(): string|Response
     {
         $ids = $this->request->param('ids');
+        if (empty($ids)) {
+            $ids = $this->request->param('id');
+        }
         if (empty($ids)) {
             return $this->error('参数错误');
         }

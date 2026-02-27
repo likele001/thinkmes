@@ -1,0 +1,76 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">编辑客户产品配置</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="row[id]" value="{$row.id|default=''}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">客户 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[customer_id]" class="form-control" id="customer_id" required>
+                        <option value="">请选择客户</option>
+                        {volist name="customerList" id="vo"}
+                        <option value="{$key}" {if isset($row.customer_id) && $row.customer_id==$key}selected{/if}>{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">产品型号 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="row[model_id]" class="form-control" id="model_id" required>
+                        <option value="">请选择产品型号</option>
+                        {volist name="modelList" id="vo"}
+                        <option value="{$key}" {if isset($row.model_id) && $row.model_id==$key}selected{/if}>{$vo}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">销售单价 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <input type="number" name="row[price]" class="form-control" step="0.01" min="0" value="{$row.price|default=''}" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">币种</label>
+                <div class="col-sm-6">
+                    <select name="row[currency]" class="form-control">
+                        <option value="CNY" {if $row.currency=='CNY'}selected{/if}>CNY 人民币</option>
+                        <option value="USD" {if $row.currency=='USD'}selected{/if}>USD 美元</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">起订量</label>
+                <div class="col-sm-6">
+                    <input type="number" name="row[min_qty]" class="form-control" min="1" value="{$row.min_qty|default='1'}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <label class="radio-inline">
+                        <input type="radio" name="row[status]" value="1" {if $row.status==1}checked{/if}> 启用
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="row[status]" value="0" {if $row.status==0}checked{/if}> 禁用
+                    </label>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">备注</label>
+                <div class="col-sm-6">
+                    <input type="text" name="row[remark]" class="form-control" maxlength="255" value="{$row.remark|default=''}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{$config.moduleurl}/mes/customer_product/index" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

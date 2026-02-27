@@ -153,3 +153,37 @@
   ON DUPLICATE KEY UPDATE title=VALUES(title), icon=VALUES(icon), sort=VALUES(sort);
   ```
 - 或执行完整菜单初始化：**`database/seed_auth_rule.sql`**。
+
+---
+
+## 六、客户门户与员工端入口（示例）
+
+### 客户门户页面（B2B 客户自助下单）
+
+**页面 URL（相对根域名）：**
+
+| 功能         | URL                     | 说明                       |
+|--------------|-------------------------|----------------------------|
+| 客户登录     | `/index/customer/login` | 客户输入账号和密码登录     |
+| 客户下单首页 | `/index/customer/index` | 登录后显示可下单产品列表   |
+| 我的订单     | `/index/customer/orders`| 查看客户自己的历史订单     |
+
+### 客户门户相关 API
+
+**API 根路径**：`/api`
+
+| 功能         | 方法 | URL                       |
+|--------------|------|---------------------------|
+| 客户登录     | POST | `/api/customer/login`     |
+| 客户资料     | GET  | `/api/customer/profile`   |
+| 可下单产品   | GET  | `/api/customer/products`  |
+| 提交订单     | POST | `/api/customer/createOrder` |
+| 订单列表     | GET  | `/api/customer/orders`    |
+
+### 员工端 H5 报工与工资
+
+| 功能             | URL                           | 说明                                     |
+|------------------|-------------------------------|------------------------------------------|
+| 员工登录 / 首页  | `/index/user/login`           | 员工登录入口，登录后进入 `/index/user/index` |
+| 员工任务看板     | `/index/user/index`           | 展示待报工任务和今日工资等指标           |
+| 扫码报工页面     | `/index/worker/scan`          | 需带 `allocation_id` 参数，配合任务二维码使用 |

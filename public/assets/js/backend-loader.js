@@ -60,43 +60,83 @@
         return iconMap[iconName] || 'fas fa-circle';
     }
 
+    function normalizeUrl(raw, name) {
+        var url = raw || '';
+        if ((!url || url === '#' || url === 'javascript:;') && name) {
+            var path = String(name).replace(/\./g, '/').replace(/^\//, '');
+            var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+            url = base ? (base.replace(/\/$/, '') + '/' + path) : ('/admin/' + path);
+        }
+        if (!url) {
+            url = '#';
+        }
+        if (url === '#' || /^javascript:/i.test(url) || /^https?:\/\//i.test(url) || /^\/\//.test(url)) {
+            return url;
+        }
+        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        if (url.charAt(0) !== '/') {
+            url = (base ? base.replace(/\/$/, '') : '') + '/' + url.replace(/^\//, '');
+        }
+        // 确保同源链接都带 /admin 前缀，避免手机或 iframe 内缺少 admin 目录
+        if (url && url.charAt(0) === '/' && url.indexOf('/admin') !== 0 && !/^\/\//.test(url)) {
+            url = '/admin' + (url === '/' ? '' : url);
+        }
+        return url;
+    }
+
+    function findFirstChildHref(node) {
+        if (!node) {
+            return '#';
+        }
+        if (!node.children || !node.children.length) {
+            return normalizeUrl(node.url, node.name);
+        }
+        for (var i = 0; i < node.children.length; i++) {
+            var child = node.children[i];
+            var u = normalizeUrl(child.url, child.name);
+            if (u && u !== '#' && u !== 'javascript:;') {
+                return u;
+            }
+            if (child.children && child.children.length) {
+                var deep = findFirstChildHref(child);
+                if (deep && deep !== '#' && deep !== 'javascript:;') {
+                    return deep;
+                }
+            }
+        }
+        return normalizeUrl(node.url, node.name);
+    }
+
+    // 轻量菜单：简单 ul/li/a 结构，无 treeview，点击直接跳转或打开 Tab
     function renderMenu(items, ul) {
-        if (!ul) ul = $('<ul class="nav nav-treeview"></ul>');
+        if (!ul) ul = $('<ul class="menu-children"></ul>');
         (items || []).forEach(function (it) {
             var hasChild = it.children && it.children.length > 0;
-            var href = (it.url && it.url !== '#') ? it.url : (it.name ? ('/' + it.name.replace(/\./g, '/')) : '#');
-            var isIndexLink = href && (href.indexOf('/admin/index/index') !== -1 || href === '/admin/' || href === '/admin');
+            var href = normalizeUrl(it.url, it.name);
             var iconClass = mapIconToFontAwesome(it.icon || '');
             var title = (it.title || it.name || '').trim();
             if (!title) return;
 
-            var li, a;
+            var li = $('<li class="menu-item"></li>');
+            var addtabsId = (it.id ? ('m' + it.id) : ((it.name || '').replace(/[\/\.]/g, '_').replace(/^_+|_+$/g, '') || ('tab_' + Math.random().toString(36).slice(2, 8))));
             if (hasChild) {
-                li = $('<li class="nav-item has-treeview"></li>');
-                var firstChild = it.children && it.children.length ? it.children[0] : null;
-                var childHref = firstChild && firstChild.url && firstChild.url !== '#' && firstChild.url !== 'javascript:;' ?
-                    firstChild.url :
-                    href;
-                var addtabsIdParent = (it.id ? ('m' + it.id) : ((it.name || '').replace(/[\/\.]/g, '_').replace(/^_+|_+$/g, '') || ('tab_' + Math.random().toString(36).slice(2, 8))));
-                a = $('<a href="#" class="nav-link"></a>').html(
-                    '<i class="nav-icon ' + iconClass + '"></i>' +
-                    '<p>' + title + '<i class="right fas fa-angle-left"></i></p>'
-                );
-                if (childHref && childHref !== '#' && childHref !== 'javascript:;') {
-                    a.attr('addtabs', addtabsIdParent).attr('url', childHref).attr('title', title);
-                }
-                li.append(a);
-                var sub = $('<ul class="nav nav-treeview"></ul>');
+                li.addClass('has-children');
+            }
+            // 父级菜单（有子菜单）默认不跳转，只负责展开/收起
+            var linkHref = (hasChild || !href || href === '#') ? 'javascript:;' : href;
+            var dataUrl = (hasChild ? '' : href);
+            var a = $('<a class="menu-link"></a>')
+                .attr('href', linkHref)
+                .attr('data-url', dataUrl)
+                .attr('data-addtabs', addtabsId)
+                .attr('data-title', title)
+                .html('<span class="menu-icon"><i class="' + iconClass + '"></i></span><span class="menu-text">' + title + '</span>');
+            if (hasChild) {
+                a.append('<span class="menu-arrow"><i class="fas fa-angle-left"></i></span>');
+                var sub = $('<ul class="menu-children"></ul>');
                 renderMenu(it.children, sub);
-                li.append(sub);
+                li.append(a).append(sub);
             } else {
-                li = $('<li class="nav-item"></li>');
-                var isSub = ul.hasClass('nav-treeview');
-                var icon = isSub ? 'far fa-circle nav-icon' : 'nav-icon ' + iconClass;
-                var addtabsId = (it.id ? ('m' + it.id) : ((it.name || '').replace(/[\/\.]/g, '_').replace(/^_+|_+$/g, '') || ('tab_' + Math.random().toString(36).slice(2, 8))));
-                a = $('<a class="nav-link" href="#"></a>').attr('addtabs', addtabsId).attr('url', href).attr('title', title).html(
-                    '<i class="' + icon + '"></i><p>' + title + '</p>'
-                );
                 li.append(a);
             }
             ul.append(li);
@@ -108,7 +148,11 @@
         var $menu = $('#menu-tree');
         if ($menu.length) {
             var indexUrl = (typeof Config !== 'undefined' && Config.moduleurl) ? (Config.moduleurl + '/index/index') : '/admin/index/index';
-            $menu.html('<li class="nav-item"><a href="#" class="nav-link" addtabs="index" url="' + indexUrl + '" title="首页"><i class="nav-icon fas fa-tachometer-alt"></i><p>首页</p></a></li>');
+            $menu.html(
+                '<li class="menu-item">' +
+                '<a href="' + indexUrl + '" class="menu-link" data-url="' + indexUrl + '" data-addtabs="index" data-title="首页">' +
+                '<span class="menu-icon"><i class="fas fa-tachometer-alt"></i></span><span class="menu-text">首页</span></a></li>'
+            );
         }
     }
 
@@ -138,32 +182,17 @@
                 $menu.empty();
                 var filteredData = filterIndexMenu(res.data);
                 var indexUrl = (typeof Config !== 'undefined' && Config.moduleurl) ? (Config.moduleurl + '/index/index') : '/admin/index/index';
-                var $homeItem = $('<li class="nav-item"><a href="#" class="nav-link" addtabs="index" url="' + indexUrl + '" title="首页"><i class="nav-icon fas fa-tachometer-alt"></i><p>首页</p></a></li>');
+                var $homeItem = $(
+                    '<li class="menu-item">' +
+                    '<a href="' + indexUrl + '" class="menu-link" data-url="' + indexUrl + '" data-addtabs="index" data-title="首页">' +
+                    '<span class="menu-icon"><i class="fas fa-tachometer-alt"></i></span><span class="menu-text">首页</span></a></li>'
+                );
                 $menu.append($homeItem);
                 var $menuItems = renderMenu(filteredData);
                 $menuItems.children().each(function() {
                     $menu.append(this);
                 });
-                // AdminLTE 3 Treeview 会在 DOM 更新后自动初始化（通过 data-widget="treeview"）
-                if (typeof $ !== 'undefined' && $.fn.tree) {
-                    $menu.tree();
-                }
-                // 兼容有子菜单的一级导航：点击一级导航也能打开页面
-                $(document).off('click.faSidebarParent', '#menu-tree .has-treeview > a[addtabs]').on('click.faSidebarParent', '#menu-tree .has-treeview > a[addtabs]', function (e) {
-                    var $this = $(this);
-                    var url = $this.attr('url') || '';
-                    if (!url || url.indexOf('javascript:') === 0) {
-                        return;
-                    }
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var id = $this.attr('addtabs') || ('tab_' + Math.random().toString(36).slice(2, 8));
-                    var title = $this.attr('title') || $.trim($this.text());
-                    var $tmp = $('<a href="#" style="display:none;"></a>').attr('addtabs', id).attr('url', url).attr('title', title);
-                    $('body').append($tmp);
-                    $tmp.trigger('click');
-                    $tmp.remove();
-                });
+                // 不再使用 AdminLTE treeview，避免 overlay/点击被拦截
             } else {
                 fallbackMenu();
             }
@@ -192,6 +221,136 @@
         }).fail(function () {});
     }
 
+    // 捕获阶段处理；手机端若被遮罩挡住则用「坐标 + elementFromPoint」取到真正菜单项再跳转
+    function bindMenuClick() {
+        if (typeof jQuery === 'undefined') return;
+        var $ = jQuery;
+
+        function getLinkFromEvent(e) {
+            var el = e.target;
+            while (el && el !== document.body) {
+                if (el.id === 'menu-tree') return null;
+                if (el.classList && el.classList.contains('menu-link')) {
+                    var arrow = el.querySelector('.menu-arrow');
+                    if (arrow && arrow.contains(e.target)) return null;
+                    return el;
+                }
+                el = el.parentElement;
+            }
+            if (window.innerWidth > 991) return null;
+            var t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+            var x = e.clientX != null ? e.clientX : (t ? t.clientX : 0);
+            var y = e.clientY != null ? e.clientY : (t ? t.clientY : 0);
+            var sidebar = document.querySelector('.main-sidebar');
+            if (!sidebar || (!x && !y)) return null;
+            var rect = sidebar.getBoundingClientRect();
+            if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return null;
+            var under = document.elementFromPoint(x, y);
+            var link = null;
+            if (under && sidebar.contains(under)) {
+                link = under.classList && under.classList.contains('menu-link') ? under : (under.closest && under.closest('.menu-link'));
+            }
+            if (!link) {
+                var wrapper = document.querySelector('.wrapper');
+                var saved = [];
+                if (wrapper && wrapper.children) {
+                    for (var i = 0; i < wrapper.children.length; i++) {
+                        var child = wrapper.children[i];
+                        if (child && child !== sidebar) {
+                            saved.push({ el: child, val: child.style.pointerEvents });
+                            child.style.pointerEvents = 'none';
+                        }
+                    }
+                }
+                under = document.elementFromPoint(x, y);
+                saved.forEach(function (o) { o.el.style.pointerEvents = o.val || ''; });
+                if (under && sidebar.contains(under)) {
+                    link = under.classList && under.classList.contains('menu-link') ? under : (under.closest && under.closest('.menu-link'));
+                }
+            }
+            return link || null;
+        }
+
+        function doNavigate(link) {
+            var url = (link.getAttribute('data-url') || link.getAttribute('href') || '').trim();
+            if (!url || url === '#' || /^javascript:/i.test(url)) return;
+            if (url.indexOf('/admin') !== 0 && url.charAt(0) === '/') url = '/admin' + url;
+            if (window.innerWidth <= 991) {
+                window.location.href = url;
+                return;
+            }
+            var id = link.getAttribute('data-addtabs') || ('tab_' + Math.random().toString(36).slice(2, 8));
+            var title = link.getAttribute('data-title') || (link.querySelector('.menu-text') && link.querySelector('.menu-text').textContent) || '';
+            var tmp = document.createElement('a');
+            tmp.href = '#';
+            tmp.style.display = 'none';
+            tmp.setAttribute('addtabs', id);
+            tmp.setAttribute('url', url);
+            tmp.setAttribute('title', title);
+            document.body.appendChild(tmp);
+            tmp.click();
+            document.body.removeChild(tmp);
+        }
+
+        var pendingMenuLink = null;
+
+        function handleMenuClick(e) {
+            var link = getLinkFromEvent(e);
+            if (!link) return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            // 一级父菜单：只展开/收起，不跳转
+            var item = link.closest && link.closest('.menu-item.has-children');
+            if (item) {
+                item.classList.toggle('open');
+                return;
+            }
+            doNavigate(link);
+        }
+
+        function handleTouchStart(e) {
+            if (window.innerWidth > 991) return;
+            var link = getLinkFromEvent(e);
+            if (link) {
+                pendingMenuLink = link;
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (window.innerWidth > 991) return;
+            if (pendingMenuLink) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                var item = pendingMenuLink.closest && pendingMenuLink.closest('.menu-item.has-children');
+                if (item) {
+                    item.classList.toggle('open');
+                } else {
+                    doNavigate(pendingMenuLink);
+                }
+                pendingMenuLink = null;
+            }
+        }
+
+        // Chrome/Android 可能默认把 document 上的 touch* 当 passive，导致 preventDefault 无效
+        // 必须显式声明 { passive: false } 才能阻止侧栏被遮罩关闭
+        document.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false });
+        document.addEventListener('touchend', handleTouchEnd, { capture: true, passive: false });
+        document.addEventListener('touchcancel', function () { pendingMenuLink = null; }, { capture: true, passive: true });
+        document.addEventListener('click', handleMenuClick, true);
+        $(document).on('click', '#menu-tree .menu-item.has-children .menu-arrow', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $(this).closest('.menu-item').toggleClass('open');
+        });
+    }
+
+    // 立即绑定触摸/点击（不等到 DOMContentLoaded），确保比 AdminLTE 更早收到事件
+    bindMenuClick();
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
             loadMenu();

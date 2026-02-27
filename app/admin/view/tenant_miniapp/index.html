@@ -38,14 +38,21 @@
     </div>
 </div>
 <script>
-$(function () {
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    $('#miniapp-form').attr('action', base + '/tenant/miniapp');
-    $('#miniapp-form').on('submit', function (e) {
-        e.preventDefault();
-        $.post($(this).attr('action'), $(this).serialize(), function (r) {
-            alert(r.msg || '保存完成');
-        }, 'json');
+(function () {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(arguments.callee, 50);
+        return;
+    }
+    var $ = jQuery;
+    $(function () {
+        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        $('#miniapp-form').attr('action', base + '/tenant/miniapp');
+        $('#miniapp-form').on('submit', function (e) {
+            e.preventDefault();
+            $.post($(this).attr('action'), $(this).serialize(), function (r) {
+                alert(r.msg || '保存完成');
+            }, 'json');
+        });
     });
-});
+})();
 </script>

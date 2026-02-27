@@ -35,6 +35,11 @@
             });
         }
         $(options.monitor).on('click', '[addtabs]', function (e) {
+            // 移动端（屏幕宽度<=991）不使用 addtabs，直接使用默认的 href 跳转
+            if (window.innerWidth <= 991) {
+                return;
+            }
+
             var url = $(this).attr('url') || '';
             if (url && url.indexOf("javascript:") !== 0) {
                 if ($(this).is("a")) {

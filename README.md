@@ -110,9 +110,17 @@ mysql -uroot -p thinkmes < database/seed_tenant_package.sql
 
 ### 4. 访问系统
 
-- **后台管理**：`http://yourdomain.com/admin/index/login`
+- **后台管理登录**：`http://yourdomain.com/admin/index/login`
   - 账号：`admin`
   - 密码：`123456`
+- **MES 制造执行后台**：登录后台后，在左侧点击「MES制造执行」进入 MES 模块（订单、生产、报工等）
+- **客户门户（B2B 客户自助下单）**：
+  - 客户登录：`http://yourdomain.com/index/customer/login`
+  - 客户下单首页：`http://yourdomain.com/index/customer/index`
+  - 客户查看订单：`http://yourdomain.com/index/customer/orders`
+- **员工端（报工与工资查询 H5）**：
+  - 员工登录 / 工作台：`http://yourdomain.com/index/user/login`（登录后进入 `/index/user/index`）
+  - 扫码报工页面：`http://yourdomain.com/index/worker/scan?allocation_id=任务ID`
 
 详细安装步骤请参考：[INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
 

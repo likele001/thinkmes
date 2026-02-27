@@ -47,7 +47,14 @@ class Customer extends Backend
         }
 
         $total = $query->count();
-        $list = $query->page($page, $limit)->select()->toArray();
+        $rows = $query->page($page, $limit)->select();
+
+        $list = [];
+        foreach ($rows as $row) {
+            $arr = $row->toArray();
+            unset($arr['login_password']);
+            $list[] = $arr;
+        }
 
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
@@ -61,7 +68,36 @@ class Customer extends Backend
             }
 
             $tenantId = $this->getTenantId();
+            $loginAccount = trim((string) ($params['login_account'] ?? ''));
+            $loginPassword = (string) ($params['login_password'] ?? '');
+            $customerName = trim((string) ($params['customer_name'] ?? ''));
+
+            if ($customerName === '') {
+                return $this->error('请输入客户名称');
+            }
+            if ($loginAccount === '') {
+                return $this->error('请输入登录账号');
+            }
+            if (strlen($loginPassword) < 6 || strlen($loginPassword) > 32) {
+                return $this->error('密码长度为 6-32 位');
+            }
+
+            $exists = CustomerModel::where('tenant_id', $tenantId)
+                ->where('login_account', $loginAccount)
+                ->find();
+            if ($exists) {
+                return $this->error('登录账号已存在');
+            }
+
             $params['tenant_id'] = $tenantId;
+            $params['login_account'] = $loginAccount;
+            $params['login_password'] = password_hash($loginPassword, PASSWORD_BCRYPT);
+            if (!isset($params['status']) || $params['status'] === '') {
+                $params['status'] = 1;
+            }
+            if (!isset($params['default_lang']) || $params['default_lang'] === '') {
+                $params['default_lang'] = 'zh-cn';
+            }
 
             try {
                 $customer = CustomerModel::create($params);
@@ -79,6 +115,9 @@ class Customer extends Backend
     {
         $ids = $this->request->param('ids');
         if (empty($ids)) {
+            $ids = $this->request->param('id');
+        }
+        if (empty($ids)) {
             return $this->error('参数错误');
         }
 
@@ -92,6 +131,34 @@ class Customer extends Backend
             $params = $this->request->post('row/a');
             if (empty($params)) {
                 return $this->error('参数不能为空');
+            }
+
+            $loginAccount = array_key_exists('login_account', $params) ? trim((string) $params['login_account']) : $row->login_account;
+            if ($loginAccount === '') {
+                return $this->error('请输入登录账号');
+            }
+            $exists = CustomerModel::where('tenant_id', $tenantId)
+                ->where('login_account', $loginAccount)
+                ->where('id', '<>', $row->id)
+                ->find();
+            if ($exists) {
+                return $this->error('登录账号已存在');
+            }
+
+            $rawPassword = $params['login_password'] ?? '';
+            if ($rawPassword !== '') {
+                $rawPassword = (string) $rawPassword;
+                if (strlen($rawPassword) < 6 || strlen($rawPassword) > 32) {
+                    return $this->error('密码长度为 6-32 位');
+                }
+                $params['login_password'] = password_hash($rawPassword, PASSWORD_BCRYPT);
+            } else {
+                unset($params['login_password']);
+            }
+
+            $params['login_account'] = $loginAccount;
+            if (!isset($params['default_lang']) || $params['default_lang'] === '') {
+                $params['default_lang'] = $row->default_lang ?: 'zh-cn';
             }
 
             try {

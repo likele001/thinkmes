@@ -245,6 +245,15 @@ Route::group('mes', function () {
     Route::post('customer/edit', 'mes.Customer/edit');
     Route::post('customer/del', 'mes.Customer/del');
 
+    // 客户产品配置管理
+    Route::get('customer_product/add', 'mes.CustomerProduct/add');
+    Route::get('customer_product/edit', 'mes.CustomerProduct/edit');
+    Route::get('customer_product/index', 'mes.CustomerProduct/index');
+    Route::get('customer_product', 'mes.CustomerProduct/index');
+    Route::post('customer_product/add', 'mes.CustomerProduct/add');
+    Route::post('customer_product/edit', 'mes.CustomerProduct/edit');
+    Route::post('customer_product/del', 'mes.CustomerProduct/del');
+
     // 工序管理（具体路由放在前面，避免被通用路由匹配）
     Route::get('process/add', 'mes.Process/add');
     Route::get('process/edit', 'mes.Process/edit');

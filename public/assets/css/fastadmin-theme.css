@@ -262,17 +262,17 @@ body.sidebar-hover-expand .main-sidebar .brand-link {
     transition: width 0.3s ease-in-out !important;
 }
 
-/* 顶栏、内容区、页脚：必须留出侧栏宽度，否则会与侧栏重叠 */
-.layout-fixed .main-header {
-    margin-left: 250px !important;
-    transition: margin-left 0.3s ease-in-out !important;
-}
+@media (min-width: 992px) {
+    .layout-fixed .main-header {
+        margin-left: 250px !important;
+        transition: margin-left 0.3s ease-in-out !important;
+    }
 
-.layout-fixed .content-wrapper,
-.layout-fixed .main-footer {
-    margin-left: 250px !important;
-    transition: margin-left 0.3s ease-in-out !important;
-}
+    .layout-fixed .content-wrapper,
+    .layout-fixed .main-footer {
+        margin-left: 250px !important;
+        transition: margin-left 0.3s ease-in-out !important;
+    }
 
 /* 保证标签页内容区有高度，避免 iframe 空白 */
 .content-wrapper .content {
@@ -298,51 +298,58 @@ body.sidebar-hover-expand .main-sidebar .brand-link {
 }
 
 /* 折叠状态：侧栏收窄，内容区左外边距同步收窄 */
-.layout-fixed.sidebar-collapse .main-sidebar,
-.layout-fixed.sidebar-mini.sidebar-collapse .main-sidebar {
-    width: 4.6rem !important;
-    max-width: 4.6rem !important;
+    .layout-fixed.sidebar-collapse .main-sidebar,
+    .layout-fixed.sidebar-mini.sidebar-collapse .main-sidebar {
+        width: 4.6rem !important;
+        max-width: 4.6rem !important;
+    }
+
+    .layout-fixed.sidebar-collapse .main-header,
+    .layout-fixed.sidebar-mini.sidebar-collapse .main-header {
+        margin-left: 4.6rem !important;
+    }
+
+    .layout-fixed.sidebar-collapse .content-wrapper,
+    .layout-fixed.sidebar-collapse .main-footer,
+    .layout-fixed.sidebar-mini.sidebar-collapse .content-wrapper,
+    .layout-fixed.sidebar-mini.sidebar-collapse .main-footer {
+        margin-left: 4.6rem !important;
+    }
+
+    .layout-fixed.sidebar-collapse.sidebar-hover-expand .main-header,
+    .layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-header {
+        margin-left: 250px !important;
+    }
+    .layout-fixed.sidebar-collapse.sidebar-hover-expand .content-wrapper,
+    .layout-fixed.sidebar-collapse.sidebar-hover-expand .main-footer,
+    .layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .content-wrapper,
+    .layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-footer {
+        margin-left: 250px !important;
+    }
+    .layout-fixed.sidebar-collapse.sidebar-hover-expand .main-sidebar,
+    .layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-sidebar {
+        width: 250px !important;
+        max-width: 250px !important;
+    }
+
+    .layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-sidebar {
+        width: 250px !important;
+        max-width: 250px !important;
+    }
+
+    .layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-header,
+    .layout-fixed.sidebar-mini:not(.sidebar-collapse) .content-wrapper,
+    .layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-footer {
+        margin-left: 250px !important;
+    }
 }
 
-.layout-fixed.sidebar-collapse .main-header,
-.layout-fixed.sidebar-mini.sidebar-collapse .main-header {
-    margin-left: 4.6rem !important;
-}
-
-.layout-fixed.sidebar-collapse .content-wrapper,
-.layout-fixed.sidebar-collapse .main-footer,
-.layout-fixed.sidebar-mini.sidebar-collapse .content-wrapper,
-.layout-fixed.sidebar-mini.sidebar-collapse .main-footer {
-    margin-left: 4.6rem !important;
-}
-
-/* 收缩状态下鼠标悬停侧栏时，AdminLTE 会展开侧栏；同步把顶栏和内容区右推，避免被盖住 */
-.layout-fixed.sidebar-collapse.sidebar-hover-expand .main-header,
-.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-header {
-    margin-left: 250px !important;
-}
-.layout-fixed.sidebar-collapse.sidebar-hover-expand .content-wrapper,
-.layout-fixed.sidebar-collapse.sidebar-hover-expand .main-footer,
-.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .content-wrapper,
-.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-footer {
-    margin-left: 250px !important;
-}
-.layout-fixed.sidebar-collapse.sidebar-hover-expand .main-sidebar,
-.layout-fixed.sidebar-mini.sidebar-collapse.sidebar-hover-expand .main-sidebar {
-    width: 250px !important;
-    max-width: 250px !important;
-}
-
-/* 展开状态：确保 sidebar-mini 未折叠时也是 250px */
-.layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-sidebar {
-    width: 250px !important;
-    max-width: 250px !important;
-}
-
-.layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-header,
-.layout-fixed.sidebar-mini:not(.sidebar-collapse) .content-wrapper,
-.layout-fixed.sidebar-mini:not(.sidebar-collapse) .main-footer {
-    margin-left: 250px !important;
+@media (max-width: 991.98px) {
+    .layout-fixed .main-header,
+    .layout-fixed .content-wrapper,
+    .layout-fixed .main-footer {
+        margin-left: 0 !important;
+    }
 }
 
 .nav-sidebar .nav-treeview {

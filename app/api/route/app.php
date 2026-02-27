@@ -27,6 +27,15 @@ Route::post('user/changePassword', 'User/changePassword')->middleware(\app\api\m
 Route::get('user/logout', 'User/logout')->middleware(\app\api\middleware\UserAuth::class);
 Route::post('user/logout', 'User/logout')->middleware(\app\api\middleware\UserAuth::class);
 
+// 客户门户：无需登录
+Route::post('customer/login', 'Customer/login');
+
+// 客户门户：需登录
+Route::get('customer/profile', 'Customer/profile')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::get('customer/products', 'Customer/products')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::post('customer/createOrder', 'Customer/createOrder')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::get('customer/orders', 'Customer/orders')->middleware(\app\api\middleware\CustomerAuth::class);
+
 // 小程序绑定（需登录）
 Route::post('miniapp/bind', 'Miniapp/bind')->middleware(\app\api\middleware\UserAuth::class);
 

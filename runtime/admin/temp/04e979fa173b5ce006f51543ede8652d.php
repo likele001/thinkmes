@@ -1,4 +1,4 @@
-<?php /*a:1:{s:62:"/www/wwwroot/thinkmes/app/admin/view/tenant_miniapp/index.html";i:1771143229;}*/ ?>
+<?php /*a:1:{s:62:"/www/wwwroot/thinkmes/app/admin/view/tenant_miniapp/index.html";i:1771666792;}*/ ?>
 <div class="card card-outline card-primary">
     <div class="card-header"><h3 class="card-title">租户小程序配置</h3></div>
     <div class="card-body">
@@ -39,14 +39,21 @@
     </div>
 </div>
 <script>
-$(function () {
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    $('#miniapp-form').attr('action', base + '/tenant/miniapp');
-    $('#miniapp-form').on('submit', function (e) {
-        e.preventDefault();
-        $.post($(this).attr('action'), $(this).serialize(), function (r) {
-            alert(r.msg || '保存完成');
-        }, 'json');
+(function () {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(arguments.callee, 50);
+        return;
+    }
+    var $ = jQuery;
+    $(function () {
+        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        $('#miniapp-form').attr('action', base + '/tenant/miniapp');
+        $('#miniapp-form').on('submit', function (e) {
+            e.preventDefault();
+            $.post($(this).attr('action'), $(this).serialize(), function (r) {
+                alert(r.msg || '保存完成');
+            }, 'json');
+        });
     });
-});
+})();
 </script>

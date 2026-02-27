@@ -44,6 +44,13 @@ INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, 
 ('mes/customer/edit', '编辑客户', 2, 0, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes/customer') AS t), '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/customer/del', '删除客户', 2, 0, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes/customer') AS t), '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 
+-- 客户产品配置
+('mes/customer_product', '客户产品配置', 1, 1, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes') AS t), 'fa fa-list', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/customer_product/index', '配置列表', 2, 0, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes/customer_product') AS t), '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/customer_product/add', '添加配置', 2, 0, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes/customer_product') AS t), '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/customer_product/edit', '编辑配置', 2, 0, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes/customer_product') AS t), '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/customer_product/del', '删除配置', 2, 0, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes/customer_product') AS t), '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+
 -- 工序管理
 ('mes/process', '工序管理', 1, 1, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes') AS t), 'fa fa-cogs', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/process/index', '工序列表', 2, 0, 1, (SELECT id FROM (SELECT id FROM fa_auth_rule WHERE name='mes/process') AS t), '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
