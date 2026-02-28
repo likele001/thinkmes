@@ -13,7 +13,7 @@
     <div class="member-right">
       <div class="card">
         <div class="card-body">
-          <div style="display:flex;align-items:center;gap:16px;">
+          <div class="profile-row" style="display:flex;align-items:center;gap:16px;">
             <div class="avatar-circle" id="avatar">C</div>
             <div style="flex:1;">
               <div style="display:flex;align-items:center;gap:8px;">
@@ -185,7 +185,7 @@ $(function(){
       return;
     }
     var payload = {
-      items: JSON.stringify(items),
+      items_json: JSON.stringify(items),
       remark: $('#order-remark').val() || ''
     };
     $.post({

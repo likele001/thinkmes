@@ -46,22 +46,51 @@ window.AdminLTEOptions.iframe = false;
 .sidebar-menu .menu-item.has-children.open > .menu-children { display: block; }
 .sidebar-menu .menu-children .menu-link { padding: 8px 15px 8px 28px; font-size: 0.95rem; }
 .sidebar-menu .menu-children .menu-icon i { font-size: 0.85rem; }
-/* 手机端：侧栏打开时，内容区只占右侧，不覆盖左侧，这样点左侧一定落在菜单上 */
+/* 侧栏：固定高度，菜单区域可滚动（PC/移动端都能上下滑） */
+.main-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+.main-sidebar .brand-link { flex-shrink: 0 !important; }
+.main-sidebar .sidebar {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+.main-sidebar .sidebar-menu-wrap {
+    height: 100% !important;
+    max-height: calc(100vh - 52px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+}
+.main-sidebar .sidebar-menu-wrap nav { padding-bottom: 20px; }
+/* 移动端：侧栏固定宽、菜单区明确高度以便滑动；打开时右侧不参与滚动 */
 @media (max-width: 991.98px) {
     .main-sidebar {
         z-index: 1038 !important;
         position: fixed !important;
-        left: 0;
-        top: 0;
-        height: 100vh;
-        transform: translateZ(0);
+        left: 0 !important;
+        top: 0 !important;
+        width: 250px !important;
+        height: 100vh !important;
     }
+    .main-sidebar .sidebar-menu-wrap {
+        height: calc(100vh - 52px) !important;
+        max-height: calc(100vh - 52px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    body.mobile-sidebar-open .main-sidebar .sidebar { transform: translateX(0) !important; }
+    body.mobile-sidebar-open .content-wrapper { overflow: hidden !important; touch-action: none !important; }
     .content-wrapper, .main-header { z-index: 1; }
     .main-sidebar .menu-link {
         cursor: pointer !important;
         -webkit-tap-highlight-color: rgba(255,255,255,.1);
     }
-    /* 关键：侧栏打开时内容区右移，左侧 250px 只有侧栏，点击一定落在菜单上 */
     body.sidebar-open .content-wrapper,
     body.sidebar-open .main-header,
     body.sidebar-open .main-footer,
@@ -114,13 +143,54 @@ window.AdminLTEOptions.iframe = false;
         });
         $(document).on('mouseenter', '.main-sidebar', function() { if ($('body').hasClass('sidebar-collapse')) $('body').addClass('sidebar-hover-expand'); });
         $(document).on('mouseleave', '.main-sidebar', function() { $('body').removeClass('sidebar-hover-expand'); });
-        /* 手机端：点汉堡时给 body 加 class，内容区右移，左侧只留侧栏，菜单可点 */
+        /* 移动端：点汉堡时 body 加 class、侧栏加 .show，内容区右移 */
         $(document).on('click', '[data-widget="pushmenu"]', function() {
-            if ($(window).width() <= 991) $('body').toggleClass('mobile-sidebar-open');
+            if ($(window).width() <= 991) {
+                $('body').toggleClass('mobile-sidebar-open');
+                $('.main-sidebar .sidebar').toggleClass('show');
+            }
         });
         $(window).on('resize', function() {
-            if ($(window).width() > 991) $('body').removeClass('mobile-sidebar-open');
+            if ($(window).width() > 991) {
+                $('body').removeClass('mobile-sidebar-open');
+                $('.main-sidebar .sidebar').removeClass('show');
+            }
         });
+        /* 移动端左侧菜单：按触摸坐标是否在侧栏内，在 document 上处理滚动（不依赖 target） */
+        (function() {
+            var wrap = document.getElementById('sidebar-menu-wrap');
+            var sidebarEl = document.querySelector('.main-sidebar');
+            if (!wrap || !sidebarEl) return;
+            var startY = 0, startScroll = 0, active = false;
+            function touchInSidebar(clientX, clientY) {
+                var body = document.body;
+                if (!body.classList.contains('mobile-sidebar-open') && !body.classList.contains('sidebar-open')) return false;
+                var r = sidebarEl.getBoundingClientRect();
+                return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+            }
+            document.addEventListener('touchstart', function(e) {
+                if (window.innerWidth > 991) return;
+                var t = e.touches && e.touches[0];
+                if (!t) return;
+                if (!touchInSidebar(t.clientX, t.clientY)) { active = false; return; }
+                active = true;
+                startY = t.clientY;
+                startScroll = wrap.scrollTop;
+            }, { capture: true, passive: true });
+            document.addEventListener('touchmove', function(e) {
+                if (window.innerWidth > 991 || !active) return;
+                var t = e.touches && e.touches[0];
+                if (!t) return;
+                e.preventDefault();
+                var y = t.clientY, dy = startY - y;
+                var next = Math.max(0, Math.min(wrap.scrollHeight - wrap.clientHeight, startScroll + dy));
+                wrap.scrollTop = next;
+                startY = y;
+                startScroll = next;
+            }, { capture: true, passive: false });
+            document.addEventListener('touchend', function() { active = false; }, { capture: true, passive: true });
+            document.addEventListener('touchcancel', function() { active = false; }, { capture: true, passive: true });
+        })();
     });
 })();
 </script>

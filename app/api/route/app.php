@@ -34,6 +34,8 @@ Route::post('customer/login', 'Customer/login');
 Route::get('customer/profile', 'Customer/profile')->middleware(\app\api\middleware\CustomerAuth::class);
 Route::get('customer/products', 'Customer/products')->middleware(\app\api\middleware\CustomerAuth::class);
 Route::post('customer/createOrder', 'Customer/createOrder')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::post('customer/confirmOrder', 'Customer/confirmOrder')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::post('customer/updateOrder', 'Customer/updateOrder')->middleware(\app\api\middleware\CustomerAuth::class);
 Route::get('customer/orders', 'Customer/orders')->middleware(\app\api\middleware\CustomerAuth::class);
 
 // 小程序绑定（需登录）

@@ -293,6 +293,9 @@
         }
 
         var pendingMenuLink = null;
+        var touchStartY = 0;
+        var touchStartX = 0;
+        var tapThreshold = 12;
 
         function handleMenuClick(e) {
             var link = getLinkFromEvent(e);
@@ -300,23 +303,33 @@
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            // 一级父菜单：只展开/收起，不跳转
-            var item = link.closest && link.closest('.menu-item.has-children');
-            if (item) {
-                item.classList.toggle('open');
+            // 只有点击「一级父项」那一行（带箭头的那行）才展开/收起；点击二级、叶子项只跳转，不收起上级
+            var parentLi = link.closest && link.closest('.menu-item');
+            if (parentLi && parentLi.classList.contains('has-children') && !link.closest('.menu-children')) {
+                parentLi.classList.toggle('open');
                 return;
             }
             doNavigate(link);
         }
 
+        // touchstart 不 preventDefault，否则会阻止侧栏上下滑动
         function handleTouchStart(e) {
             if (window.innerWidth > 991) return;
             var link = getLinkFromEvent(e);
-            if (link) {
-                pendingMenuLink = link;
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
+            var t = (e.touches && e.touches[0]);
+            if (t) {
+                touchStartX = t.clientX;
+                touchStartY = t.clientY;
+            }
+            if (link) pendingMenuLink = link;
+        }
+
+        function handleTouchMove(e) {
+            if (window.innerWidth > 991 || !pendingMenuLink) return;
+            var t = (e.touches && e.touches[0]);
+            if (!t) return;
+            if (Math.abs(t.clientY - touchStartY) > tapThreshold || Math.abs(t.clientX - touchStartX) > tapThreshold) {
+                pendingMenuLink = null;
             }
         }
 
@@ -326,19 +339,18 @@
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                var item = pendingMenuLink.closest && pendingMenuLink.closest('.menu-item.has-children');
-                if (item) {
-                    item.classList.toggle('open');
+                var parentLi = pendingMenuLink.closest && pendingMenuLink.closest('.menu-item');
+                if (parentLi && parentLi.classList.contains('has-children') && !pendingMenuLink.closest('.menu-children')) {
+                    parentLi.classList.toggle('open');
                 } else {
                     doNavigate(pendingMenuLink);
                 }
-                pendingMenuLink = null;
             }
+            pendingMenuLink = null;
         }
 
-        // Chrome/Android 可能默认把 document 上的 touch* 当 passive，导致 preventDefault 无效
-        // 必须显式声明 { passive: false } 才能阻止侧栏被遮罩关闭
-        document.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false });
+        document.addEventListener('touchstart', handleTouchStart, { capture: true, passive: true });
+        document.addEventListener('touchmove', handleTouchMove, { capture: true, passive: true });
         document.addEventListener('touchend', handleTouchEnd, { capture: true, passive: false });
         document.addEventListener('touchcancel', function () { pendingMenuLink = null; }, { capture: true, passive: true });
         document.addEventListener('click', handleMenuClick, true);

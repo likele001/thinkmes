@@ -85,9 +85,9 @@
     display: none !important;
 }
 
-/* 侧边栏相关（AdminLTE 3 使用 .main-sidebar） */
+/* 侧边栏：由 .sidebar-menu-wrap 负责内部滚动，此处不强制 height */
 .main-sidebar .sidebar {
-    height: 100% !important;
+    min-height: 0;
 }
 
 /* 响应式修复 */

@@ -15,5 +15,6 @@ Route::get('trace/detail', 'Trace/detail');
 Route::get('trace.html', 'Trace/detail');
 
 Route::get('customer/login', 'Customer/login');
+Route::get('customer/logout', 'Customer/logout');
 Route::get('customer/index', 'Customer/index');
 Route::get('customer/orders', 'Customer/orders');

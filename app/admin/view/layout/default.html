@@ -60,10 +60,12 @@
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
         <a href="{:url('index/index')}" class="brand-link"><span class="brand-text font-weight-light">KeleAdmin</span></a>
         <div class="sidebar">
-            <nav class="mt-2">
-                <!-- 轻量菜单：仅根据后端权限数据渲染，无 treeview，点击直接生效 -->
-                <ul class="sidebar-menu" id="menu-tree" role="menu"></ul>
-            </nav>
+            <div class="sidebar-menu-wrap" id="sidebar-menu-wrap">
+                <nav class="mt-2">
+                    <!-- 轻量菜单：仅根据后端权限数据渲染，无 treeview，点击直接生效 -->
+                    <ul class="sidebar-menu" id="menu-tree" role="menu"></ul>
+                </nav>
+            </div>
         </div>
     </aside>
     <div class="content-wrapper">

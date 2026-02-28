@@ -65,3 +65,13 @@ body{background:linear-gradient(180deg,#f7f9fc 0%,#eef2ff 100%);color:#1f2937}
 .slider-fill{position:absolute;left:0;top:0;height:100%;background:rgba(129,140,248,.25);pointer-events:none}
 .slider-captcha.slider-success .slider-track{background:#e0f2fe;border-color:#38bdf8}
 .slider-captcha.slider-success .slider-text{color:#0f766e}
+@media (max-width:991px){
+  .member-layout{flex-direction:column}
+  .member-left{flex:none;width:100%}
+  .profile-row{flex-wrap:wrap}
+}
+@media (max-width:576px){
+  .container-main{padding:0 12px;margin:12px auto}
+  .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-responsive table{min-width:560px}
+}
