@@ -1,0 +1,33 @@
+---
+description: 视图层 JS 应抽离到独立 JS 文件，便于维护并减轻服务器压力
+globs: app/admin/view/**/*.html
+alwaysApply: false
+---
+
+# 视图 JS 抽离规范
+
+## 原则
+
+- **视图模板**（`app/admin/view/**/*.html`）中尽量不写内联 `<script>` 业务逻辑
+- **业务 JS** 放到 `public/assets/js/backend/` 对应路径的独立 `.js` 文件中
+- 好处：便于维护、可缓存、减轻服务器压力
+
+## 路径对应
+
+| 视图路径 | JS 路径（按 Config.jsname） |
+|----------|-----------------------------|
+| `app/admin/view/app_center/index.html` | `public/assets/js/backend/app_center.js` |
+| `app/admin/view/mes/order/index.html` | `public/assets/js/backend/mes/order.js` |
+| `app/admin/view/crm/*/index.html` | `public/assets/js/backend/crm/*.js`（需与 controllername 一致） |
+
+- `Backend` 注入的 `Config.jsname` 决定加载哪个 JS，格式为 `backend/控制器路径`
+
+## 实现方式
+
+1. 在 JS 中定义 `window.__backendController`，按 action 提供方法（如 `index`、`add`）
+2. `backend-loader.js` 会按 `Config.jsname` 和 `Config.actionname` 自动加载并执行
+3. 视图中仅保留必要的 `Config` 注入和极简初始化（如无则可不写 script）
+
+## 参考
+
+- 现有示例：`public/assets/js/backend/addon.js`、`log.js`、`mes/order.js`

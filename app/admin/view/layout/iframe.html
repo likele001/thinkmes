@@ -20,7 +20,8 @@
     window.AdminLTEOptions.iframe = false;
     </script>
     {include file="common/meta" /}
-    <!-- 基础库统一在 common/script-iframe 中加载 -->
+    <!-- iframe 内页的脚本在 body 中先于 script-iframe 执行，必须先在此加载 jQuery，否则会报 $ is not defined -->
+    <script src="/assets/lib/jquery/jquery.min.js"></script>
     <script>
     // 检测是否真的在 iframe 中
     // 如果不在 iframe 中但 URL 有 iframe=1 参数，说明是直接访问，应该跳转到完整页面

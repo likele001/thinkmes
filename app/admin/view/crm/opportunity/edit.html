@@ -1,0 +1,168 @@
+<form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">客户<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <select id="c-customer_id" class="form-control" name="row[customer_id]">
+                <option value="">请选择客户</option>
+                {volist name="customers" id="c"}
+                <option value="{$c.id}" {if condition="$row.customer_id==$c.id"}selected{/if}>{$c.name}</option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">联系人</label>
+        <div class="col-xs-12 col-sm-8">
+            <select id="c-contact_id" class="form-control" name="row[contact_id]">
+                <option value="">请选择联系人</option>
+                {volist name="contacts" id="ct"}
+                <option value="{$ct.id}" {if condition="$row.contact_id==$ct.id"}selected{/if}>{$ct.name}</option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">商机名称<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-name" class="form-control" name="row[name]" value="{$row.name|default=''}" placeholder="请输入商机名称">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">阶段</label>
+        <div class="col-xs-12 col-sm-8">
+            <select id="c-stage" class="form-control" name="row[stage]">
+                <option value="lead" {if condition="$row.stage=='lead'"}selected{/if}>线索</option>
+                <option value="quote" {if condition="$row.stage=='quote'"}selected{/if}>报价</option>
+                <option value="negotiate" {if condition="$row.stage=='negotiate'"}selected{/if}>谈判</option>
+                <option value="won" {if condition="$row.stage=='won'"}selected{/if}>成交</option>
+                <option value="lost" {if condition="$row.stage=='lost'"}selected{/if}>失败</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">金额</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-amount" type="number" step="0.01" class="form-control" name="row[amount]" value="{$row.amount|default=''}" placeholder="请输入金额">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">负责人</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-owner_id" class="form-control" name="row[owner_id]" value="{$row.owner_id|default=''}" placeholder="负责人ID">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">预计成交日期</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-expected_date" type="date" class="form-control" name="row[expected_date]" value="{if condition='$row.expected_date'}{$row.expected_date|date='Y-m-d',###}{/if}" placeholder="预计成交日期">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">备注</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-remark" class="form-control" name="row[remark]" rows="3" placeholder="备注信息">{$row.remark|default=''}</textarea>
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed">确定</button>
+            <button type="reset" class="btn btn-default btn-embossed">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('form-edit');
+    if (!form) return;
+
+    var submitBtn = form.querySelector('button[type="submit"]');
+    var customerSelect = form.querySelector('[name="row[customer_id]"]');
+    var contactSelect = form.querySelector('[name="row[contact_id]"]');
+
+    // 客户选择变化时，更新联系人列表
+    if (customerSelect) {
+        customerSelect.addEventListener('change', function() {
+            var customerId = this.value;
+            if (customerId) {
+                var base = (window.Config && Config.moduleurl) ? Config.moduleurl : '/admin';
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', base + '/crm/contact/getByCustomer?customer_id=' + customerId, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        try {
+                            var r = JSON.parse(xhr.responseText);
+                            if (r.code === 1 && r.data) {
+                                var currentContactId = contactSelect.value;
+                                contactSelect.innerHTML = '<option value="">请选择联系人</option>';
+                                r.data.forEach(function(ct) {
+                                    var option = document.createElement('option');
+                                    option.value = ct.id;
+                                    option.textContent = ct.name;
+                                    if (ct.id == currentContactId) {
+                                        option.selected = true;
+                                    }
+                                    contactSelect.appendChild(option);
+                                });
+                            }
+                        } catch(e) {}
+                    }
+                };
+                xhr.send();
+            } else {
+                contactSelect.innerHTML = '<option value="">请选择联系人</option>';
+            }
+        });
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var customerId = form.querySelector('[name="row[customer_id]"]').value || '';
+        var name = form.querySelector('[name="row[name]"]').value || '';
+
+        if (!customerId) {
+            alert('请选择客户');
+            return;
+        }
+        if (!name.trim()) {
+            alert('请输入商机名称');
+            return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', form.getAttribute('action') || window.location.href, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    var r;
+                    try {
+                        r = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        alert('返回数据格式错误');
+                        return;
+                    }
+                    if (r.msg) {
+                        alert(r.msg);
+                    }
+                    if (r.code === 1) {
+                        var base = (window.Config && Config.moduleurl) ? Config.moduleurl : '/admin';
+                        window.location.href = base + '/crm/opportunity/index';
+                    }
+                } else {
+                    alert('网络错误，请重试');
+                }
+            }
+        };
+        xhr.send(new URLSearchParams(new FormData(form)).toString());
+    });
+});
+</script>

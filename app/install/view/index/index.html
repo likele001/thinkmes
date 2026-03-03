@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{$title|default='安装'} - 系统安装向导</title>
+    <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 2rem 0; }
+        .install-card { max-width: 700px; margin: 0 auto; box-shadow: 0 10px 40px rgba(0,0,0,.15); border: none; border-radius: 12px; }
+        .install-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 12px 12px 0 0; padding: 1.5rem; }
+        .install-header h4 { margin: 0; font-weight: 600; }
+        .step-tabs { display: flex; justify-content: center; gap: 0.5rem; padding: 1rem; flex-wrap: wrap; }
+        .step-tab { padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.9rem; color: #6c757d; }
+        .step-tab.active { background: #667eea; color: #fff; }
+        .step-tab.done { background: #28a745; color: #fff; }
+        .install-body { padding: 2rem; }
+        .agree-box { height: 280px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem; background: #f8f9fa; font-size: 0.9rem; }
+        .env-table td { vertical-align: middle; }
+        .env-ok { color: #28a745; }
+        .env-fail { color: #dc3545; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card install-card">
+        <div class="install-header">
+            <h4><i class="fas fa-cog mr-2"></i>系统安装向导</h4>
+            <p class="mb-0 mt-1 small opacity-90">基础后台安装（不含 MES 应用）</p>
+        </div>
+        <div class="step-tabs">
+            <span class="step-tab {$step >= 1 ? ($step == 1 ? 'active' : 'done') : ''}">1. 安装协议</span>
+            <span class="step-tab {$step >= 2 ? ($step == 2 ? 'active' : 'done') : ''}">2. 环境检测</span>
+            <span class="step-tab {$step >= 3 ? ($step == 3 ? 'active' : 'done') : ''}">3. 数据库配置</span>
+            <span class="step-tab {$step >= 4 ? ($step == 4 ? 'active' : 'done') : ''}">4. 管理员账户</span>
+            <span class="step-tab {$step >= 5 ? 'active' : ''}">5. 完成安装</span>
+        </div>
+        <div class="install-body">
+            {if $step == 1}
+            <!-- 步骤1：安装协议 -->
+            <h5 class="mb-3">请阅读以下协议</h5>
+            <div class="agree-box mb-4">
+                <p><strong>一、使用条款</strong></p>
+                <p>本系统为免费提供的基础后台框架。您可自由使用、修改与二次开发，用于个人或商业项目。</p>
+                <p><strong>二、免责声明</strong></p>
+                <p>本程序按“原样”提供，不提供任何明示或暗示的保证。使用本系统所产生的一切风险由使用者自行承担。</p>
+                <p><strong>三、安装说明</strong></p>
+                <p>安装前请确保服务器满足 PHP 8.0+、MySQL 5.7+ 等要求。安装完成后请删除或限制安装目录访问，并妥善保管管理员账号与密码。</p>
+            </div>
+            <a href="{:url('/install/index/step2')}" class="btn btn-primary btn-lg">同意并下一步</a>
+
+            {elseif $step == 2}
+            <!-- 步骤2：环境检测 -->
+            <h5 class="mb-3">服务器环境检测</h5>
+            {if isset($env)}
+            <table class="table table-bordered env-table">
+                <tr>
+                    <td width="200">PHP 版本</td>
+                    <td><span class="{$env.php_ok ? 'env-ok' : 'env-fail'}">{$env.php_version}</span> {$env.php_ok ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-times-circle text-danger"></i> 需 8.0+'}</td>
+                </tr>
+                {volist name="env.extensions" id="ext"}
+                <tr>
+                    <td>扩展 {$ext.name}</td>
+                    <td class="{$ext.ok ? 'env-ok' : 'env-fail'}">{$ext.ok ? '已安装 <i class="fas fa-check-circle"></i>' : '未安装 <i class="fas fa-times-circle"></i>'}</td>
+                </tr>
+                {/volist}
+                {volist name="env.dirs" id="dir"}
+                <tr>
+                    <td>{$dir.name}</td>
+                    <td class="{$dir.ok ? 'env-ok' : 'env-fail'}">{$dir.ok ? '可写 <i class="fas fa-check-circle"></i>' : '不可写 <i class="fas fa-times-circle"></i>'}<br><small class="text-muted">{$dir.path}</small></td>
+                </tr>
+                {/volist}
+            </table>
+            {if $env.all_ok}
+            <a href="{:url('/install/index/step3')}" class="btn btn-primary btn-lg">下一步</a>
+            {else}
+            <p class="text-danger">请先满足上述环境要求后再继续安装。</p>
+            {/if}
+            {else}
+            <p>正在检测...</p>
+            <a href="{:url('/install/index/step3')}" class="btn btn-primary btn-lg">下一步</a>
+            {/if}
+
+            {elseif $step == 3}
+            <!-- 步骤3：数据库配置 -->
+            <h5 class="mb-3">数据库配置</h5>
+            {if isset($error)}
+            <div class="alert alert-warning">{$error}</div>
+            {/if}
+            <form action="{:url('/install/index/step3')}" method="post" id="form-step3">
+                <input type="hidden" name="_action" value="next">
+                <div class="form-group">
+                    <label>数据库地址</label>
+                    <input type="text" name="db_host" class="form-control" value="{$install_db.db_host|default='127.0.0.1'}" placeholder="127.0.0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>端口</label>
+                    <input type="number" name="db_port" class="form-control" value="{$install_db.db_port|default='3306'}" placeholder="3306">
+                </div>
+                <div class="form-group">
+                    <label>数据库名</label>
+                    <input type="text" name="db_name" class="form-control" value="{$install_db.db_name|default=''}" placeholder="如 thinkmes" required>
+                </div>
+                <div class="form-group">
+                    <label>数据库用户名</label>
+                    <input type="text" name="db_user" class="form-control" value="{$install_db.db_user|default='root'}" placeholder="root" required>
+                </div>
+                <div class="form-group">
+                    <label>数据库密码</label>
+                    <input type="password" name="db_pass" class="form-control" value="{$install_db.db_pass|default=''}" placeholder="留空表示无密码">
+                </div>
+                <div class="form-group">
+                    <label>表前缀</label>
+                    <input type="text" name="db_prefix" class="form-control" value="{$install_db.db_prefix|default='fa_'}" placeholder="fa_">
+                </div>
+                <div class="form-group">
+                    <label>字符集</label>
+                    <input type="text" name="db_charset" class="form-control" value="{$install_db.db_charset|default='utf8mb4'}" placeholder="utf8mb4">
+                </div>
+                <div class="form-group" id="wrap-confirm-overwrite" style="display:none;">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" name="confirm_overwrite" id="confirm_overwrite" value="1">
+                        <label class="custom-control-label text-danger" for="confirm_overwrite">确认覆盖安装（将清空现有数据，请谨慎操作）</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-outline-secondary" id="btn-test-db">测试连接</button>
+                    <button type="submit" class="btn btn-primary ml-2">下一步</button>
+                </div>
+            </form>
+            <div id="test-result" class="mt-2"></div>
+            <script>window.INSTALL_HAS_TABLES = {:json_encode(isset($has_tables) && $has_tables==='1')};</script>
+
+            {elseif $step == 4}
+            <!-- 步骤4：管理员账户 -->
+            <h5 class="mb-3">设置管理员账户</h5>
+            {if isset($error)}
+            <div class="alert alert-danger">{$error}</div>
+            {/if}
+            <form action="{:url('/install/index/step4')}" method="post">
+                <div class="form-group">
+                    <label>登录账号</label>
+                    <input type="text" name="admin_username" class="form-control" value="{$install_admin.admin_username|default='admin'}" placeholder="2-50 个字符" required minlength="2" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>登录密码</label>
+                    <input type="password" name="admin_password" class="form-control" placeholder="6-32 位" required minlength="6" maxlength="32">
+                </div>
+                <div class="form-group">
+                    <label>昵称</label>
+                    <input type="text" name="admin_nickname" class="form-control" value="{$install_admin.admin_nickname|default='管理员'}" placeholder="管理员">
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">下一步</button>
+            </form>
+
+            {elseif $step == 5}
+            <!-- 步骤5：执行安装 -->
+            <h5 class="mb-3">确认信息并安装</h5>
+            <p>请确认以下配置无误后点击「开始安装」。</p>
+            <table class="table table-sm table-bordered mb-4">
+                <tr><td width="140">数据库</td><td>{$install_db.db_host}:{$install_db.db_port} / {$install_db.db_name}（前缀：{$install_db.db_prefix}）</td></tr>
+                <tr><td>管理员账号</td><td>{$install_admin.admin_username}（{$install_admin.admin_nickname}）</td></tr>
+            </table>
+            <form id="form-install" action="{:url('/install/index/install')}" method="post">
+                <input type="hidden" name="db_host" value="{$install_db.db_host}">
+                <input type="hidden" name="db_port" value="{$install_db.db_port}">
+                <input type="hidden" name="db_name" value="{$install_db.db_name}">
+                <input type="hidden" name="db_user" value="{$install_db.db_user}">
+                <input type="hidden" name="db_pass" value="{$install_db.db_pass}">
+                <input type="hidden" name="db_prefix" value="{$install_db.db_prefix}">
+                <input type="hidden" name="db_charset" value="{$install_db.db_charset}">
+                <input type="hidden" name="admin_username" value="{$install_admin.admin_username}">
+                <input type="hidden" name="admin_password" value="{$install_admin.admin_password}">
+                <input type="hidden" name="admin_nickname" value="{$install_admin.admin_nickname}">
+                <button type="submit" class="btn btn-success btn-lg" id="btn-install">开始安装</button>
+            </form>
+            <div id="install-result" class="mt-3"></div>
+            {/if}
+        </div>
+    </div>
+</div>
+<script src="/assets/lib/jquery/jquery.min.js"></script>
+<script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+$(function(){
+    var $step3 = $('#form-step3');
+    if ($step3.length) {
+        $('#btn-test-db').on('click', function(){
+            var $btn = $(this), $res = $('#test-result'), $wrap = $('#wrap-confirm-overwrite');
+            $btn.prop('disabled', true);
+            $res.html('<span class="text-muted">正在测试连接...</span>');
+            $wrap.hide();
+            $('#confirm_overwrite').prop('checked', false);
+            $.post('{:url("/install/index/step3")}', $step3.serialize().replace('_action=next', '_action=test'), function(res){
+                if (res.code === 1) {
+                    $res.html('<span class="text-success">' + (res.msg || '连接成功') + '</span>');
+                    if (res.has_tables && res.table_count > 0) {
+                        $wrap.show();
+                    }
+                } else {
+                    $res.html('<span class="text-danger">' + (res.msg || '连接失败') + '</span>');
+                }
+            }, 'json').fail(function(){
+                $res.html('<span class="text-danger">请求失败</span>');
+            }).always(function(){
+                $btn.prop('disabled', false);
+            });
+        });
+        if ($step3.length && typeof window.INSTALL_HAS_TABLES !== 'undefined' && window.INSTALL_HAS_TABLES) {
+            $('#wrap-confirm-overwrite').show();
+        }
+    }
+    var $formInstall = $('#form-install');
+    if ($formInstall.length) {
+        $formInstall.on('submit', function(e){
+            e.preventDefault();
+            var $btn = $('#btn-install'), $res = $('#install-result');
+            $btn.prop('disabled', true);
+            $res.html('<span class="text-muted">正在安装，请稍候...</span>');
+            $.post($formInstall.attr('action'), $formInstall.serialize(), function(res){
+                if (res.code === 1) {
+                    var fullUrl = (window.location.origin || '') + (res.url || '');
+                    var tip = res.admin_entry ? '<p class="mb-2 small"><strong>请妥善保存后台入口地址（仅通过此地址可访问后台）：</strong></p><p class="mb-0"><code class="d-inline-block bg-light px-2 py-1">' + fullUrl + '</code></p>' : '';
+                    $res.html('<div class="alert alert-success">' + (res.msg || '安装成功') + '，<a href="' + (res.url || '') + '">点击进入后台</a>' + tip + '</div>');
+                    if (res.url) setTimeout(function(){ window.location.href = res.url; }, 2000);
+                } else {
+                    $res.html('<div class="alert alert-danger">' + (res.msg || '安装失败') + '</div>');
+                    $btn.prop('disabled', false);
+                }
+            }, 'json').fail(function(){
+                $res.html('<div class="alert alert-danger">请求失败</div>');
+                $btn.prop('disabled', false);
+            });
+        });
+    }
+});
+</script>
+</body>
+</html>

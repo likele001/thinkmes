@@ -10,6 +10,46 @@ use think\Response;
 
 class CheckAuth
 {
+    /** 路径式入口时返回随机路径，否则空（供登录/错误页跳转用） */
+    protected function getAdminEntryPath(): string
+    {
+        $envFile = root_path() . '.env';
+        if (!is_file($envFile)) {
+            return '';
+        }
+        $content = @file_get_contents($envFile);
+        if ($content === false || !preg_match('/^\s*ADMIN_ENTRY\s*=\s*(\S+)/m', $content, $m)) {
+            return '';
+        }
+        $entry = trim($m[1]);
+        if (substr($entry, -4) === '.php') {
+            $entry = substr($entry, 0, -4);
+        }
+        return $entry;
+    }
+
+    /** 登录页 URL：路径式入口时为 /随机路径/index/login，否则用 url() */
+    protected function getLoginUrl(): string
+    {
+        $entry = $this->getAdminEntryPath();
+        return $entry !== '' ? '/' . $entry . '/index/login' : (string) url('/admin/index/login');
+    }
+
+    /** 后台首页 URL（用于 admin 根路径重定向） */
+    protected function getIndexUrl(): string
+    {
+        $entry = $this->getAdminEntryPath();
+        return $entry !== '' ? '/' . $entry . '/index/index' : (string) url('/admin/index/index');
+    }
+
+    /** 无权限页 URL */
+    protected function getErrorUrl(): string
+    {
+        $entry = $this->getAdminEntryPath();
+        $base = $entry !== '' ? '/' . $entry . '/index/error' : (string) url('/admin/index/error');
+        return $base;
+    }
+
     protected array $whiteList = [
         'admin/index/login',
         'admin/index/logout',
@@ -17,6 +57,7 @@ class CheckAuth
         'admin/index/error',  // 无权限提示页，避免二次拦截
         'admin/register/index',
         'admin/register/save',
+        'admin/ai/config/testaudio',  // 语音识别测试用音频，阿里云需公网拉取
     ];
     protected array $loginOnlyList = [
         // 个人中心：任何已登录管理员可访问
@@ -53,9 +94,9 @@ class CheckAuth
             $route = $path;
         }
 
-        // 处理 admin 根路径，自动重定向到 admin/index/index
+        // 处理 admin 根路径，自动重定向到后台首页（路径式入口时用 /随机路径/index/index）
         if ($route === 'admin') {
-            return redirect((string) url('/admin/index/index'));
+            return redirect($this->getIndexUrl());
         }
 
         if (in_array($route, $this->whiteList, true)) {
@@ -68,13 +109,13 @@ class CheckAuth
             if ($request->isAjax()) {
                 return json(['code' => 0, 'msg' => '请先登录', 'data' => []]);
             }
-            return redirect((string) url('/admin/index/login'));
+            return redirect($this->getLoginUrl());
         }
         if (empty($admin) || !isset($admin['id'])) {
             if ($request->isAjax()) {
                 return json(['code' => 0, 'msg' => '请先登录', 'data' => []]);
             }
-            return redirect((string) url('/admin/index/login'));
+            return redirect($this->getLoginUrl());
         }
 
         $adminId = (int) $admin['id'];
@@ -102,7 +143,7 @@ class CheckAuth
             if ($request->isAjax()) {
                 return json(['code' => 0, 'msg' => '无权限访问', 'data' => []]);
             }
-            return redirect((string) url('/admin/index/error') . '?msg=' . urlencode('无权限访问'));
+            return redirect($this->getErrorUrl() . '?msg=' . urlencode('无权限访问'));
         }
 
         return $next($request);

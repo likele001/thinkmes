@@ -1,0 +1,35 @@
+========================================
+  Nginx 配置说明（安装页 / 后台入口不 404）
+========================================
+
+【必做】站点「网站目录」指向 …/public。
+
+后台为路径式入口（安装后无单独 .php 文件）：http://域名/随机路径/index/login
+例如：http://oa1.zuiger.cn/lsj5492/index/login
+只需「不存在的路径重写到 index.php?s=$1」，把下面「完整伪静态」整段粘贴到 伪静态，保存并重载 Nginx。
+（fastcgi_pass 那行：宝塔里 网站→PHP→看你的版本，74 即 php-cgi-74.sock，80 即 php-cgi-80.sock）
+
+--- 完整伪静态（整段替换原来的）---
+location ~* (runtime|application)/ {
+    return 403;
+}
+location ~ \.php$ {
+    fastcgi_pass unix:/tmp/php-cgi-74.sock;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    include fastcgi_params;
+}
+location / {
+    if (!-e $request_filename) {
+        rewrite ^(.*)$ /index.php?s=$1&$args last;
+    }
+}
+
+【若仍 404】
+1. 确认站点「网站目录」/「运行目录」必须是 …/public，不能是项目根（否则 /index.php 会找不到）。
+2. 可改用 try_files 写法（整段替换上面的 location /，保留原查询串）：
+   location / {
+       try_files $uri $uri/ /index.php?s=$uri&$args;
+   }
+3. 重载 Nginx 后再访问：http://你的域名/随机路径/index/login
+
+========================================

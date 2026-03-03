@@ -1,0 +1,95 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-chart-bar"></i> CRM 数据概览</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{$stats.customer_count|default=0}</h3>
+                        <p>有效客户数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-users"></i></div>
+                    <a href="{:url('crm/customer/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>{$stats.opportunity_count|default=0}</h3>
+                        <p>进行中商机</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-lightbulb"></i></div>
+                    <a href="{:url('crm/opportunity/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{$stats.contract_count|default=0}</h3>
+                        <p>有效合同数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-file-contract"></i></div>
+                    <a href="{:url('crm/contract/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>¥{$stats.payment_amount|default=0|number_format=2}</h3>
+                        <p>累计回款</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-money-bill"></i></div>
+                    <a href="{:url('crm/payment/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-primary">
+                    <div class="inner">
+                        <h3>{$stats.sales_order_count|default=0}</h3>
+                        <p>销售订单数</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-shopping-cart"></i></div>
+                    <a href="{:url('crm/sales_order/index')}" class="small-box-footer">查看 <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card card-outline card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">商机金额（进行中）</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-0">¥{$stats.opportunity_amount|default=0|number_format=2}</h4>
+                        <p class="text-muted mb-0">线索、报价、谈判阶段的商机总金额</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 mt-2">
+                <div class="card card-outline card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">合同金额（履行中+已完成）</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-0">¥{$stats.contract_amount|default=0|number_format=2}</h4>
+                        <p class="text-muted mb-0">履行中与已完成的合同总金额</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 mt-2">
+                <div class="card card-outline card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">销售订单金额（已确认+生产中+已完成）</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-0">¥{$stats.sales_order_amount|default=0|number_format=2}</h4>
+                        <p class="text-muted mb-0">已确认、生产中、已完成的销售订单总金额</p>
+                        <a href="{:url('crm/sales_order/index')}" class="btn btn-sm btn-primary mt-2">查看订单列表</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

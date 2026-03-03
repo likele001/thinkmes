@@ -76,7 +76,8 @@ class Index extends Backend
             Hook::trigger('login_after', [$adminArr]);
 
             $redirectUrl = $url ?: 'admin/index/index';
-            $fullUrl = $this->request->domain() . '/' . ltrim(str_replace('.', '/', $redirectUrl), '/');
+            $path = preg_replace('#^admin/#', '', $redirectUrl);
+            $fullUrl = rtrim($this->request->domain(), '/') . $this->getAdminUrlPrefix() . '/' . str_replace('.', '/', $path);
             // 非 AJAX 请求直接 302 跳转到后台首页（仿 FastAdmin 传统表单提交）
             if (!$this->request->isAjax()) {
                 return redirect($fullUrl);
@@ -85,7 +86,7 @@ class Index extends Backend
         }
 
         if (Session::has('admin_info')) {
-            return redirect((string) url('/admin/index/index'));
+            return redirect($this->getAdminUrlPrefix() . '/index/index');
         }
 
         $loginCaptcha = ConfigModel::where('group', 'safe')->where('name', 'login_captcha')->value('value');
@@ -99,7 +100,7 @@ class Index extends Backend
     public function logout(): Response
     {
         Session::delete('admin_info');
-        return redirect((string) url('/admin/index/login'));
+        return redirect($this->getAdminUrlPrefix() . '/index/login');
     }
 
     public function captcha(): Response
@@ -362,15 +363,14 @@ class Index extends Backend
                 }
             }
             $v['icon'] = ($v['icon'] ?? '') . ' fa-fw';
-            // URL生成：根据name生成正确的URL
+            // URL生成：路径式入口时用 /随机路径/，否则用 /admin/
             if (!isset($v['url']) || !$v['url']) {
                 $name = $v['name'] ?? '';
-                // 如果name已经以admin/开头，只加前导斜杠（admin/role/index -> /admin/role/index）
+                $prefix = $this->getAdminUrlPrefix();
                 if (str_starts_with($name, 'admin/')) {
-                    $v['url'] = '/' . $name;
+                    $v['url'] = $prefix . '/' . substr($name, 6);
                 } else {
-                    // 否则加上/admin/前缀（mes/order -> /admin/mes/order）
-                    $v['url'] = '/admin/' . $name;
+                    $v['url'] = $prefix . '/' . $name;
                 }
             }
             $v['title'] = $v['title'] ?? '';
@@ -394,7 +394,7 @@ class Index extends Backend
                         'title'    => $it['title'],
                         'icon'     => ($it['icon'] ?? '') . ' fa-fw',
                         'pid'      => (int) ($it['pid'] ?? 0),
-                        'url'      => '/admin/' . $it['name'],
+                        'url'      => $this->getAdminUrlPrefix() . '/' . $it['name'],
                         'menuclass'=> '',
                         'menutabs' => 'addtabs="' . $it['id'] . '"',
                     ];
@@ -414,7 +414,7 @@ class Index extends Backend
                     'title'    => $it['title'],
                     'icon'     => ($it['icon'] ?? '') . ' fa-fw',
                     'pid'      => (int) ($it['pid'] ?? 0),
-                    'url'      => '/admin/' . $it['name'],
+                    'url'      => $this->getAdminUrlPrefix() . '/' . $it['name'],
                     'menuclass'=> '',
                     'menutabs' => 'addtabs="' . $it['id'] . '"',
                 ];

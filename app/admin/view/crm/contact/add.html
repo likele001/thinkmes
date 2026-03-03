@@ -1,0 +1,133 @@
+<form id="form-add" class="form-horizontal" role="form" action="" method="post">
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">客户<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <select id="c-customer_id" class="form-control" name="row[customer_id]" {if condition="$customer_id"}disabled{/if}>
+                {if condition="$customer_id"}
+                {volist name="customers" id="c"}
+                <option value="{$c.id}" selected>{$c.name}</option>
+                {/volist}
+                {else}
+                <option value="">请选择客户</option>
+                {volist name="customers" id="c"}
+                <option value="{$c.id}">{$c.name}</option>
+                {/volist}
+                {/if}
+            </select>
+            {if condition="$customer_id"}
+            <input type="hidden" name="row[customer_id]" value="{$customer_id}">
+            {/if}
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">姓名<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-name" class="form-control" name="row[name]" value="" placeholder="请输入联系人姓名">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">职位/角色</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-role" class="form-control" name="row[role]" value="" placeholder="如：总经理、采购经理等">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">电话</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-phone" class="form-control" name="row[phone]" value="" placeholder="联系电话">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">邮箱</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-email" type="email" class="form-control" name="row[email]" value="" placeholder="邮箱地址">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">主联系人</label>
+        <div class="col-xs-12 col-sm-8">
+            <label class="radio-inline">
+                <input type="radio" name="row[is_main]" value="1"> 是
+            </label>
+            <label class="radio-inline">
+                <input type="radio" name="row[is_main]" value="0" checked> 否
+            </label>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">备注</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-remark" class="form-control" name="row[remark]" rows="2" placeholder="备注信息"></textarea>
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed">确定</button>
+            <button type="reset" class="btn btn-default btn-embossed">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('form-add');
+    if (!form) return;
+
+    var submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var customerId = form.querySelector('[name="row[customer_id]"]').value || '';
+        var name = form.querySelector('[name="row[name]"]').value || '';
+
+        if (!customerId) {
+            alert('请选择客户');
+            return;
+        }
+        if (!name.trim()) {
+            alert('请输入联系人姓名');
+            return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', form.getAttribute('action') || window.location.href, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    var r;
+                    try {
+                        r = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        alert('返回数据格式错误');
+                        return;
+                    }
+                    if (r.msg) {
+                        alert(r.msg);
+                    }
+                    if (r.code === 1) {
+                        var base = (window.Config && Config.moduleurl) ? Config.moduleurl : '/admin';
+                        var customerId = new URLSearchParams(window.location.search).get('customer_id');
+                        var url = base + '/crm/contact/index';
+                        if (customerId) {
+                            url += '?customer_id=' + customerId;
+                        }
+                        window.location.href = url;
+                    }
+                } else {
+                    alert('网络错误，请重试');
+                }
+            }
+        };
+        xhr.send(new URLSearchParams(new FormData(form)).toString());
+    });
+});
+</script>

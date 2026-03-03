@@ -460,13 +460,17 @@ class Order extends Backend
             }
         }
 
-        // 保存到订单物料需求表
+        // 保存到订单物料需求表（仅保存需求量>0的，避免出现全0）
         foreach ($materialNeeds as $materialId => $data) {
+            $reqQty = (float) ($data['quantity'] ?? 0);
+            if ($reqQty <= 0) {
+                continue;
+            }
             OrderMaterialModel::create([
                 'tenant_id' => $tenantId,
                 'order_id' => $orderId,
                 'material_id' => $materialId,
-                'required_quantity' => $data['quantity'],
+                'required_quantity' => $reqQty,
                 'estimated_price' => $data['price'],
                 'estimated_amount' => $data['amount'],
                 'supplier_id' => $data['supplier_id'],
@@ -556,12 +560,30 @@ class Order extends Backend
         }
 
         $orderId = (int)$ids;
+        $forceRecalc = $this->request->param('recalc') === '1' || $this->request->param('recalc') === 1;
 
-        // 获取物料需求
+        // 获取物料需求；若从未计算过（如客户下单创建的订单）或全部为 0，则按 BOM 自动计算一次；带 recalc=1 时强制重算
         $orderMaterials = OrderMaterialModel::with(['material', 'supplier'])
             ->where('tenant_id', $tenantId)
             ->where('order_id', $orderId)
             ->select();
+        $hasAnyQty = false;
+        foreach ($orderMaterials as $om) {
+            if ((float)$om->required_quantity > 0) {
+                $hasAnyQty = true;
+                break;
+            }
+        }
+        if ($forceRecalc || !$hasAnyQty) {
+            OrderMaterialModel::where('tenant_id', $tenantId)
+                ->where('order_id', $orderId)
+                ->delete();
+            $this->calculateMaterialsWithCost($orderId, $tenantId);
+            $orderMaterials = OrderMaterialModel::with(['material', 'supplier'])
+                ->where('tenant_id', $tenantId)
+                ->where('order_id', $orderId)
+                ->select();
+        }
 
         // 统计总成本和缺料情况，并为每条物料计算缺料数供模板使用
         $totalAmount = 0;

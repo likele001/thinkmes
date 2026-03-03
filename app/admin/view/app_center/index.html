@@ -1,0 +1,122 @@
+<section class="content">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">应用中心</h3>
+            <div class="card-tools">
+                <span class="text-muted small mr-2">在此安装或卸载内置应用，安装后左侧将显示对应菜单。</span>
+                <button type="button" class="btn btn-sm btn-success" id="btn-upload">
+                    <i class="fas fa-upload mr-1"></i>上传应用包
+                </button>
+                <input type="file" id="input-upload" accept=".zip" style="display:none;">
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="table-app" class="table table-striped table-bordered"></table>
+        </div>
+    </div>
+</section>
+<script>
+$(function(){
+    if (typeof jQuery === 'undefined' || typeof jQuery.fn.bootstrapTable !== 'function') {
+        console.error('bootstrapTable 未加载，请刷新页面');
+        return;
+    }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var indexUrl = base + '/app_center/index';
+    var installUrl = base + '/app_center/install';
+    var uninstallUrl = base + '/app_center/uninstall';
+    var uploadUrl = base + '/app_center/upload';
+    function postAction(url, app, onSuccess) {
+        $.post(url, {app: app}, function(ret){
+            var ok = ret && ret.code === 1;
+            alert((ret && ret.msg) || (ok ? '操作成功' : '操作失败'));
+            if (ok && typeof onSuccess === 'function') onSuccess();
+        }, 'json').fail(function(){ alert('请求失败'); });
+    }
+    var $table = $('#table-app');
+    if ($table.length) {
+        $table.bootstrapTable({
+            url: indexUrl,
+            method: 'get',
+            pagination: false,
+            sidePagination: 'client',
+            dataField: 'list',
+            responseHandler: function(res) {
+                return (res && res.data) ? res.data : { total: 0, list: [] };
+            },
+            columns: [
+                { field: 'title', title: '应用名称' },
+                { field: 'description', title: '说明' },
+                {
+                    field: 'available',
+                    title: '可用',
+                    formatter: function(v) {
+                        return v ? '<span class="badge badge-success">是</span>' : '<span class="badge badge-secondary">需完整版</span>';
+                    }
+                },
+                {
+                    field: 'installed',
+                    title: '状态',
+                    formatter: function(v, row) {
+                        if (row.available && v) return '<span class="badge badge-primary">已安装</span>';
+                        if (!row.available && v) return '<span class="badge badge-secondary">数据库残留</span>';
+                        return '<span class="badge badge-light">未安装</span>';
+                    }
+                },
+                {
+                    field: 'operate',
+                    title: '操作',
+                    formatter: function(v, row) {
+                        var html = [];
+                        if (!row.available) {
+                            return row.installed
+                                ? '<span class="text-muted small">上传应用包后可激活</span>'
+                                : '<span class="text-muted">—</span>';
+                        }
+                        if (row.installed) {
+                            html.push('<button type="button" class="btn btn-xs btn-warning btn-app-uninstall" data-app="' + row.key + '">卸载</button>');
+                        } else {
+                            html.push('<button type="button" class="btn btn-xs btn-primary btn-app-install" data-app="' + row.key + '">安装</button>');
+                        }
+                        return html.join(' ');
+                    },
+                    events: {
+                        'click .btn-app-install': function(e, value, row) {
+                            e.preventDefault();
+                            if (!confirm('确定要安装「' + row.title + '」吗？将执行数据库迁移并添加菜单。')) return;
+                            postAction(installUrl, row.key, function() { $table.bootstrapTable('refresh'); });
+                        },
+                        'click .btn-app-uninstall': function(e, value, row) {
+                            e.preventDefault();
+                            if (!confirm('确定卸载「' + row.title + '」吗？仅隐藏菜单，不删除数据表。')) return;
+                            postAction(uninstallUrl, row.key, function() { $table.bootstrapTable('refresh'); });
+                        }
+                    }
+                }
+            ]
+        });
+    }
+    $('#btn-upload').on('click', function(){ $('#input-upload').click(); });
+    $('#input-upload').on('change', function(){
+        var file = this.files && this.files[0];
+        if (!file) return;
+        if (!/\.zip$/i.test(file.name)) { alert('请选择 .zip 格式的应用包'); return; }
+        if (!confirm('确定上传并安装「' + file.name + '」吗？将解压合并到项目并执行数据库安装。')) { this.value = ''; return; }
+        var fd = new FormData();
+        fd.append('file', file);
+        $.ajax({
+            url: uploadUrl,
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function(ret){
+                var ok = ret && ret.code === 1;
+                alert((ret && ret.msg) || (ok ? '安装成功' : '安装失败'));
+                if (ok && $('#table-app').length) $('#table-app').bootstrapTable('refresh');
+            },
+            error: function(){ alert('请求失败'); }
+        }).always(function(){ $('#input-upload').val(''); });
+    });
+});
+</script>

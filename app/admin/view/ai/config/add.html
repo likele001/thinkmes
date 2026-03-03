@@ -1,0 +1,128 @@
+<section class="content">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">添加 AI 配置</h3><small class="text-muted ml-2">大模型 Key 和语音 Key 是两套不同密钥，可只填其一</small></div>
+        <div class="card-body">
+            <form id="form-add" class="form-horizontal">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">大模型供应商</label>
+                    <div class="col-sm-8">
+                        <select name="provider" id="provider" class="form-control" required>
+                            <option value="openai">OpenAI（GPT）</option>
+                            <option value="azure">Azure OpenAI</option>
+                            <option value="zhipu">智谱 GLM</option>
+                            <option value="baidu">百度文心</option>
+                            <option value="aliyun">阿里通义</option>
+                            <option value="tencent">腾讯混元</option>
+                            <option value="xfyun">讯飞星火</option>
+                        </select>
+                        <small class="text-muted">用于 AI 问答、报工解析、日报生成等</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">大模型 API Key</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="api_key" id="api_key" class="form-control" placeholder="sk-xxx 或各平台密钥" required>
+                        <small class="text-muted" id="api_key_hint">用于 AI 问答、报工解析、日报生成等</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">大模型 API 地址</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="api_base" id="api_base" class="form-control" placeholder="https://api.openai.com/v1 或代理地址">
+                        <small class="text-muted">仅大模型用；语音识别各供应商有固定地址，无需填写</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">模型</label>
+                    <div class="col-sm-8"><input type="text" name="model" id="model" class="form-control" value="gpt-3.5-turbo" placeholder="gpt-3.5-turbo"></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">每日限流</label>
+                    <div class="col-sm-8"><input type="number" name="rate_limit_per_day" class="form-control" value="1000" min="0"></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">语音识别</label>
+                    <div class="col-sm-8">
+                        <select name="speech_provider" id="speech_provider" class="form-control">
+                            <option value="">不配置</option>
+                            <option value="aliyun">阿里云 Fun-ASR（推荐：稳定、抗噪、月免1h）</option>
+                            <option value="tencent">腾讯云 一句话识别（月免5h）</option>
+                            <option value="baidu">百度智能云（方言友好，月免2h）</option>
+                            <option value="xfyun">科大讯飞 录音文件转写（长音频）</option>
+                            <option value="xfyun_iat">科大讯飞 语音听写（实时/短语音，60秒内）</option>
+                        </select>
+                        <small class="text-muted">与上面大模型独立，API 地址不同，只需填 Key</small>
+                    </div>
+                </div>
+                <div class="form-group" id="speech_key_group">
+                    <label class="col-sm-2 control-label">语音识别 Key</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="speech_api_key" id="speech_api_key" class="form-control" placeholder="仅语音报工需要，与上面大模型 Key 不同">
+                        <small class="text-muted" id="speech_key_hint">阿里云：DashScope API Key；腾讯/百度/讯飞：竖线分隔多段，见下方提示</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">状态</label>
+                    <div class="col-sm-8">
+                        <select name="status" class="form-control">
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-8">
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <a href="{$config.moduleurl}/ai/config/index" class="btn btn-default ml-2">返回</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+<script>
+$(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var llmDefaults = {
+        openai: { api_base: 'https://api.openai.com/v1', model: 'gpt-3.5-turbo', hint: 'OpenAI 密钥：sk- 开头，从 platform.openai.com 获取' },
+        azure: { api_base: '', model: 'gpt-35-turbo', hint: 'Azure OpenAI：从 Azure 门户获取密钥和端点' },
+        zhipu: { api_base: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash', hint: '智谱：从 open.bigmodel.cn 获取 API Key' },
+        baidu: { api_base: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop', model: 'ernie-bot', hint: '百度文心：从千帆平台获取' },
+        aliyun: { api_base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-turbo', hint: '阿里通义：从百炼/灵积控制台获取' },
+        tencent: { api_base: 'https://api.hunyuan.cloud.tencent.com/v1', model: 'hunyuan-turbos-latest', hint: '混元：从 console.cloud.tencent.com/hunyuan/start 创建 API Key（非 SecretId）' },
+        xfyun: { api_base: 'https://spark-api.xf-yun.com/v1', model: 'general', hint: '讯飞星火：从开放平台获取' }
+    };
+    var speechHints = {
+        '': '', 'aliyun': '阿里云：DashScope API Key（百炼控制台获取）',
+        'tencent': '腾讯云：secret_id|secret_key（格式用竖线分隔）',
+        'baidu': '百度：app_id|api_key|secret_key（格式用竖线分隔）',
+        'xfyun': '讯飞录音文件转写：app_id|api_key|api_secret（控制台「录音文件转写标准版」）',
+        'xfyun_iat': '讯飞语音听写：app_id|api_key|api_secret（控制台「语音听写」页面的 APPID、APIKey、APISecret）'
+    };
+    $('#provider').on('change', function(){
+        var v = $(this).val();
+        var d = llmDefaults[v];
+        if (d) {
+            $('#api_base').val(d.api_base);
+            $('#model').val(d.model);
+            $('#api_key_hint').text(d.hint);
+        }
+    }).trigger('change');
+    $('#speech_provider').on('change', function(){
+        var v = $(this).val();
+        $('#speech_key_hint').text(speechHints[v] || '');
+    }).trigger('change');
+    $('#form-add').on('submit', function(e){
+        e.preventDefault();
+        $.post(base + '/ai/config/add', $(this).serialize(), function(r){
+            if(r.code==1){
+                alert('保存成功，建议点击「测试」验证连接');
+                if(r.data && r.data.id) location.href = base + '/ai/config/edit?id=' + r.data.id;
+                else location.href = base + '/ai/config/index';
+            } else {
+                alert(r.msg || '失败');
+            }
+        },'json');
+    });
+});
+</script>

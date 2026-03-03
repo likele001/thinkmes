@@ -14,3 +14,4 @@ Thumbs.db
 /runtime/
 /public/uploads/*
 !/public/uploads/.gitkeep
+/build/

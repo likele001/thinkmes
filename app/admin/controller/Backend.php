@@ -39,6 +39,31 @@ abstract class Backend extends BaseController
         $this->assignBackendConfig();
     }
 
+    /** 从 .env 读取后台路径式入口（无 .php），供 moduleurl/menu_url 使用 */
+    protected function getAdminEntryPath(): string
+    {
+        $envFile = root_path() . '.env';
+        if (!is_file($envFile)) {
+            return '';
+        }
+        $content = @file_get_contents($envFile);
+        if ($content === false || !preg_match('/^\s*ADMIN_ENTRY\s*=\s*(\S+)/m', $content, $m)) {
+            return '';
+        }
+        $entry = trim($m[1]);
+        if (substr($entry, -4) === '.php') {
+            $entry = substr($entry, 0, -4);
+        }
+        return $entry;
+    }
+
+    /** 后台 URL 前缀：路径式入口时为 /随机路径，否则为 /admin（供菜单、链接生成） */
+    protected function getAdminUrlPrefix(): string
+    {
+        $entry = $this->getAdminEntryPath();
+        return $entry !== '' ? ('/' . $entry) : '/admin';
+    }
+
     /**
      * 为视图注入 config、admin、site（仿 FastAdmin）
      */
@@ -61,17 +86,22 @@ abstract class Backend extends BaseController
         // controllername: 驼峰转小写路径，如 Admin->admin, AuthRule->auth_rule
         $controllername = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $controller));
         
-        // 如果路径中包含mes等子目录，需要添加到controllername前面
-        // 例如：mes/process/index -> mes/process
-        if (count($pathParts) >= 2 && $pathParts[0] === 'mes') {
-            $controllername = 'mes/' . $controllername;
+        // 如果路径中包含 mes、crm 等子目录，需要添加到 controllername 前面
+        // 例如：mes/process/index -> mes/process，crm/customer/index -> crm/customer
+        if (count($pathParts) >= 2 && in_array($pathParts[0], ['mes', 'crm', 'ai'], true)) {
+            $controllername = $pathParts[0] . '/' . $controllername;
         }
         
         $actionname     = strtolower($action);
 
-        // 后台根 URL：若 root() 已含 /admin 则不再追加，避免出现 /admin/admin/admin/...
-        $siteRoot = rtrim($this->request->domain() . $this->request->root(), '/');
-        $adminBase = (str_ends_with(strtolower($siteRoot), '/admin')) ? $siteRoot : ($siteRoot . '/admin');
+        // 后台根 URL：路径式入口时必须只用「域名+随机路径」（request->root() 已是 /admin 会拼错）
+        $adminEntry = $this->getAdminEntryPath();
+        if ($adminEntry !== '') {
+            $adminBase = rtrim($this->request->domain(), '/') . '/' . $adminEntry;
+        } else {
+            $siteRoot = rtrim($this->request->domain() . $this->request->root(), '/');
+            $adminBase = (str_ends_with(strtolower($siteRoot), '/admin')) ? $siteRoot : ($siteRoot . '/admin');
+        }
         // 静态资源始终从站点根取（/assets/...），避免 /admin/assets/... 导致 404
         $config = [
             'site'           => [
@@ -271,6 +301,19 @@ abstract class Backend extends BaseController
         if ($this->request->get('iframe') === '1' || $isAddtabs) {
             View::assign('__CONTENT__', $content);
             return View::fetch('layout/iframe');
+        }
+        // 兜底：路径为 index/index 且 Referer 为主框架（无 addtabs）时，多半是 iframe 请求但 Nginx 未传 $args，按 iframe 返回避免重复嵌套
+        $pathinfo = trim((string) $this->request->pathinfo(), '/');
+        if ($pathinfo === 'index/index' && isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] !== '') {
+            $ref = $_SERVER['HTTP_REFERER'];
+            $host = $this->request->host(true);
+            if (strpos($ref, $host) !== false && strpos($ref, 'addtabs=1') === false && strpos($ref, 'iframe=1') === false) {
+                $refPath = parse_url($ref, PHP_URL_PATH);
+                if ($refPath && (strpos($refPath, '/index/index') !== false || preg_match('#/([a-z0-9]+)/index/index$#', $refPath))) {
+                    View::assign('__CONTENT__', $content);
+                    return View::fetch('layout/iframe');
+                }
+            }
         }
 
         // 如果在 iframe 中（通过 Referer 检测），使用简化的 iframe 布局

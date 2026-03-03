@@ -1,0 +1,118 @@
+<section class="content">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">编辑 AI 配置</h3></div>
+        <div class="card-body">
+            <form id="form-edit" class="form-horizontal">
+                <input type="hidden" name="id" value="{$data.id}">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">大模型供应商</label>
+                    <div class="col-sm-8"><input type="text" class="form-control" value="{$data.provider}" disabled></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">大模型 API Key</label>
+                    <div class="col-sm-8"><input type="text" name="api_key" class="form-control" value="{$data.api_key|default=''}" placeholder="留空则不修改"></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">大模型 API 地址</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="api_base" class="form-control" value="{$data.api_base}">
+                        <small class="text-muted">仅大模型用；语音识别有固定地址，无需填</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">模型</label>
+                    <div class="col-sm-8"><input type="text" name="model" class="form-control" value="{$data.model}"></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">每日限流</label>
+                    <div class="col-sm-8"><input type="number" name="rate_limit_per_day" class="form-control" value="{$data.rate_limit_per_day}" min="0"></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">语音识别</label>
+                    <div class="col-sm-8">
+                        <select name="speech_provider" id="speech_provider" class="form-control">
+                            <option value="">不配置</option>
+                            <option value="aliyun" {if isset($data.speech_provider) && $data.speech_provider=='aliyun'}selected{/if}>阿里云 Fun-ASR</option>
+                            <option value="tencent" {if isset($data.speech_provider) && $data.speech_provider=='tencent'}selected{/if}>腾讯云 一句话识别</option>
+                            <option value="baidu" {if isset($data.speech_provider) && $data.speech_provider=='baidu'}selected{/if}>百度智能云</option>
+                            <option value="xfyun" {if isset($data.speech_provider) && $data.speech_provider=='xfyun'}selected{/if}>科大讯飞 录音文件转写</option>
+                            <option value="xfyun_iat" {if isset($data.speech_provider) && $data.speech_provider=='xfyun_iat'}selected{/if}>科大讯飞 语音听写（实时/短语音）</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">语音识别 Key</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="speech_api_key" class="form-control" value="{$data.speech_api_key|default=''}" placeholder="留空不修改，与上面大模型 Key 不同">
+                        <small class="text-muted">阿里云：API Key；腾讯/百度/讯飞：竖线分隔 app_id|api_key|api_secret（讯飞听写用「语音听写」页凭证）</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">状态</label>
+                    <div class="col-sm-8">
+                        <select name="status" class="form-control">
+                            <option value="1" {if $data.status==1}selected{/if}>启用</option>
+                            <option value="0" {if $data.status==0}selected{/if}>禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-8">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <button type="button" id="btn-test" class="btn btn-info ml-2">测试大模型</button>
+                        <button type="button" id="btn-test-speech" class="btn btn-info ml-2">测试语音识别</button>
+                        <a href="{$config.moduleurl}/ai/config/index" class="btn btn-default ml-2">返回</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+<script>
+$(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-edit').on('submit', function(e){
+        e.preventDefault();
+        $.post(base + '/ai/config/edit', $(this).serialize(), function(r){
+            alert(r.msg || (r.code==1?'成功':'失败'));
+            if(r.code==1) location.href = base + '/ai/config/index';
+        },'json');
+    });
+    $('#btn-test').on('click', function(){
+        var id = $('input[name="id"]').val();
+        if(!id){ alert('配置ID不存在'); return; }
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('测试中...');
+        var data = { id: id, use_form: 1, api_key: $('input[name="api_key"]').val(), api_base: $('input[name="api_base"]').val(), model: $('input[name="model"]').val() };
+        $.post(base + '/ai/config/test', data, function(r){
+            $btn.prop('disabled', false).text('测试大模型');
+            if(r.code==1){
+                alert('测试成功\nAI 回复：' + (r.data && r.data.reply ? r.data.reply : r.msg));
+            } else {
+                alert('测试失败：' + (r.msg || '未知错误'));
+            }
+        },'json').fail(function(){
+            $btn.prop('disabled', false).text('测试大模型');
+            alert('请求失败');
+        });
+    });
+    $('#btn-test-speech').on('click', function(){
+        var id = $('input[name="id"]').val();
+        if(!id){ alert('配置ID不存在'); return; }
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('测试中...');
+        var data = { id: id, use_form: 1, speech_provider: $('#speech_provider').val(), speech_api_key: $('input[name="speech_api_key"]').val() };
+        $.post(base + '/ai/config/testSpeech', data, function(r){
+            $btn.prop('disabled', false).text('测试语音识别');
+            if(r.code==1){
+                alert('语音识别连接正常\n识别结果：' + (r.data && r.data.text ? r.data.text : '(空)'));
+            } else {
+                alert('测试失败：' + (r.msg || '未知错误'));
+            }
+        },'json').fail(function(){
+            $btn.prop('disabled', false).text('测试语音识别');
+            alert('请求失败');
+        });
+    });
+});
+</script>

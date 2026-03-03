@@ -1,0 +1,144 @@
+<form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">订单编号</label>
+        <div class="col-xs-12 col-sm-8">
+            <input class="form-control" value="{$row.order_no|default=''}" disabled>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">客户<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <select id="customer_id" class="form-control" name="row[customer_id]">
+                {volist name="customers" id="c"}
+                <option value="{$c.id}" {if condition="$row.customer_id==$c.id"}selected{/if}>{$c.name}</option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">关联合同</label>
+        <div class="col-xs-12 col-sm-8">
+            <select id="contract_id" class="form-control" name="row[contract_id]">
+                <option value="">请选择合同（可选）</option>
+                {volist name="contracts" id="ct"}
+                <option value="{$ct.id}" {if condition="$row.contract_id==$ct.id"}selected{/if}>{$ct.contract_no}{if condition="isset($ct.customer_name) && $ct.customer_name"} - {$ct.customer_name}{/if}</option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">状态</label>
+        <div class="col-xs-12 col-sm-8">
+            <select class="form-control" name="row[status]">
+                <option value="draft" {if condition="$row.status=='draft'"}selected{/if}>草稿</option>
+                <option value="confirmed" {if condition="$row.status=='confirmed'"}selected{/if}>已确认</option>
+                <option value="producing" {if condition="$row.status=='producing'"}selected{/if}>生产中</option>
+                <option value="completed" {if condition="$row.status=='completed'"}selected{/if}>已完成</option>
+                <option value="cancelled" {if condition="$row.status=='cancelled'"}selected{/if}>已取消</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">交货日期</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="date" class="form-control" name="row[delivery_date]" value="{if condition='$row.delivery_date'}{:date('Y-m-d', $row.delivery_date)}{/if}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">订单明细</label>
+        <div class="col-xs-12 col-sm-10">
+            <table class="table table-bordered" id="items-table">
+                <thead><tr><th>产品</th><th>数量</th><th>单价</th><th>金额</th><th>操作</th></tr></thead>
+                <tbody id="items-tbody"></tbody>
+            </table>
+            <button type="button" class="btn btn-sm btn-default" id="btn-add-item"><i class="fas fa-plus"></i> 添加明细</button>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">备注</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea class="form-control" name="row[remark]" rows="2" placeholder="备注">{$row.remark|default=''}</textarea>
+        </div>
+    </div>
+    {if condition="$row.mes_order_id > 0"}
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <span class="badge badge-success">已转 MES 生产订单</span>
+        </div>
+    </div>
+    {/if}
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed">确定</button>
+            <button type="reset" class="btn btn-default btn-embossed">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+(function(){
+    var products = {:json_encode($products)};
+    var items = {:json_encode($items)};
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    function addRow(item) {
+        item = item || {};
+        var html = '<tr class="item-row">' +
+            '<td><select class="form-control form-control-sm product-select" name="items[][product_id]">' +
+            '<option value="">请选择产品</option>';
+        products.forEach(function(p) {
+            var sel = (item.product_id == p.id) ? ' selected' : '';
+            html += '<option value="' + p.id + '" data-name="' + (p.name||'') + '" data-code="' + (p.code||'') + '" data-unit="' + (p.unit||'个') + '" data-price="' + (p.price||0) + '"' + sel + '>' + (p.name||'') + ' (' + (p.code||'') + ')</option>';
+        });
+        html += '</select><input type="hidden" name="items[][product_name]" value="' + (item.product_name||'') + '"><input type="hidden" name="items[][product_code]" value="' + (item.product_code||'') + '"><input type="hidden" name="items[][unit]" value="' + (item.unit||'个') + '"></td>' +
+            '<td><input type="number" min="1" class="form-control form-control-sm qty-input" name="items[][quantity]" value="' + (item.quantity||1) + '"></td>' +
+            '<td><input type="number" step="0.01" class="form-control form-control-sm price-input" name="items[][price]" value="' + (item.price||0) + '"></td>' +
+            '<td class="amount-cell">' + (item.amount||0) + '</td>' +
+            '<td><a href="javascript:;" class="btn btn-xs btn-danger btn-remove-item">删除</a></td></tr>';
+        $('#items-tbody').append(html);
+    }
+    $(document).ready(function() {
+        if (items && items.length) {
+            items.forEach(addRow);
+        } else {
+            addRow();
+        }
+        $('#btn-add-item').on('click', function() { addRow(); });
+        $(document).on('change', '.product-select', function() {
+            var opt = $(this).find('option:selected');
+            var tr = $(this).closest('tr');
+            tr.find('[name*="[product_name]"]').val(opt.data('name'));
+            tr.find('[name*="[product_code]"]').val(opt.data('code'));
+            tr.find('[name*="[unit]"]').val(opt.data('unit'));
+            tr.find('.price-input').val(opt.data('price'));
+            calcAmount(tr);
+        });
+        $(document).on('input', '.qty-input, .price-input', function() { calcAmount($(this).closest('tr')); });
+        $(document).on('click', '.btn-remove-item', function() { $(this).closest('tr').remove(); });
+        function calcAmount(tr) {
+            var q = parseFloat(tr.find('.qty-input').val()) || 0;
+            var p = parseFloat(tr.find('.price-input').val()) || 0;
+            tr.find('.amount-cell').text((q * p).toFixed(2));
+        }
+        $('#form-edit').on('submit', function(e) {
+            e.preventDefault();
+            var customerId = $('#customer_id').val();
+            if (!customerId) { alert('请选择客户'); return; }
+            var rows = $('#items-tbody .item-row');
+            var hasValid = false;
+            rows.each(function() {
+                var q = parseFloat($(this).find('.qty-input').val()) || 0;
+                if (q > 0) hasValid = true;
+            });
+            if (!hasValid) { alert('请至少添加一条有效明细'); return; }
+            var btn = $(this).find('button[type="submit"]');
+            btn.prop('disabled', true);
+            $.post(base + '/crm/sales_order/edit?id=' + {:json_encode($row.id)}, $(this).serialize(), function(r) {
+                btn.prop('disabled', false);
+                if (r.msg) alert(r.msg);
+                if (r.code == 1) window.location.href = base + '/crm/sales_order/index';
+            }, 'json');
+        });
+    });
+})();
+</script>

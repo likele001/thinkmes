@@ -60,8 +60,21 @@
         return iconMap[iconName] || 'fas fa-circle';
     }
 
+    // 去掉错误形态 /admin/随机路径/ 或 域名/admin/随机路径/ 改为 /随机路径/ 或 域名/随机路径/（路径式入口不应带 admin）
+    function stripAdminEntryPrefix(u) {
+        if (typeof u !== 'string' || u === '') return u;
+        // 相对路径：/admin/joxushcckurt/xxx -> /joxushcckurt/xxx
+        var m = u.match(/^(\/admin)\/([a-z0-9]{8,})\//);
+        if (m) return '/' + m[2] + u.slice(m[0].length);
+        // 完整 URL：http(s)://host/admin/joxushcckurt/xxx -> http(s)://host/joxushcckurt/xxx
+        m = u.match(/^(https?:\/\/[^\/]+)\/admin\/([a-z0-9]{8,})\//);
+        if (m) return m[1] + '/' + m[2] + u.slice(m[0].length);
+        return u;
+    }
+
     function normalizeUrl(raw, name) {
         var url = raw || '';
+        url = stripAdminEntryPrefix(url);
         if ((!url || url === '#' || url === 'javascript:;') && name) {
             var path = String(name).replace(/\./g, '/').replace(/^\//, '');
             var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
@@ -77,8 +90,9 @@
         if (url.charAt(0) !== '/') {
             url = (base ? base.replace(/\/$/, '') : '') + '/' + url.replace(/^\//, '');
         }
-        // 确保同源链接都带 /admin 前缀，避免手机或 iframe 内缺少 admin 目录
-        if (url && url.charAt(0) === '/' && url.indexOf('/admin') !== 0 && !/^\/\//.test(url)) {
+        // 路径式入口时 URL 已为 /随机路径/xxx，不再加 /admin；否则确保带 /admin 前缀
+        var useAdminPrefix = !base || base === '' || (base.indexOf('/admin') !== -1 && (base.endsWith('/admin') || base.endsWith('/admin/')));
+        if (url && url.charAt(0) === '/' && url.indexOf('/admin') !== 0 && !/^\/\//.test(url) && useAdminPrefix) {
             url = '/admin' + (url === '/' ? '' : url);
         }
         return url;
@@ -274,7 +288,10 @@
         function doNavigate(link) {
             var url = (link.getAttribute('data-url') || link.getAttribute('href') || '').trim();
             if (!url || url === '#' || /^javascript:/i.test(url)) return;
-            if (url.indexOf('/admin') !== 0 && url.charAt(0) === '/') url = '/admin' + url;
+            url = stripAdminEntryPrefix(url);
+            var baseUrl = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+            var isPathEntry = baseUrl && baseUrl.indexOf('/admin') === -1;
+            if (!isPathEntry && url.charAt(0) === '/' && url.indexOf('/admin') !== 0) url = '/admin' + url;
             if (window.innerWidth <= 991) {
                 window.location.href = url;
                 return;
