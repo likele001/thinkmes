@@ -27,6 +27,12 @@ Route::post('user/changePassword', 'User/changePassword')->middleware(\app\api\m
 Route::get('user/logout', 'User/logout')->middleware(\app\api\middleware\UserAuth::class);
 Route::post('user/logout', 'User/logout')->middleware(\app\api\middleware\UserAuth::class);
 
+// 支付：异步通知（第三方回调，无需登录）
+Route::post('payment/notify/:gateway_id', 'Payment/notify');
+Route::any('payment/notify/:gateway_id', 'Payment/notify');
+// 支付：创建订单（内部或后台调用）
+Route::post('payment/create', 'Payment/create');
+
 // 客户门户：无需登录
 Route::post('customer/login', 'Customer/login');
 
@@ -51,6 +57,11 @@ Route::post('worker/report', 'Worker/report')->middleware(\app\api\middleware\Us
 Route::get('worker/reports', 'Worker/reports')->middleware(\app\api\middleware\UserAuth::class);
 Route::get('worker/wages', 'Worker/wages')->middleware(\app\api\middleware\UserAuth::class);
 Route::post('worker/uploadImage', 'Worker/uploadImage')->middleware(\app\api\middleware\UserAuth::class);
+
+// AI 接口（员工端）
+Route::post('ai/transcribe', 'Ai/transcribe')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
+Route::post('ai/parse', 'Ai/parse')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
+Route::post('ai/ask', 'Ai/ask')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
 
 // 后端管理小程序 API（参考 FastAdmin Scanwork，需管理员 Token）
 Route::post('scanwork/adminLogin', 'Scanwork/adminLogin');

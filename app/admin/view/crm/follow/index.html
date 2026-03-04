@@ -6,6 +6,7 @@
         <div id="toolbar" class="toolbar mb-2">
             <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
             <a href="{$config.moduleurl}/crm/follow/add" class="btn btn-success btn-add" title="添加"><i class="fas fa-plus"></i> 添加跟进</a>
+            <a href="javascript:;" id="btn-crm-suggest" class="btn btn-info" title="智能建议"><i class="fas fa-brain"></i> 智能建议</a>
             <a href="javascript:;" class="btn btn-success btn-edit btn-disabled disabled" title="编辑"><i class="fas fa-edit"></i> 编辑</a>
             <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled" title="删除"><i class="fas fa-trash-alt"></i> 删除</a>
         </div>
@@ -99,6 +100,26 @@
                 return;
             }
             location.href = base + '/crm/follow/edit?id=' + rows[0].id;
+        });
+
+        // CRM AI: 智能跟单建议（选中一条跟进记录或指定客户/商机）
+        $(document).off('click', '#btn-crm-suggest').on('click', '#btn-crm-suggest', function() {
+            var rows = table.bootstrapTable('getSelections');
+            if (rows.length != 1) {
+                alert('请选择一条跟进记录以获取建议');
+                return;
+            }
+            var r = rows[0];
+            var customerId = r.customer_id || 0;
+            var opportunityId = r.opportunity_id || 0;
+            fetch(base + '/crm/follow/suggest', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({customer_id: customerId, opportunity_id: opportunityId})})
+                .then(r=>r.json()).then(function(j){
+                    if (!j) { alert('请求失败'); return; }
+                    if (j.code != 0) { alert(j.msg || 'AI 生成失败'); return; }
+                    var html = '跟进建议：\n' + (j.data.follow_advice || '') + '\n\n话术：\n' + (j.data.script || '') + '\n\n意向分：' + (j.data.intent_score || 0) + '\n理由：' + (j.data.intent_reason || '');
+                    alert(html);
+                    table.bootstrapTable('refresh');
+                });
         });
 
         $(document).off('click', '#toolbar .btn-del').on('click', '#toolbar .btn-del', function() {

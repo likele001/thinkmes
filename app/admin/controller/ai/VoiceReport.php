@@ -13,12 +13,20 @@ class VoiceReport extends Base
 {
     public function index(): string|Response
     {
+        $err = $this->checkModule('voice_report');
+        if ($err !== null) {
+            return $err;
+        }
         View::assign('title', '语音报工');
         return $this->fetchWithLayout('ai/voice_report/index');
     }
 
     public function transcribe(): Response
     {
+        $err = $this->checkModule('voice_report');
+        if ($err !== null) {
+            return $err;
+        }
         return $this->safeAiCall(function () {
             $audioUrl = trim((string) $this->request->post('audio_url', ''));
             if (empty($audioUrl)) {
@@ -35,6 +43,10 @@ class VoiceReport extends Base
 
     public function parse(): Response
     {
+        $err = $this->checkModule('voice_report');
+        if ($err !== null) {
+            return $err;
+        }
         return $this->safeAiCall(function () {
             $text = trim((string) $this->request->post('text', ''));
             if (empty($text)) {

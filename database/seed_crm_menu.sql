@@ -76,12 +76,30 @@ ON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `icon` = VALUES(`icon`), `sor
 
 SET @follow_pid = COALESCE((SELECT id FROM fa_auth_rule WHERE name = 'crm/follow' LIMIT 1), 0);
 
-INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
-('crm/follow/index', '跟进列表', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-('crm/follow/add', '添加跟进', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-('crm/follow/edit', '编辑跟进', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-('crm/follow/del', '删除跟进', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
-ON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `pid` = @follow_pid;
+UPDATE `fa_auth_rule` SET `title` = '跟进列表', `type` = 2, `ismenu` = 0, `status` = 1, `pid` = @follow_pid, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'crm/follow/index';
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+SELECT 'crm/follow/index', '跟进列表', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `fa_auth_rule` WHERE `name` = 'crm/follow/index');
+
+UPDATE `fa_auth_rule` SET `title` = '添加跟进', `type` = 2, `ismenu` = 0, `status` = 1, `pid` = @follow_pid, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'crm/follow/add';
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+SELECT 'crm/follow/add', '添加跟进', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `fa_auth_rule` WHERE `name` = 'crm/follow/add');
+
+UPDATE `fa_auth_rule` SET `title` = '编辑跟进', `type` = 2, `ismenu` = 0, `status` = 1, `pid` = @follow_pid, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'crm/follow/edit';
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+SELECT 'crm/follow/edit', '编辑跟进', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `fa_auth_rule` WHERE `name` = 'crm/follow/edit');
+
+UPDATE `fa_auth_rule` SET `title` = '删除跟进', `type` = 2, `ismenu` = 0, `status` = 1, `pid` = @follow_pid, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'crm/follow/del';
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+SELECT 'crm/follow/del', '删除跟进', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `fa_auth_rule` WHERE `name` = 'crm/follow/del');
+
+UPDATE `fa_auth_rule` SET `title` = 'AI智能建议', `type` = 2, `ismenu` = 0, `status` = 1, `pid` = @follow_pid, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'crm/follow/suggest';
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+SELECT 'crm/follow/suggest', 'AI智能建议', 2, 0, 1, @follow_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `fa_auth_rule` WHERE `name` = 'crm/follow/suggest');
 
 -- 7. 回款管理
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)

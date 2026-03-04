@@ -61,14 +61,15 @@
     }
 
     // 去掉错误形态 /admin/随机路径/ 或 域名/admin/随机路径/ 改为 /随机路径/ 或 域名/随机路径/（路径式入口不应带 admin）
+    // 仅匹配 8 位以上随机串（如 joxushcckurt），避免把 controller 名（如 attachment）当随机路径
     function stripAdminEntryPrefix(u) {
         if (typeof u !== 'string' || u === '') return u;
-        // 相对路径：/admin/joxushcckurt/xxx -> /joxushcckurt/xxx
-        var m = u.match(/^(\/admin)\/([a-z0-9]{8,})\//);
-        if (m) return '/' + m[2] + u.slice(m[0].length);
+        // 相对路径：/admin/joxushcckurt/xxx -> /joxushcckurt/xxx（随机路径与后续之间补回斜杠）
+        var m = u.match(/^(\/admin)\/([a-z0-9]{8,})\/(.+)$/);
+        if (m) return '/' + m[2] + '/' + m[3];
         // 完整 URL：http(s)://host/admin/joxushcckurt/xxx -> http(s)://host/joxushcckurt/xxx
-        m = u.match(/^(https?:\/\/[^\/]+)\/admin\/([a-z0-9]{8,})\//);
-        if (m) return m[1] + '/' + m[2] + u.slice(m[0].length);
+        m = u.match(/^(https?:\/\/[^\/]+)\/admin\/([a-z0-9]{8,})\/(.+)$/);
+        if (m) return m[1] + '/' + m[2] + '/' + m[3];
         return u;
     }
 
@@ -298,15 +299,41 @@
             }
             var id = link.getAttribute('data-addtabs') || ('tab_' + Math.random().toString(36).slice(2, 8));
             var title = link.getAttribute('data-title') || (link.querySelector('.menu-text') && link.querySelector('.menu-text').textContent) || '';
-            var tmp = document.createElement('a');
-            tmp.href = '#';
-            tmp.style.display = 'none';
-            tmp.setAttribute('addtabs', id);
-            tmp.setAttribute('url', url);
-            tmp.setAttribute('title', title);
-            document.body.appendChild(tmp);
-            tmp.click();
-            document.body.removeChild(tmp);
+            // FastAdmin addtabs 依赖页面中存在 a[addtabs] 元素，供标签点击/关闭时再次触发
+            // 这里使用一个隐藏容器持久化保存这些链接，避免“后开的标签把前面的标签点不动/关闭后空白”
+            function getAddtabsStore() {
+                var store = document.getElementById('__addtabs_link_store__');
+                if (!store) {
+                    store = document.createElement('div');
+                    store.id = '__addtabs_link_store__';
+                    store.style.display = 'none';
+                    document.body.appendChild(store);
+                }
+                return store;
+            }
+            function upsertAddtabsLink(tabId, tabUrl, tabTitle) {
+                var store = getAddtabsStore();
+                var a = null;
+                for (var i = 0; i < store.children.length; i++) {
+                    var ch = store.children[i];
+                    if (ch && ch.getAttribute && ch.getAttribute('addtabs') === tabId) {
+                        a = ch;
+                        break;
+                    }
+                }
+                if (!a) {
+                    a = document.createElement('a');
+                    a.href = '#';
+                    store.appendChild(a);
+                }
+                a.setAttribute('addtabs', tabId);
+                a.setAttribute('url', tabUrl);
+                a.setAttribute('title', tabTitle || '');
+                a.textContent = tabTitle || tabId;
+                return a;
+            }
+            var a = upsertAddtabsLink(id, url, title);
+            a.click();
         }
 
         var pendingMenuLink = null;
@@ -315,6 +342,19 @@
         var tapThreshold = 12;
 
         function handleMenuClick(e) {
+            // 检查是否点击了箭头
+            var arrow = e.target.closest && e.target.closest('.menu-arrow');
+            if (arrow) {
+                var menuItem = arrow.closest && arrow.closest('.menu-item');
+                if (menuItem && menuItem.classList.contains('has-children')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    menuItem.classList.toggle('open');
+                    return;
+                }
+            }
+            
             var link = getLinkFromEvent(e);
             if (!link) return;
             e.preventDefault();
@@ -371,10 +411,23 @@
         document.addEventListener('touchend', handleTouchEnd, { capture: true, passive: false });
         document.addEventListener('touchcancel', function () { pendingMenuLink = null; }, { capture: true, passive: true });
         document.addEventListener('click', handleMenuClick, true);
+        // jQuery 事件处理器作为备用（处理动态添加的菜单项）
         $(document).on('click', '#menu-tree .menu-item.has-children .menu-arrow', function (e) {
             e.stopPropagation();
             e.preventDefault();
             $(this).closest('.menu-item').toggleClass('open');
+        });
+        // 也处理点击菜单链接本身的情况
+        $(document).on('click', '#menu-tree .menu-item.has-children > .menu-link', function (e) {
+            var $menuItem = $(this).closest('.menu-item');
+            if ($menuItem.hasClass('has-children') && !$(this).closest('.menu-children').length) {
+                // 如果点击的不是箭头，也允许切换
+                if (!$(e.target).closest('.menu-arrow').length) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    $menuItem.toggleClass('open');
+                }
+            }
         });
     }
 

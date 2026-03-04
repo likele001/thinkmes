@@ -14,6 +14,10 @@ class Anomaly extends Base
 {
     public function index(): string|Response
     {
+        $err = $this->checkModule('anomaly');
+        if ($err !== null) {
+            return $err;
+        }
         if ($this->request->isAjax()) {
             $tenantId = $this->getTenantId();
             $list = Db::name('ai_anomaly')
@@ -30,6 +34,10 @@ class Anomaly extends Base
 
     public function scan(): Response
     {
+        $err = $this->checkModule('anomaly');
+        if ($err !== null) {
+            return $err;
+        }
         return $this->safeAiCall(function () {
             $tenantId = $this->getTenantId();
             $days = max(1, min(30, (int) $this->request->post('days', 7)));

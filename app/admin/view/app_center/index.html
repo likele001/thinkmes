@@ -1,7 +1,7 @@
 <section class="content">
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">应用中心</h3>
+            <h3 class="card-title">应用中心 <span id="app-count" class="text-muted small font-weight-normal ml-2"></span></h3>
             <div class="card-tools">
                 <span class="text-muted small mr-2">在此安装或卸载内置应用，安装后左侧将显示对应菜单。</span>
                 <button type="button" class="btn btn-sm btn-success" id="btn-upload">
@@ -10,8 +10,10 @@
                 <input type="file" id="input-upload" accept=".zip" style="display:none;">
             </div>
         </div>
-        <div class="card-body">
-            <table id="table-app" class="table table-striped table-bordered"></table>
+        <div class="card-body p-0">
+            <div class="table-responsive app-center-table-wrap" style="min-height:280px;max-height:75vh;overflow-y:auto;">
+                <table id="table-app" class="table table-striped table-bordered mb-0"></table>
+            </div>
         </div>
     </div>
 </section>
@@ -42,7 +44,10 @@ $(function(){
             sidePagination: 'client',
             dataField: 'list',
             responseHandler: function(res) {
-                return (res && res.data) ? res.data : { total: 0, list: [] };
+                var data = (res && res.data) ? res.data : { total: 0, list: [] };
+                var total = (data.list && data.list.length) ? data.list.length : (data.total || 0);
+                $('#app-count').text('共 ' + total + ' 个应用');
+                return data;
             },
             columns: [
                 { field: 'title', title: '应用名称' },

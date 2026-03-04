@@ -136,3 +136,6 @@ if (is_file(__DIR__ . '/mes.php')) {
 if (is_file(__DIR__ . '/ai.php')) {
     require __DIR__ . '/ai.php';
 }
+if (is_file(__DIR__ . '/payment.php')) {
+    require __DIR__ . '/payment.php';
+}

@@ -6,6 +6,9 @@
         <div id="toolbar" class="toolbar mb-2">
             <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
             <a href="{$config.moduleurl}/mes/report/add" class="btn btn-success btn-add" title="添加"><i class="fas fa-plus"></i> 添加报工</a>
+            <a href="javascript:;" id="btn-voice-report" class="btn btn-info" title="语音转报工"><i class="fas fa-microphone"></i> 语音转报工</a>
+            <a href="javascript:;" id="btn-ai-anomaly" class="btn btn-danger" title="AI 异常检测"><i class="fas fa-bug"></i> AI 异常检测</a>
+            <a href="javascript:;" id="btn-boss-qa" class="btn btn-primary" title="老板问答"><i class="fas fa-question-circle"></i> 老板问答</a>
             <a href="javascript:;" class="btn btn-warning btn-audit btn-disabled disabled" title="审核"><i class="fas fa-check-circle"></i> 审核</a>
             <a href="javascript:;" class="btn btn-success btn-edit btn-disabled disabled" title="编辑"><i class="fas fa-edit"></i> 编辑</a>
             <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled" title="删除"><i class="fas fa-trash-alt"></i> 删除</a>
@@ -177,6 +180,50 @@
                     alert(r.msg || '删除失败');
                 }
             }, 'json');
+        });
+        // AI: 语音转报工（简易流程：上传音频URL -> transcribe -> parse -> 显示结果）
+        $(document).off('click', '#btn-voice-report').on('click', '#btn-voice-report', function() {
+            var url = prompt('请输入音频文件 URL（http(s)://）或网站相对路径（/uploads/...）:');
+            if (!url) return;
+            fetch(base + '/mes/report/ai/transcribe', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({audio_url: url})})
+                .then(r=>r.json()).then(function(j){
+                    if (!j || j.code != 0) { alert(j.msg || '识别失败'); return; }
+                    var text = j.data && j.data.text ? j.data.text : '';
+                    if (!text) { alert('未识别到文字'); return; }
+                    if (!confirm('识别结果：\n' + text + '\n\n是否继续解析为报工？')) return;
+                    fetch(base + '/mes/report/ai/parse', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text: text})})
+                        .then(r=>r.json()).then(function(p){
+                            if (!p || p.code != 0) { alert(p.msg || '解析失败'); return; }
+                            var data = p.data && p.data.data ? p.data.data : p.data;
+                            alert('解析结果：\n' + JSON.stringify(data, null, 2));
+                        });
+                });
+        });
+
+        // AI: 异常检测（对近 N 天报工进行分析）
+        $(document).off('click', '#btn-ai-anomaly').on('click', '#btn-ai-anomaly', function() {
+            var days = prompt('请输入要扫描的天数（默认7天）：', '7');
+            days = parseInt(days) || 7;
+            if (!confirm('开始 AI 异常检测，可能需要较长时间，确定继续？')) return;
+            fetch(base + '/mes/report/ai/anomaly', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({days: days})})
+                .then(r=>r.json()).then(function(j){
+                    if (!j) { alert('请求失败'); return; }
+                    if (j.code != 0) { alert(j.msg || '分析失败'); return; }
+                    alert('扫描完成，发现 ' + (j.data && j.data.count ? j.data.count : 0) + ' 条异常记录');
+                    table.bootstrapTable('refresh');
+                });
+        });
+
+        // AI: 老板问答（简易弹窗）
+        $(document).off('click', '#btn-boss-qa').on('click', '#btn-boss-qa', function() {
+            var q = prompt('请输入问题（例如：今日完成数量是多少？）');
+            if (!q) return;
+            fetch(base + '/mes/qa/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question: q})})
+                .then(r=>r.json()).then(function(j){
+                    if (!j) { alert('请求失败'); return; }
+                    if (j.code != 0) { alert(j.msg || 'AI 无法回答'); return; }
+                    alert('回答：\n' + (j.data && j.data.answer ? j.data.answer : JSON.stringify(j.data)));
+                });
         });
         table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
             var rows = table.bootstrapTable('getSelections');

@@ -373,6 +373,8 @@ class Index extends Backend
                     $v['url'] = $prefix . '/' . $name;
                 }
             }
+            // 如果菜单没有子菜单，尝试链接到对应的 index 页面
+            $v['_original_url'] = $v['url'] ?? '';
             $v['title'] = $v['title'] ?? '';
             $v['menuclass'] = '';
             $v['menutabs'] = 'addtabs="' . ($v['id'] ?? '') . '"';
@@ -448,7 +450,23 @@ class Index extends Backend
                 $curId = $item['id'] ?? 0;
                 $children = is_numeric($curId) ? $this->buildMenuTree($list, (int) $curId) : [];
                 $item['children'] = $children;
-                $item['url'] = $children ? 'javascript:;' : $item['url'];
+                
+                // 如果有子菜单，URL 设为 javascript:;（点击展开/收起）
+                // 如果没有子菜单，检查是否有对应的 index 子项，如果有则链接到 index
+                if ($children) {
+                    $item['url'] = 'javascript:;';
+                } else {
+                    $name = $item['name'] ?? '';
+                    $originalUrl = $item['_original_url'] ?? $item['url'] ?? '';
+                    // 如果 URL 是菜单本身（如 /admin/ai/package），尝试链接到 index
+                    if ($name && !str_ends_with($name, '/index')) {
+                        $prefix = $this->getAdminUrlPrefix();
+                        $indexUrl = $prefix . '/' . $name . '/index';
+                        $item['url'] = $indexUrl;
+                    } else {
+                        $item['url'] = $originalUrl ?: $item['url'] ?? '#';
+                    }
+                }
                 $tree[] = $item;
             }
         }

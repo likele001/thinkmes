@@ -1,0 +1,58 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑支付网关</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="id" value="{$row.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">网关类型</label>
+                <div class="col-sm-6"><input type="text" class="form-control" value="{$gatewayNames[$row['code']] ?? $row.code}" disabled></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">显示名称</label>
+                <div class="col-sm-6"><input type="text" name="name" class="form-control" value="{$row.name}" required></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">配置(JSON)</label>
+                <div class="col-sm-8">
+                    <textarea name="config" id="config" class="form-control" rows="8">{$row.config_json}</textarea>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">启用</label>
+                <div class="col-sm-6"><label><input type="checkbox" name="enabled" value="1" {$row.enabled == 1 ? 'checked' : ''}> 启用</label></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">排序</label>
+                <div class="col-sm-6"><input type="number" name="sort" class="form-control" value="{$row.sort}"></div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="javascript:history.back();" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var form = document.getElementById('form-edit');
+    form.setAttribute('action', base + '/payment/config/edit?id=' + (document.querySelector('input[name=id]').value));
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var fd = new FormData(form);
+        var configStr = document.getElementById('config').value.trim();
+        try {
+            if (configStr) JSON.parse(configStr);
+        } catch (err) {
+            alert('配置 JSON 格式错误');
+            return;
+        }
+        fetch(form.getAttribute('action'), { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function(r) {
+            alert(r.msg || '');
+            if (r.code == 1) location.href = base + '/payment/config/index';
+        }).catch(function() { alert('请求失败'); });
+    });
+})();
+</script>

@@ -108,6 +108,21 @@ Route::group('mes', function () {
     Route::post('report/del', 'mes.Report/del');
     Route::post('report/audit', 'mes.Report/audit');
 
+    // MES 下的 AI 接口代理（受租户购买与全局开关限制）
+    Route::post('report/ai/transcribe', 'ai.VoiceReport/transcribe')
+        ->middleware(\app\common\middleware\AICheck::class)
+        ->middleware(\app\common\middleware\AIBilling::class);
+    Route::post('report/ai/parse', 'ai.VoiceReport/parse')
+        ->middleware(\app\common\middleware\AICheck::class)
+        ->middleware(\app\common\middleware\AIBilling::class);
+    Route::post('report/ai/anomaly', 'ai.Anomaly/scan')
+        ->middleware(\app\common\middleware\AICheck::class)
+        ->middleware(\app\common\middleware\AIBilling::class);
+    // 老板问答放到 mes/qa 下，便于 MES 菜单调用
+    Route::post('qa/ask', 'ai.Qa/ask')
+        ->middleware(\app\common\middleware\AICheck::class)
+        ->middleware(\app\common\middleware\AIBilling::class);
+
     Route::get('customer/add', 'mes.Customer/add');
     Route::get('customer/edit', 'mes.Customer/edit');
     Route::get('customer/index', 'mes.Customer/index');

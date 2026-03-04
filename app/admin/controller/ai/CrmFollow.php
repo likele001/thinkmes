@@ -14,6 +14,10 @@ class CrmFollow extends Base
 {
     public function index(): string|Response
     {
+        $err = $this->checkModule('crm_follow');
+        if ($err !== null) {
+            return $err;
+        }
         if ($this->request->isAjax()) {
             $tenantId = $this->getTenantId();
             $list = Db::name('ai_crm_follow')
@@ -30,6 +34,10 @@ class CrmFollow extends Base
 
     public function suggest(): Response
     {
+        $err = $this->checkModule('crm_follow');
+        if ($err !== null) {
+            return $err;
+        }
         return $this->safeAiCall(function () {
             $customerId = (int) $this->request->post('customer_id', 0);
             $opportunityId = (int) $this->request->post('opportunity_id', 0);

@@ -14,6 +14,10 @@ class Qa extends Base
 {
     public function index(): string|Response
     {
+        $err = $this->checkModule('qa');
+        if ($err !== null) {
+            return $err;
+        }
         if ($this->request->isAjax()) {
             $tenantId = $this->getTenantId();
             $list = Db::name('ai_qa_history')
@@ -30,6 +34,10 @@ class Qa extends Base
 
     public function ask(): Response
     {
+        $err = $this->checkModule('qa');
+        if ($err !== null) {
+            return $err;
+        }
         return $this->safeAiCall(function () {
             $question = trim((string) $this->request->post('question', ''));
             if (empty($question)) {

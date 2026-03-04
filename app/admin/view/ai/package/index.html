@@ -1,0 +1,114 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>AI 套餐管理</em> 管理 AI 功能套餐和全局开关</div>
+    </div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
+            <a href="javascript:;" id="btn-add-package" class="btn btn-success" title="添加套餐"><i class="fas fa-plus"></i> 添加套餐</a>
+            <a href="javascript:;" id="btn-global-switch" class="btn btn-info" title="全局开关"><i class="fas fa-toggle-on"></i> 全局开关</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+
+<!-- 添加套餐弹窗 -->
+<div class="modal fade" id="modal-add-package" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加 AI 套餐</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-add-package">
+                    <div class="form-group">
+                        <label>套餐名称</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>月价（元）</label>
+                        <input type="number" name="price_month" class="form-control" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>季价（元）</label>
+                        <input type="number" name="price_quarter" class="form-control" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>年价（元）</label>
+                        <input type="number" name="price_year" class="form-control" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="enabled" value="1" checked> 启用
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-package">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 全局开关弹窗（含四个子功能：报工、异常检测、智能问答、CRM跟单） -->
+<div class="modal fade" id="modal-global-switch" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">AI 全局开关与子功能</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-global-switch">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="enabled" value="1" id="switch-enabled"> 启用 AI 功能
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="require_purchase" value="1" id="switch-require"> 要求购买套餐
+                        </label>
+                        <small class="form-text text-muted">勾选后，租户必须购买 AI 套餐才能使用 AI 功能</small>
+                    </div>
+                    <div class="form-group">
+                        <label>提示信息</label>
+                        <textarea name="notice" class="form-control" rows="2" placeholder="AI 功能未启用时的提示信息"></textarea>
+                    </div>
+                    <hr/>
+                    <h6>子功能单独开关</h6>
+                    <p class="text-muted small">报工、异常检测、智能问答、CRM 自动跟单 可单独开启或关闭</p>
+                    <div class="form-group row">
+                        <div class="col-6">
+                            <label><input type="checkbox" name="switch_voice_report" value="1" id="switch-voice-report"> 语音报工</label>
+                        </div>
+                        <div class="col-6">
+                            <label><input type="checkbox" name="switch_anomaly" value="1" id="switch-anomaly"> 异常检测</label>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-6">
+                            <label><input type="checkbox" name="switch_qa" value="1" id="switch-qa"> 智能问答</label>
+                        </div>
+                        <div class="col-6">
+                            <label><input type="checkbox" name="switch_crm_follow" value="1" id="switch-crm-follow"> CRM 自动跟单</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-switch">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 页面逻辑由 /assets/js/backend/ai/ai_package.js 按 jsname 加载 -->

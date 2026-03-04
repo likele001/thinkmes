@@ -1,0 +1,72 @@
+<!-- AI 全局开关与四个子功能开关（平台/租户均可单独开关） -->
+<div class="container-fluid">
+  <h2>AI 全局开关与子功能</h2>
+  <form id="globalForm" class="form-horizontal">
+    <div class="form-group">
+      <label>全局启用：</label>
+      <select name="enabled">
+        <option value="1">启用</option>
+        <option value="0">禁用</option>
+      </select>
+      <span class="help-block">关闭后所有 AI 功能不可用</span>
+    </div>
+    <div class="form-group">
+      <label>是否必须购买套餐：</label>
+      <select name="require_purchase">
+        <option value="1">是</option>
+        <option value="0">否</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>提示文字：</label>
+      <input type="text" name="notice" class="form-control" style="max-width:400px" placeholder="公告/说明" />
+    </div>
+    <hr />
+    <h4>子功能单独开关</h4>
+    <p class="text-muted">报工、异常检测、智能问答、CRM 自动跟单 可单独开启或关闭（平台设置默认，租户可覆盖）</p>
+    <div class="form-group">
+      <label><input type="checkbox" name="switch_voice_report" value="1" /> 语音报工</label>
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" name="switch_anomaly" value="1" /> 异常检测</label>
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" name="switch_qa" value="1" /> 智能问答</label>
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" name="switch_crm_follow" value="1" /> CRM 自动跟单</label>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="submitGlobal()">保存</button>
+  </form>
+</div>
+<script>
+(function(){
+  var base = (typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : '') + '/admin/ai';
+  fetch(base + '/globalSwitch').then(function(r){ return r.json(); }).then(function(res){
+    if (res.code !== 1 || !res.data) return;
+    var d = res.data;
+    var form = document.getElementById('globalForm');
+    if (form.elements.enabled) form.elements.enabled.value = String(d.enabled || 0);
+    if (form.elements.require_purchase) form.elements.require_purchase.value = String(d.require_purchase ?? 1);
+    if (form.elements.notice) form.elements.notice.value = (d.notice || '');
+    ['switch_voice_report','switch_anomaly','switch_qa','switch_crm_follow'].forEach(function(name){
+      var el = form.elements[name];
+      if (el) el.checked = (d[name] == 1);
+    });
+  });
+})();
+function submitGlobal(){
+  var form = document.getElementById('globalForm');
+  var data = {
+    enabled: form.elements.enabled ? form.elements.enabled.value : 0,
+    require_purchase: form.elements.require_purchase ? form.elements.require_purchase.value : 1,
+    notice: (form.elements.notice && form.elements.notice.value) || '',
+    switch_voice_report: form.elements.switch_voice_report && form.elements.switch_voice_report.checked ? 1 : 0,
+    switch_anomaly: form.elements.switch_anomaly && form.elements.switch_anomaly.checked ? 1 : 0,
+    switch_qa: form.elements.switch_qa && form.elements.switch_qa.checked ? 1 : 0,
+    switch_crm_follow: form.elements.switch_crm_follow && form.elements.switch_crm_follow.checked ? 1 : 0
+  };
+  var base = (typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : '') + '/admin/ai';
+  fetch(base + '/updateGlobal', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(function(r){ return r.json(); }).then(function(j){ alert(j.msg || '保存成功'); });
+}
+</script>

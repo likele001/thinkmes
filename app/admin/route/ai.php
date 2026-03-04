@@ -1,4 +1,8 @@
 <?php
+
+
+// AI 管理后台路由（仅管理控制器，不加 AICheck 中间件）
+
 /**
  * 工厂 AI 模块 - 独立路由
  */
@@ -36,4 +40,14 @@ Route::group('ai', function () {
     Route::get('crm_follow/index', 'ai.CrmFollow/index');
     Route::get('crm_follow', 'ai.CrmFollow/index');
     Route::post('crm_follow/suggest', 'ai.CrmFollow/suggest');
+
+    // AI 套餐管理
+    Route::get('package/index', 'AiPackage/index');
+    Route::get('package', 'AiPackage/index');
+    Route::get('package/globalSwitchPage', 'AiPackage/globalSwitchPage');
+    Route::get('packages', 'AiPackage/packages');
+    Route::post('createPackage', 'AiPackage/createPackage');
+    Route::post('purchaseForTenant', 'AiPackage/purchaseForTenant');
+    Route::get('globalSwitch', 'AiPackage/globalSwitch');
+    Route::post('updateGlobal', 'AiPackage/updateGlobal');
 });

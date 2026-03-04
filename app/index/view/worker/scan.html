@@ -44,7 +44,34 @@
               <input type="number" class="form-control" id="work-hours" name="work_hours" min="0.1" step="0.1" placeholder="请输入本次工时">
             </div>
             <button type="submit" class="btn btn-primary">提交报工</button>
+            <button type="button" id="btn-voice-report" class="btn btn-outline-primary ms-2">语音报工</button>
           </form>
+          <!-- 语音解析结果编辑模态 -->
+          <div class="modal fade" id="voiceParseModal" tabindex="-1" role="dialog" aria-labelledby="voiceParseModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="voiceParseModalLabel">解析结果确认</h5>
+                  <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group mb-2"><label>订单号</label><input id="parsed-order-no" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>型号</label><input id="parsed-model-name" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>工序</label><input id="parsed-process-name" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>数量</label><input id="parsed-quantity" type="number" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>编号（逗号分隔）</label><input id="parsed-item-nos" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>工时</label><input id="parsed-work-hours" type="number" step="0.1" class="form-control" /></div>
+                  <small class="text-muted">请确认并可在此处编辑解析结果，点击“应用到表单”将填充报工表单。</small>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                  <button type="button" class="btn btn-primary" id="apply-parsed-btn">应用到表单</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -224,5 +251,151 @@ $(function(){
       }
     });
   });
+
+  // 语音报工：支持录音或音频 URL 上传后调用 AI 转写/解析，并自动填充表单
+  (function(){
+    var mediaRecorder = null;
+    var audioChunks = [];
+    function startRecording(){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('浏览器不支持录音，请使用音频文件 URL');
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = function(e){ audioChunks.push(e.data); };
+        mediaRecorder.onstop = function(){
+          var blob = new Blob(audioChunks, { type: 'audio/webm' });
+          uploadAudioBlob(blob);
+          try { stream.getTracks().forEach(t=>t.stop()); } catch(e){}
+        };
+        mediaRecorder.start();
+        var t = setTimeout(function(){ if(mediaRecorder && mediaRecorder.state==='recording'){ mediaRecorder.stop(); } }, 15000);
+        alert('开始录音（最长15秒），录音结束后自动上传并解析');
+      }).catch(function(err){
+        alert('无法访问麦克风：' + err.message);
+      });
+    }
+
+    function uploadAudioBlob(blob){
+      var form = new FormData();
+      form.append('file', blob, 'voice.webm');
+      $.ajax({
+        url: '/api/common/upload',
+        type: 'POST',
+        data: form,
+        processData: false,
+        contentType: false,
+        headers: {'Authorization':'Bearer '+tk},
+        success: function(r){
+          if(r.code===1 && r.data && r.data.url){
+            callTranscribe(r.data.url);
+          } else {
+            alert(r.msg || '上传音频失败');
+          }
+        },
+        error: function(){ alert('上传音频失败'); }
+      });
+    }
+
+    function callTranscribe(url){
+      fetch('/api/ai/transcribe', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk}, body:JSON.stringify({audio_url: url})})
+        .then(r=>r.json()).then(function(j){
+          if(!j || j.code!=1){ alert(j && j.msg ? j.msg : '转写失败'); return; }
+          var text = j.data && j.data.text ? j.data.text : '';
+          if(!text){ alert('未识别到语音内容'); return; }
+          if(!confirm('识别结果：\n' + text + '\n\n是否继续解析为报工？')) return;
+          callParse(text);
+        }).catch(function(){ alert('转写请求失败'); });
+    }
+
+    function callParse(text){
+      fetch('/api/ai/parse', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk}, body:JSON.stringify({text: text})})
+        .then(r=>r.json()).then(function(j){
+          if(!j || j.code!=1){ alert(j && j.msg ? j.msg : '解析失败'); return; }
+          var data = j.data && j.data.data ? j.data.data : j.data;
+          applyParsedData(data);
+        }).catch(function(){ alert('解析请求失败'); });
+    }
+
+    function applyParsedData(data){
+      if(!data) { alert('未解析到结构化数据'); return; }
+      // 填充模态并显示，允许用户编辑后应用
+      try{
+        var itemNos = data.item_nos || '';
+        if(typeof itemNos === 'object' && !Array.isArray(itemNos)){
+          try{ itemNos = JSON.stringify(itemNos); }catch(e){ itemNos = '';} 
+        }
+        if(Array.isArray(itemNos)){
+          itemNos = itemNos.join(',');
+        }
+        $('#parsed-order-no').val(data.order_no || '');
+        $('#parsed-model-name').val(data.model_name || '');
+        $('#parsed-process-name').val(data.process_name || '');
+        $('#parsed-quantity').val(data.quantity || '');
+        $('#parsed-item-nos').val(Array.isArray(data.item_nos) ? data.item_nos.join(',') : (data.item_nos || ''));
+        $('#parsed-work-hours').val(data.work_hours || '');
+        // 使用 Bootstrap 5 modal show，如果不可用回退
+        try{ var vm = new bootstrap.Modal(document.getElementById('voiceParseModal')); vm.show(); }catch(e){ $('#voiceParseModal').modal('show'); }
+      }catch(e){ console.error(e); alert('显示解析结果出错'); }
+    }
+
+    // 模态：应用解析结果到表单
+    $(document).off('click', '#apply-parsed-btn').on('click', '#apply-parsed-btn', function(){
+      var orderNo = $('#parsed-order-no').val();
+      var modelName = $('#parsed-model-name').val();
+      var processName = $('#parsed-process-name').val();
+      var quantity = parseInt($('#parsed-quantity').val()||0,10) || 0;
+      var itemNosRaw = $('#parsed-item-nos').val() || '';
+      var workHours = parseFloat($('#parsed-work-hours').val()||0) || 0;
+      var itemNos = [];
+      if(itemNosRaw){ itemNos = itemNosRaw.split(/[,;\s]+/).filter(Boolean); }
+      // 优先使用 item_nos 填充为按件
+      if(itemNos.length){
+        $('#work-type').val('piece').trigger('change');
+        // 勾选匹配的 item_no
+        itemNos.forEach(function(no){
+          $('.product-item-block').each(function(){
+            var $b = $(this);
+            if(String($b.data('item-no')) === String(no)){
+              $b.find('.item-no-check').prop('checked', true).trigger('change');
+            }
+          });
+        });
+      } else if(quantity>0){
+        // 根据数量选择前 N 未选编号，或填工时
+        var unchecked = [];
+        $('.product-item-block').each(function(){ if(!$(this).find('.item-no-check').prop('checked')) unchecked.push(this); });
+        if(unchecked.length >= quantity){
+          $('#work-type').val('piece').trigger('change');
+          for(var i=0;i<quantity;i++){ $(unchecked[i]).find('.item-no-check').prop('checked', true).trigger('change'); }
+        } else {
+          $('#work-type').val('hour').trigger('change');
+          $('#work-hours').val(workHours || quantity || '');
+        }
+      } else if(workHours>0){
+        $('#work-type').val('hour').trigger('change');
+        $('#work-hours').val(workHours);
+      }
+      // 关闭模态
+      try{ var vm2 = bootstrap.Modal.getInstance(document.getElementById('voiceParseModal')); if(vm2) vm2.hide(); }catch(e){ $('#voiceParseModal').modal('hide'); }
+    });
+
+    // 触发器按钮
+    $(document).off('click', '#btn-voice-report').on('click', '#btn-voice-report', function(){
+      if(confirm('使用麦克风录音并自动解析？点击“否”可输入音频 URL')){
+        startRecording();
+      } else {
+        var url = prompt('请输入音频文件 URL（http(s)://）或相对路径：');
+        if(url) uploadAudioByUrl(url);
+      }
+    });
+
+    function uploadAudioByUrl(url){
+      // 直接调用转写接口，接口会尝试抓取 URL
+      callTranscribe(url);
+    }
+  })();
 });
 </script>

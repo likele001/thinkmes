@@ -1,0 +1,25 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>统计报表</em> 支付订单汇总（单用户）</div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4" id="stats-cards"></div>
+        <p class="text-muted small">数据按全部订单统计，不分租户。</p>
+    </div>
+</div>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $.get(base + '/payment/stats/index', function(res){
+        if (!res || res.code !== 1 || !res.data) return;
+        var d = res.data;
+        var html = ''
+            + '<div class="col-md-4"><div class="card"><div class="card-body"><h6 class="text-muted">总订单数</h6><p class="h4 mb-0">' + (d.total_orders || 0) + '</p></div></div></div>'
+            + '<div class="col-md-4"><div class="card"><div class="card-body"><h6 class="text-muted">已支付笔数</h6><p class="h4 mb-0">' + (d.paid_orders || 0) + '</p></div></div></div>'
+            + '<div class="col-md-4"><div class="card"><div class="card-body"><h6 class="text-muted">总金额(元)</h6><p class="h4 mb-0">¥' + (d.total_amount || 0) + '</p></div></div></div>'
+            + '<div class="col-md-4"><div class="card"><div class="card-body"><h6 class="text-muted">今日已支付</h6><p class="h4 mb-0">' + (d.today_paid || 0) + ' 笔 / ¥' + (d.today_amount || 0) + '</p></div></div></div>'
+            + '<div class="col-md-4"><div class="card"><div class="card-body"><h6 class="text-muted">本月已支付</h6><p class="h4 mb-0">' + (d.month_paid || 0) + ' 笔 / ¥' + (d.month_amount || 0) + '</p></div></div></div>';
+        $('#stats-cards').html(html);
+    }, 'json');
+})();
+</script>

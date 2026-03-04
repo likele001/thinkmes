@@ -1,0 +1,10 @@
+
+A
+￼
+￼
+
+Updated file for modal and modified modal functionality
+我要在 scan.html 添加一个模态窗口并替换原来的 alert/confirm 流程，便于用户编辑解析结果后应用到表单。接着我会修改 JS 的 applyParsedData 逻辑并添加模态 HTML 与事件处理。
+
+Reviewed scan.html and updated scan.html
+

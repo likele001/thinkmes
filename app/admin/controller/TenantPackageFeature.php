@@ -190,6 +190,8 @@ class TenantPackageFeature extends Backend
     protected function getAllFeatures(): array
     {
         return [
+            'ai' => '工厂 AI（附加收费/按应用开通）',
+            'crm' => 'CRM 客户关系管理',
             'order' => '订单管理',
             'product' => '产品管理',
             'inventory' => '库存管理',

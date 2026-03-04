@@ -1,0 +1,21 @@
+<!-- AI 套餐管理（简单演示） -->
+<div class="container">
+  <h2>AI 套餐</h2>
+  <div id="list"></div>
+  <h3>新增套餐</h3>
+  <form id="pkgForm">
+    <input name="name" placeholder="名称" />
+    <input name="price_month" placeholder="月价" />
+    <input name="price_quarter" placeholder="季价" />
+    <input name="price_year" placeholder="年价" />
+    <textarea name="description" placeholder="描述"></textarea>
+    <button type="button" onclick="create()">创建</button>
+  </form>
+</div>
+<script>
+function load(){fetch('/admin/ai/packages').then(r=>r.json()).then(j=>{
+  const el=document.getElementById('list'); el.innerHTML=''; (j.data||[]).forEach(p=>{el.innerHTML+=`<div>${p.id} - ${p.name} - ¥${p.price_month}</div>`});
+});}
+function create(){const data=Object.fromEntries(new FormData(document.getElementById('pkgForm')));fetch('/admin/ai/createPackage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()).then(j=>{alert(j.msg||'ok');load()});}
+load();
+</script>

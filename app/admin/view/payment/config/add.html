@@ -1,0 +1,65 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">添加支付网关</h3></div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">网关类型</label>
+                <div class="col-sm-6">
+                    <select name="code" id="code" class="form-control" required>
+                        <option value="">请选择</option>
+                        {volist name="gatewayNames" id="name" key="code"}
+                        <option value="{$code}" {if isset($code_preselect) && $code_preselect == $code}selected{/if}>{$name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">显示名称</label>
+                <div class="col-sm-6"><input type="text" name="name" class="form-control" required placeholder="如：虎皮椒-支付宝"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">配置(JSON)</label>
+                <div class="col-sm-8">
+                    <textarea name="config" id="config" class="form-control" rows="8" placeholder='{"appid":"","appsecret":"","type":"alipay"} 或 {"pid":"","key":"","submit_url":"https://xxx.com/submit.php"}'></textarea>
+                    <small class="text-muted">虎皮椒：appid, appsecret, type(alipay/wechat), api_url(可选)。易支付：pid, key, submit_url, type(可选)。</small>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">启用</label>
+                <div class="col-sm-6"><label><input type="checkbox" name="enabled" value="1" checked> 启用</label></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">排序</label>
+                <div class="col-sm-6"><input type="number" name="sort" class="form-control" value="0"></div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">提交</button>
+                    <a href="javascript:history.back();" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var form = document.getElementById('form-add');
+    form.setAttribute('action', base + '/payment/config/add');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var fd = new FormData(form);
+        var configStr = document.getElementById('config').value.trim();
+        try {
+            if (configStr) JSON.parse(configStr);
+        } catch (err) {
+            alert('配置 JSON 格式错误');
+            return;
+        }
+        fetch(form.getAttribute('action'), { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function(r) {
+            alert(r.msg || '');
+            if (r.code == 1) location.href = base + '/payment/config/index';
+        }).catch(function() { alert('请求失败'); });
+    });
+})();
+</script>

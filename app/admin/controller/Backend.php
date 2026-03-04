@@ -88,7 +88,7 @@ abstract class Backend extends BaseController
         
         // 如果路径中包含 mes、crm 等子目录，需要添加到 controllername 前面
         // 例如：mes/process/index -> mes/process，crm/customer/index -> crm/customer
-        if (count($pathParts) >= 2 && in_array($pathParts[0], ['mes', 'crm', 'ai'], true)) {
+        if (count($pathParts) >= 2 && in_array($pathParts[0], ['mes', 'crm', 'ai', 'payment'], true)) {
             $controllername = $pathParts[0] . '/' . $controllername;
         }
         
@@ -296,9 +296,11 @@ abstract class Backend extends BaseController
             }
         }
         
-        // FastAdmin 标准：iframe/addtabs 请求使用 iframe 布局（完整 html+head+body+CSS）
-        $isAddtabs = ($this->request->get('addtabs') === '1') || (strtolower((string)$this->request->get('ref')) === 'addtabs');
-        if ($this->request->get('iframe') === '1' || $isAddtabs) {
+        // FastAdmin 标准：iframe 内页使用 iframe 布局
+        // 注意：标签页 iframe 打开时会追加 addtabs=1（不是 ref=addtabs）
+        // ref=addtabs 只是主框架 pushState 的标识，不应该影响布局渲染
+        $isIFrameLayout = ($this->request->get('iframe') === '1') || ($this->request->get('addtabs') === '1');
+        if ($isIFrameLayout) {
             View::assign('__CONTENT__', $content);
             return View::fetch('layout/iframe');
         }

@@ -22,11 +22,13 @@ window.AdminLTEOptions.iframe = false;
 .tab-addtabs .tab-pane { display: none; height: 100%; }
 .tab-addtabs .tab-pane.active { display: block; height: 100%; }
 .tab-addtabs .tab-pane iframe { border: none; width: 100%; height: 100%; min-height: 500px; display: block; }
-.content-wrapper .content { flex: 1; min-height: 0; overflow: hidden; }
-#addtabs-container { height: 100%; padding: 0; overflow: hidden; }
+.content-wrapper .content { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
+#addtabs-container { height: 100%; padding: 0; overflow-x: auto; overflow-y: hidden; min-width: 0; }
 #nav-addtabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
 #nav-addtabs .close-tab { cursor: pointer; margin-left: 8px; padding: 2px 4px; border-radius: 3px; opacity: 0.6; }
 #nav-addtabs .close-tab:hover { opacity: 1; background: rgba(0,0,0,0.1); }
+/* 整页不滚动，仅侧栏菜单区与右侧 iframe 内可滚动 */
+body.layout-fixed .wrapper { height: 100vh !important; overflow: hidden !important; }
 /* 轻量侧栏菜单：无 treeview，结构简单，点击可靠 */
 .sidebar-menu { list-style: none; margin: 0; padding: 8px 0; }
 .sidebar-menu .menu-item { margin: 0; }
@@ -41,34 +43,37 @@ window.AdminLTEOptions.iframe = false;
 .sidebar-menu .menu-arrow { margin-left: auto; transition: transform .2s; }
 .sidebar-menu .menu-item.open > .menu-arrow { transform: rotate(-90deg); }
 .sidebar-menu .menu-children { list-style: none; margin: 0; padding: 0 0 0 12px; }
-.sidebar-menu > .menu-item > .menu-children { display: block; }
-.sidebar-menu .menu-item.has-children > .menu-children { display: none; }
-.sidebar-menu .menu-item.has-children.open > .menu-children { display: block; }
+.sidebar-menu .menu-item.has-children > .menu-children { display: none !important; }
+.sidebar-menu .menu-item.has-children.open > .menu-children { display: block !important; }
 .sidebar-menu .menu-children .menu-link { padding: 8px 15px 8px 28px; font-size: 0.95rem; }
 .sidebar-menu .menu-children .menu-icon i { font-size: 0.85rem; }
-/* 侧栏：固定高度，菜单区域可滚动（PC/移动端都能上下滑） */
+/* 侧栏：固定高度，菜单区域独立滚动，不带动右侧内容 */
 .main-sidebar {
     display: flex !important;
     flex-direction: column !important;
     height: 100vh !important;
+    max-height: 100vh !important;
     overflow: hidden !important;
 }
 .main-sidebar .brand-link { flex-shrink: 0 !important; }
 .main-sidebar .sidebar {
+    display: flex !important;
+    flex-direction: column !important;
     flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow: hidden !important;
 }
 .main-sidebar .sidebar-menu-wrap {
-    height: 100% !important;
-    max-height: calc(100vh - 52px) !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
+    overscroll-behavior: contain !important;
 }
 .main-sidebar .sidebar-menu-wrap nav { padding-bottom: 20px; }
-/* 移动端：侧栏固定宽、菜单区明确高度以便滑动；打开时右侧不参与滚动 */
+/* 小屏/移动端：侧栏固定宽、菜单区单独可滑动，禁止右侧跟随滚动 */
 @media (max-width: 991.98px) {
     .main-sidebar {
         z-index: 1038 !important;
@@ -77,15 +82,32 @@ window.AdminLTEOptions.iframe = false;
         top: 0 !important;
         width: 250px !important;
         height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .main-sidebar .sidebar {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
     .main-sidebar .sidebar-menu-wrap {
-        height: calc(100vh - 52px) !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
         max-height: calc(100vh - 52px) !important;
-        overflow-y: auto !important;
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
     }
     body.mobile-sidebar-open .main-sidebar .sidebar { transform: translateX(0) !important; }
-    body.mobile-sidebar-open .content-wrapper { overflow: hidden !important; touch-action: none !important; }
+    body.mobile-sidebar-open .content-wrapper { overflow: hidden !important; touch-action: none !important; position: relative !important; }
+    body.mobile-sidebar-open .wrapper { overflow: hidden !important; }
     .content-wrapper, .main-header { z-index: 1; }
     .main-sidebar .menu-link {
         cursor: pointer !important;
@@ -101,6 +123,8 @@ window.AdminLTEOptions.iframe = false;
     }
     body.sidebar-open .content-wrapper,
     body.mobile-sidebar-open .content-wrapper { width: calc(100% - 250px) !important; }
+    /* 小屏下整页不滚动，仅左侧菜单区与右侧 iframe 内可滚动 */
+    body.layout-fixed .wrapper { overflow: hidden !important; }
 }
 </style>
 <script>
@@ -111,6 +135,24 @@ window.AdminLTEOptions.iframe = false;
         var footerH = $('.main-footer').outerHeight(true) || 60;
         var iframeHeight = Math.max(500, $(window).height() - (180 + footerH));
         $(document).addtabs({ nav: '#nav-addtabs', tab: '#tab-addtabs-content', iframeUse: true, iframeHeight: iframeHeight, close: true, monitor: 'body' });
+        
+        // 页面加载时，如果 URL 中有 hash，自动激活对应的标签页
+        $(function() {
+            var hash = window.location.hash;
+            if (hash && hash.indexOf('#con_') === 0) {
+                var conid = hash.substring(1);
+                var id = conid.replace('con_', '');
+                var tabid = 'tab_' + id;
+                var $tabitem = $('#' + tabid, '#nav-addtabs');
+                var $conitem = $('#' + conid, '#tab-addtabs-content');
+                if ($tabitem.length > 0 && $conitem.length > 0) {
+                    $('#nav-addtabs').find("[role='presentation']").removeClass('active');
+                    $('#tab-addtabs-content').find("[role='tabpanel']").removeClass('active');
+                    $tabitem.addClass('active');
+                    $conitem.addClass('active');
+                }
+            }
+        });
         $(window).on('resize', function() {
             var h = Math.max(500, $(window).height() - (180 + ($('.main-footer').outerHeight(true) || 60)));
             $('.tab-addtabs .tab-pane iframe').attr('height', h).css('height', h + 'px');

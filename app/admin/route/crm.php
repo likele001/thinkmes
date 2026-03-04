@@ -40,6 +40,10 @@ Route::group('crm', function () {
     Route::post('follow/add', 'crm.Follow/add');
     Route::post('follow/edit', 'crm.Follow/edit');
     Route::post('follow/del', 'crm.Follow/del');
+    // CRM 下的 AI 路由：智能跟单建议（受租户购买与全局开关限制）
+    Route::post('follow/suggest', 'ai.CrmFollow/suggest')
+        ->middleware(\app\common\middleware\AICheck::class)
+        ->middleware(\app\common\middleware\AIBilling::class);
     Route::get('payment/index', 'crm.Payment/index');
     Route::get('payment/add', 'crm.Payment/add');
     Route::get('payment/edit', 'crm.Payment/edit');

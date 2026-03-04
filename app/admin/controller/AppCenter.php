@@ -46,13 +46,27 @@ class AppCenter extends Backend
             'ai' => [
                 'key'         => 'ai',
                 'title'       => '工厂 AI',
-                'description' => '语音报工、异常检测、智能问答、自动日报、CRM 智能跟单',
+                'description' => '语音报工、异常检测、智能问答、自动日报、CRM 智能跟单；可单独开关子功能',
                 'sql_files'   => [
                     'migrate_add_ai_tables.sql',
+                    'migrate_add_ai_package.sql',
+                    'migrate_add_ai_module_switch.sql',
                     'seed_ai_menu.sql',
                 ],
                 'check_table' => 'ai_config',
                 'code_path'   => dirname(__DIR__) . '/controller/ai',
+            ],
+            'payment' => [
+                'key'         => 'payment',
+                'title'       => '支付管理',
+                'description' => '单用户版：支付配置、订单管理、回调日志、统计报表',
+                'sql_files'   => [
+                    'migrate_add_payment_tables.sql',
+                    'migrate_add_payment_callback_log.sql',
+                    'seed_payment_menu.sql',
+                ],
+                'check_table' => 'payment_gateway',
+                'code_path'   => dirname(__DIR__) . '/controller/payment',
             ],
         ];
     }
@@ -94,8 +108,12 @@ class AppCenter extends Backend
 
     protected function isAppInstalled(string $key, array $def, string $prefix): bool
     {
-        if (Db::name('config')->where('name', 'app_' . $key . '_installed')->value('value') === '1') {
+        $configVal = Db::name('config')->where('name', 'app_' . $key . '_installed')->value('value');
+        if ($configVal === '1') {
             return true;
+        }
+        if ($configVal === '0' || $configVal === '') {
+            return false;
         }
         $checkTable = $def['check_table'] ?? '';
         if ($checkTable !== '') {
@@ -152,6 +170,10 @@ class AppCenter extends Backend
             Db::name('auth_rule')->where('name', 'ai')->update(['status' => 1]);
             Db::name('auth_rule')->where('name', 'like', 'ai/%')->update(['status' => 1]);
         }
+        if ($appKey === 'payment') {
+            Db::name('auth_rule')->where('name', 'payment')->update(['status' => 1]);
+            Db::name('auth_rule')->where('name', 'like', 'payment/%')->update(['status' => 1]);
+        }
         return $this->success('安装成功');
     }
 
@@ -175,6 +197,10 @@ class AppCenter extends Backend
         if ($appKey === 'ai') {
             Db::name('auth_rule')->where('name', 'ai')->update(['status' => 0]);
             Db::name('auth_rule')->where('name', 'like', 'ai/%')->update(['status' => 0]);
+        }
+        if ($appKey === 'payment') {
+            Db::name('auth_rule')->where('name', 'payment')->update(['status' => 0]);
+            Db::name('auth_rule')->where('name', 'like', 'payment/%')->update(['status' => 0]);
         }
         $this->setAppInstalledConfig($appKey, 0);
         return $this->success('已卸载（菜单已隐藏，数据表保留）');

@@ -39,7 +39,7 @@ window.AdminLTEOptions.iframe = false;
 body.layout-fixed { overflow-x: hidden !important; }
 .wrapper { display: flex !important; flex-direction: column !important; min-height: 100vh !important; }
 .layout-fixed .content-wrapper { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; min-width: 0 !important; }
-.content-wrapper > .content { flex: 1 !important; min-height: 0 !important; overflow: hidden !important; min-width: 0 !important; }
+.content-wrapper > .content { flex: 1 !important; min-height: 0 !important; overflow-x: auto !important; overflow-y: hidden !important; min-width: 0 !important; }
 </style>
 <script type="text/javascript">
     var Config = {:json_encode($config ?? [], 256)};
