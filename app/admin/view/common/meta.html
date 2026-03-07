@@ -1,46 +1,11 @@
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>{$title|default='keleadmin'} - KeleAdmin</title>
-<script>
-// 向 localStorage 写入禁用 IFrame 的配置（AdminLTE 会从这里读取）
-try {
-    var iframeConfig = {
-        autoIframeMode: false,
-        autoItemActive: false,
-        autoShowNewTab: false,
-        onTabClick: function(e) { return e; },
-        onTabChanged: function(e) { return e; },
-        onTabCreated: function(e) { return e; }
-    };
-    localStorage.setItem('AdminLTE:IFrame:Options', JSON.stringify(iframeConfig));
-} catch(e) {}
-// 确保 AdminLTEOptions 正确设置
-window.AdminLTEOptions = window.AdminLTEOptions || {};
-window.AdminLTEOptions.autoIframeMode = false;
-window.AdminLTEOptions.iframe = false;
-</script>
-<!-- Bootstrap 4 (AdminLTE 3 依赖) -->
-<link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
-<!-- Font Awesome -->
+<!-- Pear Admin Layui 风格 -->
+<link rel="stylesheet" href="/assets/lib/layui/css/layui.css">
 <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
-<!-- AdminLTE 3 -->
-<link rel="stylesheet" href="/assets/lib/adminlte/css/adminlte.min.css">
-<!-- Bootstrap Table -->
+<link rel="stylesheet" href="/assets/css/pear-admin-theme.css">
+<!-- 内页/iframe 业务表格与表单仍用 Bootstrap -->
+<link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
 <link rel="stylesheet" href="/assets/lib/bootstrap-table/css/bootstrap-table.min.css">
-<!-- Custom Theme -->
-<link rel="stylesheet" href="/assets/css/fastadmin-theme.css">
-<style>
-/* FastAdmin 兼容样式 */
-.panel-lead { font-size: 14px; }
-.panel-lead em { font-style: normal; font-weight: 600; margin-right: 8px; }
-.toolbar .btn { margin-right: 6px; }
-
-/* FastAdmin 布局：内容区占满剩余高度；不把 content-wrapper 拉满整行，避免盖住侧栏 */
-body.layout-fixed { overflow-x: hidden !important; }
-.wrapper { display: flex !important; flex-direction: column !important; min-height: 100vh !important; }
-.layout-fixed .content-wrapper { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; min-width: 0 !important; }
-.content-wrapper > .content { flex: 1 !important; min-height: 0 !important; overflow-x: auto !important; overflow-y: hidden !important; min-width: 0 !important; }
-</style>
-<script type="text/javascript">
-    var Config = {:json_encode($config ?? [], 256)};
-</script>
+<script type="text/javascript">var Config = {:json_encode($config ?? [], 256)};</script>

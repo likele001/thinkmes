@@ -1,160 +1,42 @@
-<!-- 基础库（项目自带，无 CDN） -->
 <script src="/assets/lib/jquery/jquery.min.js"></script>
 <script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/lib/fontawesome/js/all.min.js"></script>
-<script>
-try {
-    var iframeConfig = { autoIframeMode: false, autoItemActive: false, autoShowNewTab: false, onTabClick: function(e) { return e; }, onTabChanged: function(e) { return e; }, onTabCreated: function(e) { return e; } };
-    localStorage.setItem('AdminLTE:IFrame:Options', JSON.stringify(iframeConfig));
-} catch(e) {}
-window.AdminLTEOptions = window.AdminLTEOptions || {};
-window.AdminLTEOptions.autoIframeMode = false;
-window.AdminLTEOptions.iframe = false;
-</script>
-<!-- 菜单点击必须在 AdminLTE 之前绑定，否则移动端点菜单会先被 AdminLTE 关侧栏，无法跳转 -->
-<script src="/assets/js/backend-loader.js"></script>
-<script src="/assets/lib/adminlte/js/adminlte.min.js"></script>
 <script src="/assets/lib/bootstrap-table/js/bootstrap-table.min.js"></script>
-<script>if (typeof AdminLTE !== 'undefined' && AdminLTE.IFrame) { delete AdminLTE.IFrame; } $(document).off('init.lte.iframe');</script>
+<script src="/assets/lib/fontawesome/js/all.min.js"></script>
+<script src="/assets/js/backend-loader.js"></script>
 <script src="/assets/lib/fastadmin-addtabs/jquery.addtabs.js"></script>
 <style>
-.tab-addtabs { position: relative; min-height: 500px; height: calc(100vh - 240px); }
+.tab-addtabs { height: 100%; min-height: 400px; }
 .tab-addtabs .tab-pane { display: none; height: 100%; }
 .tab-addtabs .tab-pane.active { display: block; height: 100%; }
-.tab-addtabs .tab-pane iframe { border: none; width: 100%; height: 100%; min-height: 500px; display: block; }
-.content-wrapper .content { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
-#addtabs-container { height: 100%; padding: 0; overflow-x: auto; overflow-y: hidden; min-width: 0; }
-#nav-addtabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-#nav-addtabs .close-tab { cursor: pointer; margin-left: 8px; padding: 2px 4px; border-radius: 3px; opacity: 0.6; }
-#nav-addtabs .close-tab:hover { opacity: 1; background: rgba(0,0,0,0.1); }
-/* 整页不滚动，仅侧栏菜单区与右侧 iframe 内可滚动 */
-body.layout-fixed .wrapper { height: 100vh !important; overflow: hidden !important; }
-/* 轻量侧栏菜单：无 treeview，结构简单，点击可靠 */
-.sidebar-menu { list-style: none; margin: 0; padding: 8px 0; }
-.sidebar-menu .menu-item { margin: 0; }
-.sidebar-menu .menu-link {
-    display: flex; align-items: center; padding: 10px 15px; color: rgba(255,255,255,.8);
-    text-decoration: none; cursor: pointer; transition: background .2s; border-left: 3px solid transparent;
-}
-.sidebar-menu .menu-link:hover { background: rgba(255,255,255,.05); color: #fff; }
-.sidebar-menu .menu-icon { width: 28px; flex-shrink: 0; text-align: center; }
-.sidebar-menu .menu-icon i { font-size: 1rem; }
-.sidebar-menu .menu-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sidebar-menu .menu-arrow { margin-left: auto; transition: transform .2s; }
-.sidebar-menu .menu-item.open > .menu-arrow { transform: rotate(-90deg); }
-.sidebar-menu .menu-children { list-style: none; margin: 0; padding: 0 0 0 12px; }
-.sidebar-menu .menu-item.has-children > .menu-children { display: none !important; }
-.sidebar-menu .menu-item.has-children.open > .menu-children { display: block !important; }
-.sidebar-menu .menu-children .menu-link { padding: 8px 15px 8px 28px; font-size: 0.95rem; }
-.sidebar-menu .menu-children .menu-icon i { font-size: 0.85rem; }
-/* 侧栏：固定高度，菜单区域独立滚动，不带动右侧内容 */
-.main-sidebar {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
-}
-.main-sidebar .brand-link { flex-shrink: 0 !important; }
-.main-sidebar .sidebar {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-}
-.main-sidebar .sidebar-menu-wrap {
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-    overscroll-behavior: contain !important;
-}
-.main-sidebar .sidebar-menu-wrap nav { padding-bottom: 20px; }
-/* 小屏/移动端：侧栏固定宽、菜单区单独可滑动，禁止右侧跟随滚动 */
-@media (max-width: 991.98px) {
-    .main-sidebar {
-        z-index: 1038 !important;
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 250px !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    .main-sidebar .sidebar {
-        flex: 1 1 0 !important;
-        min-height: 0 !important;
-        max-height: 100vh !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    .main-sidebar .sidebar-menu-wrap {
-        flex: 1 1 0 !important;
-        min-height: 0 !important;
-        max-height: calc(100vh - 52px) !important;
-        overflow-y: scroll !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        overscroll-behavior-y: contain !important;
-        touch-action: pan-y !important;
-    }
-    body.mobile-sidebar-open .main-sidebar .sidebar { transform: translateX(0) !important; }
-    body.mobile-sidebar-open .content-wrapper { overflow: hidden !important; touch-action: none !important; position: relative !important; }
-    body.mobile-sidebar-open .wrapper { overflow: hidden !important; }
-    .content-wrapper, .main-header { z-index: 1; }
-    .main-sidebar .menu-link {
-        cursor: pointer !important;
-        -webkit-tap-highlight-color: rgba(255,255,255,.1);
-    }
-    body.sidebar-open .content-wrapper,
-    body.sidebar-open .main-header,
-    body.sidebar-open .main-footer,
-    body.mobile-sidebar-open .content-wrapper,
-    body.mobile-sidebar-open .main-header,
-    body.mobile-sidebar-open .main-footer {
-        margin-left: 250px !important;
-    }
-    body.sidebar-open .content-wrapper,
-    body.mobile-sidebar-open .content-wrapper { width: calc(100% - 250px) !important; }
-    /* 小屏下整页不滚动，仅左侧菜单区与右侧 iframe 内可滚动 */
-    body.layout-fixed .wrapper { overflow: hidden !important; }
-}
+.tab-addtabs .tab-pane iframe { width: 100%; height: 100%; min-height: 400px; display: block; }
+.pear-content { height: 100%; }
+#nav-addtabs .close-tab { cursor: pointer; margin-left: 6px; opacity: .7; }
+#nav-addtabs .close-tab:hover { opacity: 1; }
 </style>
 <script>
 (function() {
     if (typeof jQuery === 'undefined') return;
     var $ = jQuery;
     $(function() {
-        var footerH = $('.main-footer').outerHeight(true) || 60;
-        var iframeHeight = Math.max(500, $(window).height() - (180 + footerH));
+        var headerH = 50, tabsH = 40;
+        var iframeHeight = Math.max(400, $(window).height() - headerH - tabsH);
         $(document).addtabs({ nav: '#nav-addtabs', tab: '#tab-addtabs-content', iframeUse: true, iframeHeight: iframeHeight, close: true, monitor: 'body' });
-        
-        // 页面加载时，如果 URL 中有 hash，自动激活对应的标签页
+
         $(function() {
             var hash = window.location.hash;
             if (hash && hash.indexOf('#con_') === 0) {
-                var conid = hash.substring(1);
-                var id = conid.replace('con_', '');
-                var tabid = 'tab_' + id;
-                var $tabitem = $('#' + tabid, '#nav-addtabs');
-                var $conitem = $('#' + conid, '#tab-addtabs-content');
-                if ($tabitem.length > 0 && $conitem.length > 0) {
-                    $('#nav-addtabs').find("[role='presentation']").removeClass('active');
-                    $('#tab-addtabs-content').find("[role='tabpanel']").removeClass('active');
+                var conid = hash.substring(1), id = conid.replace('con_', ''), tabid = 'tab_' + id;
+                var $tabitem = $('#' + tabid, '#nav-addtabs'), $conitem = $('#' + conid, '#tab-addtabs-content');
+                if ($tabitem.length && $conitem.length) {
+                    $('#nav-addtabs').find('li[role="presentation"]').removeClass('active');
+                    $('#tab-addtabs-content').find('.tab-pane').removeClass('active');
                     $tabitem.addClass('active');
                     $conitem.addClass('active');
                 }
             }
         });
         $(window).on('resize', function() {
-            var h = Math.max(500, $(window).height() - (180 + ($('.main-footer').outerHeight(true) || 60)));
+            var h = Math.max(400, $(window).height() - headerH - tabsH);
             $('.tab-addtabs .tab-pane iframe').attr('height', h).css('height', h + 'px');
         });
         $(document).on('click', '[data-addtabs-close="all"]', function(e) {
@@ -163,7 +45,7 @@ body.layout-fixed .wrapper { height: 100vh !important; overflow: hidden !importa
             $('#tab-addtabs-content').find('.tab-pane').not('#con_index').remove();
             $('#nav-addtabs').find('#tab_index').addClass('active');
             $('#tab-addtabs-content').find('#con_index').addClass('active');
-            $('#addtabs-close-dropdown').removeClass('show').find('.dropdown-menu').removeClass('show');
+            $('#pear-close-dropdown').hide();
         });
         $(document).on('click', '[data-addtabs-close="other"]', function(e) {
             e.preventDefault(); e.stopPropagation();
@@ -172,67 +54,53 @@ body.layout-fixed .wrapper { height: 100vh !important; overflow: hidden !importa
             var conId = activeId ? ('con_' + activeId.replace('tab_', '')) : 'con_index';
             $('#nav-addtabs').find('li[role="presentation"]').each(function() { if (!$(this).is($activeLi)) $(this).remove(); });
             $('#tab-addtabs-content').find('.tab-pane').not('#' + conId).remove();
-            $('#addtabs-close-dropdown').removeClass('show').find('.dropdown-menu').removeClass('show');
+            $('#pear-close-dropdown').hide();
         });
         $(document).on('click', '#addtabs-close-btn', function(e) {
-            e.preventDefault(); e.stopPropagation();
-            var $dd = $('#addtabs-close-dropdown'), $menu = $dd.find('.dropdown-menu');
-            if ($dd.hasClass('show')) { $dd.removeClass('show'); $menu.removeClass('show'); } else { $dd.addClass('show'); $menu.addClass('show'); }
-            return false;
+            e.stopPropagation();
+            var $dd = $('#pear-close-dropdown');
+            $dd.toggle();
         });
         $(document).on('click', function(e) {
-            if (!$(e.target).closest('#addtabs-close-dropdown').length) $('#addtabs-close-dropdown').removeClass('show').find('.dropdown-menu').removeClass('show');
+            if (!$(e.target).closest('#addtabs-close-wrap').length) $('#pear-close-dropdown').hide();
         });
-        $(document).on('mouseenter', '.main-sidebar', function() { if ($('body').hasClass('sidebar-collapse')) $('body').addClass('sidebar-hover-expand'); });
-        $(document).on('mouseleave', '.main-sidebar', function() { $('body').removeClass('sidebar-hover-expand'); });
-        /* 移动端：点汉堡时 body 加 class、侧栏加 .show，内容区右移 */
-        $(document).on('click', '[data-widget="pushmenu"]', function() {
-            if ($(window).width() <= 991) {
-                $('body').toggleClass('mobile-sidebar-open');
-                $('.main-sidebar .sidebar').toggleClass('show');
+        $(document).on('click', '#pear-side-toggle', function() {
+            var w = $(window).width();
+            if (w <= 768) {
+                $('#pear-side').toggleClass('show');
+            } else {
+                var $wrap = $('.pear-admin-wrap');
+                $wrap.toggleClass('sidebar-collapsed');
+                var collapsed = $wrap.hasClass('sidebar-collapsed');
+                var $btn = $(this);
+                $btn.attr('title', collapsed ? '展开侧栏' : '收起侧栏');
+                $btn.removeClass('layui-icon-shrink-right layui-icon-spread-left').addClass(collapsed ? 'layui-icon-spread-left' : 'layui-icon-shrink-right');
             }
         });
         $(window).on('resize', function() {
-            if ($(window).width() > 991) {
-                $('body').removeClass('mobile-sidebar-open');
-                $('.main-sidebar .sidebar').removeClass('show');
+            if ($(window).width() > 768) {
+                $('#pear-side').removeClass('show');
+            } else {
+                $('.pear-admin-wrap').removeClass('sidebar-collapsed');
+                $('#pear-side-toggle').attr('title', '菜单').removeClass('layui-icon-spread-left').addClass('layui-icon-shrink-right');
             }
         });
-        /* 移动端左侧菜单：按触摸坐标是否在侧栏内，在 document 上处理滚动（不依赖 target） */
-        (function() {
-            var wrap = document.getElementById('sidebar-menu-wrap');
-            var sidebarEl = document.querySelector('.main-sidebar');
-            if (!wrap || !sidebarEl) return;
-            var startY = 0, startScroll = 0, active = false;
-            function touchInSidebar(clientX, clientY) {
-                var body = document.body;
-                if (!body.classList.contains('mobile-sidebar-open') && !body.classList.contains('sidebar-open')) return false;
-                var r = sidebarEl.getBoundingClientRect();
-                return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
-            }
-            document.addEventListener('touchstart', function(e) {
-                if (window.innerWidth > 991) return;
-                var t = e.touches && e.touches[0];
-                if (!t) return;
-                if (!touchInSidebar(t.clientX, t.clientY)) { active = false; return; }
-                active = true;
-                startY = t.clientY;
-                startScroll = wrap.scrollTop;
-            }, { capture: true, passive: true });
-            document.addEventListener('touchmove', function(e) {
-                if (window.innerWidth > 991 || !active) return;
-                var t = e.touches && e.touches[0];
-                if (!t) return;
-                e.preventDefault();
-                var y = t.clientY, dy = startY - y;
-                var next = Math.max(0, Math.min(wrap.scrollHeight - wrap.clientHeight, startScroll + dy));
-                wrap.scrollTop = next;
-                startY = y;
-                startScroll = next;
-            }, { capture: true, passive: false });
-            document.addEventListener('touchend', function() { active = false; }, { capture: true, passive: true });
-            document.addEventListener('touchcancel', function() { active = false; }, { capture: true, passive: true });
-        })();
+        // 清除缓存：Ajax POST，成功后提示，不跳转
+        $(document).on('click', '#btn-clear-cache', function(e) {
+            e.preventDefault();
+            var url = $(this).data('url');
+            if (!url) return;
+            var $btn = $(this).css('pointer-events', 'none');
+            $.post(url).done(function(res) {
+                var msg = (res && res.msg) ? res.msg : '缓存已清理';
+                if (res && res.code === 1) {
+                    var $tip = $('<div class="clear-cache-tip">' + msg + '</div>');
+                    $tip.css({ position: 'fixed', top: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, padding: '8px 16px', background: '#1aa094', color: '#fff', borderRadius: '4px', fontSize: '14px', boxShadow: '0 2px 8px rgba(0,0,0,.2)' });
+                    $('body').append($tip);
+                    setTimeout(function() { $tip.fadeOut(200, function() { $(this).remove(); }); }, 2000);
+                }
+            }).always(function() { $btn.css('pointer-events', ''); });
+        });
     });
 })();
 </script>

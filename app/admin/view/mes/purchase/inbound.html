@@ -70,7 +70,7 @@ $(function() {
         var supplierId = $(this).val();
         if (supplierId) {
             // 动态获取该供应商的物料列表（示例）
-            $.get('{:url("admin/mes/purchase/getMaterials")}?supplier_id=' + supplierId, function(res) {
+            $.get((typeof Config !== 'undefined' && Config.moduleurl ? Config.moduleurl : '') + '/mes/purchase/getMaterials?supplier_id=' + supplierId, function(res) {
                 if (res.code === 1) {
                     var options = '<option value="">请选择物料</option>';
                     $.each(res.data, function(i, item) {
@@ -86,7 +86,7 @@ $(function() {
     $('#form-add').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
-            url: '{:url("admin/mes/purchase/saveInbound")}',
+            url: (typeof Config !== 'undefined' && Config.moduleurl ? Config.moduleurl : '') + '/mes/purchase/saveInbound',
             type: 'POST',
             data: $(this).serialize(),
             dataType: 'json',

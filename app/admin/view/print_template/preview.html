@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打印预览 - {$templateName|default='打印'}</title>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; margin: 20px; background: #fff; }
+        .print-actions { margin-bottom: 16px; }
+        .print-actions .btn { margin-right: 8px; padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: #fff; font-size: 14px; }
+        .print-actions .btn-primary { background: #007bff; color: #fff; border-color: #007bff; }
+        @media print {
+            .print-actions { display: none !important; }
+            body { margin: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-actions">
+        <button type="button" class="btn btn-primary" onclick="window.print();">打印</button>
+        <button type="button" class="btn btn-default" onclick="window.close();">关闭</button>
+    </div>
+    <div class="print-content">
+        {$content|raw}
+    </div>
+    <script>
+        if (typeof jQuery !== 'undefined' && jQuery('.btn').length) {
+            jQuery('.btn').on('click', function() {
+                if (this.getAttribute('onclick') && this.getAttribute('onclick').indexOf('print') >= 0) window.print();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">收款登记</h3></div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">应收单</label>
+                <div class="col-sm-6">
+                    <select name="receivable_id" class="form-control" required>
+                        <option value="">请选择未结清应收单</option>
+                        {volist name="receivableList" id="r"}
+                        <option value="{$r.id}">#{$r.id} {$r.title} - 应收{$r.amount} 已收{$r.received}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">收款金额</label>
+                <div class="col-sm-6"><input type="number" name="amount" class="form-control" step="0.01" required></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">收款时间</label>
+                <div class="col-sm-6"><input type="datetime-local" name="pay_time" class="form-control" value="{:date('Y-m-d\TH:i')}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">备注</label>
+                <div class="col-sm-6"><textarea name="remark" class="form-control" rows="2"></textarea></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-add" class="btn btn-primary">确定登记</button>
+        <a href="{$config.moduleurl}/finance/receive/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-add').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/finance/receive/add', $(this).serialize(), function(r) {
+            if (r.code == 1) { alert(r.msg || '登记成功'); location.href = base + '/finance/receive/index'; }
+            else alert(r.msg || '登记失败');
+        }, 'json');
+    });
+})();
+</script>

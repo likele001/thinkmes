@@ -1,0 +1,43 @@
+(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var Controller = {
+        index: function () {
+            var $ = jQuery, table = $('#table');
+            if (!table.length || typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) return;
+            table.bootstrapTable({
+                url: base + '/hr/employee/index',
+                method: 'get',
+                sidePagination: 'server',
+                pagination: true,
+                pageSize: 20,
+                sortName: 'id',
+                sortOrder: 'desc',
+                responseHandler: function (res) { var d = res && res.data ? res.data : {}; return { total: d.total || 0, rows: d.list || [] }; },
+                columns: [
+                    { checkbox: true },
+                    { field: 'id', title: 'ID', width: 80 },
+                    { field: 'no', title: '工号', width: 100 },
+                    { field: 'name', title: '姓名', align: 'left' },
+                    { field: 'department_name', title: '部门', width: 120 },
+                    { field: 'position_name', title: '岗位', width: 100 },
+                    { field: 'mobile', title: '手机', width: 120 },
+                    { field: 'status', title: '状态', width: 80, formatter: function (v) { return v == 1 ? '<span class="badge badge-success">在职</span>' : '<span class="badge badge-secondary">离职</span>'; }},
+                    { field: 'operate', title: '操作', width: 120, formatter: function (v, row) {
+                        return '<a href="' + base + '/hr/employee/edit?id=' + row.id + '" class="btn btn-xs btn-success">编辑</a> <a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
+                    }}
+                ]
+            });
+            $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function () { table.bootstrapTable('refresh'); });
+            $(document).off('click', '.btn-del').on('click', '.btn-del', function () {
+                var id = $(this).data('id');
+                if (!confirm('确定删除？')) return;
+                $.post(base + '/hr/employee/del', { ids: id }, function (r) { if (r.code == 1) { table.bootstrapTable('refresh'); alert(r.msg || '删除成功'); } else alert(r.msg || '删除失败'); }, 'json');
+            });
+        },
+        add: function () {},
+        edit: function () {}
+    };
+    var action = (typeof Config !== 'undefined' && Config.actionname) ? Config.actionname : 'index';
+    if (Controller[action]) Controller[action]();
+    window.__backendController = Controller;
+})();

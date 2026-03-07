@@ -1,0 +1,120 @@
+/* Pear Admin Layui 风格 - 后台主框架 */
+body { margin: 0; overflow: hidden; }
+.pear-admin-wrap { display: flex; flex-direction: column; height: 100vh; }
+.pear-header {
+  height: 50px; flex-shrink: 0; background: #1aa094;
+  display: flex; align-items: center; padding: 0 16px; color: #fff;
+}
+.pear-header .logo { font-size: 18px; font-weight: 600; margin-right: 20px; color: #fff; text-decoration: none; }
+.pear-header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.pear-header .nav-right a { color: rgba(255,255,255,.9); text-decoration: none; }
+.pear-header .nav-right a:hover { color: #fff; }
+.pear-body { display: flex; flex: 1; min-height: 0; }
+.pear-side {
+  width: 220px; flex-shrink: 0; background: #0d9488;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.pear-side-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+.pear-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.pear-tabs {
+  flex-shrink: 0; background: #f2f2f2; border-bottom: 1px solid #e6e6e6;
+  display: flex; align-items: center; padding: 0 8px; min-height: 40px;
+}
+.pear-tabs .tabs-list { flex: 1; display: flex; overflow-x: auto; padding: 4px 0; gap: 2px; }
+.pear-tabs .tabs-list { list-style: none; margin: 0; padding: 4px 0; }
+.pear-tabs .tabs-list > li,
+.pear-tabs .tabs-list .tab-item {
+  display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 4px;
+  background: #fff; border: 1px solid #e6e6e6; white-space: nowrap; cursor: pointer;
+  font-size: 13px; color: #333; margin-right: 2px;
+}
+.pear-tabs .tabs-list > li a,
+.pear-tabs .tabs-list .tab-item a { text-decoration: none; color: inherit; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.pear-tabs .tabs-list > li.active,
+.pear-tabs .tabs-list > li.active a,
+.pear-tabs .tabs-list .tab-item.active { background: #1aa094; color: #fff; border-color: #1aa094; }
+.pear-tabs .tabs-list .tab-item .close-tab { margin-left: 6px; opacity: .6; }
+.pear-tabs .tabs-list .tab-item .close-tab:hover { opacity: 1; }
+.pear-tabs .tabs-close { flex-shrink: 0; margin-left: 8px; position: relative; }
+.pear-content { flex: 1; min-height: 0; position: relative; }
+.pear-content .tab-pane { display: none; height: 100%; }
+.pear-content .tab-pane.active { display: block; }
+.pear-content .tab-pane iframe { width: 100%; height: 100%; border: none; display: block; min-height: 400px; }
+/* 侧栏菜单（与 backend-loader 输出的结构一致） */
+#menu-tree { list-style: none; margin: 0; padding: 10px 0; }
+#menu-tree .menu-item { margin: 0; }
+#menu-tree .menu-link {
+  display: flex; align-items: center; padding: 10px 16px; color: rgba(255,255,255,.9);
+  text-decoration: none; cursor: pointer; border-left: 3px solid transparent;
+}
+#menu-tree .menu-link:hover { background: rgba(0,0,0,.1); color: #fff; }
+#menu-tree .menu-icon { width: 24px; flex-shrink: 0; text-align: center; }
+#menu-tree .menu-icon i { font-size: 14px; }
+#menu-tree .menu-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#menu-tree .menu-arrow { margin-left: auto; transition: transform .2s; }
+#menu-tree .menu-item.open > .menu-link .menu-arrow { transform: rotate(-90deg); }
+#menu-tree .menu-children { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#menu-tree .menu-item.has-children > .menu-children { display: none; }
+#menu-tree .menu-item.has-children.open > .menu-children { display: block; }
+#menu-tree .menu-children .menu-link { padding: 8px 16px 8px 24px; font-size: 13px; }
+/* 顶部「收起/展开侧栏」按钮：桌面端可缩小侧栏为仅图标，移动端控制抽屉 */
+.pear-toggle {
+  background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;
+  padding: 0 14px; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px; transition: background .2s;
+}
+.pear-toggle:hover { background: rgba(255,255,255,.15); }
+.pear-toggle:focus { outline: none; }
+/* 桌面端：侧栏可收起为窄条（仅图标），主内容区更宽 */
+@media (min-width: 769px) {
+  .pear-side { width: 220px; transition: width .2s; }
+  .pear-admin-wrap.sidebar-collapsed .pear-side { width: 64px; }
+  .pear-admin-wrap.sidebar-collapsed .pear-side .menu-text,
+  .pear-admin-wrap.sidebar-collapsed .pear-side .menu-arrow { display: none; }
+  .pear-admin-wrap.sidebar-collapsed .pear-side .menu-children { display: none !important; }
+  .pear-admin-wrap.sidebar-collapsed .pear-side .menu-link { justify-content: center; padding-left: 0; padding-right: 0; }
+}
+@media (max-width: 768px) {
+  .pear-side { position: fixed; left: 0; top: 50px; z-index: 1000; height: calc(100vh - 50px); width: 220px; transform: translateX(-100%); transition: transform .2s; }
+  .pear-side.show { transform: translateX(0); }
+  .pear-side-scroll { height: 100%; }
+  .pear-admin-wrap.sidebar-collapsed .pear-side { width: 220px; }
+}
+
+/* ===== iframe 内容页：Bootstrap 主题色对齐 Pear Admin ===== */
+
+/* Primary: #007bff → #1aa094 */
+.btn-primary { background-color: #1aa094; border-color: #1aa094; }
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active,
+.btn-primary:not(:disabled):not(.disabled):active { background-color: #158f84; border-color: #13847a; }
+.btn-primary.focus, .btn-primary:focus { box-shadow: 0 0 0 .2rem rgba(26,160,148,.4); }
+.btn-outline-primary { color: #1aa094; border-color: #1aa094; }
+.btn-outline-primary:hover, .btn-outline-primary:active { background-color: #1aa094; border-color: #1aa094; color: #fff; }
+.bg-primary { background-color: #1aa094 !important; }
+.text-primary { color: #1aa094 !important; }
+.badge-primary { background-color: #1aa094; }
+
+/* Card */
+.card-primary.card-outline { border-top-color: #1aa094; }
+.card-primary:not(.card-outline) > .card-header { background-color: #1aa094; border-color: #158f84; }
+
+/* Pagination */
+.page-item.active .page-link { background-color: #1aa094; border-color: #1aa094; }
+.page-link { color: #1aa094; }
+.page-link:hover { color: #158f84; }
+
+/* Links */
+.iframe-body a:not(.btn):not(.nav-link):not(.small-box-footer) { color: #1aa094; }
+.iframe-body a:not(.btn):not(.nav-link):not(.small-box-footer):hover { color: #158f84; }
+
+/* Form */
+.form-control:focus { border-color: #1aa094; box-shadow: 0 0 0 .2rem rgba(26,160,148,.25); }
+.custom-control-input:checked ~ .custom-control-label::before { background-color: #1aa094; border-color: #1aa094; }
+
+/* Table */
+.table .selected td { background-color: rgba(26,160,148,.08); }
+.toolbar .btn + .btn { margin-left: 4px; }
+
+/* Small-box 链接底栏 */
+.small-box-footer { transition: background .15s; }
+.small-box-footer:hover { background: rgba(0,0,0,.08); }

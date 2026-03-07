@@ -1,0 +1,67 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">添加设备</h3></div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">设备编号</label>
+                <div class="col-sm-6"><input type="text" name="row[code]" class="form-control" required placeholder="请输入设备编号"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">设备名称</label>
+                <div class="col-sm-6"><input type="text" name="row[name]" class="form-control" required placeholder="请输入设备名称"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">分类</label>
+                <div class="col-sm-6"><input type="text" name="row[category]" class="form-control" placeholder="如：冲压、焊接"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">型号规格</label>
+                <div class="col-sm-6"><input type="text" name="row[model]" class="form-control" placeholder="型号规格"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="row[status]" class="form-control">
+                        <option value="1">正常</option>
+                        <option value="0">停用</option>
+                        <option value="2">维修中</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">安装日期</label>
+                <div class="col-sm-6"><input type="date" name="row[install_date]" class="form-control"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">备注</label>
+                <div class="col-sm-6"><textarea name="row[remark]" class="form-control" rows="3" placeholder="备注"></textarea></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <div class="row">
+            <div class="col-sm-6 offset-sm-2">
+                <button type="submit" form="form-add" class="btn btn-primary">确定添加</button>
+                <a href="{$config.moduleurl}/equipment/equipment/index" class="btn btn-default ml-2">返回列表</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var $ = jQuery;
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-add').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/equipment/equipment/add', $(this).serialize(), function(r) {
+            if (r.code == 1) {
+                alert(r.msg || '添加成功');
+                location.href = base + '/equipment/equipment/index';
+            } else {
+                alert(r.msg || '添加失败');
+            }
+        }, 'json');
+    });
+})();
+</script>

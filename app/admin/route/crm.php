@@ -12,9 +12,19 @@ Route::group('crm', function () {
     Route::post('customer/add', 'crm.Customer/add');
     Route::post('customer/edit', 'crm.Customer/edit');
     Route::post('customer/del', 'crm.Customer/del');
+    Route::get('customer_tag/index', 'crm.CustomerTag/index');
+    Route::get('customer_tag/add', 'crm.CustomerTag/add');
+    Route::get('customer_tag/edit', 'crm.CustomerTag/edit');
+    Route::post('customer_tag/add', 'crm.CustomerTag/add');
+    Route::post('customer_tag/edit', 'crm.CustomerTag/edit');
+    Route::post('customer_tag/del', 'crm.CustomerTag/del');
+    Route::post('quote/aiGenerate', 'crm.Quote/aiGenerate')
+        ->middleware(\app\common\middleware\AICheck::class)
+        ->middleware(\app\common\middleware\AIBilling::class);
     Route::get('contact/index', 'crm.Contact/index');
     Route::get('contact/add', 'crm.Contact/add');
     Route::get('contact/edit', 'crm.Contact/edit');
+    Route::get('contact/getByCustomer', 'crm.Contact/getByCustomer');
     Route::get('contact', 'crm.Contact/index');
     Route::post('contact/add', 'crm.Contact/add');
     Route::post('contact/edit', 'crm.Contact/edit');
@@ -22,6 +32,7 @@ Route::group('crm', function () {
     Route::get('opportunity/index', 'crm.Opportunity/index');
     Route::get('opportunity/add', 'crm.Opportunity/add');
     Route::get('opportunity/edit', 'crm.Opportunity/edit');
+    Route::get('opportunity/getByCustomer', 'crm.Opportunity/getByCustomer');
     Route::get('opportunity', 'crm.Opportunity/index');
     Route::post('opportunity/add', 'crm.Opportunity/add');
     Route::post('opportunity/edit', 'crm.Opportunity/edit');

@@ -199,4 +199,20 @@ class Contact extends Backend
             return $this->error('删除失败：' . $e->getMessage());
         }
     }
+
+    /**
+     * 按客户 ID 获取联系人列表（联动下拉）
+     */
+    public function getByCustomer(): Response
+    {
+        $customerId = (int) $this->request->get('customer_id', 0);
+        if ($customerId <= 0) {
+            return $this->success('', ['list' => []]);
+        }
+        $tenantId = $this->getTenantId();
+        $query = ContactModel::where('tenant_id', $tenantId)->where('customer_id', $customerId)->order('id', 'asc');
+        $rows = $query->select();
+        $list = $rows->toArray();
+        return $this->success('', ['list' => $list]);
+    }
 }

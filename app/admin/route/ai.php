@@ -41,6 +41,10 @@ Route::group('ai', function () {
     Route::get('crm_follow', 'ai.CrmFollow/index');
     Route::post('crm_follow/suggest', 'ai.CrmFollow/suggest');
 
+    Route::get('cockpit/index', 'ai.Cockpit/index');
+    Route::get('cockpit', 'ai.Cockpit/index');
+    Route::get('cockpit/getCockpitData', 'ai.Cockpit/getCockpitData');
+
     // AI 套餐管理
     Route::get('package/index', 'AiPackage/index');
     Route::get('package', 'AiPackage/index');

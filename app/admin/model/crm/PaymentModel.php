@@ -18,5 +18,6 @@ class PaymentModel extends Model
         'amount'      => 'float',
         'pay_date'    => 'integer',
         'create_time' => 'integer',
+        'update_time' => 'integer',
     ];
 }

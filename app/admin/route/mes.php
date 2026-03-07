@@ -164,6 +164,7 @@ Route::group('mes', function () {
     Route::post('supplier/del', 'mes.Supplier/del');
 
     Route::get('stock/index', 'mes.Stock/index');
+    Route::get('stock/alert', 'mes.Stock/alert');
     Route::get('stock/check', 'mes.Stock/check');
     Route::get('stock/log', 'mes.Stock/log');
     Route::get('stock/outbound', 'mes.Stock/outbound');
@@ -220,6 +221,8 @@ Route::group('mes', function () {
     Route::get('bi/productionEfficiency', 'mes.Bi/productionEfficiency');
     Route::get('bi/qualityAnalysis', 'mes.Bi/qualityAnalysis');
     Route::get('bi/costAnalysis', 'mes.Bi/costAnalysis');
+    Route::post('bi/syncProgress', 'mes.Bi/syncProgress');
+    Route::get('bi/syncProgress', 'mes.Bi/syncProgress');
 
     Route::get('shipment/add', 'mes.Shipment/add');
     Route::get('shipment/edit', 'mes.Shipment/edit');
@@ -229,6 +232,9 @@ Route::group('mes', function () {
     Route::post('shipment/add', 'mes.Shipment/add');
     Route::post('shipment/edit', 'mes.Shipment/edit');
     Route::post('shipment/del', 'mes.Shipment/del');
+
+    Route::get('mrp/index', 'mes.Mrp/index');
+    Route::get('mrp', 'mes.Mrp/index');
 
     Route::get('index', 'mes.Mes/index');
 });

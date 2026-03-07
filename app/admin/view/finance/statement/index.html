@@ -1,0 +1,47 @@
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-file-invoice-dollar"></i> 对账单</h3></div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-auto">
+                <label>类型</label>
+                <select id="type" class="form-control">
+                    <option value="receivable">应收对账（按客户）</option>
+                    <option value="payable">应付对账（按供应商）</option>
+                </select>
+            </div>
+            <div class="col-auto"><label>开始</label><input type="date" id="start_date" class="form-control" value="{:date('Y-m-01')}"></div>
+            <div class="col-auto"><label>结束</label><input type="date" id="end_date" class="form-control" value="{:date('Y-m-d')}"></div>
+            <div class="col-auto d-flex align-items-end"><button type="button" id="btn-query" class="btn btn-primary">查询</button></div>
+        </div>
+        <table id="stmt-table" class="table table-bordered">
+            <thead><tr><th>名称</th><th>应收/应付合计</th><th>已收/已付</th><th>余额</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    function load() {
+        $.get(base + '/finance/statement/index', {
+            type: $('#type').val(),
+            start_date: $('#start_date').val(),
+            end_date: $('#end_date').val()
+        }, function(r) {
+            if (r.code != 1 || !r.data || !r.data.list) {
+                $('#stmt-table tbody').html('<tr><td colspan="4" class="text-center">暂无数据</td></tr>');
+                return;
+            }
+            var list = r.data.list, type = r.data.type, html = '';
+            var col1 = type === 'receivable' ? 'amount' : 'amount', col2 = type === 'receivable' ? 'received' : 'paid';
+            list.forEach(function(row) {
+                html += '<tr><td>' + (row.name || '-') + '</td><td>' + (row.amount || 0) + '</td><td>' + (row[col2] || 0) + '</td><td>' + (row.balance || 0) + '</td></tr>';
+            });
+            $('#stmt-table tbody').html(html || '<tr><td colspan="4" class="text-center">暂无数据</td></tr>');
+        }, 'json');
+    }
+    $('#btn-query').on('click', load);
+    load();
+})();
+</script>

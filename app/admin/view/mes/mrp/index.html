@@ -1,0 +1,40 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>缺料计算(MRP)</em> 按进行中订单汇总物料需求，减去当前库存</div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label>指定订单ID（可选，逗号分隔；不填则按全部待生产/生产中订单）</label>
+                <input type="text" id="order_ids" class="form-control" placeholder="如 1,2,3">
+            </div>
+            <div class="col-auto d-flex align-items-end">
+                <button type="button" id="btn-query" class="btn btn-primary">计算缺料</button>
+            </div>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+<script>
+(function init() {
+    if (typeof window.jQuery === 'undefined' || !window.jQuery.fn.bootstrapTable) { setTimeout(init, 50); return; }
+    var $ = window.jQuery, base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '', $table = $('#table');
+    function load() {
+        var orderIds = $('#order_ids').val();
+        var url = base + '/mes/mrp/index';
+        if (orderIds) url += '?order_ids=' + encodeURIComponent(orderIds);
+        $.get(url, function(res) {
+            if (res.code != 1 || !res.data) return;
+            var list = res.data.list || [];
+            var html = '<thead><tr><th>物料ID</th><th>编码</th><th>名称</th><th>需求总量</th><th>当前库存</th><th>缺料量</th><th>单位</th></tr></thead><tbody>';
+            list.forEach(function(row) {
+                html += '<tr><td>' + (row.material_id || '') + '</td><td>' + (row.material_code || '') + '</td><td>' + (row.material_name || '') + '</td><td>' + (row.required || 0) + '</td><td>' + (row.stock || 0) + '</td><td class="text-danger">' + (row.shortage || 0) + '</td><td>' + (row.unit || '') + '</td></tr>';
+            });
+            html += '</tbody>';
+            $table.html(html || '<tbody><tr><td colspan="7" class="text-center">无缺料或未选择订单</td></tr></tbody>');
+        }, 'json');
+    }
+    $('#btn-query').on('click', load);
+    load();
+})();
+</script>

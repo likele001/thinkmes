@@ -8,6 +8,7 @@ use app\admin\model\mes\OrderModel;
 use app\admin\model\mes\ProductionPlanModel;
 use app\admin\model\mes\ReportModel;
 use app\admin\model\mes\AllocationModel;
+use app\admin\model\mes\WageModel;
 use think\facade\Db;
 use think\facade\View;
 use think\Response;
@@ -246,13 +247,19 @@ class Bi extends Backend
         $startTime = strtotime($startDate . ' 00:00:00');
         $endTime = strtotime($endDate . ' 23:59:59');
         
-        // 按订单统计成本
+        // 按订单统计成本（mes_wage 无 order_id，通过 report->allocation 关联订单）
+        $wageTable = (new WageModel())->getTable();
+        $reportTable = (new ReportModel())->getTable();
+        $allocationTable = (new AllocationModel())->getTable();
         $query = OrderModel::alias('o')
             ->leftJoin('mes_order_material om', 'o.id = om.order_id')
             ->where('o.create_time', 'between', [$startTime, $endTime])
             ->field('o.id, o.order_no, o.order_name,
                      SUM(om.estimated_amount) as material_cost,
-                     (SELECT SUM(wage) FROM mes_wage WHERE order_id = o.id) as labor_cost')
+                     (SELECT COALESCE(SUM(w.total_wage),0) FROM ' . $wageTable . ' w 
+                      INNER JOIN ' . $reportTable . ' r ON w.report_id = r.id 
+                      INNER JOIN ' . $allocationTable . ' a ON r.allocation_id = a.id 
+                      WHERE a.order_id = o.id) as labor_cost')
             ->group('o.id')
             ->order('o.id', 'desc');
         if ($tenantId > 0) {
@@ -273,5 +280,57 @@ class Bi extends Backend
         }
         
         return $this->success('', ['total' => $total, 'list' => $list]);
+    }
+
+    /**
+     * 生产进度同步：根据已审核报工汇总更新分配/计划的已完成数量与进度
+     */
+    public function syncProgress(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $tenantWhere = $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+
+        $reportSums = ReportModel::where('status', 1)
+            ->when(count($tenantWhere) > 0, fn ($q) => $q->where($tenantWhere))
+            ->field('allocation_id, SUM(quantity) as total')
+            ->group('allocation_id')
+            ->select();
+
+        $updatedAllocations = 0;
+        foreach ($reportSums as $row) {
+            $allocation = AllocationModel::where('id', $row->allocation_id)->find();
+            if (!$allocation) {
+                continue;
+            }
+            if ($tenantId > 0 && (int) $allocation->tenant_id !== $tenantId) {
+                continue;
+            }
+            $sum = (int) $row->total;
+            $allocation->completed_quantity = $sum;
+            $allocation->status = $sum >= (int) $allocation->quantity ? 2 : ($sum > 0 ? 1 : $allocation->status);
+            $allocation->save();
+            $updatedAllocations++;
+        }
+
+        // 计划维度：按 plan_id 汇总分配的 completed/total，更新 plan.completed_quantity 与 progress
+        $planIds = ProductionPlanModel::when(count($tenantWhere) > 0, fn ($q) => $q->where($tenantWhere))->column('id');
+        foreach ($planIds as $planId) {
+            $allocations = AllocationModel::where('plan_id', $planId)->select();
+            $totalQty = 0;
+            $completedQty = 0;
+            foreach ($allocations as $a) {
+                $totalQty += (int) $a->quantity;
+                $completedQty += (int) $a->completed_quantity;
+            }
+            $plan = ProductionPlanModel::find($planId);
+            if ($plan && $totalQty > 0) {
+                $plan->completed_quantity = $completedQty;
+                $plan->progress = round($completedQty / $totalQty * 100, 2);
+                $plan->status = $completedQty >= $totalQty ? 2 : ($completedQty > 0 ? 1 : $plan->status);
+                $plan->save();
+            }
+        }
+
+        return $this->success('同步成功', ['updated_allocations' => $updatedAllocations]);
     }
 }

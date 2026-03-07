@@ -18,6 +18,7 @@
 
     function operFmt(value, row) {
         var html = '<a href="' + editUrl + '?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit">编辑</a> ';
+        html += '<a href="' + base + '/print_template/preview?ref_type=shipment&ref_id=' + row.id + '" target="_blank" class="btn btn-xs btn-default" title="按模板打印">打印</a> ';
         html += '<a href="' + trackUrl + '?id=' + row.id + '" class="btn btn-xs btn-info">跟踪</a> ';
         html += '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '">删除</a>';
         return html;

@@ -6,6 +6,7 @@ namespace app\index\controller;
 use think\facade\View;
 use think\Response;
 use think\facade\Request;
+use think\facade\Cache;
 
 /**
  * 前端 C 端用户：登录、注册、会员中心、个人资料、修改密码、找回密码
@@ -13,6 +14,24 @@ use think\facade\Request;
  */
 class User
 {
+    /** 未登录时跳转的登录页 URL（带应用前缀 /index/） */
+    private function loginUrl(): string
+    {
+        $root = rtrim((string) request()->root(true), '/');
+        return $root . '/index/user/login';
+    }
+
+    /** 验证 token 是否有效 */
+    private function isValidToken(string $token): bool
+    {
+        if ($token === '') {
+            return false;
+        }
+        $cacheKey = \app\api\middleware\UserAuth::CACHE_PREFIX . $token;
+        $payload = Cache::get($cacheKey);
+        return !empty($payload) && is_array($payload) && isset($payload['user_id']) && $payload['user_id'] > 0;
+    }
+
     private function fetchWithLayout(string $template): string
     {
         $content = View::fetch($template);
@@ -21,13 +40,13 @@ class User
     }
 
     /**
-     * 会员中心首页（需前端根据 token 判断是否已登录，未登录跳转登录页）
+     * 会员中心首页：未登录或 token 无效必须跳转登录/注册页
      */
     public function index(): string|Response
     {
         $token = (string) (Request::cookie('user_token') ?? '');
-        if ($token === '') {
-            return redirect((string) url('user/login'));
+        if (!$this->isValidToken($token)) {
+            return redirect($this->loginUrl());
         }
         View::assign('title', '会员中心');
         return $this->fetchWithLayout('user/index');
@@ -47,7 +66,7 @@ class User
      */
     public function register(): string|Response
     {
-        return redirect((string) url('user/login') . '?tab=register');
+        return redirect($this->loginUrl() . '?tab=register');
     }
 
     /**
@@ -56,8 +75,8 @@ class User
     public function profile(): string|Response
     {
         $token = (string) (Request::cookie('user_token') ?? '');
-        if ($token === '') {
-            return redirect((string) url('user/login'));
+        if (!$this->isValidToken($token)) {
+            return redirect($this->loginUrl());
         }
         View::assign('title', '个人资料');
         return $this->fetchWithLayout('user/profile');
@@ -69,8 +88,8 @@ class User
     public function changepwd(): string|Response
     {
         $token = (string) (Request::cookie('user_token') ?? '');
-        if ($token === '') {
-            return redirect((string) url('user/login'));
+        if (!$this->isValidToken($token)) {
+            return redirect($this->loginUrl());
         }
         View::assign('title', '修改密码');
         return $this->fetchWithLayout('user/changepwd');
@@ -99,6 +118,6 @@ class User
      */
     public function logout(): Response
     {
-        return redirect((string) url('user/login'));
+        return redirect($this->loginUrl());
     }
 }

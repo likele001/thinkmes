@@ -189,10 +189,11 @@ class Purchase extends Backend
                 // 更新物料库存
                 $material = MaterialModel::where('tenant_id', $tenantId)->find($params['material_id']);
                 if ($material) {
+                    $beforeQty = (float)$material->stock;
                     $material->stock += $params['in_quantity'];
                     $material->save();
 
-                    // 记录库存流水
+                    // 记录库存流水（仅记流水，库存已在上方更新）
                     StockLogModel::log(
                         $tenantId,
                         $params['material_id'],
@@ -200,7 +201,9 @@ class Purchase extends Backend
                         'purchase_in',
                         $inbound->id,
                         $params['operator_id'],
-                        '采购入库：' . $params['in_no']
+                        '采购入库：' . $params['in_no'],
+                        $beforeQty,
+                        $beforeQty + $params['in_quantity']
                     );
                 }
 
@@ -280,6 +283,7 @@ class Purchase extends Backend
         }
 
         View::assign('row', $row);
+        View::assign('ids', $ids);
         View::assign('title', '编辑入库单');
         return $this->fetchWithLayout('mes/purchase/edit_inbound');
     }

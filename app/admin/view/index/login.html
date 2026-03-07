@@ -4,90 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>后台登录 - KeleAdmin</title>
-    <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/lib/adminlte/css/adminlte.min.css">
-    <link rel="stylesheet" href="/assets/css/fastadmin-theme.css">
-    <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/assets/lib/layui/css/layui.css">
+    <style>
+        body { background: linear-gradient(135deg, #1aa094 0%, #0d9488 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .login-box { width: 100%; max-width: 400px; padding: 20px; }
+        .login-card { background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.15); padding: 40px; }
+        .login-box .title { font-size: 22px; font-weight: 600; color: #1aa094; text-align: center; margin-bottom: 10px; }
+        .login-box .sub { text-align: center; color: #999; margin-bottom: 24px; font-size: 13px; }
+        .login-box .layui-form-item { margin-bottom: 20px; }
+        .login-box .layui-input { height: 44px; line-height: 44px; }
+        .login-box .login-btn { width: 100%; height: 44px; line-height: 44px; font-size: 16px; background: #1aa094; }
+        .login-box .login-btn:hover { background: #0d9488; }
+        .login-box .captcha-row { display: flex; align-items: stretch; gap: 8px; }
+        .login-box .captcha-row .captcha-input { flex: 1; min-width: 0; }
+        .login-box .captcha-row .captcha-input .layui-input { height: 44px; line-height: 44px; }
+        .login-box .captcha-img { width: 120px; height: 44px; cursor: pointer; border-radius: 4px; object-fit: contain; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .login-box .tip { text-align: center; color: #999; font-size: 12px; margin-top: 16px; }
+    </style>
 </head>
-<body class="hold-transition login-page">
+<body>
 <div class="login-box">
-    <div class="card card-outline card-primary">
-        <div class="card-header text-center">
-            <a href="#" class="h4"><b>KeleAdmin</b> 后台</a>
-        </div>
-        <div class="card-body login-card-body">
-            <p class="login-box-msg">登录到管理后台</p>
-            <form action="{:url('index/login')}" method="post" id="login-form">
-                <input type="hidden" name="url" value="{$url|default='admin/index/index'}">
-                <div class="input-group mb-3">
-                    <input type="text" name="username" class="form-control" placeholder="用户名" required autofocus>
-                    <div class="input-group-append">
-                        <div class="input-group-text"><i class="fas fa-user"></i></div>
+    <div class="login-card">
+        <div class="title">KeleAdmin 后台</div>
+        <p class="sub">登录到管理后台</p>
+        <form action="{:url('index/login')}" method="post" id="login-form" class="layui-form">
+            <input type="hidden" name="url" value="{$url|default='admin/index/index'}">
+            <div class="layui-form-item">
+                <input type="text" name="username" required placeholder="用户名" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-form-item">
+                <input type="password" name="password" required placeholder="密码" autocomplete="off" class="layui-input">
+            </div>
+            {if isset($loginCaptchaOn) && $loginCaptchaOn}
+            <div class="layui-form-item">
+                <div class="captcha-row">
+                    <div class="captcha-input">
+                        <input type="text" name="captcha" placeholder="验证码" autocomplete="off" class="layui-input">
                     </div>
+                    <img src="{:url('index/captcha')}" class="captcha-img" alt="验证码" title="点击刷新">
                 </div>
-                <div class="input-group mb-3">
-                    <input type="password" name="password" class="form-control" placeholder="密码" required>
-                    <div class="input-group-append">
-                        <div class="input-group-text"><i class="fas fa-lock"></i></div>
-                    </div>
-                </div>
-                {if isset($loginCaptchaOn) && $loginCaptchaOn}
-                <div class="input-group mb-3">
-                    <input type="text" name="captcha" class="form-control" placeholder="验证码" autocomplete="off">
-                    <div class="input-group-append">
-                        <span class="input-group-text p-0">
-                            <img src="{:url('index/captcha')}" class="captcha-img" alt="验证码" style="cursor:pointer;height:38px;border-radius:0 0.25rem 0.25rem 0;">
-                        </span>
-                    </div>
-                </div>
-                {/if}
-                <div class="row">
-                    <div class="col-8">
-                        <div class="icheck-primary">
-                            <input type="checkbox" id="remember" name="remember" value="1">
-                            <label for="remember">保持会话</label>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <button type="submit" class="btn btn-primary btn-block">登录</button>
-                    </div>
-                </div>
-            </form>
-            <p class="mb-0 text-center text-muted small">默认账号 admin / 123456</p>
-        </div>
+            </div>
+            {/if}
+            <div class="layui-form-item">
+                <input type="checkbox" name="remember" value="1" title="保持会话" lay-skin="primary">
+            </div>
+            <div class="layui-form-item">
+                <button type="submit" class="layui-btn login-btn">登 录</button>
+            </div>
+        </form>
+        <p class="tip">默认账号 admin / 123456</p>
     </div>
 </div>
 <script src="/assets/lib/jquery/jquery.min.js"></script>
-<script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/lib/layui/layui.js"></script>
 <script>
-function refreshAdminCaptcha() {
-    var $img = $('.captcha-img');
-    if ($img.length) {
-        var src = $img.attr('src').split('?')[0];
-        $img.attr('src', src + '?t=' + Date.now());
+layui.use(['form','layer'], function(){
+    var layer = layui.layer;
+    function refreshAdminCaptcha() {
+        var $img = $('.captcha-img');
+        if ($img.length) { var src = $img.attr('src').split('?')[0]; $img.attr('src', src + '?t=' + Date.now()); }
     }
-}
-$(function(){
-    $('.captcha-img').on('click', function(){
-        refreshAdminCaptcha();
-    });
-    refreshAdminCaptcha();
-    $('#login-form').on('submit', function(e){
-        e.preventDefault();
-        var $f = $(this), $btn = $f.find('button[type=submit]');
-        $btn.prop('disabled', true);
-        $.post($f.attr('action'), $f.serialize(), function(res){
-            if(res.code === 1){
-                window.location.href = (res.data && res.data.url) ? res.data.url : (window.location.origin + '/admin/index/index');
-            } else {
-                alert(res.msg || '登录失败');
+    $(function(){
+        $('.captcha-img').on('click', function(){ refreshAdminCaptcha(); });
+        $('#login-form').on('submit', function(e){
+            e.preventDefault();
+            var $f = $(this), $btn = $f.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            $.post($f.attr('action'), $f.serialize(), function(res){
+                if (res.code === 1) {
+                    window.location.href = (res.data && res.data.url) ? res.data.url : (window.location.origin + '/admin/index/index');
+                } else {
+                    layer.msg(res.msg || '登录失败');
+                    refreshAdminCaptcha();
+                    $btn.prop('disabled', false);
+                }
+            }, 'json').fail(function(){
+                layer.msg('请求失败');
                 refreshAdminCaptcha();
                 $btn.prop('disabled', false);
-            }
-        }, 'json').fail(function(){
-            alert('请求失败');
-            refreshAdminCaptcha();
-            $btn.prop('disabled', false);
+            });
         });
     });
 });

@@ -5,6 +5,9 @@ namespace app\admin\controller\crm;
 
 use app\admin\controller\Backend;
 use app\admin\model\crm\CustomerModel;
+use app\admin\model\crm\CustomerTagModel;
+use app\admin\model\crm\CustomerTagRelModel;
+use think\facade\Db;
 use think\facade\View;
 use think\Response;
 
@@ -17,6 +20,8 @@ class Customer extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
+            $tenantId = $this->getTenantId();
+            View::assign('tagList', CustomerTagModel::where('tenant_id', $tenantId)->order('sort')->select());
             View::assign('title', '客户管理');
             return $this->fetchWithLayout('crm/customer/index');
         }
@@ -49,11 +54,33 @@ class Customer extends Backend
         if ($level !== '' && $level !== null) {
             $query->where('level', (int) $level);
         }
+        $tagId = $this->request->get('tag_id');
+        if ($tagId !== '' && $tagId !== null && (int) $tagId > 0) {
+            $customerIds = CustomerTagRelModel::where('tag_id', (int) $tagId)->column('customer_id');
+            $query->whereIn('id', $customerIds ?: [0]);
+        }
 
         $total = $query->count();
         $rows = $query->page($page, $limit)->select();
+        $list = $rows->toArray();
+        $customerIds = array_column($list, 'id');
+        $tagRels = [];
+        if (!empty($customerIds)) {
+            $rels = CustomerTagRelModel::with('tag')->whereIn('customer_id', $customerIds)->select();
+            foreach ($rels as $r) {
+                $cid = $r->customer_id;
+                if (!isset($tagRels[$cid])) {
+                    $tagRels[$cid] = [];
+                }
+                $tagRels[$cid][] = $r->tag->name ?? '';
+            }
+        }
+        foreach ($list as &$item) {
+            $item['tag_names'] = isset($tagRels[$item['id']]) ? implode(', ', $tagRels[$item['id']]) : '';
+        }
+        unset($item);
 
-        return $this->success('', ['total' => $total, 'list' => $rows->toArray()]);
+        return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
     public function add(): string|Response
@@ -78,15 +105,26 @@ class Customer extends Backend
             if (!isset($params['level']) || $params['level'] === '') {
                 $params['level'] = 0;
             }
+            $tagIds = $this->request->post('tag_ids/a');
+            unset($params['tag_ids']);
 
             try {
                 $customer = CustomerModel::create($params);
+                if (!empty($tagIds) && is_array($tagIds)) {
+                    foreach ($tagIds as $tid) {
+                        $tid = (int) $tid;
+                        if ($tid > 0) {
+                            CustomerTagRelModel::create(['customer_id' => $customer->id, 'tag_id' => $tid]);
+                        }
+                    }
+                }
                 return $this->success('添加成功', ['id' => $customer->id]);
             } catch (\Exception $e) {
                 return $this->error('添加失败：' . $e->getMessage());
             }
         }
 
+        View::assign('tagList', CustomerTagModel::where('tenant_id', $this->getTenantId())->order('sort')->select());
         View::assign('title', '添加客户');
         return $this->fetchWithLayout('crm/customer/add');
     }
@@ -118,14 +156,29 @@ class Customer extends Backend
                 return $this->error('请输入客户名称');
             }
 
+            $tagIds = $this->request->post('tag_ids/a');
+            unset($params['tag_ids']);
+
             try {
                 $row->save($params);
+                CustomerTagRelModel::where('customer_id', $row->id)->delete();
+                if (!empty($tagIds) && is_array($tagIds)) {
+                    foreach ($tagIds as $tid) {
+                        $tid = (int) $tid;
+                        if ($tid > 0) {
+                            CustomerTagRelModel::create(['customer_id' => $row->id, 'tag_id' => $tid]);
+                        }
+                    }
+                }
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
                 return $this->error('编辑失败：' . $e->getMessage());
             }
         }
 
+        $tagIds = CustomerTagRelModel::where('customer_id', $row->id)->column('tag_id');
+        View::assign('tagIds', $tagIds ?: []);
+        View::assign('tagList', CustomerTagModel::where('tenant_id', $this->getTenantId())->order('sort')->select());
         View::assign('row', $row);
         View::assign('title', '编辑客户');
         return $this->fetchWithLayout('crm/customer/edit');

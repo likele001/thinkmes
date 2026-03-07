@@ -19,5 +19,6 @@ class FollowModel extends BaseModel
         'admin_id'         => 'integer',
         'next_follow_time' => 'integer',
         'create_time'      => 'integer',
+        'update_time'      => 'integer',
     ];
 }

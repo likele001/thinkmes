@@ -8,67 +8,40 @@ use think\facade\View;
 use think\Response;
 
 /**
- * 应用中心：在后台单独安装/卸载内置应用（如 MES）
+ * 应用中心：基础框架不内置业务应用，仅支持「上传应用包」安装与卸载
+ * 各业务应用（MES/CRM/AI 等）单独打包发布，通过本地上传 zip 安装
+ * 完整版：若代码中存在对应应用目录，也会在列表中展示并可卸载
  */
 class AppCenter extends Backend
 {
+    /** 基础框架不内置应用，应用均通过上传应用包安装 */
     protected array $apps = [];
+
+    /** 可单独打包的应用 key => [title, description]，与 build/pack_*.php 对应 */
+    protected static array $knownPackagedApps = [
+        'mes'       => ['title' => 'MES制造执行', 'description' => '工单、报工、工序、BOM、生产计划、质检、工资等'],
+        'crm'       => ['title' => 'CRM客户关系', 'description' => '客户、商机、合同、跟进、回款、销售订单'],
+        'ai'        => ['title' => '工厂AI', 'description' => 'AI配置、老板问答、语音报工、智能跟单等'],
+        'payment'   => ['title' => '支付管理', 'description' => '支付配置与订单支付'],
+        'equipment' => ['title' => '设备管理', 'description' => '设备、点检、保养、维修'],
+        'hr'        => ['title' => '人事考勤', 'description' => '组织、员工、考勤、排班、请假、薪资'],
+        'finance'   => ['title' => '财务管理', 'description' => '科目、凭证、账簿、报表'],
+    ];
+
+    /** 卸载时可选删除的数据表：key => 表名前缀（不含 fa_），用于 SHOW TABLES LIKE prefix+pattern；上传安装的以 app.json tables 为准 */
+    protected static array $knownTablePrefixes = [
+        'mes'       => ['mes_'],
+        'crm'       => ['crm_'],
+        'ai'        => ['ai_', 'tenant_ai_'],
+        'payment'   => ['payment_'],
+        'equipment' => ['equipment_'],
+        'hr'        => ['hr_'],
+        'finance'   => ['finance_'],
+    ];
 
     protected function initialize(): void
     {
         parent::initialize();
-        $this->apps = [
-            'mes' => [
-                'key'         => 'mes',
-                'title'       => 'MES 制造执行系统',
-                'description' => '订单、产品、BOM、工序、报工、生产计划、库存、质检等制造执行功能',
-                'sql_files'   => [
-                    'migrate_add_mes_tables.sql',
-                    'migrate_add_mes_extended_tables.sql',
-                    'migrate_add_mes_complete_supply_chain.sql',
-                    'seed_mes_menu.sql',
-                ],
-                'check_table' => 'mes_product',
-                'code_path'   => dirname(__DIR__) . '/controller/mes',
-            ],
-            'crm' => [
-                'key'         => 'crm',
-                'title'       => 'CRM 客户关系管理',
-                'description' => '客户、联系人、商机、合同、跟进、回款、销售订单等销售与客户全生命周期管理',
-                'sql_files'   => [
-                    'migrate_add_crm_tables.sql',
-                    'migrate_add_crm_sales_order.sql',
-                    'seed_crm_menu.sql',
-                ],
-                'check_table' => 'crm_customer',
-                'code_path'   => dirname(__DIR__) . '/controller/crm',
-            ],
-            'ai' => [
-                'key'         => 'ai',
-                'title'       => '工厂 AI',
-                'description' => '语音报工、异常检测、智能问答、自动日报、CRM 智能跟单；可单独开关子功能',
-                'sql_files'   => [
-                    'migrate_add_ai_tables.sql',
-                    'migrate_add_ai_package.sql',
-                    'migrate_add_ai_module_switch.sql',
-                    'seed_ai_menu.sql',
-                ],
-                'check_table' => 'ai_config',
-                'code_path'   => dirname(__DIR__) . '/controller/ai',
-            ],
-            'payment' => [
-                'key'         => 'payment',
-                'title'       => '支付管理',
-                'description' => '单用户版：支付配置、订单管理、回调日志、统计报表',
-                'sql_files'   => [
-                    'migrate_add_payment_tables.sql',
-                    'migrate_add_payment_callback_log.sql',
-                    'seed_payment_menu.sql',
-                ],
-                'check_table' => 'payment_gateway',
-                'code_path'   => dirname(__DIR__) . '/controller/payment',
-            ],
-        ];
     }
 
     protected function getTablePrefix(): string
@@ -92,7 +65,49 @@ class AppCenter extends Backend
     {
         $prefix = $this->getTablePrefix();
         $list = [];
+        // 1) 已安装的应用（从 config app_*_installed=1 读取，含上传安装的）
+        $configs = Db::name('config')->where('name', 'like', 'app_%_installed')->where('value', '1')->column('name');
+        foreach ($configs as $name) {
+            if (preg_match('/^app_(.+)_installed$/', $name, $m)) {
+                $key = $m[1];
+                $title = Db::name('config')->where('name', 'app_' . $key . '_title')->value('value') ?: $key;
+                $description = Db::name('config')->where('name', 'app_' . $key . '_description')->value('value') ?: '';
+                $list[] = [
+                    'key'         => $key,
+                    'title'       => $title,
+                    'description' => $description,
+                    'available'   => true,
+                    'installed'   => true,
+                ];
+            }
+        }
+        // 2) 完整版：代码中存在的可打包应用（mes/crm/ai/payment/equipment/hr/finance）也列入，与「上传安装」一致展示
+        $installedKeys = array_column($list, 'key');
+        foreach (static::$knownPackagedApps as $key => $def) {
+            if (in_array($key, $installedKeys, true)) {
+                continue;
+            }
+            if (!$this->appCodeExists($key)) {
+                continue;
+            }
+            $configInstalled = Db::name('config')->where('name', 'app_' . $key . '_installed')->value('value');
+            $installed = ($configInstalled === '1' || $configInstalled === null); // 未写过 config 视为已安装（代码在即算）
+            $title = Db::name('config')->where('name', 'app_' . $key . '_title')->value('value') ?: ($def['title'] ?? $key);
+            $description = Db::name('config')->where('name', 'app_' . $key . '_description')->value('value') ?: ($def['description'] ?? '');
+            $list[] = [
+                'key'         => $key,
+                'title'       => $title,
+                'description' => $description,
+                'available'   => true,
+                'installed'   => $installed,
+            ];
+        }
+        // 3) 若有内置应用且未安装，也展示（兼容带内置应用的发行版）
+        $installedKeys = array_column($list, 'key');
         foreach ($this->apps as $key => $def) {
+            if (in_array($key, $installedKeys, true)) {
+                continue;
+            }
             $available = is_dir($def['code_path'] ?? '');
             $installed = $this->isAppInstalled($key, $def, $prefix);
             $list[] = [
@@ -104,6 +119,17 @@ class AppCenter extends Backend
             ];
         }
         return $this->success('', ['total' => count($list), 'list' => $list]);
+    }
+
+    /** 判断可打包应用是否存在于代码中（有对应 controller 目录或路由） */
+    protected function appCodeExists(string $key): bool
+    {
+        $base = root_path() . 'app/admin/controller/';
+        if (is_dir($base . $key)) {
+            return true;
+        }
+        $routeFile = root_path() . 'app/admin/route/' . $key . '.php';
+        return is_file($routeFile);
     }
 
     protected function isAppInstalled(string $key, array $def, string $prefix): bool
@@ -135,11 +161,11 @@ class AppCenter extends Backend
         }
         $appKey = trim((string) $this->request->post('app', ''));
         if ($appKey === '' || !isset($this->apps[$appKey])) {
-            return $this->error('应用不存在');
+            return $this->error('基础版不内置应用，请通过「上传应用包」安装');
         }
         $def = $this->apps[$appKey];
-        if (!is_dir($def['code_path'])) {
-            return $this->error('当前版本不包含该应用，请使用完整版');
+        if (!is_dir($def['code_path'] ?? '')) {
+            return $this->error('当前版本不包含该应用，请上传应用包安装');
         }
         $prefix = $this->getTablePrefix();
         if ($this->isAppInstalled($appKey, $def, $prefix)) {
@@ -174,6 +200,18 @@ class AppCenter extends Backend
             Db::name('auth_rule')->where('name', 'payment')->update(['status' => 1]);
             Db::name('auth_rule')->where('name', 'like', 'payment/%')->update(['status' => 1]);
         }
+        if ($appKey === 'equipment') {
+            Db::name('auth_rule')->where('name', 'equipment')->update(['status' => 1]);
+            Db::name('auth_rule')->where('name', 'like', 'equipment/%')->update(['status' => 1]);
+        }
+        if ($appKey === 'hr') {
+            Db::name('auth_rule')->where('name', 'hr')->update(['status' => 1]);
+            Db::name('auth_rule')->where('name', 'like', 'hr/%')->update(['status' => 1]);
+        }
+        if ($appKey === 'finance') {
+            Db::name('auth_rule')->where('name', 'finance')->update(['status' => 1]);
+            Db::name('auth_rule')->where('name', 'like', 'finance/%')->update(['status' => 1]);
+        }
         return $this->success('安装成功');
     }
 
@@ -183,27 +221,77 @@ class AppCenter extends Backend
             return $this->error('仅平台超级管理员可卸载应用');
         }
         $appKey = trim((string) $this->request->post('app', ''));
-        if ($appKey === '' || !isset($this->apps[$appKey])) {
-            return $this->error('应用不存在');
+        if ($appKey === '') {
+            return $this->error('请指定应用');
         }
-        if ($appKey === 'mes') {
-            Db::name('auth_rule')->where('name', 'mes')->update(['status' => 0]);
-            Db::name('auth_rule')->where('name', 'like', 'mes/%')->update(['status' => 0]);
+        $configVal = Db::name('config')->where('name', 'app_' . $appKey . '_installed')->value('value');
+        $allowUninstall = ($configVal === '1') || (isset(static::$knownPackagedApps[$appKey]) && $this->appCodeExists($appKey));
+        if (!$allowUninstall) {
+            return $this->error('该应用未安装');
         }
-        if ($appKey === 'crm') {
-            Db::name('auth_rule')->where('name', 'crm')->update(['status' => 0]);
-            Db::name('auth_rule')->where('name', 'like', 'crm/%')->update(['status' => 0]);
-        }
-        if ($appKey === 'ai') {
-            Db::name('auth_rule')->where('name', 'ai')->update(['status' => 0]);
-            Db::name('auth_rule')->where('name', 'like', 'ai/%')->update(['status' => 0]);
-        }
-        if ($appKey === 'payment') {
-            Db::name('auth_rule')->where('name', 'payment')->update(['status' => 0]);
-            Db::name('auth_rule')->where('name', 'like', 'payment/%')->update(['status' => 0]);
+        $authPrefix = Db::name('config')->where('name', 'app_' . $appKey . '_auth_prefix')->value('value') ?: $appKey;
+        // 删除该应用在权限规则表中的菜单/权限记录，避免权限规则列表里残留大量「禁用」项；重新安装时会执行 seed_*_menu.sql 重新生成
+        Db::name('auth_rule')->where('name', $authPrefix)->delete();
+        Db::name('auth_rule')->where('name', 'like', $authPrefix . '/%')->delete();
+        $deleteTables = (int) $this->request->post('delete_tables', 0);
+        $dropped = [];
+        if ($deleteTables === 1) {
+            $tables = $this->getAppTablesForUninstall($appKey, $prefix);
+            foreach ($tables as $fullName) {
+                try {
+                    Db::execute("DROP TABLE IF EXISTS `" . str_replace('`', '``', $fullName) . "`");
+                    $dropped[] = $fullName;
+                } catch (\Throwable $e) {
+                    // 单表失败不阻断，继续删其余表
+                }
+            }
         }
         $this->setAppInstalledConfig($appKey, 0);
-        return $this->success('已卸载（菜单已隐藏，数据表保留）');
+        $msg = '已卸载（菜单与权限规则已移除）';
+        if (!empty($dropped)) {
+            $msg .= '，已删除 ' . count($dropped) . ' 个数据表：' . implode('、', array_slice($dropped, 0, 5)) . (count($dropped) > 5 ? ' 等' : '');
+        } else {
+            $msg .= '，数据表已保留';
+        }
+        return $this->success($msg);
+    }
+
+    /** 获取某应用在卸载时可删除的表名（带表前缀） */
+    protected function getAppTablesForUninstall(string $appKey, string $prefix): array
+    {
+        $tables = [];
+        $configJson = Db::name('config')->where('name', 'app_' . $appKey . '_tables')->value('value');
+        if ($configJson !== null && $configJson !== '') {
+            $arr = json_decode($configJson, true);
+            if (is_array($arr)) {
+                foreach ($arr as $t) {
+                    $t = str_replace('`', '', (string) $t);
+                    if ($t === '') continue;
+                    if (str_starts_with($t, 'fa_')) {
+                        $t = $prefix . substr($t, 3);
+                    } else {
+                        $t = $prefix . ltrim($t, '_');
+                    }
+                    $tables[] = $t;
+                }
+                return array_unique($tables);
+            }
+        }
+        if (!isset(static::$knownTablePrefixes[$appKey])) {
+            return $tables;
+        }
+        $conn = Db::connect();
+        foreach (static::$knownTablePrefixes[$appKey] as $suffix) {
+            $pattern = $prefix . $suffix . '%';
+            $rows = Db::query("SHOW TABLES LIKE '" . addslashes($pattern) . "'");
+            foreach ($rows as $row) {
+                $name = (string) reset($row);
+                if ($name !== '') {
+                    $tables[] = $name;
+                }
+            }
+        }
+        return array_unique($tables);
     }
 
     protected function setAppInstalledConfig(string $appKey, int $value): void
@@ -391,8 +479,46 @@ class AppCenter extends Backend
             }
         }
         $this->setAppInstalledConfig($appKey, 1);
+        if (!empty($manifest['tables']) && is_array($manifest['tables'])) {
+            $this->setAppTablesConfig($appKey, $manifest['tables']);
+        }
         $authPrefix = $manifest['auth_prefix'] ?? $appKey;
         Db::name('auth_rule')->where('name', $authPrefix)->update(['status' => 1]);
         Db::name('auth_rule')->where('name', 'like', $authPrefix . '/%')->update(['status' => 1]);
+        $this->setAppMetaConfig($appKey, [
+            'title'       => $manifest['title'] ?? $appKey,
+            'description' => $manifest['description'] ?? '',
+            'auth_prefix' => $authPrefix,
+        ]);
+    }
+
+    protected function setAppMetaConfig(string $appKey, array $meta): void
+    {
+        $now = time();
+        foreach ($meta as $k => $v) {
+            $name = 'app_' . $appKey . '_' . $k;
+            if (Db::name('config')->where('name', $name)->find()) {
+                Db::name('config')->where('name', $name)->update(['value' => (string) $v, 'update_time' => $now]);
+            } else {
+                Db::name('config')->insert([
+                    'name' => $name, 'title' => $appKey . ' ' . $k, 'value' => (string) $v,
+                    'group' => 'base', 'sort' => 0, 'create_time' => $now, 'update_time' => $now,
+                ]);
+            }
+        }
+    }
+
+    protected function setAppTablesConfig(string $appKey, array $tables): void
+    {
+        $name = 'app_' . $appKey . '_tables';
+        $value = json_encode(array_values($tables));
+        if (Db::name('config')->where('name', $name)->find()) {
+            Db::name('config')->where('name', $name)->update(['value' => $value, 'update_time' => time()]);
+        } else {
+            Db::name('config')->insert([
+                'name' => $name, 'title' => $appKey . ' 数据表列表（卸载时可删）', 'value' => $value,
+                'group' => 'base', 'sort' => 0, 'create_time' => time(), 'update_time' => time(),
+            ]);
+        }
     }
 }

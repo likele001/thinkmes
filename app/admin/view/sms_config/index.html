@@ -1,0 +1,48 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">短信配置</h3></div>
+    <div class="card-body">
+        <form id="form-sms" method="post" class="form-horizontal">
+            <input type="hidden" name="list[0][name]" value="sms_provider"><input type="hidden" name="list[0][sort]" value="1">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">短信服务商</label>
+                <div class="col-sm-6"><input type="text" name="list[0][value]" class="form-control" value="{$config.sms_provider|default=''}" placeholder="如 aliyun / tencent"></div>
+            </div>
+            <input type="hidden" name="list[1][name]" value="sms_access_key"><input type="hidden" name="list[1][sort]" value="2">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">AccessKey</label>
+                <div class="col-sm-6"><input type="text" name="list[1][value]" class="form-control" value="{$config.sms_access_key|default=''}" placeholder="AccessKey"></div>
+            </div>
+            <input type="hidden" name="list[2][name]" value="sms_secret"><input type="hidden" name="list[2][sort]" value="3">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Secret</label>
+                <div class="col-sm-6"><input type="password" name="list[2][value]" class="form-control" value="{$config.sms_secret|default=''}" placeholder="Secret"></div>
+            </div>
+            <input type="hidden" name="list[3][name]" value="sms_sign"><input type="hidden" name="list[3][sort]" value="4">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">签名</label>
+                <div class="col-sm-6"><input type="text" name="list[3][value]" class="form-control" value="{$config.sms_sign|default=''}" placeholder="短信签名"></div>
+            </div>
+            <input type="hidden" name="list[4][name]" value="sms_template_id"><input type="hidden" name="list[4][sort]" value="5">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">模板ID</label>
+                <div class="col-sm-6"><input type="text" name="list[4][value]" class="form-control" value="{$config.sms_template_id|default=''}" placeholder="模板ID"></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-sms" class="btn btn-primary">保存配置</button>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-sms').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/sms_config/index', $(this).serialize(), function(r) {
+            if (r.code == 1) alert(r.msg || '保存成功');
+            else alert(r.msg || '保存失败');
+        }, 'json');
+    });
+})();
+</script>

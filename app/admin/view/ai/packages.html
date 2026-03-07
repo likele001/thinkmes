@@ -13,9 +13,10 @@
   </form>
 </div>
 <script>
-function load(){fetch('/admin/ai/packages').then(r=>r.json()).then(j=>{
+var _aiBase = (typeof Config !== 'undefined' && Config.moduleurl ? Config.moduleurl : '') + '/ai';
+function load(){fetch(_aiBase + '/packages').then(r=>r.json()).then(j=>{
   const el=document.getElementById('list'); el.innerHTML=''; (j.data||[]).forEach(p=>{el.innerHTML+=`<div>${p.id} - ${p.name} - ¥${p.price_month}</div>`});
 });}
-function create(){const data=Object.fromEntries(new FormData(document.getElementById('pkgForm')));fetch('/admin/ai/createPackage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()).then(j=>{alert(j.msg||'ok');load()});}
+function create(){const data=Object.fromEntries(new FormData(document.getElementById('pkgForm')));fetch(_aiBase + '/createPackage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()).then(j=>{alert(j.msg||'ok');load()});}
 load();
 </script>

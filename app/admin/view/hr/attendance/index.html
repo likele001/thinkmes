@@ -1,0 +1,30 @@
+<div class="card panel-intro">
+    <div class="card-header"><div class="panel-lead"><em>考勤打卡记录</em></div></div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh"><i class="fas fa-sync-alt"></i> 刷新</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+<script>
+(function init() {
+    if (typeof window.jQuery === 'undefined' || !window.jQuery.fn.bootstrapTable) { setTimeout(init, 50); return; }
+    var $ = window.jQuery, base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '', $table = $('#table');
+    if ($table.data('bootstrap.table')) return;
+    $table.bootstrapTable({
+        url: base + '/hr/attendance/index', pk: 'id', sortName: 'day', sortOrder: 'desc',
+        pagination: true, sidePagination: 'server', pageSize: 20, pageList: [10, 20, 50],
+        responseHandler: function (res) { var d = res.data || {}; return { total: d.total || 0, rows: d.list || [] }; },
+        columns: [
+            {field: 'id', title: 'ID', width: 70},
+            {field: 'employee_name', title: '员工', width: 100},
+            {field: 'day', title: '日期', width: 110},
+            {field: 'clock_in_text', title: '上班打卡', width: 100},
+            {field: 'clock_out_text', title: '下班打卡', width: 100},
+            {field: 'source', title: '来源', width: 80}
+        ]
+    });
+    $('#toolbar .btn-refresh').on('click', function() { $table.bootstrapTable('refresh'); });
+})();
+</script>

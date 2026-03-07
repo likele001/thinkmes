@@ -1,0 +1,44 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">添加打印模板</h3></div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">模板名称</label>
+                <div class="col-sm-6"><input type="text" name="row[name]" class="form-control" required placeholder="如：生产订单"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">类型</label>
+                <div class="col-sm-6">
+                    <select name="row[type]" class="form-control">
+                        <option value="order">生产订单</option>
+                        <option value="sales_order">销售订单</option>
+                        <option value="shipment">发货单</option>
+                        <option value="contract">合同</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">HTML内容</label>
+                <div class="col-sm-8"><textarea name="row[content]" class="form-control" rows="10" placeholder="支持变量：{order_no}、{customer_name} 等"></textarea></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-add" class="btn btn-primary">确定添加</button>
+        <a href="{$config.moduleurl}/print_template/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-add').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/print_template/add', $(this).serialize(), function(r) {
+            if (r.code == 1) { alert(r.msg || '添加成功'); location.href = base + '/print_template/index'; }
+            else alert(r.msg || '添加失败');
+        }, 'json');
+    });
+})();
+</script>

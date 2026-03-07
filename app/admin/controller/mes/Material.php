@@ -108,6 +108,7 @@ class Material extends Backend
         }
 
         View::assign('row', $row);
+        View::assign('ids', $ids);
         View::assign('title', '编辑物料');
         return $this->fetchWithLayout('mes/material/edit');
     }

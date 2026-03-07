@@ -132,7 +132,7 @@ $(function() {
     window.audit = function(id, status) {
         if (confirm('确定要' + (status == 1 ? '通过' : '驳回') + '该申请吗？')) {
             $.ajax({
-                url: '{:url("admin/mes/purchase/auditRequest")}',
+                url: (typeof Config !== 'undefined' && Config.moduleurl ? Config.moduleurl : '') + '/mes/purchase/auditRequest',
                 type: 'POST',
                 data: {
                     ids: id,

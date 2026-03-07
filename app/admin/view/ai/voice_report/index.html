@@ -3,6 +3,16 @@
         <div class="panel-lead"><em>语音报工</em> 语音→文字→自动填充报工</div>
     </div>
     <div class="card-body">
-        <p class="text-muted">语音报工功能开发中，需先配置 AI 与语音识别 API。</p>
+        <div class="alert alert-info mb-3">
+            <strong>功能说明</strong>：语音报工功能开发中，需先配置 <strong>AI 大模型</strong> 与 <strong>语音识别 API</strong> 后即可使用。
+        </div>
+        <p class="text-muted mb-2">请先在「AI 配置」中完成：</p>
+        <ul class="text-muted mb-3">
+            <li><strong>大模型</strong>：填写 API Key、API 地址、模型名（用于将识别出的文字解析为报工结构化数据）；</li>
+            <li><strong>语音识别</strong>：选择供应商（百度/阿里云/腾讯云/讯飞等），并填写对应 Key（如百度：app_id|api_key|secret_key）。</li>
+        </ul>
+        <a href="{:url('/admin/ai/config/index')}?ref=addtabs" class="btn btn-primary">
+            <i class="fa fa-cog"></i> 前往配置 AI 与语音识别
+        </a>
     </div>
 </div>

@@ -67,10 +67,31 @@ class StockLogModel extends Model
     }
 
     /**
-     * 记录库存变动
+     * 记录库存变动（仅写流水，不修改库存；调用方需自行先更新库存）
+     * @param float|null $beforeQty 变动前数量，与 $afterQty 同时传入时只记流水不更新库存
+     * @param float|null $afterQty  变动后数量
      */
-    public static function log(int $tenantId, int $materialId, float $changeQty, string $businessType, int $businessId, int $operatorId, string $remark = ''): void
+    public static function log(int $tenantId, int $materialId, float $changeQty, string $businessType, int $businessId, int $operatorId, string $remark = '', ?float $beforeQty = null, ?float $afterQty = null): void
     {
+        if ($beforeQty !== null && $afterQty !== null) {
+            // 调用方已更新库存，仅记录流水
+            self::create([
+                'tenant_id'        => $tenantId,
+                'material_id'      => $materialId,
+                'product_model_id' => 0,
+                'warehouse_id'     => 0,
+                'before_quantity'  => $beforeQty,
+                'change_quantity'  => $changeQty,
+                'after_quantity'   => $afterQty,
+                'business_type'    => $businessType,
+                'business_id'      => $businessId,
+                'operator_id'      => $operatorId,
+                'remark'           => $remark,
+                'create_time'      => time(),
+            ]);
+            return;
+        }
+
         $material = MaterialModel::where('tenant_id', $tenantId)->find($materialId);
         if (!$material) {
             return;
@@ -79,11 +100,10 @@ class StockLogModel extends Model
         $beforeQty = (float)$material->stock;
         $afterQty = $beforeQty + $changeQty;
 
-        // 更新物料库存
+        // 更新物料库存（仅当调用方未传 before/after 时，由 log 负责更新，兼容 Scanwork 等）
         $material->stock = $afterQty;
         $material->save();
 
-        // 记录流水
         self::create([
             'tenant_id'        => $tenantId,
             'material_id'      => $materialId,

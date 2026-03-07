@@ -71,17 +71,34 @@ class AiPackage extends Backend
 
         try {
             if ($tenantId === 0) {
-                $update = array_intersect_key($data, array_flip(['enabled', 'require_purchase', 'notice', 'update_time', 'switch_voice_report', 'switch_anomaly', 'switch_qa', 'switch_crm_follow']));
+                $allowedKeys = ['enabled', 'require_purchase', 'notice', 'update_time', 'switch_voice_report', 'switch_anomaly', 'switch_qa', 'switch_crm_follow'];
+                $update = array_intersect_key($data, array_flip($allowedKeys));
                 $exists = Db::name('ai_global_switch')->where('id', 1)->find();
+                $tableName = Db::getConfig('prefix') . 'ai_global_switch';
+                $columns = [];
+                try {
+                    $columns = array_column(Db::query('SHOW COLUMNS FROM `' . $tableName . '`'), 'Field');
+                } catch (\Throwable $e) {}
+                $update = array_intersect_key($update, array_flip($columns ?: ['enabled', 'require_purchase', 'notice', 'update_time']));
                 try {
                     if ($exists) {
                         Db::name('ai_global_switch')->where('id', 1)->update($update);
                     } else {
                         $update['id'] = 1;
+                        $insertKeys = $columns ?: array_merge($allowedKeys, ['id']);
+                        $update = array_intersect_key($update, array_flip($insertKeys));
                         Db::name('ai_global_switch')->insert($update);
                     }
                 } catch (\Throwable $e) {
                     if (stripos($e->getMessage(), 'Unknown column') !== false) {
+                        $update = array_intersect_key($data, array_flip(['enabled', 'require_purchase', 'notice', 'update_time']));
+                        if ($exists) {
+                            Db::name('ai_global_switch')->where('id', 1)->update($update);
+                        } else {
+                            $update['id'] = 1;
+                            Db::name('ai_global_switch')->insert($update);
+                        }
+                    } elseif (stripos($e->getMessage(), 'fields not exists') !== false) {
                         $update = array_intersect_key($data, array_flip(['enabled', 'require_purchase', 'notice', 'update_time']));
                         if ($exists) {
                             Db::name('ai_global_switch')->where('id', 1)->update($update);

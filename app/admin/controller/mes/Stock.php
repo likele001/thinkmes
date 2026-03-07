@@ -79,6 +79,35 @@ class Stock extends Backend
     }
 
     /**
+     * AI库存预警：库存低于安全库存的物料列表
+     */
+    public function alert(): string|Response
+    {
+        $limitParam = $this->request->get('limit');
+        if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
+            View::assign('title', '库存预警');
+            return $this->fetchWithLayout('mes/stock/alert');
+        }
+        $tenantId = $this->getTenantId();
+        $query = MaterialModel::order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tp = (int) $this->request->get('tenant_id', 0);
+            if ($tp > 0) {
+                $query->where('tenant_id', $tp);
+            }
+        }
+        $query->whereColumn('stock', '<', 'min_stock')->where('min_stock', '>', 0);
+        $list = $query->select()->toArray();
+        foreach ($list as &$item) {
+            $item['shortage'] = max(0, (float) $item['min_stock'] - (float) $item['stock']);
+        }
+        unset($item);
+        return $this->success('', ['total' => count($list), 'list' => $list]);
+    }
+
+    /**
      * 出库单列表
      */
     public function outbound(): string|Response
@@ -162,14 +191,15 @@ class Stock extends Backend
                 $material = MaterialModel::where('tenant_id', $tenantId)
                     ->find($orderMaterial->material_id);
                 if ($material) {
-                    $newStock = $material->stock - $params['out_quantity'];
+                    $beforeQty = (float)$material->stock;
+                    $newStock = $beforeQty - $params['out_quantity'];
                     if ($newStock < 0) {
                         throw new \Exception('库存不足，当前库存：' . $material->stock);
                     }
                     $material->stock = $newStock;
                     $material->save();
 
-                    // 记录库存流水
+                    // 记录库存流水（仅记流水，库存已在上方更新）
                     StockLogModel::log(
                         $tenantId,
                         $orderMaterial->material_id,
@@ -177,7 +207,9 @@ class Stock extends Backend
                         'production_out',
                         $outbound->id,
                         $params['operator_id'],
-                        '生产领料：' . $params['out_no']
+                        '生产领料：' . $params['out_no'],
+                        $beforeQty,
+                        $newStock
                     );
                 }
 
@@ -318,11 +350,11 @@ class Stock extends Backend
             $diffQuantity = $actualQuantity - $material->stock;
             $businessType = $diffQuantity >= 0 ? 'check_in' : 'check_out';
 
-            // 更新库存
+            $beforeQty = (float)$material->stock;
             $material->stock = $actualQuantity;
             $material->save();
 
-            // 记录流水
+            // 记录流水（仅记流水，库存已在上方更新）
             StockLogModel::log(
                 $tenantId,
                 $materialId,
@@ -330,7 +362,9 @@ class Stock extends Backend
                 $businessType,
                 0,
                 $this->auth->id ?? 0,
-                '库存盘点：' . $remark
+                '库存盘点：' . $remark,
+                $beforeQty,
+                $actualQuantity
             );
 
             Db::commit();

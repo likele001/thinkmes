@@ -88,7 +88,19 @@
 <script>
 function fmt(t){if(!t)return '-';var d=new Date(t*1000);var y=d.getFullYear(),m=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2),hh=('0'+d.getHours()).slice(-2),mm=('0'+d.getMinutes()).slice(-2);return y+'-'+m+'-'+dd+' '+hh+':'+mm;}
 $(function(){
+  // 检查 localStorage 和 cookie 中的 token，任一有效即可
   var tk = localStorage.getItem('token')||'';
+  if(!tk){
+    // 尝试从 cookie 读取
+    var cookies = document.cookie.split(';');
+    for(var i=0;i<cookies.length;i++){
+      var c = cookies[i].trim();
+      if(c.indexOf('user_token=')===0){
+        tk = c.substring(11);
+        break;
+      }
+    }
+  }
   if(!tk){location.href='/index/user/login';return;}
   $.ajax({
     url:'/api/user/profile',

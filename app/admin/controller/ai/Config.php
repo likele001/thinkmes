@@ -167,8 +167,8 @@ class Config extends Base
         $header = "RIFF" . pack('V', 16036) . "WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x80\x3e\x00\x00\x00\x7d\x00\x00\x02\x00\x10\x00data" . pack('V', 16000);
         $samples = str_repeat("\x00\x00", 8000);
         $wav = $header . $samples;
-        return Response::create($wav, 200, [
-            'Content-Type' => 'audio/wav',
+        return response($wav, 200, [
+            'Content-Type'   => 'audio/wav',
             'Content-Length' => (string) strlen($wav),
         ]);
     }

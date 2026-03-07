@@ -55,6 +55,8 @@ CREATE TABLE `fa_crm_sales_order_item` (
   `price` decimal(14,2) NOT NULL DEFAULT 0.00 COMMENT '单价',
   `amount` decimal(14,2) NOT NULL DEFAULT 0.00 COMMENT '金额',
   `remark` varchar(255) NOT NULL DEFAULT '' COMMENT '备注',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_tenant` (`tenant_id`),
   KEY `idx_sales_order` (`sales_order_id`)

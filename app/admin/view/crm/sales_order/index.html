@@ -24,6 +24,7 @@
         var $ = jQuery, base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '', table = $('#table');
         if (table.data('bootstrap.table')) return true;
         var cols = [
+            {checkbox: true},
             {field: 'id', title: 'ID', width: 80, sortable: true},
             {field: 'order_no', title: '订单编号', align: 'left'},
             {field: 'customer_name', title: '客户', align: 'left'},
@@ -34,8 +35,9 @@
             }},
             {field: 'mes_order_id', title: 'MES', width: 80, formatter: function(v) { return v > 0 ? '<span class="badge badge-success">已转</span>' : '-'; }},
             {field: 'create_time', title: '创建时间', width: 180, formatter: function(v) { return v ? new Date(v * 1000).toLocaleString('zh-CN') : ''; }},
-            {field: 'operate', title: '操作', width: 180, formatter: function(v, row) {
+            {field: 'operate', title: '操作', width: 200, formatter: function(v, row) {
                 var html = '<a href="' + base + '/crm/sales_order/edit?id=' + row.id + '" class="btn btn-xs btn-success">编辑</a> ';
+                html += '<a href="' + base + '/print_template/preview?ref_type=sales_order&ref_id=' + row.id + '" target="_blank" class="btn btn-xs btn-default" title="按模板打印">打印</a> ';
                 html += '<a href="javascript:;" class="btn btn-xs btn-danger btn-del-one">删除</a>';
                 if (mesInstalled && row.mes_order_id == 0 && row.status !== 'cancelled') {
                     html += ' <a href="javascript:;" class="btn btn-xs btn-info btn-to-mes-one" data-id="' + row.id + '">转生产</a>';
@@ -72,7 +74,8 @@
         }
         table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
             var rows = table.bootstrapTable('getSelections');
-            $('.btn-edit, .btn-del').toggleClass('disabled btn-disabled', rows.length === 0);
+            $('#toolbar .btn-edit').toggleClass('disabled btn-disabled', rows.length !== 1);
+            $('#toolbar .btn-del').toggleClass('disabled btn-disabled', rows.length === 0);
             if (mesInstalled) {
                 var canToMes = rows.length === 1 && rows[0].mes_order_id == 0 && rows[0].status !== 'cancelled';
                 $('.btn-to-mes').toggleClass('disabled btn-disabled', !canToMes);

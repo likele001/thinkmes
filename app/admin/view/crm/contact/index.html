@@ -56,6 +56,7 @@
                 };
             },
             columns: [
+                {checkbox: true},
                 {field: 'id', title: 'ID', width: 80, sortable: true},
                 {field: 'customer_name', title: '客户', align: 'left'},
                 {field: 'name', title: '姓名', align: 'left'},
@@ -126,11 +127,8 @@
 
         table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
             var rows = table.bootstrapTable('getSelections');
-            if (rows.length > 0) {
-                $('.btn-edit, .btn-del').removeClass('disabled btn-disabled');
-            } else {
-                $('.btn-edit, .btn-del').addClass('disabled btn-disabled');
-            }
+            $('#toolbar .btn-edit').toggleClass('disabled btn-disabled', rows.length !== 1);
+            $('#toolbar .btn-del').toggleClass('disabled btn-disabled', rows.length === 0);
         });
 
         return true;

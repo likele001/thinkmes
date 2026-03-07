@@ -1,0 +1,164 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fa fa-tachometer-alt"></i> 经营数据大屏</h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-lg-2 col-4">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3 id="crm-follow-today">0</h3>
+                        <p>今日跟进</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-hand-holding-heart"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-4">
+                <div class="small-box bg-primary">
+                    <div class="inner">
+                        <h3 id="crm-opportunity-amount">¥0</h3>
+                        <p>商机金额</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-lightbulb"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-4">
+                <div class="small-box bg-teal">
+                    <div class="inner">
+                        <h3 id="crm-payment-month">¥0</h3>
+                        <p>本月回款</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-money-bill"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-4">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3 id="mes-today-quantity">0</h3>
+                        <p>今日产量</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-cubes"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-4">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3 id="mes-pending-reports">0</h3>
+                        <p>待审核报工</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-clock"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-4">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3 id="stock-alert-count">0</h3>
+                        <p>库存预警</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-exclamation-triangle"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-secondary">
+                    <div class="inner">
+                        <h3 id="finance-receivable">¥0</h3>
+                        <p>本月应收</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-file-invoice-dollar"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-secondary">
+                    <div class="inner">
+                        <h3 id="finance-received">¥0</h3>
+                        <p>本月已收</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-check-circle"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-dark">
+                    <div class="inner">
+                        <h3 id="finance-payable">¥0</h3>
+                        <p>本月应付</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-credit-card"></i></div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-dark">
+                    <div class="inner">
+                        <h3 id="finance-paid">¥0</h3>
+                        <p>本月已付</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-hand-holding-usd"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fa fa-wrench"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">逾期未保养</span>
+                        <span class="info-box-number" id="equipment-overdue">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-danger"><i class="fa fa-tools"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">近30天维修</span>
+                        <span class="info-box-number" id="equipment-repair">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    function fmtMoney(v) {
+        if (v == null || v === '') return '¥0';
+        var n = parseFloat(v);
+        return '¥' + (isNaN(n) ? 0 : n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+    function load() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', base + '/ai/cockpit/getCockpitData', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    var res = JSON.parse(xhr.responseText);
+                    var d = (res && res.data) ? res.data : {};
+                    var crm = d.crm || {}, mes = d.mes || {}, stock = d.stock || {}, finance = d.finance || {}, equipment = d.equipment || {};
+                    document.getElementById('crm-follow-today').textContent = crm.follow_today != null ? crm.follow_today : 0;
+                    document.getElementById('crm-opportunity-amount').textContent = fmtMoney(crm.opportunity_amount);
+                    document.getElementById('crm-payment-month').textContent = fmtMoney(crm.payment_month);
+                    document.getElementById('mes-today-quantity').textContent = mes.today_quantity != null ? mes.today_quantity : 0;
+                    document.getElementById('mes-pending-reports').textContent = mes.pending_reports != null ? mes.pending_reports : 0;
+                    document.getElementById('stock-alert-count').textContent = stock.alert_count != null ? stock.alert_count : 0;
+                    document.getElementById('finance-receivable').textContent = fmtMoney(finance.receivable_month);
+                    document.getElementById('finance-received').textContent = fmtMoney(finance.received_month);
+                    document.getElementById('finance-payable').textContent = fmtMoney(finance.payable_month);
+                    document.getElementById('finance-paid').textContent = fmtMoney(finance.paid_month);
+                    document.getElementById('equipment-overdue').textContent = equipment.overdue_maintenance != null ? equipment.overdue_maintenance : 0;
+                    document.getElementById('equipment-repair').textContent = equipment.recent_repair != null ? equipment.recent_repair : 0;
+                } catch (e) {}
+            }
+        };
+        xhr.send();
+    }
+    load();
+    setInterval(load, 60000);
+    document.querySelector('.btn-refresh') && document.querySelector('.btn-refresh').addEventListener('click', load);
+})();
+</script>

@@ -19,5 +19,7 @@ class SalesOrderItemModel extends Model
         'quantity'        => 'integer',
         'price'           => 'float',
         'amount'          => 'float',
+        'create_time'     => 'integer',
+        'update_time'     => 'integer',
     ];
 }

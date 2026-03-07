@@ -88,7 +88,7 @@ abstract class Backend extends BaseController
         
         // 如果路径中包含 mes、crm 等子目录，需要添加到 controllername 前面
         // 例如：mes/process/index -> mes/process，crm/customer/index -> crm/customer
-        if (count($pathParts) >= 2 && in_array($pathParts[0], ['mes', 'crm', 'ai', 'payment'], true)) {
+        if (count($pathParts) >= 2 && in_array($pathParts[0], ['mes', 'crm', 'ai', 'payment', 'equipment', 'hr', 'finance'], true)) {
             $controllername = $pathParts[0] . '/' . $controllername;
         }
         

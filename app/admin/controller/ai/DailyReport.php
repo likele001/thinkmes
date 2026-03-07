@@ -38,7 +38,7 @@ class DailyReport extends Base
             $tenantId = $this->getTenantId();
             $since = $type === 'daily'
                 ? strtotime($reportDate . ' 00:00:00')
-                : strtotime('monday this week', strtotime($reportDate)) ?: strtotime($reportDate);
+                : (strtotime('monday this week', strtotime($reportDate)) ?: strtotime($reportDate));
             $until = $type === 'daily'
                 ? strtotime($reportDate . ' 23:59:59')
                 : $since + 7 * 86400 - 1;

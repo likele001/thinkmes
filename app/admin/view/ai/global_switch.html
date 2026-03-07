@@ -41,7 +41,7 @@
 </div>
 <script>
 (function(){
-  var base = (typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : '') + '/admin/ai';
+  var base = (typeof Config !== 'undefined' && Config.moduleurl ? Config.moduleurl : (typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : '') + '/admin') + '/ai';
   fetch(base + '/globalSwitch').then(function(r){ return r.json(); }).then(function(res){
     if (res.code !== 1 || !res.data) return;
     var d = res.data;
@@ -66,7 +66,7 @@ function submitGlobal(){
     switch_qa: form.elements.switch_qa && form.elements.switch_qa.checked ? 1 : 0,
     switch_crm_follow: form.elements.switch_crm_follow && form.elements.switch_crm_follow.checked ? 1 : 0
   };
-  var base = (typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : '') + '/admin/ai';
+  var base = (typeof Config !== 'undefined' && Config.moduleurl ? Config.moduleurl : (typeof BACKEND_BASE_URL !== 'undefined' ? BACKEND_BASE_URL : '') + '/admin') + '/ai';
   fetch(base + '/updateGlobal', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}).then(function(r){ return r.json(); }).then(function(j){ alert(j.msg || '保存成功'); });
 }
 </script>

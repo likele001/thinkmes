@@ -1,0 +1,68 @@
+{include file='common/meta' /}
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>创建质检单 - 报工：{$report.report_no|default=''}</h4></div>
+    <div class="panel-body">
+        <form id="form-add" class="form-horizontal" role="form" action="" method="post">
+            <input type="hidden" name="row[report_id]" value="{$report.id|default=''}">
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">质检标准</label>
+                <div class="col-xs-12 col-sm-8">
+                    <select id="c-standard_id" class="form-control" name="row[standard_id]">
+                        <option value="0">请选择</option>
+                        {volist name="standardList" id="name" key="sid"}
+                        <option value="{$sid}">{$name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">质检数量<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <input type="number" min="1" class="form-control" name="row[check_quantity]" value="1" data-rule="required" placeholder="质检数量">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">合格数量<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <input type="number" min="0" class="form-control" name="row[qualified_quantity]" value="1" data-rule="required" placeholder="合格数量">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">不合格数量</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input type="number" min="0" class="form-control" name="row[unqualified_quantity]" value="0" placeholder="不合格数量">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">质检时间</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input type="datetime-local" class="form-control" name="row[check_time]" value="{:date('Y-m-d\TH:i', time())}" placeholder="质检时间">
+                </div>
+            </div>
+            <div class="form-group layer-footer">
+                <label class="control-label col-xs-12 col-sm-2"></label>
+                <div class="col-xs-12 col-sm-8">
+                    <button type="submit" class="btn btn-success btn-embossed">提交质检</button>
+                    <button type="button" class="btn btn-default btn-embossed" onclick="window.parent.layer.closeAll();">取消</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+$(function() {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var reportId = '{$report.id|default=""}';
+    $('#form-add').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/mes/quality/addCheck?report_id=' + reportId, $(this).serialize(), function(r) {
+            if (r.code == 1) {
+                if (typeof Fast !== 'undefined' && Fast.api) Fast.api.close(); else alert(r.msg);
+            } else {
+                alert(r.msg || '提交失败');
+            }
+        }, 'json');
+    });
+});
+</script>
+{include file='common/script-iframe' /}

@@ -94,6 +94,19 @@ Route::get('config/index', 'Config/index');
 Route::get('config/group', 'Config/group');
 Route::post('config/save', 'Config/save');
 
+// 打印模板
+Route::get('print_template/index', 'PrintTemplate/index');
+Route::get('print_template/add', 'PrintTemplate/add');
+Route::get('print_template/edit', 'PrintTemplate/edit');
+Route::get('print_template/preview', 'PrintTemplate/preview');
+Route::post('print_template/add', 'PrintTemplate/add');
+Route::post('print_template/edit', 'PrintTemplate/edit');
+Route::post('print_template/del', 'PrintTemplate/del');
+
+// 短信配置
+Route::get('sms_config/index', 'SmsConfig/index');
+Route::post('sms_config/index', 'SmsConfig/index');
+
 // 插件管理
 Route::get('addon/index', 'Addon/index');
 Route::get('addon/detail', 'Addon/detail');
@@ -126,6 +139,15 @@ Route::post('app_center/install', 'AppCenter/install');
 Route::post('app_center/uninstall', 'AppCenter/uninstall');
 Route::post('app_center/upload', 'AppCenter/upload');
 
+// 套餐功能占位（报表统计、数据导出、API、自定义字段、工作流、消息通知、数据备份）
+Route::get('report/index', 'Report/index');
+Route::get('export/index', 'Export/index');
+Route::get('api/index', 'Api/index');
+Route::get('custom_field/index', 'CustomField/index');
+Route::get('workflow/index', 'Workflow/index');
+Route::get('notification/index', 'Notification/index');
+Route::get('backup/index', 'Backup/index');
+
 // 按需加载应用路由（应用包安装时合并对应 crm.php / mes.php）
 if (is_file(__DIR__ . '/crm.php')) {
     require __DIR__ . '/crm.php';
@@ -138,4 +160,13 @@ if (is_file(__DIR__ . '/ai.php')) {
 }
 if (is_file(__DIR__ . '/payment.php')) {
     require __DIR__ . '/payment.php';
+}
+if (is_file(__DIR__ . '/equipment.php')) {
+    require __DIR__ . '/equipment.php';
+}
+if (is_file(__DIR__ . '/hr.php')) {
+    require __DIR__ . '/hr.php';
+}
+if (is_file(__DIR__ . '/finance.php')) {
+    require __DIR__ . '/finance.php';
 }

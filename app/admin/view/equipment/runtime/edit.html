@@ -1,0 +1,51 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑运行记录</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">设备</label>
+                <div class="col-sm-6">
+                    <select name="row[equipment_id]" class="form-control" required>
+                        <option value="">请选择</option>
+                        {volist name="equipmentList" id="eq"}
+                        <option value="{$eq.id}" {$eq.id == $row.equipment_id ? 'selected' : ''}>{$eq.code} - {$eq.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">运行日期</label>
+                <div class="col-sm-6"><input type="date" name="row[run_date]" class="form-control" required value="{$row.run_date}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">计划工时(h)</label>
+                <div class="col-sm-6"><input type="number" name="row[plan_hours]" class="form-control" step="0.01" value="{$row.plan_hours}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">实际运行(h)</label>
+                <div class="col-sm-6"><input type="number" name="row[run_hours]" class="form-control" step="0.01" value="{$row.run_hours}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">停机(h)</label>
+                <div class="col-sm-6"><input type="number" name="row[down_hours]" class="form-control" step="0.01" value="{$row.down_hours}"></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/equipment/runtime/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-edit').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/equipment/runtime/edit?ids=' + '{$row.id}', $(this).serialize(), function(r) {
+            if (r.code == 1) { alert(r.msg || '保存成功'); location.href = base + '/equipment/runtime/index'; }
+            else alert(r.msg || '保存失败');
+        }, 'json');
+    });
+})();
+</script>

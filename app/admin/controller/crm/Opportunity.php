@@ -63,6 +63,22 @@ class Opportunity extends Backend
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
+    /**
+     * 按客户 ID 获取商机列表（联动下拉）
+     */
+    public function getByCustomer(): Response
+    {
+        $customerId = (int) $this->request->get('customer_id', 0);
+        if ($customerId <= 0) {
+            return $this->success('', ['list' => []]);
+        }
+        $tenantId = $this->getTenantId();
+        $query = OpportunityModel::where('tenant_id', $tenantId)->where('customer_id', $customerId)->order('id', 'desc');
+        $rows = $query->select();
+        $list = $rows->toArray();
+        return $this->success('', ['list' => $list]);
+    }
+
     public function add(): string|Response
     {
         if ($this->request->isPost()) {

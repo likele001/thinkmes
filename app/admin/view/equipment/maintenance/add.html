@@ -1,0 +1,63 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">添加保养计划</h3></div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">设备</label>
+                <div class="col-sm-6">
+                    <select name="row[equipment_id]" class="form-control" required>
+                        <option value="">请选择</option>
+                        {volist name="equipmentList" id="eq"}
+                        <option value="{$eq.id}">{$eq.code} - {$eq.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">保养类型</label>
+                <div class="col-sm-6">
+                    <select name="row[plan_type]" class="form-control">
+                        <option value="daily">日保养</option>
+                        <option value="weekly">周保养</option>
+                        <option value="monthly" selected>月保养</option>
+                        <option value="quarterly">季保养</option>
+                        <option value="yearly">年保养</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">周期(天)</label>
+                <div class="col-sm-6"><input type="number" name="row[cycle_days]" class="form-control" value="30" min="1"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">上次保养日期</label>
+                <div class="col-sm-6"><input type="date" name="row[last_date]" class="form-control"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">下次保养日期</label>
+                <div class="col-sm-6"><input type="date" name="row[next_date]" class="form-control"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">保养内容</label>
+                <div class="col-sm-6"><textarea name="row[content]" class="form-control" rows="3" placeholder="保养内容"></textarea></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-add" class="btn btn-primary">确定添加</button>
+        <a href="{$config.moduleurl}/equipment/maintenance/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-add').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/equipment/maintenance/add', $(this).serialize(), function(r) {
+            if (r.code == 1) { alert(r.msg || '添加成功'); location.href = base + '/equipment/maintenance/index'; }
+            else alert(r.msg || '添加失败');
+        }, 'json');
+    });
+})();
+</script>

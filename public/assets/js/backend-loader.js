@@ -18,16 +18,25 @@
         var iconMap = {
             'home': 'fas fa-tachometer-alt',
             'dashboard': 'fas fa-tachometer-alt',
+            'tachometer-alt': 'fas fa-tachometer-alt',
             'cube': 'fas fa-cube',
+            'cubes': 'fas fa-cubes',
             'clipboard': 'fas fa-clipboard',
             'sitemap': 'fas fa-sitemap',
+            'puzzle-piece': 'fas fa-puzzle-piece',
+            'th-large': 'fas fa-th-large',
+            'building': 'fas fa-building',
+            'box': 'fas fa-box',
+            'list': 'fas fa-list',
+            'receipt': 'fas fa-receipt',
+            'user-check': 'fas fa-user-check',
+            'user-cog': 'fas fa-user-cog',
             'shopping-cart': 'fas fa-shopping-cart',
             'user': 'fas fa-user',
             'users': 'fas fa-users',
             'cog': 'fas fa-cog',
             'gear': 'fas fa-cog',
             'wrench': 'fas fa-wrench',
-            'list': 'fas fa-list',
             'table': 'fas fa-table',
             'file': 'fas fa-file',
             'folder': 'fas fa-folder',
@@ -89,6 +98,10 @@
         }
         var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
         if (url.charAt(0) !== '/') {
+            // 避免菜单返回 admin/config 时与 base(/admin) 拼成 /admin/admin/config
+            if (url.indexOf('admin/') === 0 && base && (base.indexOf('/admin') !== -1 || base === '/admin')) {
+                url = url.substring(6);
+            }
             url = (base ? base.replace(/\/$/, '') : '') + '/' + url.replace(/^\//, '');
         }
         // 路径式入口时 URL 已为 /随机路径/xxx，不再加 /admin；否则确保带 /admin 前缀
@@ -184,10 +197,12 @@
         }
         $.get(menuUrl, function (res) {
             if (res.code === 1 && res.data && res.data.length) {
+                // 从接口数据里去掉「首页」，避免与下面手写的首页重复（路径式入口时 href 可能不含 /admin/，故用 name 判断）
                 function filterIndexMenu(items) {
                     return items.filter(function(item) {
                         var href = (item.url && item.url !== '#') ? item.url : (item.name ? ('/' + item.name.replace(/\./g, '/')) : '#');
-                        var isIndex = href && (href.indexOf('/admin/index/index') !== -1 || href === '/admin/' || href === '/admin' || href.indexOf('/admin/index') === 0);
+                        var isIndex = (item.name && (item.name === 'admin/index/index' || item.name === 'admin/index')) ||
+                            (href && (href.indexOf('/admin/index/index') !== -1 || href === '/admin/' || href === '/admin' || href.indexOf('/admin/index') === 0 || href.indexOf('/index/index') !== -1));
                         if (item.children && item.children.length > 0) {
                             item.children = filterIndexMenu(item.children);
                         }

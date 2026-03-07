@@ -1,0 +1,64 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑保养计划</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <input type="hidden" name="row[id]" value="{$row.id}">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">设备</label>
+                <div class="col-sm-6">
+                    <select name="row[equipment_id]" class="form-control" required>
+                        <option value="">请选择</option>
+                        {volist name="equipmentList" id="eq"}
+                        <option value="{$eq.id}" {$eq.id == $row.equipment_id ? 'selected' : ''}>{$eq.code} - {$eq.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">保养类型</label>
+                <div class="col-sm-6">
+                    <select name="row[plan_type]" class="form-control">
+                        <option value="daily" {$row.plan_type == 'daily' ? 'selected' : ''}>日保养</option>
+                        <option value="weekly" {$row.plan_type == 'weekly' ? 'selected' : ''}>周保养</option>
+                        <option value="monthly" {$row.plan_type == 'monthly' ? 'selected' : ''}>月保养</option>
+                        <option value="quarterly" {$row.plan_type == 'quarterly' ? 'selected' : ''}>季保养</option>
+                        <option value="yearly" {$row.plan_type == 'yearly' ? 'selected' : ''}>年保养</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">周期(天)</label>
+                <div class="col-sm-6"><input type="number" name="row[cycle_days]" class="form-control" value="{$row.cycle_days}" min="1"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">上次保养日期</label>
+                <div class="col-sm-6"><input type="date" name="row[last_date]" class="form-control" value="{$row.last_date}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">下次保养日期</label>
+                <div class="col-sm-6"><input type="date" name="row[next_date]" class="form-control" value="{$row.next_date}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">保养内容</label>
+                <div class="col-sm-6"><textarea name="row[content]" class="form-control" rows="3">{$row.content}</textarea></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/equipment/maintenance/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-edit').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/equipment/maintenance/edit?ids=' + $('input[name="row[id]"]').val(), $(this).serialize(), function(r) {
+            if (r.code == 1) { alert(r.msg || '保存成功'); location.href = base + '/equipment/maintenance/index'; }
+            else alert(r.msg || '保存失败');
+        }, 'json');
+    });
+})();
+</script>

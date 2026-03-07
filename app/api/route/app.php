@@ -58,6 +58,8 @@ Route::get('worker/reports', 'Worker/reports')->middleware(\app\api\middleware\U
 Route::get('worker/wages', 'Worker/wages')->middleware(\app\api\middleware\UserAuth::class);
 Route::post('worker/uploadImage', 'Worker/uploadImage')->middleware(\app\api\middleware\UserAuth::class);
 
+Route::get('cockpit/getData', 'Cockpit/getData')->middleware(\app\api\middleware\UserAuth::class);
+
 // AI 接口（员工端）
 Route::post('ai/transcribe', 'Ai/transcribe')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
 Route::post('ai/parse', 'Ai/parse')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
@@ -71,6 +73,7 @@ Route::get('scanwork/getOrderDetail', 'Scanwork/getOrderDetail')->middleware(\ap
 Route::get('scanwork/getOrderModels', 'Scanwork/getOrderModels')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getAllocations', 'Scanwork/getAllocations')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getAllocationDetail', 'Scanwork/getAllocationDetail')->middleware(\app\api\middleware\AdminAuth::class);
+Route::get('scanwork/getTaskByScan', 'Scanwork/getTaskByScan')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/createAllocation', 'Scanwork/createAllocation')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getReports', 'Scanwork/getReports')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getActiveReports', 'Scanwork/getActiveReports')->middleware(\app\api\middleware\AdminAuth::class);

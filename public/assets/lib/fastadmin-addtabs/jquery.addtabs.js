@@ -84,8 +84,23 @@
         navobj.on('dblclick', 'li[role=presentation]', function () {
             $(this).find(".close-tab").trigger("click");
         });
-        navobj.on('click', 'li[role=presentation]', function () {
-            $("a[addtabs=" + $("a", this).attr("node-id") + "]").trigger("click");
+        navobj.on('click', 'li[role=presentation]', function (e) {
+            if ($(e.target).closest('.close-tab').length) return;
+            var nodeId = $("a", this).attr("node-id");
+            if (!nodeId) return;
+            var tabid = 'tab_' + nodeId, conid = 'con_' + nodeId;
+            var $tabitem = $('#' + tabid, navobj), $conitem = $('#' + conid, tabobj);
+            if ($tabitem.length && $conitem.length) {
+                e.preventDefault();
+                e.stopPropagation();
+                navobj.find("li[role=presentation]").removeClass('active');
+                tabobj.find(".tab-pane").removeClass('active');
+                $tabitem.addClass('active');
+                $conitem.addClass('active');
+                document.title = $("a", this).text().replace(/\s*$/g, '').replace(/^\s*/, '') || document.title;
+                return false;
+            }
+            $("a[addtabs=" + nodeId + "]", options.monitor).trigger("click");
         });
 
         $(window).resize(function () {
@@ -200,21 +215,27 @@
             var conid = 'con_' + id;
             var tabitem = $('#' + tabid, navobj);
             var conitem = $('#' + conid, tabobj);
-            //如果关闭的是当前激活的TAB，激活他的前一个TAB（只在标签栏 navobj 内查找，避免误匹配侧栏 li.active）
-            if (navobj.find("li.active").not('.tabdrop').attr('id') === tabid) {
-                var prev = tabitem.prev().not(".tabdrop");
-                var next = tabitem.next().not(".tabdrop");
-                if (prev.length > 0) {
-                    prev.find('a').trigger("click");
-                } else if (next.length > 0) {
-                    next.find('a').trigger("click");
-                } else {
-                    $(">li:not(.tabdrop):last > a", navobj).trigger('click');
-                }
-            }
+            var needActivate = navobj.find("li.active").not('.tabdrop').attr('id') === tabid;
+            var prev = tabitem.prev().not(".tabdrop");
+            var next = tabitem.next().not(".tabdrop");
             //关闭TAB
             tabitem.remove();
             conitem.remove();
+            //如果关闭的是当前激活的TAB，直接激活前一个或后一个（不依赖 a[addtabs]）
+            if (needActivate) {
+                var $to = prev.length ? prev : (next.length ? next : navobj.find("li[role=presentation]").not('.tabdrop').first());
+                if ($to.length) {
+                    var nodeId = $to.find('a').attr("node-id");
+                    if (nodeId) {
+                        var cid = 'con_' + nodeId;
+                        navobj.find("li[role=presentation]").removeClass('active');
+                        tabobj.find(".tab-pane").removeClass('active');
+                        $to.addClass('active');
+                        $('#' + cid, tabobj).addClass('active');
+                        document.title = $to.find('a').text().replace(/\s*$/g, '').replace(/^\s*/, '') || document.title;
+                    }
+                }
+            }
             _drop();
             options.callback();
         };

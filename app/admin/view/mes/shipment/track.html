@@ -1,0 +1,42 @@
+{include file='common/meta' /}
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>物流跟踪 - {$shipment.shipment_no|default=''}</h4></div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-sm-6">
+                <dl class="dl-horizontal">
+                    <dt>发货单号</dt><dd>{$shipment.shipment_no|default='-'}</dd>
+                    <dt>订单号</dt><dd>{$shipment.order.order_no|default='-'}</dd>
+                    <dt>客户</dt><dd>{$shipment.customer.customer_name|default='-'}</dd>
+                    <dt>物流公司</dt><dd>{$shipment.logistics_company|default='-'}</dd>
+                    <dt>物流单号</dt><dd>{$shipment.logistics_no|default='-'}</dd>
+                    <dt>发货时间</dt><dd>{$shipment.shipment_time|date='Y-m-d H:i',###}</dd>
+                </dl>
+            </div>
+            <div class="col-sm-6">
+                <dl class="dl-horizontal">
+                    <dt>收货人</dt><dd>{$shipment.receiver_name|default='-'}</dd>
+                    <dt>收货电话</dt><dd>{$shipment.receiver_phone|default='-'}</dd>
+                    <dt>收货地址</dt><dd>{$shipment.receiver_address|default='-'}</dd>
+                </dl>
+            </div>
+        </div>
+        <h5>发货明细</h5>
+        <table class="table table-bordered table-condensed">
+            <thead><tr><th>产品/型号</th><th>数量</th><th>批次号</th></tr></thead>
+            <tbody>
+                {volist name="shipment.items" id="item"}
+                <tr>
+                    <td>{$item.model_id|default='-'}</td>
+                    <td>{$item.quantity|default='0'}</td>
+                    <td>{$item.batch_no|default='-'}</td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+        {if empty($shipment.items)}
+        <p class="text-muted">暂无明细</p>
+        {/if}
+    </div>
+</div>
+{include file='common/script-iframe' /}

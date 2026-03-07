@@ -4,20 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>无权限 - KeleAdmin</title>
-    <link rel="stylesheet" href="/public/assets/lib/adminlte/css/adminlte.min.css">
+    <link rel="stylesheet" href="/assets/lib/layui/css/layui.css">
+    <style>
+        body { background: #f2f2f2; padding: 40px; }
+        .error-page { text-align: center; padding: 60px 20px; background: #fff; border-radius: 8px; max-width: 500px; margin: 0 auto; }
+        .error-page .headline { font-size: 72px; color: #1aa094; margin: 0; }
+        .error-page .error-content { margin-top: 20px; color: #666; }
+        .error-page a { margin-top: 20px; }
+    </style>
 </head>
-<body class="hold-transition">
-<div class="content-wrapper" style="margin-left:0">
-    <section class="content">
-        <div class="error-page">
-            <h2 class="headline text-warning">403</h2>
-            <div class="error-content">
-                <h3><i class="fas fa-exclamation-triangle text-warning"></i> 无权限访问</h3>
-                <p>{$msg|default='您没有权限访问该页面'}</p>
-                <a href="{:url('index/index')}" class="btn btn-primary">返回首页</a>
-            </div>
-        </div>
-    </section>
+<body>
+<div class="error-page">
+    <h2 class="headline">403</h2>
+    <div class="error-content">
+        <h3>无权限访问</h3>
+        <p>{$msg|default='您没有权限访问该页面'}</p>
+        <a href="{:url('index/index')}" class="layui-btn layui-btn-normal">返回首页</a>
+    </div>
 </div>
 </body>
 </html>

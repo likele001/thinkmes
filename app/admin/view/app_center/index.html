@@ -28,8 +28,9 @@ $(function(){
     var installUrl = base + '/app_center/install';
     var uninstallUrl = base + '/app_center/uninstall';
     var uploadUrl = base + '/app_center/upload';
-    function postAction(url, app, onSuccess) {
-        $.post(url, {app: app}, function(ret){
+    function postAction(url, data, onSuccess) {
+        var payload = typeof data === 'string' ? { app: data } : (data || {});
+        $.post(url, payload, function(ret){
             var ok = ret && ret.code === 1;
             alert((ret && ret.msg) || (ok ? '操作成功' : '操作失败'));
             if (ok && typeof onSuccess === 'function') onSuccess();
@@ -89,12 +90,13 @@ $(function(){
                         'click .btn-app-install': function(e, value, row) {
                             e.preventDefault();
                             if (!confirm('确定要安装「' + row.title + '」吗？将执行数据库迁移并添加菜单。')) return;
-                            postAction(installUrl, row.key, function() { $table.bootstrapTable('refresh'); });
+                            postAction(installUrl, { app: row.key }, function() { $table.bootstrapTable('refresh'); });
                         },
                         'click .btn-app-uninstall': function(e, value, row) {
                             e.preventDefault();
-                            if (!confirm('确定卸载「' + row.title + '」吗？仅隐藏菜单，不删除数据表。')) return;
-                            postAction(uninstallUrl, row.key, function() { $table.bootstrapTable('refresh'); });
+                            if (!confirm('确定卸载「' + row.title + '」吗？')) return;
+                            var delTables = confirm('是否同时删除该应用的数据表？\n\n删除后数据无法恢复。\n\n【确定】= 卸载并删除数据表\n【取消】= 仅移除菜单，保留数据');
+                            postAction(uninstallUrl, { app: row.key, delete_tables: delTables ? 1 : 0 }, function() { $table.bootstrapTable('refresh'); });
                         }
                     }
                 }

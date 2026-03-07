@@ -1,0 +1,51 @@
+{include file='common/meta' /}
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>编辑入库单</h4></div>
+    <div class="panel-body">
+        <form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">入库单号</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input class="form-control" value="{$row.in_no|default=''}" readonly>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">入库时间</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input type="datetime-local" class="form-control" name="row[in_time]" value="{$row.in_time|date='Y-m-d\TH:i',###}" placeholder="入库时间">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">备注</label>
+                <div class="col-xs-12 col-sm-8">
+                    <textarea class="form-control" name="row[remark]" rows="2" placeholder="备注">{$row.remark|default=''}</textarea>
+                </div>
+            </div>
+            <div class="form-group layer-footer">
+                <label class="control-label col-xs-12 col-sm-2"></label>
+                <div class="col-xs-12 col-sm-8">
+                    <button type="submit" class="btn btn-success btn-embossed">保存</button>
+                    <button type="button" class="btn btn-default btn-embossed" onclick="window.parent.layer.closeAll();">取消</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+$(function() {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var ids = '{$ids|default=""}';
+    $('#form-edit').on('submit', function(e) {
+        e.preventDefault();
+        var data = $(this).serialize() + '&ids=' + encodeURIComponent(ids);
+        $.post(base + '/mes/purchase/editInbound', data, function(r) {
+            if (r.code == 1) {
+                if (typeof Fast !== 'undefined' && Fast.api) Fast.api.close(); else alert(r.msg);
+            } else {
+                alert(r.msg || '保存失败');
+            }
+        }, 'json');
+    });
+});
+</script>
+{include file='common/script-iframe' /}

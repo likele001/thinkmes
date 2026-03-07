@@ -78,10 +78,7 @@ class Index extends Backend
             $redirectUrl = $url ?: 'admin/index/index';
             $path = preg_replace('#^admin/#', '', $redirectUrl);
             $fullUrl = rtrim($this->request->domain(), '/') . $this->getAdminUrlPrefix() . '/' . str_replace('.', '/', $path);
-            // 非 AJAX 请求直接 302 跳转到后台首页（仿 FastAdmin 传统表单提交）
-            if (!$this->request->isAjax()) {
-                return redirect($fullUrl);
-            }
+            // 登录接口统一返回 JSON，前端根据 data.url 跳转（表单已用 Ajax 提交）
             return $this->success('登录成功', ['url' => $fullUrl]);
         }
 
@@ -100,6 +97,10 @@ class Index extends Backend
     public function logout(): Response
     {
         Session::delete('admin_info');
+        $loginUrl = rtrim($this->request->domain(), '/') . $this->getAdminUrlPrefix() . '/index/login';
+        if ($this->request->isAjax()) {
+            return $this->success('已退出', ['url' => $loginUrl]);
+        }
         return redirect($this->getAdminUrlPrefix() . '/index/login');
     }
 
@@ -363,15 +364,26 @@ class Index extends Backend
                 }
             }
             $v['icon'] = ($v['icon'] ?? '') . ' fa-fw';
-            // URL生成：路径式入口时用 /随机路径/，否则用 /admin/
+            $prefix = $this->getAdminUrlPrefix();
+            // URL生成：路径式入口时用 /随机路径/，否则用 /admin/；避免 DB 里存了 admin/xxx 导致前端再拼一次出现 /admin/admin/xxx
             if (!isset($v['url']) || !$v['url']) {
                 $name = $v['name'] ?? '';
-                $prefix = $this->getAdminUrlPrefix();
                 if (str_starts_with($name, 'admin/')) {
-                    $v['url'] = $prefix . '/' . substr($name, 6);
+                    $v['url'] = $prefix . '/' . trim(substr($name, 6), '/');
                 } else {
                     $v['url'] = $prefix . '/' . $name;
                 }
+            } else {
+                $raw = (string) $v['url'];
+                if (str_starts_with($raw, 'admin/')) {
+                    $v['url'] = $prefix . '/' . trim(substr($raw, 6), '/');
+                } else {
+                    $v['url'] = rtrim($raw, '/');
+                }
+            }
+            // 仅当路径以尾斜杠结尾时补 /index（如权限里填 admin/config/），避免 /admin/config//index
+            if ($v['url'] !== '' && $v['url'] !== '#' && str_ends_with($v['url'], '/')) {
+                $v['url'] = rtrim($v['url'], '/') . '/index';
             }
             // 如果菜单没有子菜单，尝试链接到对应的 index 页面
             $v['_original_url'] = $v['url'] ?? '';
@@ -385,8 +397,8 @@ class Index extends Backend
         if ($this->getTenantId() === 0) {
             $present = array_map(function($it){ return strtolower($it['name'] ?? ''); }, $ruleList);
             $need = [
-                ['id' => 'virt_tenant_package', 'name' => 'tenant_package/index', 'title' => '套餐管理', 'icon' => 'fas fa-cubes', 'pid' => 0],
-                ['id' => 'virt_tenant_audit',   'name' => 'tenant_audit/index',   'title' => '租户审核', 'icon' => 'fas fa-user-check', 'pid' => 0],
+                ['id' => 'virt_tenant_package', 'name' => 'tenant_package/index', 'title' => '套餐管理', 'icon' => 'fas fa-cubes', 'pid' => 11],
+                ['id' => 'virt_tenant_audit',   'name' => 'tenant_audit/index',   'title' => '租户审核', 'icon' => 'fas fa-user-check', 'pid' => 11],
             ];
             foreach ($need as $it) {
                 if (!in_array(strtolower($it['name']), $present, true)) {
@@ -458,10 +470,10 @@ class Index extends Backend
                 } else {
                     $name = $item['name'] ?? '';
                     $originalUrl = $item['_original_url'] ?? $item['url'] ?? '';
-                    // 如果 URL 是菜单本身（如 /admin/ai/package），尝试链接到 index
                     if ($name && !str_ends_with($name, '/index')) {
                         $prefix = $this->getAdminUrlPrefix();
-                        $indexUrl = $prefix . '/' . $name . '/index';
+                        $cleanName = str_starts_with($name, 'admin/') ? substr($name, 6) : $name;
+                        $indexUrl = $prefix . '/' . trim($cleanName, '/') . '/index';
                         $item['url'] = $indexUrl;
                     } else {
                         $item['url'] = $originalUrl ?: $item['url'] ?? '#';
@@ -527,6 +539,10 @@ class Index extends Backend
         $auth = new Auth();
         $auth->clearAllCache();
         \think\facade\Cache::clear();
+        // 非 Ajax（如直接打开链接）时跳转回首页，避免整页只显示 JSON
+        if (!$this->request->isAjax()) {
+            return redirect($this->getAdminUrlPrefix() . '/index/index?cleared=1');
+        }
         return $this->success('缓存已清理');
     }
 }

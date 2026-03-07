@@ -9,6 +9,27 @@
             <a href="javascript:;" class="btn btn-success btn-edit btn-disabled disabled" title="编辑"><i class="fas fa-edit"></i> 编辑</a>
             <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled" title="删除"><i class="fas fa-trash-alt"></i> 删除</a>
         </div>
+        <div class="form-inline mb-2">
+            <input type="text" id="filter-name" class="form-control form-control-sm mr-2" placeholder="客户名称" style="width:120px">
+            <select id="filter-level" class="form-control form-control-sm mr-2" style="width:100px">
+                <option value="">全部级别</option>
+                <option value="0">普通</option>
+                <option value="1">重要</option>
+                <option value="2">战略</option>
+            </select>
+            <select id="filter-tag_id" class="form-control form-control-sm mr-2" style="width:120px">
+                <option value="">全部标签</option>
+                {volist name="tagList" id="t"}
+                <option value="{$t.id}">{$t.name}</option>
+                {/volist}
+            </select>
+            <select id="filter-status" class="form-control form-control-sm mr-2" style="width:90px">
+                <option value="">全部状态</option>
+                <option value="1">正常</option>
+                <option value="0">停用</option>
+            </select>
+            <button type="button" class="btn btn-sm btn-primary" id="btn-search">搜索</button>
+        </div>
         <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
     </div>
 </div>
@@ -37,6 +58,13 @@
             pageList: [10, 20, 50],
             sortName: 'id',
             sortOrder: 'desc',
+            queryParams: function(params) {
+                params.name = $('#filter-name').val() || '';
+                params.level = $('#filter-level').val() || '';
+                params.tag_id = $('#filter-tag_id').val() || '';
+                params.status = $('#filter-status').val() || '';
+                return params;
+            },
             responseHandler: function(res) {
                 var data = res && res.data ? res.data : {};
                 return {
@@ -45,6 +73,7 @@
                 };
             },
             columns: [
+                {checkbox: true},
                 {field: 'id', title: 'ID', width: 80, sortable: true},
                 {field: 'name', title: '客户名称', align: 'left'},
                 {field: 'short_name', title: '简称', align: 'left'},
@@ -54,6 +83,7 @@
                     if (value == 2) return '<span class="badge badge-warning">战略</span>';
                     return value;
                 }},
+                {field: 'tag_names', title: '标签', width: 120},
                 {field: 'source', title: '来源', align: 'left'},
                 {field: 'industry', title: '行业', align: 'left'},
                 {field: 'status', title: '状态', width: 100, formatter: function(value) {
@@ -88,6 +118,9 @@
         $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function() {
             table.bootstrapTable('refresh');
         });
+        $(document).off('click', '#btn-search').on('click', '#btn-search', function() {
+            table.bootstrapTable('refresh');
+        });
 
         $(document).off('click', '#toolbar .btn-edit').on('click', '#toolbar .btn-edit', function() {
             var rows = table.bootstrapTable('getSelections');
@@ -120,11 +153,8 @@
 
         table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
             var rows = table.bootstrapTable('getSelections');
-            if (rows.length > 0) {
-                $('.btn-edit, .btn-del').removeClass('disabled btn-disabled');
-            } else {
-                $('.btn-edit, .btn-del').addClass('disabled btn-disabled');
-            }
+            $('#toolbar .btn-edit').toggleClass('disabled btn-disabled', rows.length !== 1);
+            $('#toolbar .btn-del').toggleClass('disabled btn-disabled', rows.length === 0);
         });
 
         return true;

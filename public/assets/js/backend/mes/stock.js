@@ -209,6 +209,33 @@
         // 库存盘点
         check: function () {
             initCheckTable();
+        },
+
+        // 库存预警
+        alert: function () {
+            var $table = $('#table');
+            if ($table.length === 0 || typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) return;
+            $table.bootstrapTable({
+                url: base + '/mes/stock/alert',
+                method: 'get',
+                sidePagination: 'server',
+                pagination: true,
+                pageSize: 20,
+                sortName: 'id',
+                sortOrder: 'desc',
+                responseHandler: function (res) {
+                    var d = res && res.data ? res.data : {};
+                    return { total: d.total || 0, rows: d.list || [] };
+                },
+                columns: [
+                    { field: 'id', title: 'ID', width: 80 },
+                    { field: 'name', title: '物料名称', align: 'left' },
+                    { field: 'code', title: '编码', width: 120 },
+                    { field: 'stock', title: '当前库存', width: 100 },
+                    { field: 'min_stock', title: '安全库存', width: 100 },
+                    { field: 'shortage', title: '缺货量', width: 100 }
+                ]
+            });
         }
     };
 

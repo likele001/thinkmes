@@ -1,0 +1,40 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>库存预警</em> 当前库存低于安全库存的物料</div>
+    </div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh"><i class="fas fa-sync-alt"></i> 刷新</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+<script>
+(function init() {
+    if (typeof window.jQuery === 'undefined' || !window.jQuery.fn.bootstrapTable) { setTimeout(init, 50); return; }
+    var $ = window.jQuery, base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '', $table = $('#table');
+    if ($table.data('bootstrap.table')) return;
+    $table.bootstrapTable({
+        url: base + '/mes/stock/alert',
+        pk: 'id',
+        pagination: false,
+        sidePagination: 'server',
+        responseHandler: function (res) {
+            var d = res.data || {};
+            return { total: d.total || 0, rows: d.list || [] };
+        },
+        columns: [
+            {field: 'id', title: 'ID', width: 70},
+            {field: 'code', title: '物料编码', width: 120},
+            {field: 'name', title: '物料名称', align: 'left'},
+            {field: 'stock', title: '当前库存', width: 100},
+            {field: 'min_stock', title: '安全库存', width: 100},
+            {field: 'shortage', title: '缺货量', width: 100, formatter: function(v) {
+                return '<span class="text-danger">' + (v != null ? v : 0) + '</span>';
+            }},
+            {field: 'unit', title: '单位', width: 70}
+        ]
+    });
+    $('#toolbar .btn-refresh').on('click', function() { $table.bootstrapTable('refresh'); });
+})();
+</script>

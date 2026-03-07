@@ -1,0 +1,44 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑打印模板</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">模板名称</label>
+                <div class="col-sm-6"><input type="text" name="row[name]" class="form-control" required value="{$row.name}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">类型</label>
+                <div class="col-sm-6">
+                    <select name="row[type]" class="form-control">
+                        <option value="order" {$row.type == 'order' ? 'selected' : ''}>生产订单</option>
+                        <option value="sales_order" {$row.type == 'sales_order' ? 'selected' : ''}>销售订单</option>
+                        <option value="shipment" {$row.type == 'shipment' ? 'selected' : ''}>发货单</option>
+                        <option value="contract" {$row.type == 'contract' ? 'selected' : ''}>合同</option>
+                        <option value="other" {$row.type == 'other' ? 'selected' : ''}>其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">HTML内容</label>
+                <div class="col-sm-8"><textarea name="row[content]" class="form-control" rows="10">{$row.content}</textarea></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/print_template/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-edit').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/print_template/edit?ids=' + '{$row.id}', $(this).serialize(), function(r) {
+            if (r.code == 1) { alert(r.msg || '保存成功'); location.href = base + '/print_template/index'; }
+            else alert(r.msg || '保存失败');
+        }, 'json');
+    });
+})();
+</script>

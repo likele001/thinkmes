@@ -1,0 +1,55 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑应收</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">摘要</label>
+                <div class="col-sm-6"><input type="text" name="row[title]" class="form-control" required value="{$row.title}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">客户</label>
+                <div class="col-sm-6">
+                    <select name="row[customer_id]" class="form-control">
+                        <option value="">请选择</option>
+                        {volist name="customerList" id="c"}
+                        <option value="{$c.id}" {$c.id == $row.customer_id ? 'selected' : ''}>{$c.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">应收金额</label>
+                <div class="col-sm-6"><input type="number" name="row[amount]" class="form-control" step="0.01" required value="{$row.amount}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">已收金额</label>
+                <div class="col-sm-6"><input type="number" name="row[received]" class="form-control" step="0.01" value="{$row.received}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">到期日</label>
+                <div class="col-sm-6"><input type="date" name="row[due_date]" class="form-control" value="{$row.due_date}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">备注</label>
+                <div class="col-sm-6"><textarea name="row[remark]" class="form-control" rows="2">{$row.remark}</textarea></div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/finance/receivable/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    $('#form-edit').on('submit', function(e) {
+        e.preventDefault();
+        $.post(base + '/finance/receivable/edit?ids=' + '{$row.id}', $(this).serialize(), function(r) {
+            if (r.code == 1) { alert(r.msg || '保存成功'); location.href = base + '/finance/receivable/index'; }
+            else alert(r.msg || '保存失败');
+        }, 'json');
+    });
+})();
+</script>

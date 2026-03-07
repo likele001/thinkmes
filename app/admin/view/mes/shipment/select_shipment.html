@@ -60,7 +60,8 @@
 
 <script>
 function selectShipment(shipmentId) {
-    window.location.href = "{:url('mes.Shipment/track')}?id=" + shipmentId;
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    window.location.href = base + '/mes/shipment/track?id=' + shipmentId;
 }
 
 $(function() {

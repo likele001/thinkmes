@@ -1,0 +1,55 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-chart-pie"></i> 设备利用率统计</h3>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-auto">
+                <label>开始日期</label>
+                <input type="date" id="start_date" class="form-control" value="{:date('Y-m-d', strtotime('-30 days'))}">
+            </div>
+            <div class="col-auto">
+                <label>结束日期</label>
+                <input type="date" id="end_date" class="form-control" value="{:date('Y-m-d')}">
+            </div>
+            <div class="col-auto d-flex align-items-end">
+                <button type="button" id="btn-query" class="btn btn-primary">查询</button>
+            </div>
+        </div>
+        <table id="stat-table" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>设备</th>
+                    <th>统计天数</th>
+                    <th>计划工时(h)</th>
+                    <th>实际运行(h)</th>
+                    <th>停机(h)</th>
+                    <th>利用率%</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+(function() {
+    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    function loadStat() {
+        var start = $('#start_date').val(), end = $('#end_date').val();
+        $.get(base + '/equipment/equipment/stat', { start_date: start, end_date: end }, function(r) {
+            if (r.code != 1 || !r.data || !r.data.list) {
+                $('#stat-table tbody').html('<tr><td colspan="6" class="text-center">暂无数据</td></tr>');
+                return;
+            }
+            var html = '';
+            r.data.list.forEach(function(row) {
+                html += '<tr><td>' + (row.equipment_name || '-') + '</td><td>' + (row.days || 0) + '</td><td>' + (row.plan_hours || 0) + '</td><td>' + (row.run_hours || 0) + '</td><td>' + (row.down_hours || 0) + '</td><td>' + (row.utilization || 0) + '%</td></tr>';
+            });
+            $('#stat-table tbody').html(html || '<tr><td colspan="6" class="text-center">暂无数据</td></tr>');
+        }, 'json');
+    }
+    $('#btn-query').on('click', loadStat);
+    loadStat();
+})();
+</script>

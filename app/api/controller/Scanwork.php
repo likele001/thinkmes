@@ -988,9 +988,11 @@ class Scanwork extends BaseController
         }
         Db::startTrans();
         try {
-            $material->stock = (float) $material->stock + $quantity;
+            $beforeQty = (float) $material->stock;
+            $afterQty = $beforeQty + $quantity;
+            $material->stock = $afterQty;
             $material->save();
-            StockLogModel::log($tenantId, $materialId, $quantity, 'adjust_in', 0, $adminId, $remark ?: '调整入库');
+            StockLogModel::log($tenantId, $materialId, $quantity, 'adjust_in', 0, $adminId, $remark ?: '调整入库', $beforeQty, $afterQty);
             Db::commit();
             return $this->success('入库成功');
         } catch (\Throwable $e) {
@@ -1020,9 +1022,10 @@ class Scanwork extends BaseController
         }
         Db::startTrans();
         try {
-            $material->stock = $stock - $quantity;
+            $afterQty = $stock - $quantity;
+            $material->stock = $afterQty;
             $material->save();
-            StockLogModel::log($tenantId, $materialId, -$quantity, 'adjust_out', 0, $adminId, $remark ?: '调整出库');
+            StockLogModel::log($tenantId, $materialId, -$quantity, 'adjust_out', 0, $adminId, $remark ?: '调整出库', $stock, $afterQty);
             Db::commit();
             return $this->success('出库成功');
         } catch (\Throwable $e) {
@@ -1053,7 +1056,7 @@ class Scanwork extends BaseController
         try {
             $material->stock = $actualQuantity;
             $material->save();
-            StockLogModel::log($tenantId, $materialId, $diff, $businessType, 0, $adminId, $remark ?: '库存盘点');
+            StockLogModel::log($tenantId, $materialId, $diff, $businessType, 0, $adminId, $remark ?: '库存盘点', $before, $actualQuantity);
             Db::commit();
             return $this->success('盘点成功', ['diff' => $diff]);
         } catch (\Throwable $e) {
@@ -1866,9 +1869,10 @@ class Scanwork extends BaseController
             $material = MaterialModel::where('tenant_id', $tenantId)->find($params['material_id']);
             if ($material) {
                 $qty = (float) ($params['in_quantity'] ?? 0);
-                $material->stock = (float) $material->stock + $qty;
+                $beforeQty = (float) $material->stock;
+                $material->stock = $beforeQty + $qty;
                 $material->save();
-                StockLogModel::log($tenantId, (int) $params['material_id'], $qty, 'purchase_in', $inbound->id, $adminId, '采购入库：' . $inbound->in_no);
+                StockLogModel::log($tenantId, (int) $params['material_id'], $qty, 'purchase_in', $inbound->id, $adminId, '采购入库：' . $inbound->in_no, $beforeQty, $beforeQty + $qty);
             }
             if (!empty($params['purchase_request_id'])) {
                 $req = PurchaseRequestModel::where('tenant_id', $tenantId)->find($params['purchase_request_id']);
@@ -2177,6 +2181,58 @@ class Scanwork extends BaseController
             'status' => 1,
         ]);
         return $this->success('生成成功', ['trace_code' => $traceCode, 'qr_url' => $qrUrl]);
+    }
+
+    /**
+     * 扫码报工：扫工序/任务条码返回任务信息及建议报工数量
+     * GET code= 分配ID 或 含 allocation_id= 的 URL
+     */
+    public function getTaskByScan(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $code = trim((string) $this->request->get('code', ''));
+        if ($code === '') {
+            return $this->error('请扫描任务条码或输入分配ID');
+        }
+        $allocationId = null;
+        if (preg_match('/^[1-9]\d*$/', $code)) {
+            $allocationId = (int) $code;
+        } elseif (preg_match('/allocation_id=(\d+)/i', $code, $m)) {
+            $allocationId = (int) $m[1];
+        }
+        if ($allocationId === null || $allocationId <= 0) {
+            return $this->error('无效的条码内容');
+        }
+        $allocation = AllocationModel::with(['order', 'model.product', 'process'])->where('tenant_id', $tenantId)->find($allocationId);
+        if (!$allocation) {
+            return $this->error('任务不存在或已失效');
+        }
+        $quantity = (int) $allocation->quantity;
+        $completed = (int) $allocation->completed_quantity;
+        $defaultQuantity = max(0, $quantity - $completed);
+        $orderNo = $allocation->order ? $allocation->order->order_no : '';
+        $modelName = '';
+        if ($allocation->model) {
+            $modelName = $allocation->model->name ?? '';
+            if ($modelName === '' && isset($allocation->model->product) && $allocation->model->product) {
+                $modelName = $allocation->model->product->name ?? '';
+            }
+        }
+        $processName = $allocation->process ? $allocation->process->name : '';
+        $data = [
+            'id' => $allocation->id,
+            'order_id' => $allocation->order_id,
+            'model_id' => $allocation->model_id,
+            'process_id' => $allocation->process_id,
+            'quantity' => $quantity,
+            'completed_quantity' => $completed,
+            'status' => $allocation->status,
+            'order_no' => $orderNo,
+            'model_name' => $modelName,
+            'process_name' => $processName,
+            'default_quantity' => $defaultQuantity,
+        ];
+        return $this->success('', $data);
     }
 
     public function queryTraceCode(): Response

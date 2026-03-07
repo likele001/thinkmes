@@ -1,0 +1,31 @@
+<div class="card panel-intro">
+    <div class="card-header"><div class="panel-lead"><em>收款登记</em></div></div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh"><i class="fas fa-sync-alt"></i> 刷新</a>
+            <a href="{$config.moduleurl}/finance/receive/add" class="btn btn-success"><i class="fas fa-plus"></i> 登记收款</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+<script>
+(function init() {
+    if (typeof window.jQuery === 'undefined' || !window.jQuery.fn.bootstrapTable) { setTimeout(init, 50); return; }
+    var $ = window.jQuery, base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '', $table = $('#table');
+    if ($table.data('bootstrap.table')) return;
+    $table.bootstrapTable({
+        url: base + '/finance/receive/index', pk: 'id', sortName: 'id', sortOrder: 'desc',
+        pagination: true, sidePagination: 'server', pageSize: 20, pageList: [10, 20, 50],
+        responseHandler: function (res) { var d = res.data || {}; return { total: d.total || 0, rows: d.list || [] }; },
+        columns: [
+            {field: 'id', title: 'ID', width: 70},
+            {field: 'receivable_title', title: '应收单', align: 'left'},
+            {field: 'customer_name', title: '客户', width: 120},
+            {field: 'amount', title: '收款金额', width: 100},
+            {field: 'pay_time', title: '收款时间', width: 160},
+            {field: 'remark', title: '备注', align: 'left'}
+        ]
+    });
+    $('#toolbar .btn-refresh').on('click', function() { $table.bootstrapTable('refresh'); });
+})();
+</script>

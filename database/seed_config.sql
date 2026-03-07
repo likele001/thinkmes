@@ -3,7 +3,7 @@
 -- 注意：需要先执行 migrate_add_config_title.sql 添加 title 字段
 
 INSERT INTO `fa_config` (`name`, `title`, `value`, `group`, `sort`) VALUES
-('site_name', '站点名称', 'ThinkMes', 'base', 0),
+('site_name', '站点名称', 'KeleAdmin', 'base', 0),
 ('site_logo', '站点Logo', '', 'base', 1),
 ('login_captcha', '登录验证码', '0', 'safe', 0),
 ('login_fail_limit', '登录失败次数限制', '5', 'safe', 1),

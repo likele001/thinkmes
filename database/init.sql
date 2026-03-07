@@ -72,6 +72,12 @@ CREATE TABLE `fa_config` (
   UNIQUE KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';
 
+-- 验证码等安全配置（后台登录验证码、前端登录/注册验证码方式，基础版即含）
+INSERT INTO `fa_config` (`name`, `title`, `value`, `group`, `sort`, `create_time`, `update_time`) VALUES
+('login_captcha', '登录验证码', '1', 'safe', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('front_captcha_mode', '前端验证码方式', 'image', 'safe', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `value` = VALUES(`value`), `sort` = VALUES(`sort`);
+
 -- 文件上传表
 DROP TABLE IF EXISTS `fa_upload`;
 CREATE TABLE `fa_upload` (
@@ -167,13 +173,113 @@ VALUES (1, 0, 0, 'admin', '$2y$10$FgTjiHSfat5J4izn09x4u.nZ0d/aiDm0dWXN7YEZBteofm
 INSERT INTO `fa_role` (`id`, `name`, `rules`, `status`, `create_time`, `update_time`)
 VALUES (1, '超级管理员', '*', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
--- 默认菜单/规则（供侧栏显示）
+-- 默认菜单/规则（供侧栏显示，带层级：首页 + 系统管理/扩展功能/租户与用户 三大分组）
 INSERT INTO `fa_auth_rule` (`id`, `name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
 (1, 'admin/index/index', '首页', 1, 1, 1, 0, 'fas fa-tachometer-alt', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(2, 'admin/admin/index', '管理员管理', 1, 1, 1, 0, 'fas fa-user-shield', 10, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(3, 'admin/role/index', '角色管理', 1, 1, 1, 0, 'fas fa-users-cog', 20, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(4, 'admin/auth_rule/index', '权限规则', 1, 1, 1, 0, 'fas fa-sitemap', 30, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(5, 'admin/config/index', '系统配置', 1, 1, 1, 0, 'fas fa-cog', 40, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(6, 'admin/log/index', '操作日志', 1, 1, 1, 0, 'fas fa-history', 50, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(7, 'admin/addon/index', '插件管理', 1, 1, 1, 0, 'fas fa-plug', 60, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(8, 'admin/app_center/index', '应用中心', 1, 1, 1, 0, 'fas fa-th-large', 65, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+(9, 'admin/_sys', '系统管理', 1, 1, 1, 0, 'fas fa-cog', 5, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(10, 'admin/_ext', '扩展功能', 1, 1, 1, 0, 'fas fa-puzzle-piece', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(11, 'admin/_tenant_user', '租户与用户', 1, 1, 1, 0, 'fas fa-users', 7, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(2, 'admin/admin/index', '管理员管理', 1, 1, 1, 9, 'fas fa-user-shield', 10, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(3, 'admin/role/index', '角色管理', 1, 1, 1, 9, 'fas fa-users-cog', 20, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(4, 'admin/auth_rule/index', '权限规则', 1, 1, 1, 9, 'fas fa-sitemap', 30, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(5, 'admin/config/index', '系统配置', 1, 1, 1, 9, 'fas fa-cog', 40, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(6, 'admin/log/index', '操作日志', 1, 1, 1, 9, 'fas fa-history', 50, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(7, 'admin/addon/index', '插件管理', 1, 1, 1, 10, 'fas fa-plug', 60, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(8, 'admin/app_center/index', '应用中心', 1, 1, 1, 10, 'fas fa-th-large', 65, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+
+-- 租户套餐表（安装向导一步到位，无需再执行 migrate）
+DROP TABLE IF EXISTS `fa_tenant_package`;
+CREATE TABLE `fa_tenant_package` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '套餐ID',
+  `name` varchar(50) NOT NULL DEFAULT '' COMMENT '套餐名称',
+  `max_admin` int NOT NULL DEFAULT 10 COMMENT '最大管理员数',
+  `max_user` int NOT NULL DEFAULT 1000 COMMENT '最大C端用户数',
+  `expire_days` int DEFAULT NULL COMMENT '默认有效天数 NULL=永久',
+  `sort` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租户套餐表';
+
+-- 租户小程序配置表
+DROP TABLE IF EXISTS `fa_tenant_miniapp`;
+CREATE TABLE `fa_tenant_miniapp` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `tenant_id` int unsigned NOT NULL COMMENT '租户ID',
+  `type` varchar(20) NOT NULL DEFAULT 'wechat' COMMENT '小程序类型：wechat 等',
+  `name` varchar(50) NOT NULL DEFAULT '' COMMENT '小程序名称',
+  `app_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'AppID',
+  `app_secret` varchar(100) NOT NULL DEFAULT '' COMMENT 'AppSecret',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：1启用 0禁用',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_tenant_type` (`tenant_id`,`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租户小程序配置表';
+
+-- 套餐功能配置表
+DROP TABLE IF EXISTS `fa_tenant_package_feature`;
+CREATE TABLE `fa_tenant_package_feature` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `package_id` int unsigned NOT NULL COMMENT '套餐ID',
+  `feature_code` varchar(50) NOT NULL COMMENT '功能代码',
+  `feature_name` varchar(50) NOT NULL COMMENT '功能名称',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_package_feature` (`package_id`,`feature_code`),
+  KEY `idx_package` (`package_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='套餐功能配置表';
+
+-- 租户订单表
+DROP TABLE IF EXISTS `fa_tenant_order`;
+CREATE TABLE `fa_tenant_order` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+  `tenant_id` int unsigned NOT NULL COMMENT '租户ID',
+  `order_no` varchar(32) NOT NULL COMMENT '订单号',
+  `package_id` int unsigned NOT NULL COMMENT '套餐ID',
+  `type` tinyint NOT NULL COMMENT '类型：1购买 2续费 3升级',
+  `amount` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT '金额',
+  `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态：0待支付 1已支付 2已取消 3已退款',
+  `pay_method` varchar(20) DEFAULT '' COMMENT '支付方式：alipay/wechat/bank',
+  `pay_time` int DEFAULT NULL COMMENT '支付时间',
+  `expire_days` int DEFAULT NULL COMMENT '购买/续费天数',
+  `remark` varchar(255) DEFAULT '' COMMENT '备注',
+  `create_time` int NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `update_time` int NOT NULL DEFAULT 0 COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_order_no` (`order_no`),
+  KEY `idx_tenant` (`tenant_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租户订单表';
+
+-- 打印模板表（底座可选功能）
+CREATE TABLE IF NOT EXISTS `fa_print_template` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `tenant_id` int unsigned NOT NULL DEFAULT 0,
+  `name` varchar(64) NOT NULL COMMENT '模板名称',
+  `type` varchar(32) NOT NULL DEFAULT 'order' COMMENT '类型：order/shipment/contract等',
+  `content` text COMMENT 'HTML内容，支持变量如 {order_no}',
+  `create_time` int DEFAULT NULL,
+  `update_time` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `tenant_id` (`tenant_id`),
+  KEY `type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='打印模板';
+
+-- 租户套餐默认数据
+INSERT INTO `fa_tenant_package` (`id`, `name`, `max_admin`, `max_user`, `expire_days`, `sort`, `create_time`, `update_time`) VALUES
+(1, '基础版', 5, 100, 365, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(2, '标准版', 20, 1000, 365, 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+(3, '专业版', 50, 5000, NULL, 3, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `max_admin` = VALUES(`max_admin`), `max_user` = VALUES(`max_user`), `expire_days` = VALUES(`expire_days`), `sort` = VALUES(`sort`);
+
+-- 底座菜单：文件管理→扩展功能(10)；租户/套餐/订单/用户→租户与用户(11)
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('admin/attachment/index', '文件管理', 1, 1, 1, 10, 'fas fa-folder-open', 55, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('admin/tenant/index', '租户管理', 1, 1, 1, 11, 'fas fa-building', 66, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('admin/tenant_package/index', '租户套餐', 1, 1, 1, 11, 'fas fa-box', 67, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('admin/tenant_package_feature/index', '套餐功能', 1, 1, 1, 11, 'fas fa-list', 68, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('admin/tenant_order/index', '租户订单', 1, 1, 1, 11, 'fas fa-receipt', 69, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('admin/member/index', '用户管理', 1, 1, 1, 11, 'fas fa-users', 70, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `icon` = VALUES(`icon`), `sort` = VALUES(`sort`), `ismenu` = VALUES(`ismenu`), `pid` = VALUES(`pid`);
