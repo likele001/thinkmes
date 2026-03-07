@@ -15,7 +15,7 @@ class {$TableName} extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '{$TableName}管理');
+            View::assign('title', '{$title}');
             return $this->fetchWithLayout('{$table}/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
@@ -34,7 +34,7 @@ class {$TableName} extends Backend
             return $this->addPost();
         }
         View::assign('data', []);
-        View::assign('title', '添加{$TableName}');
+        View::assign('title', '添加{$title}');
         return $this->fetchWithLayout('{$table}/add');
     }
 
@@ -58,7 +58,7 @@ class {$TableName} extends Backend
             return $this->error('记录不存在');
         }
         View::assign('data', $data->toArray());
-        View::assign('title', '编辑{$TableName}');
+        View::assign('title', '编辑{$title}');
         return $this->fetchWithLayout('{$table}/edit');
     }
 

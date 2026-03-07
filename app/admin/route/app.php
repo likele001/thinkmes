@@ -133,6 +133,18 @@ Route::post('common/mergeChunks', 'Common/mergeChunks');
 // 缓存清理（后台入口）
 Route::post('index/clearCache', 'Index/clearCache');
 
+// CRUD 一键生成 / 在线命令（仅平台超管）
+Route::get('crud_gen/index', 'CrudGen/index');
+Route::get('crud_gen/add', 'CrudGen/add');
+Route::get('crud_gen/tables', 'CrudGen/tables');
+Route::get('crud_gen/sqlFiles', 'CrudGen/sqlFiles');
+Route::get('crud_gen/getFieldList', 'CrudGen/getFieldList');
+Route::post('crud_gen/command', 'CrudGen/command');
+Route::get('crud_gen/detail', 'CrudGen/detail');
+Route::post('crud_gen/reExecute', 'CrudGen/reExecute');
+Route::post('crud_gen/del', 'CrudGen/del');
+Route::post('crud_gen/generate', 'CrudGen/generate');
+
 // 应用中心（内置应用安装/卸载/上传）
 Route::get('app_center/index', 'AppCenter/index');
 Route::post('app_center/install', 'AppCenter/install');

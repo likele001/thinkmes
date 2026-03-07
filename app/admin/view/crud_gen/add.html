@@ -1,0 +1,149 @@
+<section class="content">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">一键生成 CRUD</h3>
+            <div class="card-tools">
+                <a href="{$config.moduleurl}/crud_gen/index" class="btn btn-sm btn-outline-secondary"><i class="fas fa-list"></i> 返回列表</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item"><a class="nav-link active" href="javascript:;">一键生成CRUD</a></li>
+            </ul>
+
+            <form id="crud-form" class="form-horizontal">
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">主表</label>
+                    <div class="col-sm-6">
+                        <select name="table" id="crud-table" class="form-control">
+                            <option value="">请选择主表</option>
+                        </select>
+                        <small class="form-text text-muted">从当前数据库表中选择；若选择下面 SQL 文件则优先按 SQL 解析表结构</small>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">SQL 文件（可选）</label>
+                    <div class="col-sm-6">
+                        <select name="sql_file" id="crud-sql-file" class="form-control">
+                            <option value="">不选择，从上面主表生成</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">应用</label>
+                    <div class="col-sm-4">
+                        <select name="app" id="crud-app" class="form-control">
+                            <option value="admin" selected>admin（后台）</option>
+                            <option value="api">api</option>
+                            <option value="index">index</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">忽略字段</label>
+                    <div class="col-sm-6">
+                        <input type="text" name="ignore" id="crud-ignore" class="form-control" placeholder="逗号分隔，如：remark,extra">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">同时生成菜单</label>
+                    <div class="col-sm-6">
+                        <label class="mb-0"><input type="checkbox" name="with_menu" id="crud-with-menu" value="1"> 生成后写入「系统管理」下菜单</label>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">生成命令行</label>
+                    <div class="col-sm-8">
+                        <textarea id="crud-command" class="form-control" rows="4" readonly placeholder="请点击「生成命令行」"></textarea>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">返回结果</label>
+                    <div class="col-sm-8">
+                        <textarea id="crud-result" class="form-control" rows="6" readonly placeholder="请点击「立即执行」"></textarea>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-offset-2 col-sm-8">
+                        <button type="button" id="btn-command" class="btn btn-primary"><i class="fas fa-terminal mr-1"></i> 生成命令行</button>
+                        <button type="button" id="btn-execute" class="btn btn-success ml-2"><i class="fas fa-play mr-1"></i> 立即执行</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var $table = $('#crud-table'), $sqlFile = $('#crud-sql-file'), $command = $('#crud-command'), $result = $('#crud-result');
+
+    function loadTables(){
+        $.get(base + '/crud_gen/tables', function(ret){
+            var list = (ret && ret.data && ret.data.list) ? ret.data.list : [];
+            $table.find('option:not(:first)').remove();
+            list.forEach(function(row){
+                var label = (row.table || '') + (row.comment ? ' - ' + row.comment : '');
+                $table.append('<option value="' + (row.table || '').replace(/"/g, '&quot;') + '">' + (label || row.table || '').replace(/</g, '&lt;') + '</option>');
+            });
+        }, 'json');
+    }
+    function loadSqlFiles(){
+        $.get(base + '/crud_gen/sqlFiles', function(ret){
+            var list = (ret && ret.data && ret.data.list) ? ret.data.list : [];
+            $sqlFile.find('option:not(:first)').remove();
+            list.forEach(function(row){
+                $sqlFile.append('<option value="' + (row.path || '').replace(/"/g, '&quot;') + '">' + (row.name || row.path || '').replace(/</g, '&lt;') + '</option>');
+            });
+        }, 'json');
+    }
+    loadTables();
+    loadSqlFiles();
+
+    function getFormData(){
+        return {
+            table: $table.val() || '',
+            sql_file: $sqlFile.val() || '',
+            app: $('#crud-app').val() || 'admin',
+            ignore: $('#crud-ignore').val() || '',
+            with_menu: $('#crud-with-menu').prop('checked') ? '1' : '0'
+        };
+    }
+
+    $('#btn-command').on('click', function(){
+        var $btn = $(this).prop('disabled', true);
+        $.post(base + '/crud_gen/command', $.extend(getFormData(), { action: 'command' }), function(ret){
+            if (ret && ret.code === 1 && ret.data && ret.data.command) {
+                $command.val(ret.data.command);
+            } else {
+                $command.val((ret && ret.msg) ? ret.msg : '生成失败');
+            }
+        }, 'json').fail(function(){ $command.val('请求失败'); }).always(function(){ $btn.prop('disabled', false); });
+    });
+
+    $('#btn-execute').on('click', function(){
+        var $btn = $(this).prop('disabled', true);
+        $result.val('执行中...');
+        var data = getFormData();
+        data.action = 'execute';
+        data.command_preview = $command.val() || ('一键生成CRUD：' + (data.table || 'SQL') + ' @ ' + data.app);
+        $.post(base + '/crud_gen/command', data, function(ret){
+            if (ret && ret.code === 1) {
+                $result.val((ret.data && ret.data.result) ? ret.data.result : (ret.msg || '执行完成'));
+                if (ret.data && ret.data.status === 1) {
+                    $result.addClass('border-success');
+                } else {
+                    $result.addClass('border-danger');
+                }
+            } else {
+                $result.val((ret && ret.msg) ? ret.msg : '执行失败');
+                $result.addClass('border-danger');
+            }
+        }, 'json').fail(function(){
+            $result.val('请求失败');
+            $result.addClass('border-danger');
+        }).always(function(){ $btn.prop('disabled', false); });
+    });
+})();
+</script>
