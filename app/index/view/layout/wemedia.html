@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{$title|default='自媒体工作台'} - 文案与短视频</title>
+  <script src="/assets/lib/jquery/jquery.min.js"></script>
+  <script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/assets/css/pear-admin-theme.css">
+  <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
+  <style>
+    .pear-main .pear-content { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .wemedia-content { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    .wemedia-side .menu-link { color: rgba(255,255,255,.95); text-decoration: none; }
+    .wemedia-side .menu-link:hover { color: #fff; background: rgba(0,0,0,.12); }
+  </style>
+</head>
+<body>
+  <div class="pear-admin-wrap">
+    <header class="pear-header">
+      <a href="/index/wemedia/index" class="logo">自媒体工作台</a>
+      <div class="nav-right">
+        <a href="/index/user/index"><i class="fas fa-home me-1"></i>会员中心</a>
+        <a href="/index/user/profile"><i class="fas fa-user me-1"></i>{$wemediaUser.nickname|default=$wemediaUser.username|default='用户'}</a>
+        <a href="/index/user/logout"><i class="fas fa-sign-out-alt me-1"></i>退出</a>
+      </div>
+    </header>
+    <div class="pear-body">
+      <aside class="pear-side wemedia-side" id="pear-side">
+        <div class="pear-side-scroll">
+          <ul id="menu-tree">
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/index"><span class="menu-icon"><i class="fas fa-tachometer-alt"></i></span><span class="menu-text">工作台</span></a></li>
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/topic/index"><span class="menu-icon"><i class="fas fa-lightbulb"></i></span><span class="menu-text">选题策划</span></a></li>
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/copy/index"><span class="menu-icon"><i class="fas fa-pen-fancy"></i></span><span class="menu-text">文案创作</span></a></li>
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/material/index"><span class="menu-icon"><i class="fas fa-folder-open"></i></span><span class="menu-text">素材管理</span></a></li>
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/video/index"><span class="menu-icon"><i class="fas fa-video"></i></span><span class="menu-text">短视频辅助</span></a></li>
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/schedule/index"><span class="menu-icon"><i class="fas fa-calendar-alt"></i></span><span class="menu-text">发布排期</span></a></li>
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/report/index"><span class="menu-icon"><i class="fas fa-chart-line"></i></span><span class="menu-text">数据复盘</span></a></li>
+            <li class="menu-item"><a class="menu-link" href="/index/wemedia/compliance/index"><span class="menu-icon"><i class="fas fa-shield-alt"></i></span><span class="menu-text">合规检测</span></a></li>
+          </ul>
+        </div>
+      </aside>
+      <main class="pear-main">
+        <div class="pear-content">
+          <div class="wemedia-content">
+            {$__CONTENT__|raw}
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var path = location.pathname.replace(/\/$/, '');
+    $('#menu-tree .menu-link').each(function(){
+      var href = $(this).attr('href') || '';
+      if (href && path.indexOf(href) === 0) $(this).closest('.menu-item').addClass('active');
+    });
+  })();
+  </script>
+</body>
+</html>

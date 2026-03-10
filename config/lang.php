@@ -9,7 +9,7 @@ return [
     // 自动侦测浏览器语言
     'auto_detect_browser' => true,
     // 允许的语言列表
-    'allow_lang_list'     => [],
+    'allow_lang_list'     => ['zh-cn', 'en', 'en-us', 'ko'],
     // 多语言自动侦测变量名
     'detect_var'          => 'lang',
     // 是否使用Cookie记录
@@ -18,12 +18,18 @@ return [
     'cookie_var'          => 'think_lang',
     // 多语言header变量
     'header_var'          => 'think-lang',
-    // 扩展语言包
+    // 扩展语言包（后台改为按控制器加载 lang/语言/控制器名.php，在 Backend::initialize 中处理）
     'extend_list'         => [],
     // Accept-Language转义为对应语言包名称
     'accept_language'     => [
         'zh-hans-cn' => 'zh-cn',
+        'zh-hans'    => 'zh-cn',
+        'en'         => 'en-us',
+        'en-us'      => 'en-us',
+        'en-gb'      => 'en-us',
+        'ko'         => 'ko',
+        'ko-kr'      => 'ko',
     ],
-    // 是否支持语言分组
-    'allow_group'         => false,
+    // 是否支持语言分组（必须 true，否则 menu.xxx 等嵌套键无法解析）
+    'allow_group'         => true,
 ];

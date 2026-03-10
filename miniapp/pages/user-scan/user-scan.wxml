@@ -1,0 +1,8 @@
+<view class="container scan-page">
+  <view class="card tip-card">
+    <view class="tip-title">扫描分工二维码</view>
+    <view class="tip-desc">将摄像头对准分工单上的二维码，即可快速进入报工</view>
+  </view>
+  <button class="btn-primary scan-btn" bindtap="startScan">打开扫码</button>
+  <view class="back-link" bindtap="goBack">返回首页</view>
+</view>

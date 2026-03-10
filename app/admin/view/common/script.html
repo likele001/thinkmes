@@ -22,6 +22,64 @@
         var iframeHeight = Math.max(400, $(window).height() - headerH - tabsH);
         $(document).addtabs({ nav: '#nav-addtabs', tab: '#tab-addtabs-content', iframeUse: true, iframeHeight: iframeHeight, close: true, monitor: 'body' });
 
+        // 根据当前激活的 tab 在侧栏菜单中高亮对应项并展开父级（与参考图一致：展开父级 + 当前项高亮）
+        function normalizePathForMatch(url) {
+            if (!url || typeof url !== 'string') return '';
+            try {
+                var u = (url.split('?')[0] || '').split('#')[0].trim();
+                if (u.indexOf('http') === 0) {
+                    var a = document.createElement('a');
+                    a.href = u;
+                    u = a.pathname || u;
+                }
+                return u.replace(/\/$/, '') || '/';
+            } catch (e) { return (url.split('?')[0] || '').split('#')[0].replace(/\/$/, '') || ''; }
+        }
+        function syncMenuActiveByTab() {
+            var $activeLi = $('#nav-addtabs li.active').first();
+            if (!$activeLi.length) return;
+            var nodeId = $activeLi.find('a').attr('node-id');
+            if (!nodeId) return;
+            var url = null;
+            var store = document.getElementById('__addtabs_link_store__');
+            if (store) {
+                var a = store.querySelector('a[addtabs="' + nodeId + '"]');
+                if (a) url = a.getAttribute('url');
+            }
+            if (!url) {
+                var $iframe = $('#iframe_' + nodeId);
+                if ($iframe.length && $iframe.attr('src')) url = $iframe.attr('src');
+            }
+            if (!url) return;
+            var path = normalizePathForMatch(url);
+            $('#menu-tree .menu-item').removeClass('active');
+            $('#menu-tree .menu-item.has-children').removeClass('open');
+            var $best = null, bestLen = 0;
+            $('#menu-tree .menu-link[data-url]').each(function() {
+                var dataUrl = normalizePathForMatch($(this).attr('data-url'));
+                if (!dataUrl) return;
+                if (path === dataUrl || path.indexOf(dataUrl + '/') === 0) {
+                    if (dataUrl.length > bestLen) {
+                        bestLen = dataUrl.length;
+                        $best = $(this).closest('.menu-item');
+                    }
+                }
+            });
+            if ($best && $best.length) {
+                $best.addClass('active');
+                $best.parents('.menu-item.has-children').addClass('open');
+            }
+        }
+        window.syncMenuActiveByTab = syncMenuActiveByTab;
+
+        // 切换 tab 时同步侧栏高亮
+        $(document).on('click', '#nav-addtabs li[role="presentation"]', function() {
+            setTimeout(syncMenuActiveByTab, 0);
+        });
+        $(document).on('click', 'body [addtabs][url]', function() {
+            setTimeout(syncMenuActiveByTab, 50);
+        });
+
         $(function() {
             var hash = window.location.hash;
             if (hash && hash.indexOf('#con_') === 0) {
@@ -32,9 +90,12 @@
                     $('#tab-addtabs-content').find('.tab-pane').removeClass('active');
                     $tabitem.addClass('active');
                     $conitem.addClass('active');
+                    if (window.syncMenuActiveByTab) window.syncMenuActiveByTab();
                 }
             }
         });
+        setTimeout(syncMenuActiveByTab, 400);
+        setTimeout(syncMenuActiveByTab, 1200);
         $(window).on('resize', function() {
             var h = Math.max(400, $(window).height() - headerH - tabsH);
             $('.tab-addtabs .tab-pane iframe').attr('height', h).css('height', h + 'px');
@@ -46,6 +107,7 @@
             $('#nav-addtabs').find('#tab_index').addClass('active');
             $('#tab-addtabs-content').find('#con_index').addClass('active');
             $('#pear-close-dropdown').hide();
+            if (window.syncMenuActiveByTab) window.syncMenuActiveByTab();
         });
         $(document).on('click', '[data-addtabs-close="other"]', function(e) {
             e.preventDefault(); e.stopPropagation();
@@ -55,6 +117,7 @@
             $('#nav-addtabs').find('li[role="presentation"]').each(function() { if (!$(this).is($activeLi)) $(this).remove(); });
             $('#tab-addtabs-content').find('.tab-pane').not('#' + conId).remove();
             $('#pear-close-dropdown').hide();
+            if (window.syncMenuActiveByTab) window.syncMenuActiveByTab();
         });
         $(document).on('click', '#addtabs-close-btn', function(e) {
             e.stopPropagation();
@@ -73,7 +136,8 @@
                 $wrap.toggleClass('sidebar-collapsed');
                 var collapsed = $wrap.hasClass('sidebar-collapsed');
                 var $btn = $(this);
-                $btn.attr('title', collapsed ? '展开侧栏' : '收起侧栏');
+                var lang = (typeof Config !== 'undefined' && Config.lang) ? Config.lang : {};
+                $btn.attr('title', collapsed ? (lang.sidebar_expand || '展开侧栏') : (lang.sidebar_collapse || '收起侧栏'));
                 $btn.removeClass('layui-icon-shrink-right layui-icon-spread-left').addClass(collapsed ? 'layui-icon-spread-left' : 'layui-icon-shrink-right');
             }
         });
@@ -82,7 +146,8 @@
                 $('#pear-side').removeClass('show');
             } else {
                 $('.pear-admin-wrap').removeClass('sidebar-collapsed');
-                $('#pear-side-toggle').attr('title', '菜单').removeClass('layui-icon-spread-left').addClass('layui-icon-shrink-right');
+                var lang = (typeof Config !== 'undefined' && Config.lang) ? Config.lang : {};
+                $('#pear-side-toggle').attr('title', lang.menu_toggle || '菜单').removeClass('layui-icon-spread-left').addClass('layui-icon-shrink-right');
             }
         });
         // 清除缓存：Ajax POST，成功后提示，不跳转
@@ -92,7 +157,8 @@
             if (!url) return;
             var $btn = $(this).css('pointer-events', 'none');
             $.post(url).done(function(res) {
-                var msg = (res && res.msg) ? res.msg : '缓存已清理';
+                var lang = (typeof Config !== 'undefined' && Config.lang) ? Config.lang : {};
+                var msg = (res && res.msg) ? res.msg : (lang.cache_cleared || '缓存已清理');
                 if (res && res.code === 1) {
                     var $tip = $('<div class="clear-cache-tip">' + msg + '</div>');
                     $tip.css({ position: 'fixed', top: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, padding: '8px 16px', background: '#1aa094', color: '#fff', borderRadius: '4px', fontSize: '14px', boxShadow: '0 2px 8px rgba(0,0,0,.2)' });

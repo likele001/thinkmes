@@ -9,7 +9,7 @@ $(function () {
     location.href = '/index/customer/login';
     return;
   }
-  var currentLang = 'zh-cn';
+  var currentLang = (typeof window.__LANG !== 'undefined' ? window.__LANG : 'zh-cn');
 
   function fmt(t) {
     if (t == null || t === '' || (typeof t === 'number' && (t <= 0 || t < 86400))) return '-';
@@ -21,6 +21,7 @@ $(function () {
   }
 
   function statusText(s, lang) {
+    if (typeof window.__L !== 'undefined' && window.__L['status_' + s] !== undefined) return window.__L['status_' + s];
     var zh = { 0: '待确认', 1: '已确认', 2: '生产中', 3: '已发货', 4: '已完成', 5: '已取消' };
     var en = { 0: 'Pending', 1: 'Confirmed', 2: 'In Production', 3: 'Shipped', 4: 'Completed', 5: 'Canceled' };
     return (lang === 'en-us' ? en : zh)[s] || s;
@@ -28,21 +29,29 @@ $(function () {
 
   function applyLang(lang) {
     currentLang = lang || currentLang;
+    var d = (typeof window.__L !== 'undefined' ? window.__L : {});
+    if (Object.keys(d).length > 0) {
+      $('[data-i18n]').each(function () {
+        var k = $(this).data('i18n');
+        if (d[k]) $(this).text(d[k]);
+      });
+      return d;
+    }
     var dict = {
       'zh-cn': { nav_place_order: '下单', nav_orders: '我的订单', title_orders: '我的订单', th_order_no: '订单号', th_status: '状态', th_amount: '金额', th_currency: '币种', th_time: '下单时间', th_action: '操作', btn_detail: '明细', btn_confirm: '确认订单', btn_save: '保存修改', th_product: '产品', th_qty: '数量', th_progress: '生产进度', btn_del: '删除', progress_done: '已完成', progress_pending: '待排产' },
       'en-us': { nav_place_order: 'Place Order', nav_orders: 'My Orders', title_orders: 'My Orders', th_order_no: 'Order No', th_status: 'Status', th_amount: 'Amount', th_currency: 'Currency', th_time: 'Created At', th_action: 'Action', btn_detail: 'Items', btn_confirm: 'Confirm Order', btn_save: 'Save', th_product: 'Product', th_qty: 'Qty', th_progress: 'Progress', btn_del: 'Delete', progress_done: 'Done', progress_pending: 'Pending' }
     };
-    var d = dict[currentLang] || dict['zh-cn'];
+    var fallback = dict[currentLang] || dict['zh-cn'];
     $('[data-i18n]').each(function () {
       var k = $(this).data('i18n');
-      if (d[k]) $(this).text(d[k]);
+      if (fallback[k]) $(this).text(fallback[k]);
     });
-    return d;
+    return fallback;
   }
 
   function renderItemRow(it, status, lang) {
-    var d = { btn_del: '删除', progress_done: '已完成', progress_pending: '待排产' };
-    if (lang === 'en-us') {
+    var d = (typeof window.__L !== 'undefined' && window.__L.btn_del) ? { btn_del: window.__L.btn_del, progress_done: window.__L.progress_done, progress_pending: window.__L.progress_pending } : { btn_del: '删除', progress_done: '已完成', progress_pending: '待排产' };
+    if (lang === 'en-us' && !window.__L) {
       d.btn_del = 'Delete';
       d.progress_done = 'Done';
       d.progress_pending = 'Pending';
@@ -74,13 +83,14 @@ $(function () {
           return;
         }
         var c = r.data || {};
-        currentLang = (c.default_lang || 'zh-cn').toLowerCase();
+        currentLang = (typeof window.__LANG !== 'undefined' ? window.__LANG : (c.default_lang || 'zh-cn')).toLowerCase();
         applyLang(currentLang);
         loadOrders(currentLang);
       },
       error: function () {
-        applyLang('zh-cn');
-        loadOrders('zh-cn');
+        currentLang = typeof window.__LANG !== 'undefined' ? window.__LANG : 'zh-cn';
+        applyLang(currentLang);
+        loadOrders(currentLang);
       }
     });
   }
@@ -91,13 +101,13 @@ $(function () {
       headers: { 'Authorization': 'Bearer ' + tk },
       success: function (r) {
         if (r.code !== 1) {
-          $('#order-list').html('<tr><td colspan="6" class="text-center">加载失败</td></tr>');
+          $('#order-list').html('<tr><td colspan="6" class="text-center">' + (window.__L && window.__L.msg_load_fail ? window.__L.msg_load_fail : '加载失败') + '</td></tr>');
           return;
         }
         var list = (r.data && r.data.list) ? r.data.list : [];
         if (!Array.isArray(list)) list = [];
         if (!list.length) {
-          $('#order-list').html('<tr><td colspan="6" class="text-center">暂无订单</td></tr>');
+          $('#order-list').html('<tr><td colspan="6" class="text-center">' + (window.__L && window.__L.msg_no_orders ? window.__L.msg_no_orders : '暂无订单') + '</td></tr>');
           return;
         }
         var html = '';
@@ -109,7 +119,7 @@ $(function () {
         $('#order-list').html(html);
       },
       error: function () {
-        $('#order-list').html('<tr><td colspan="6" class="text-center">加载失败</td></tr>');
+        $('#order-list').html('<tr><td colspan="6" class="text-center">' + (window.__L && window.__L.msg_load_fail ? window.__L.msg_load_fail : '加载失败') + '</td></tr>');
       }
     });
   }
@@ -128,7 +138,7 @@ $(function () {
       if (id && qty > 0) items.push({ id: id, quantity: qty });
     });
     if (!items.length) {
-      alert('请保留至少一条有效明细');
+      alert(window.__L && window.__L.msg_keep_one_item ? window.__L.msg_keep_one_item : '请保留至少一条有效明细');
       return;
     }
     $.ajax({
@@ -140,12 +150,12 @@ $(function () {
         if (r.msg) alert(r.msg);
         if (r.code === 1) loadOrders(currentLang);
       },
-      error: function () { alert('操作失败'); }
+      error: function () { alert(window.__L && window.__L.msg_operation_fail ? window.__L.msg_operation_fail : '操作失败'); }
     });
   });
   $(document).on('click', '.btn-confirm-order', function () {
     var orderId = $(this).data('id');
-    if (!confirm('确认后不可再修改数量或删除产品，确定要确认订单吗？')) return;
+    if (!confirm(window.__L && window.__L.msg_confirm_confirm ? window.__L.msg_confirm_confirm : '确认后不可再修改数量或删除产品，确定要确认订单吗？')) return;
     $.ajax({
       url: '/api/customer/confirmOrder',
       method: 'POST',
@@ -155,7 +165,7 @@ $(function () {
         if (r.msg) alert(r.msg);
         if (r.code === 1) loadOrders(currentLang);
       },
-      error: function () { alert('操作失败'); }
+      error: function () { alert(window.__L && window.__L.msg_operation_fail ? window.__L.msg_operation_fail : '操作失败'); }
     });
   });
 

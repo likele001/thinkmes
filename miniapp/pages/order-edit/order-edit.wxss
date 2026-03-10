@@ -1,0 +1,15 @@
+.form-item { margin-bottom: 24rpx; }
+.form-item .label { display: block; color: #666; margin-bottom: 8rpx; }
+.form-item .input { border: 2rpx solid #eee; border-radius: 8rpx; padding: 20rpx; }
+.form-item .picker { border: 2rpx solid #eee; border-radius: 8rpx; padding: 20rpx; color: #333; }
+.form-item .textarea { border: 2rpx solid #eee; border-radius: 8rpx; padding: 20rpx; min-height: 120rpx; width: 100%; box-sizing: border-box; }
+.section-title { font-size: 30rpx; font-weight: 700; color: #1e293b; margin-bottom: 20rpx; }
+.model-row { display: flex; align-items: center; gap: 16rpx; margin-bottom: 20rpx; flex-wrap: wrap; }
+.model-row .picker-model { flex: 1; min-width: 200rpx; border: 2rpx solid #eee; border-radius: 8rpx; padding: 20rpx; color: #333; }
+.model-row .input-qty { width: 140rpx; border: 2rpx solid #eee; border-radius: 8rpx; padding: 20rpx; text-align: center; }
+.model-row .btn-del { color: #ef4444; font-size: 26rpx; padding: 16rpx; }
+.btn-add-model { margin-top: 16rpx; padding: 20rpx; border: 2rpx dashed #cbd5e1; border-radius: 12rpx; color: #64748b; text-align: center; }
+.btn-row { margin-top: 32rpx; display: flex; flex-direction: column; gap: 24rpx; padding: 0 20rpx 20rpx; }
+.btn-primary { width: 100%; background: #1989fa; color: #fff; border-radius: 12rpx; border: none; }
+.btn-primary::after { border: none; }
+.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }

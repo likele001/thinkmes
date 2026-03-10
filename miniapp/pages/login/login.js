@@ -6,6 +6,7 @@ Page({
     username: '',
     password: '',
     loading: false,
+    waitingAuto: true,
   },
 
   onLoad() {
@@ -16,6 +17,59 @@ Page({
     if (app.checkUserLogin()) {
       wx.reLaunch({ url: '/pages/user-index/user-index' });
       return;
+    }
+    this._autoLoginCheck = setInterval(() => this.checkAutoLoginResult(), 350);
+    setTimeout(() => {
+      if (this._autoLoginCheck) {
+        clearInterval(this._autoLoginCheck);
+        this._autoLoginCheck = null;
+      }
+      if (this.data.waitingAuto) {
+        this.setData({ waitingAuto: false });
+        this.applyAutoLoginResult();
+      }
+    }, 2500);
+  },
+
+  onUnload() {
+    if (this._autoLoginCheck) {
+      clearInterval(this._autoLoginCheck);
+      this._autoLoginCheck = null;
+    }
+  },
+
+  checkAutoLoginResult() {
+    if (!app.globalData.autoUserLoginDone) return;
+    if (this._autoLoginCheck) {
+      clearInterval(this._autoLoginCheck);
+      this._autoLoginCheck = null;
+    }
+    this.setData({ waitingAuto: false });
+    this.applyAutoLoginResult();
+  },
+
+  applyAutoLoginResult() {
+    if (app.checkUserLogin()) {
+      wx.reLaunch({ url: '/pages/user-index/user-index' });
+      return;
+    }
+    if (app.globalData.needBindEmployee) {
+      wx.navigateTo({ url: '/pages/bind-employee/bind-employee' });
+      return;
+    }
+    if (!this.data.selectedMode) {
+      this.setData({ selectedMode: '' });
+    }
+  },
+
+  onShow() {
+    const storedTenantId = wx.getStorageSync('tenant_id');
+    if (storedTenantId && app.globalData.tenantId !== storedTenantId) {
+      app.globalData.tenantId = storedTenantId;
+      app.globalData.tenantName = wx.getStorageSync('tenant_name') || '';
+    }
+    if (!this.data.waitingAuto && !this.data.selectedMode && app.globalData.needBindEmployee) {
+      wx.navigateTo({ url: '/pages/bind-employee/bind-employee' });
     }
   },
 
@@ -86,11 +140,35 @@ Page({
           wx.showToast({ title: '获取登录态失败', icon: 'none' });
           return;
         }
-        app.userLogin(res.code)
-          .then(() => {
-            wx.reLaunch({ url: '/pages/user-index/user-index' });
-          })
-          .catch(() => {});
+        const tenantId = app.globalData.tenantId || wx.getStorageSync('tenant_id');
+        wx.request({
+          url: app.globalData.baseUrl + '/miniapp/login',
+          method: 'POST',
+          data: { code: res.code, tenant_id: tenantId, nickname: '', avatar: '' },
+          header: { 'content-type': 'application/json' },
+          success: (reqRes) => {
+            if (reqRes.statusCode === 200 && reqRes.data && reqRes.data.code === 1 && reqRes.data.data) {
+              const data = reqRes.data.data;
+              if (data.token) {
+                app.globalData.userToken = data.token;
+                app.globalData.userInfo = data;
+                app.globalData.token = data.token;
+                app.globalData.isAdminMode = false;
+                wx.setStorageSync('user_token', data.token);
+                wx.setStorageSync('user_info', data);
+                wx.reLaunch({ url: '/pages/user-index/user-index' });
+                return;
+              }
+              if (data.need_bind === true) {
+                app.globalData.needBindEmployee = true;
+                wx.navigateTo({ url: '/pages/bind-employee/bind-employee' });
+                return;
+              }
+            }
+            wx.showToast({ title: (reqRes.data && reqRes.data.msg) || '登录失败', icon: 'none' });
+          },
+          fail: () => wx.showToast({ title: '网络错误', icon: 'none' }),
+        });
       },
       fail: () => wx.showToast({ title: '登录失败', icon: 'none' }),
     });

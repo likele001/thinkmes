@@ -2,15 +2,16 @@
  * 角色管理：链接从 table_index_url 派生，避免多一层路径
  */
 (function () {
+    var L = (typeof Config !== 'undefined' && Config.lang) ? Config.lang : {};
     var indexUrl = (typeof Config !== 'undefined' && Config.table_index_url) ? Config.table_index_url : '';
     var base = indexUrl ? indexUrl.replace(/\/index\/?(\?.*)?$/, '') : '';
     var editUrl = base ? base + '/edit' : '';
     var delUrl = base ? base + '/del' : '';
 
-    function statusFmt(v) { return v == 1 ? '正常' : '禁用'; }
+    function statusFmt(v) { return v == 1 ? (L.status_normal || '正常') : (L.status_disabled || '禁用'); }
     function operFmt(v) {
-        return '<a class="btn btn-xs btn-primary" href="' + editUrl + '?id=' + v + '">编辑</a> ' +
-            '<button class="btn btn-xs btn-danger" data-id="' + v + '" type="button">删除</button>';
+        return '<a class="btn btn-xs btn-primary" href="' + editUrl + '?id=' + v + '">' + (L.edit || '编辑') + '</a> ' +
+            '<button class="btn btn-xs btn-danger" data-id="' + v + '" type="button">' + (L.delete || '删除') + '</button>';
     }
     function rulesFmt(v, row) {
         var names = Array.isArray(row.rules_names) ? row.rules_names.slice() : ((v || '').split(','));
@@ -22,7 +23,7 @@
         if (names.length > limit) {
             var more = names.slice(limit);
             var all = names.join('，');
-            html += ' <a href="javascript:;" class="text-primary btn-show-all" title="查看全部" data-all="' + all.replace(/"/g, '&quot;') + '">更多(' + (names.length - limit) + ')</a>';
+            html += ' <a href="javascript:;" class="text-primary btn-show-all" title="' + (L.view_all || '查看全部') + '" data-all="' + all.replace(/"/g, '&quot;') + '">' + (L.more || '更多') + '(' + (names.length - limit) + ')</a>';
         }
         return html;
     }
@@ -38,10 +39,10 @@
                 pageList: [10, 20, 50],
                 columns: [
                     { field: 'id', title: 'ID', width: 60 },
-                    { field: 'name', title: '角色名' },
-                    { field: 'rules', title: '规则', formatter: rulesFmt },
-                    { field: 'status', title: '状态', formatter: statusFmt },
-                    { field: 'id', title: '操作', formatter: operFmt }
+                    { field: 'name', title: L.role_name || '角色名' },
+                    { field: 'rules', title: L.rules || '规则', formatter: rulesFmt },
+                    { field: 'status', title: L.status || '状态', formatter: statusFmt },
+                    { field: 'id', title: L.operation || '操作', formatter: operFmt }
                 ],
                 responseHandler: function (res) {
                     return { total: (res.data && res.data.total) ? res.data.total : 0, rows: (res.data && res.data.list) ? res.data.list : [] };
@@ -80,9 +81,9 @@
                 var sel = $table.bootstrapTable('getSelections') || [];
                 if (sel.length === 0) return;
                 var id = sel[0].id;
-                if (!id || !confirm('确定删除？')) return;
+                if (!id || !confirm(L.confirm_del || '确定删除？')) return;
                 $.post(delUrl, { id: id }, function (r) {
-                    alert(r.msg || (r.code === 1 ? '删除成功' : '失败'));
+                    alert(r.msg || (r.code === 1 ? (L.delete_success || '删除成功') : '失败'));
                     if (r.code === 1) $table.bootstrapTable('refresh');
                 }, 'json');
             });

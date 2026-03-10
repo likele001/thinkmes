@@ -41,6 +41,27 @@
             </div>
         </div>
         <!-- /.card -->
+
+        <!-- 行业质检标准模板（可供选择、复制后编辑） -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h3 class="card-title">行业质检标准模板</h3>
+                <span class="text-muted small">选择下方模板点击「复制」可生成到我的标准，再编辑名称、工序、检查项等</span>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table id="table-templates" class="table table-bordered table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>模板名称</th>
+                            <th>检查项数量</th>
+                            <th>合格率</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -62,9 +83,7 @@ $(function() {
         showRefresh: true,
         showColumns: true,
         columns: [
-            {
-                checkbox: true
-            },
+            { checkbox: true },
             {
                 field: 'code',
                 title: '标准编号',
@@ -125,9 +144,7 @@ $(function() {
                 title: '操作',
                 align: 'center',
                 formatter: function(value, row, index) {
-                    var html = '';
-                    html += '<a href="{:url("mes/quality/addStandard")}?id=' + value + '" class="btn btn-xs btn-primary" title="编辑"><i class="fas fa-edit"></i></a> ';
-                    return html;
+                    return '<a href="{:url("mes/quality/addStandard")}?id=' + value + '" class="btn btn-xs btn-primary" title="编辑"><i class="fas fa-edit"></i></a> ';
                 }
             }
         ],
@@ -150,6 +167,35 @@ $(function() {
     // 搜索表单提交
     $(document).off('submit', '#form-search').on('submit', '#form-search', function(e) {
         return true;
+    });
+
+    // 加载行业模板列表
+    $.get('{:url("mes/quality/getTemplates")}', function(res) {
+        if (res.code === 1 && res.data && res.data.list && res.data.list.length) {
+            var rows = res.data.list.map(function(row) {
+                var cnt = 0;
+                try { cnt = JSON.parse(row.check_items || '[]').length; } catch (e) {}
+                return '<tr><td>' + (row.name || '-') + '</td><td>' + cnt + '</td><td>' + (row.qualified_rate || 100) + '%</td><td><button type="button" class="btn btn-xs btn-success btn-copy-template" data-id="' + row.id + '"><i class="fas fa-copy"></i> 复制</button></td></tr>';
+            });
+            $('#table-templates tbody').html(rows.join(''));
+        }
+    }, 'json');
+
+    // 从模板复制
+    $(document).off('click', '.btn-copy-template').on('click', '.btn-copy-template', function() {
+        var id = $(this).data('id');
+        var $btn = $(this).prop('disabled', true);
+        $.post('{:url("mes/quality/copyTemplate")}', { template_id: id }, function(res) {
+            if (res.code === 1 && res.data && res.data.id) {
+                window.location.href = '{:url("mes/quality/addStandard")}?id=' + res.data.id;
+            } else {
+                $btn.prop('disabled', false);
+                alert(res.msg || '复制失败');
+            }
+        }, 'json').fail(function() {
+            $btn.prop('disabled', false);
+            alert('请求失败');
+        });
     });
 });
 </script>

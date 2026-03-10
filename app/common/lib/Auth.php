@@ -84,29 +84,10 @@ class Auth
         $roleIds = array_filter(array_map('intval', explode(',', (string) ($admin['role_ids'] ?? ''))));
         if (empty($roleIds)) {
             // 回退：租户管理员无角色时，根据套餐功能授予菜单权限
-            try {
-                $tenantId = (int) ($admin['tenant_id'] ?? 0);
-                if ($tenantId > 0) {
-                    $tenant = Db::name('tenant')->where('id', $tenantId)->find();
-                    if ($tenant && isset($tenant['package_id'])) {
-                        $featureCodes = Db::name('tenant_package_feature')
-                            ->where('package_id', (int) $tenant['package_id'])
-                            ->where('is_enabled', 1)
-                            ->column('feature_code');
-                        if (!empty($featureCodes)) {
-                            $names = Db::name('auth_rule')
-                                ->where('status', 1)
-                                ->whereIn('name', $featureCodes)
-                                ->column('name');
-                            $base = ['dashboard', 'admin/index', 'admin/index/index'];
-                            $names = array_values(array_unique(array_merge($base, array_filter(array_map('strval', $names)))));
-                            Cache::set($cacheKey, $names, $this->cacheTtl);
-                            return $names;
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // ignore fallback errors
+            $names = $this->getRuleNamesFromPackageFeatures($admin);
+            if (!empty($names)) {
+                Cache::set($cacheKey, $names, $this->cacheTtl);
+                return $names;
             }
             Cache::set($cacheKey, [], $this->cacheTtl);
             return [];
@@ -125,29 +106,10 @@ class Auth
         $ruleIds = array_unique($ruleIds);
         if (empty($ruleIds)) {
             // 角色存在但未配置任何规则，回退到套餐功能
-            try {
-                $tenantId = (int) ($admin['tenant_id'] ?? 0);
-                if ($tenantId > 0) {
-                    $tenant = Db::name('tenant')->where('id', $tenantId)->find();
-                    if ($tenant && isset($tenant['package_id'])) {
-                        $featureCodes = Db::name('tenant_package_feature')
-                            ->where('package_id', (int) $tenant['package_id'])
-                            ->where('is_enabled', 1)
-                            ->column('feature_code');
-                        if (!empty($featureCodes)) {
-                            $names = Db::name('auth_rule')
-                                ->where('status', 1)
-                                ->whereIn('name', $featureCodes)
-                                ->column('name');
-                            $base = ['dashboard', 'admin/index', 'admin/index/index'];
-                            $names = array_values(array_unique(array_merge($base, array_filter(array_map('strval', $names)))));
-                            Cache::set($cacheKey, $names, $this->cacheTtl);
-                            return $names;
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // ignore
+            $names = $this->getRuleNamesFromPackageFeatures($admin);
+            if (!empty($names)) {
+                Cache::set($cacheKey, $names, $this->cacheTtl);
+                return $names;
             }
             Cache::set($cacheKey, [], $this->cacheTtl);
             return [];
@@ -197,6 +159,47 @@ class Auth
             Cache::clear();
         } catch (\Throwable $e) {
             // 部分驱动无 clear，忽略
+        }
+    }
+
+    /**
+     * 根据租户套餐功能生成权限 name 列表（用于无角色或规则为空时的回退）
+     * 支持 feature_code 点号/斜杠，有分工时自动包含分工二维码
+     */
+    protected function getRuleNamesFromPackageFeatures(array $admin): array
+    {
+        try {
+            $tenantId = (int) ($admin['tenant_id'] ?? 0);
+            if ($tenantId <= 0) {
+                return [];
+            }
+            $tenant = Db::name('tenant')->where('id', $tenantId)->find();
+            if (!$tenant || !isset($tenant['package_id']) || (int) $tenant['package_id'] <= 0) {
+                return [];
+            }
+            $featureCodes = Db::name('tenant_package_feature')
+                ->where('package_id', (int) $tenant['package_id'])
+                ->where('is_enabled', 1)
+                ->column('feature_code');
+            if (empty($featureCodes)) {
+                return [];
+            }
+            $names = [];
+            foreach ($featureCodes as $code) {
+                $codeSlash = str_replace('.', '/', $code);
+                $exact = Db::name('auth_rule')->where('status', 1)->where('name', $codeSlash)->column('name');
+                $children = Db::name('auth_rule')->where('status', 1)->where('name', 'like', $codeSlash . '/%')->column('name');
+                $names = array_merge($names, $exact, $children);
+                if ($codeSlash === 'mes/allocation') {
+                    $qrExact = Db::name('auth_rule')->where('status', 1)->where('name', 'mes/allocation_qrcode')->column('name');
+                    $qrChildren = Db::name('auth_rule')->where('status', 1)->where('name', 'like', 'mes/allocation_qrcode/%')->column('name');
+                    $names = array_merge($names, $qrExact, $qrChildren);
+                }
+            }
+            $base = ['dashboard', 'admin/index', 'admin/index/index'];
+            return array_values(array_unique(array_merge($base, array_filter(array_map('strval', $names)))));
+        } catch (\Throwable $e) {
+            return [];
         }
     }
 

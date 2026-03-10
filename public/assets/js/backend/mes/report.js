@@ -127,7 +127,7 @@
                                 auditImages.push(url);
                                 if (imagePreview && imagePreview.length) {
                                     var wrap = $('<div class="me-2 mb-2 position-relative" style="width:70px;height:70px;overflow:hidden;border:1px solid #ddd;border-radius:4px;"></div>');
-                                    var img = $('<img>').attr('src', url).css({ width: '100%', height: '100%', objectFit: 'cover' });
+                                    var img = $('<img>').attr('src', url).attr('loading', 'lazy').attr('decoding', 'async').css({ width: '100%', height: '100%', objectFit: 'cover' });
                                     var del = $('<span class="badge bg-danger" style="position:absolute;top:2px;right:2px;cursor:pointer;">×</span>');
                                     del.on('click', function () {
                                         var idx = auditImages.indexOf(url);
@@ -143,19 +143,16 @@
                             } else {
                                 auditVideos.push(url);
                                 if (videoPreview && videoPreview.length) {
-                                    var vwrap = $('<div class="me-2 mb-2 position-relative" style="width:120px;"></div>');
-                                    var video = $('<video controls muted preload="metadata" style="width:100%;border-radius:4px;"><source></video>');
-                                    video.find('source').attr('src', url);
+                                    var vwrap = $('<div class="me-2 mb-2 position-relative d-inline-flex align-items-center" style="width:120px;height:56px;border:1px solid #ddd;border-radius:4px;background:#f5f5f5;"></div>');
+                                    var vlabel = $('<span class="small text-muted px-2">视频 ' + (auditVideos.length) + '</span>');
                                     var vdel = $('<span class="badge bg-danger" style="position:absolute;top:2px;right:2px;cursor:pointer;">×</span>');
                                     vdel.on('click', function () {
                                         var idx2 = auditVideos.indexOf(url);
-                                        if (idx2 > -1) {
-                                            auditVideos.splice(idx2, 1);
-                                        }
+                                        if (idx2 > -1) auditVideos.splice(idx2, 1);
                                         vwrap.remove();
                                         syncHidden();
                                     });
-                                    vwrap.append(video).append(vdel);
+                                    vwrap.append(vlabel).append(vdel);
                                     videoPreview.append(vwrap);
                                 }
                             }

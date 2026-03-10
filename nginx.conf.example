@@ -13,6 +13,9 @@ server {
         fastcgi_pass 127.0.0.1:9000;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include fastcgi_params;
+        # 长耗时接口（如 AI 文生视频）防 502，与 PHP max_execution_time、FPM request_terminate_timeout 一起调大
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
     }
     location ~ /runtime/ { deny all; }
     location ~ /\.env { deny all; }

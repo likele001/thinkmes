@@ -1,25 +1,77 @@
-<view class="container">
-  <view class="card metrics" wx:if="{{!loading}}">
-    <view class="row">
-      <text class="label">今日报工</text>
-      <text class="value">{{metrics.today_report_quantity}} 件</text>
+<view class="container user-index">
+  <!-- 欢迎区（与 PC 一致） -->
+  <view class="welcome-card" wx:if="{{!loading}}">
+    <view class="welcome-title">欢迎，{{welcomeName}}</view>
+    <view class="welcome-date">{{todayDate}}</view>
+  </view>
+
+  <!-- 今日三指标（与 PC 三色块一致） -->
+  <view class="stats-row" wx:if="{{!loading}}">
+    <view class="stat-card stat-tasks">
+      <view class="stat-num">{{metrics.today_task_count || 0}}</view>
+      <view class="stat-label">今日任务</view>
     </view>
-    <view class="row">
-      <text class="label">今日工资</text>
-      <text class="value text-primary">¥ {{metrics.today_wage}}</text>
+    <view class="stat-card stat-reports">
+      <view class="stat-num">{{metrics.today_report_quantity || 0}}</view>
+      <view class="stat-label">今日报工</view>
     </view>
-    <view class="row" wx:if="{{metrics.pending_reports > 0}}">
-      <text class="label">待审核</text>
-      <text class="value">{{metrics.pending_reports}} 条</text>
+    <view class="stat-card stat-wage">
+      <view class="stat-num">¥{{metrics.today_wage || '0'}}</view>
+      <view class="stat-label">今日工资</view>
     </view>
   </view>
-  <view class="card" wx:if="{{loading}}">加载中...</view>
-  <view class="section-title">我的任务</view>
-  <view class="card task-item" wx:for="{{tasks}}" wx:key="allocation_id" data-id="{{item.allocation_id}}" data-pending="{{item.pending_qty}}" bindtap="goTask">
+
+  <view class="card loading-card" wx:if="{{loading}}">加载中...</view>
+
+  <!-- 功能入口六宫格（与 PC 一致） -->
+  <view class="section-title">功能入口</view>
+  <view class="menu-grid" wx:if="{{!loading}}">
+    <view class="menu-tile" bindtap="goTasks">
+      <view class="menu-tile-icon">📋</view>
+      <view class="menu-tile-text">我的任务</view>
+      <view class="menu-tile-desc">查看分配任务</view>
+    </view>
+    <view class="menu-tile" bindtap="goScan">
+      <view class="menu-tile-icon">📷</view>
+      <view class="menu-tile-text">扫码报工</view>
+      <view class="menu-tile-desc">扫分工码报工</view>
+    </view>
+    <view class="menu-tile" bindtap="goReports">
+      <view class="menu-tile-icon">📝</view>
+      <view class="menu-tile-text">报工记录</view>
+      <view class="menu-tile-desc">历史报工列表</view>
+    </view>
+    <view class="menu-tile" bindtap="goWages">
+      <view class="menu-tile-icon">💰</view>
+      <view class="menu-tile-text">我的工资</view>
+      <view class="menu-tile-desc">工资明细</view>
+    </view>
+    <view class="menu-tile" bindtap="goProfile">
+      <view class="menu-tile-icon">👤</view>
+      <view class="menu-tile-text">个人中心</view>
+      <view class="menu-tile-desc">资料与设置</view>
+    </view>
+    <view class="menu-tile" bindtap="goAdmin">
+      <view class="menu-tile-icon">🔧</view>
+      <view class="menu-tile-text">管理端</view>
+      <view class="menu-tile-desc">进入管理后台</view>
+    </view>
+  </view>
+
+  <!-- 快捷操作（与 PC 一致） -->
+  <view class="section-title">快捷操作</view>
+  <view class="quick-actions" wx:if="{{!loading}}">
+    <view class="quick-btn primary" bindtap="goTasks">查看任务</view>
+    <view class="quick-btn success" bindtap="goScan">扫码报工</view>
+    <view class="quick-btn outline" bindtap="goReports">报工记录</view>
+  </view>
+
+  <!-- 我的任务列表 -->
+  <view class="section-title" id="taskSection">我的任务</view>
+  <view class="card task-item" wx:for="{{tasks}}" wx:key="allocation_id" data-id="{{item.allocation_id}}" data-pending="{{item.pending_qty}}" bindtap="goTask" wx:if="{{!loading}}">
     <view class="task-name">{{item.product_name}} - {{item.model_name}}</view>
     <view class="text-muted">{{item.order_name || item.order_no}} · {{item.process_name}}</view>
     <view class="task-qty">已报 {{item.reported_qty}} / 分配 {{item.assign_qty}} · 待报 <text class="text-primary">{{item.pending_qty}}</text></view>
   </view>
-  <view class="empty" wx:if="{{!loading && tasks.length === 0}}">暂无任务</view>
-  <view class="link-admin" bindtap="goAdmin">进入管理端 →</view>
+  <view class="empty" wx:if="{{!loading && tasks.length === 0}}">暂无任务，请等待分工</view>
 </view>

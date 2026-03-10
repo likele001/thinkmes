@@ -1,0 +1,196 @@
+<div class="card">
+  <div class="card-header"><i class="fas fa-edit me-2"></i>{$title|default='文案'}</div>
+  <div class="card-body">
+    <form id="copy-form">
+      <input type="hidden" name="id" value="{$item.id|default=0}">
+      <div class="mb-3">
+        <label class="form-label">标题 <span class="text-danger">*</span></label>
+        <div class="d-flex gap-2 align-items-start">
+          <input type="text" name="title" class="form-control flex-grow-1" value="{$item.title|default=''}" placeholder="文案标题" required>
+          <button type="button" id="copy-gen-title" class="btn btn-outline-primary btn-sm">AI 生成标题</button>
+        </div>
+        <div id="copy-title-suggestions" class="small mt-2" style="display:none;"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">平台</label>
+          <select name="platform" class="form-control">
+            <option value="">不限</option>
+            <option value="xiaohongshu">小红书</option>
+            <option value="douyin">抖音</option>
+            <option value="wechat">公众号</option>
+            <option value="shipinhao">视频号</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">关联选题</label>
+          <select name="topic_id" class="form-control">
+            <option value="0">不关联</option>
+            {volist name="topics" id="t"}
+            <option value="{$t.id}">{$t.title}</option>
+            {/volist}
+          </select>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">正文</label>
+        <div class="border rounded p-2 mb-2 bg-light small">
+          <span class="text-muted me-2">生成选项：</span>
+          <select id="copy-gen-wordcount" class="form-control form-control-sm d-inline-block w-auto">
+            <option value="">字数不限</option>
+            <option value="300">短（约300字）</option>
+            <option value="500">中短（约500字）</option>
+            <option value="800" selected>中（约800字）</option>
+            <option value="1000">中长（约1000字）</option>
+            <option value="1500">长（约1500字）</option>
+          </select>
+          <select id="copy-gen-tone" class="form-control form-control-sm d-inline-block w-auto ms-1">
+            <option value="">语气不限</option>
+            <option value="亲切自然">亲切自然</option>
+            <option value="正式得体">正式得体</option>
+            <option value="口语化">口语化</option>
+            <option value="文艺">文艺</option>
+            <option value="简洁有力">简洁有力</option>
+          </select>
+          <select id="copy-gen-emotion" class="form-control form-control-sm d-inline-block w-auto ms-1">
+            <option value="">情绪不限</option>
+            <option value="积极向上">积极向上</option>
+            <option value="温暖治愈">温暖治愈</option>
+            <option value="理性客观">理性客观</option>
+            <option value="幽默轻松">幽默轻松</option>
+            <option value="沉稳内敛">沉稳内敛</option>
+          </select>
+          <select id="copy-gen-mood" class="form-control form-control-sm d-inline-block w-auto ms-1">
+            <option value="">心情不限</option>
+            <option value="平静">平静</option>
+            <option value="愉悦">愉悦</option>
+            <option value="励志">励志</option>
+            <option value="反思共鸣">反思共鸣</option>
+            <option value="走心共鸣">走心共鸣</option>
+          </select>
+          <button type="button" id="copy-gen-content" class="btn btn-outline-primary btn-sm ms-2">AI 生成正文</button>
+        </div>
+        <textarea name="content" class="form-control" rows="10" placeholder="选好选题与生成选项后点「AI 生成正文」或在此直接填写">{$item.content|default=''}</textarea>
+        <div id="copy-content-model-hint" class="small text-muted mt-1" style="display:none;"></div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">标签（逗号分隔）</label>
+        <div class="d-flex gap-2 align-items-start">
+          <input type="text" name="tags" class="form-control flex-grow-1" value="{$item.tags|default=''}" placeholder="如：美妆,种草">
+          <button type="button" id="copy-gen-tags" class="btn btn-outline-primary btn-sm">AI 推荐标签</button>
+        </div>
+        <div id="copy-tags-suggestions" class="small mt-2" style="display:none;"></div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">状态</label>
+        <select name="status" class="form-control">
+          <option value="0">草稿</option>
+          <option value="1">已发布</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/index/wemedia/copy/index" class="btn btn-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+var __copyItem = {$itemJson|raw};
+$(function(){
+  if (__copyItem && __copyItem.topic_id) $('select[name=topic_id]').val(String(__copyItem.topic_id));
+  if (__copyItem && __copyItem.platform) $('select[name=platform]').val(__copyItem.platform);
+  if (__copyItem && __copyItem.status !== undefined) $('select[name=status]').val(String(__copyItem.status));
+});
+$('#copy-gen-title').on('click', function(){
+  var topicId = $('select[name=topic_id]').val();
+  if (!topicId || topicId === '0') { alert('请先选择关联选题'); return; }
+  var $btn = $(this).prop('disabled', true);
+  var $box = $('#copy-title-suggestions').hide().empty();
+  $.post('/index/wemedia/copy/generateTitle', { topic_id: topicId, platform: $('select[name=platform]').val() }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var list = (r.data && r.data.list) ? r.data.list : [];
+    var modelUsed = (r.data && r.data.model_used) ? r.data.model_used : '';
+    var h = '';
+    if (modelUsed) h += '<p class="text-muted mb-1">由 <strong>' + modelUsed + '</strong> 生成，点击选用：</p>';
+    h += '<div class="d-flex flex-wrap gap-1">';
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    list.forEach(function(t){
+      h += '<button type="button" class="btn btn-sm btn-outline-secondary copy-pick-title">' + esc(t) + '</button>';
+    });
+    h += '</div>';
+    $box.html(h).show();
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$(document).on('click', '.copy-pick-title', function(){
+  var t = $(this).text();
+  $('input[name=title]').val(t);
+});
+$('#copy-gen-content').on('click', function(){
+  var topicId = $('select[name=topic_id]').val();
+  if (!topicId || topicId === '0') { alert('请先选择关联选题'); return; }
+  var $btn = $(this).prop('disabled', true);
+  var $hint = $('#copy-content-model-hint').hide().empty();
+  $.post('/index/wemedia/copy/generateContent', {
+    topic_id: topicId,
+    title: $('input[name=title]').val(),
+    platform: $('select[name=platform]').val(),
+    word_count: $('#copy-gen-wordcount').val(),
+    tone: $('#copy-gen-tone').val(),
+    emotion: $('#copy-gen-emotion').val(),
+    mood: $('#copy-gen-mood').val()
+  }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var content = (r.data && r.data.content) ? r.data.content : '';
+    var modelUsed = (r.data && r.data.model_used) ? r.data.model_used : '';
+    $('textarea[name=content]').val(content);
+    if (modelUsed) $hint.text('由 ' + modelUsed + ' 生成').show();
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#copy-gen-tags').on('click', function(){
+  var topicId = $('select[name=topic_id]').val();
+  var plat = $('select[name=platform]').val();
+  if (!topicId || topicId === '0') { alert('请先选择关联选题'); return; }
+  if (!plat) { alert('请先选择平台（抖音/公众号/小红书等）'); return; }
+  var $btn = $(this).prop('disabled', true);
+  var $box = $('#copy-tags-suggestions').hide().empty();
+  $.post('/index/wemedia/copy/generateTags', {
+    topic_id: topicId,
+    title: $('input[name=title]').val(),
+    platform: plat
+  }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var list = (r.data && r.data.list) ? r.data.list : [];
+    var tagsStr = (r.data && r.data.tags) ? r.data.tags : list.join(',');
+    var modelUsed = (r.data && r.data.model_used) ? r.data.model_used : '';
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    var h = '';
+    if (modelUsed) h += '<p class="text-muted mb-1">由 <strong>' + modelUsed + '</strong> 推荐，点击选用或全部填入：</p>';
+    h += '<div class="d-flex flex-wrap gap-1 align-items-center">';
+    list.forEach(function(t){
+      h += '<button type="button" class="btn btn-sm btn-outline-secondary copy-pick-tag">' + esc(t) + '</button>';
+    });
+    h += '<button type="button" class="btn btn-sm btn-success ms-2" id="copy-pick-all-tags">全部填入</button></div>';
+    $box.html(h).show();
+    $box.data('tagsStr', tagsStr);
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$(document).on('click', '.copy-pick-tag', function(){
+  var t = $(this).text();
+  var $input = $('input[name=tags]');
+  var cur = ($input.val() || '').trim();
+  $input.val(cur ? cur + ',' + t : t);
+});
+$(document).on('click', '#copy-pick-all-tags', function(){
+  var s = $('#copy-tags-suggestions').data('tagsStr');
+  if (s) $('input[name=tags]').val(s);
+});
+$('#copy-form').on('submit', function(e){
+  e.preventDefault();
+  var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+  $.post('/index/wemedia/copy/save', $(this).serialize(), function(r){
+    alert(r.msg || (r.code === 1 ? '保存成功' : '失败'));
+    if (r.code === 1) location.href = '/index/wemedia/copy/index';
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+</script>

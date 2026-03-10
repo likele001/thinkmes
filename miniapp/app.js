@@ -8,9 +8,12 @@ App({
     adminToken: null,
     userToken: null,
     baseUrl: BASE_URL,
-    tenantId: 0,           // 从后台「租户小程序配置」根据 AppID 拉取，未拉取到则用 config 的 TENANT_ID
+    tenantId: 0,
     tenantName: '',
     isAdminMode: false,
+    autoUserLoginDone: false,
+    autoUserLoginOk: false,
+    needBindEmployee: false,
   },
 
   onLaunch() {
@@ -29,8 +32,11 @@ App({
       this.globalData.isAdminMode = false;
       this.globalData.token = userToken;
     }
-    // 根据当前小程序 AppID 从后台获取租户配置（租户小程序配置表）
     this.fetchTenantConfig();
+    // 无管理员态时，延迟尝试一次员工端自动登录（静默），成功与否由登录页根据结果跳转
+    if (!adminToken && !adminInfo) {
+      setTimeout(() => { this.tryAutoUserLogin(); }, 600);
+    }
   },
 
   fetchTenantConfig() {
@@ -58,6 +64,65 @@ App({
     if (!this.globalData.tenantId) {
       this.globalData.tenantId = TENANT_ID || 0;
     }
+  },
+
+  /** 静默尝试员工端自动登录（不弹 toast），成功写 token，结果供登录页判断 */
+  tryAutoUserLogin() {
+    if (this.globalData.userToken || wx.getStorageSync('user_token')) {
+      this.globalData.autoUserLoginDone = true;
+      this.globalData.autoUserLoginOk = true;
+      return;
+    }
+    const tenantId = this.globalData.tenantId || wx.getStorageSync('tenant_id') || TENANT_ID;
+    if (!tenantId) {
+      this.globalData.autoUserLoginDone = true;
+      this.globalData.autoUserLoginOk = false;
+      return;
+    }
+    wx.login({
+      success: (res) => {
+        if (!res.code) return;
+        wx.request({
+          url: this.globalData.baseUrl + '/miniapp/login',
+          method: 'POST',
+          data: { code: res.code, tenant_id: tenantId, nickname: '', avatar: '' },
+          header: { 'content-type': 'application/json' },
+          success: (reqRes) => {
+            if (reqRes.statusCode !== 200 || !reqRes.data) return;
+            const data = reqRes.data;
+            if (data.code === 1 && data.data && data.data.token) {
+              const token = data.data.token;
+              const userInfo = data.data;
+              this.globalData.userToken = token;
+              this.globalData.userInfo = userInfo;
+              this.globalData.token = token;
+              this.globalData.isAdminMode = false;
+              wx.setStorageSync('user_token', token);
+              wx.setStorageSync('user_info', userInfo);
+              this.globalData.autoUserLoginDone = true;
+              this.globalData.autoUserLoginOk = true;
+              return;
+            }
+            if (data.data && data.data.need_bind === true) {
+              this.globalData.autoUserLoginDone = true;
+              this.globalData.autoUserLoginOk = false;
+              this.globalData.needBindEmployee = true;
+              return;
+            }
+            this.globalData.autoUserLoginDone = true;
+            this.globalData.autoUserLoginOk = false;
+          },
+          fail: () => {
+            this.globalData.autoUserLoginDone = true;
+            this.globalData.autoUserLoginOk = false;
+          },
+        });
+      },
+      fail: () => {
+        this.globalData.autoUserLoginDone = true;
+        this.globalData.autoUserLoginOk = false;
+      },
+    });
   },
 
   // 管理员端请求（Scanwork API）

@@ -1,0 +1,12 @@
+<view class="container">
+  <view class="actions">
+    <button size="mini" bindtap="goGenerate">生成追溯码</button>
+    <button size="mini" bindtap="goQuery">查询追溯码</button>
+  </view>
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <view class="row"><text class="title">{{item.trace_code || item.item_no || item.code || '-'}}</text></view>
+    <view class="text-muted">订单：{{item.order_no || '-'}} 状态：{{item.status_text || item.status}}</view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无追溯码</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

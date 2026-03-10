@@ -167,14 +167,14 @@ ON DUPLICATE KEY UPDATE
     `title` = VALUES(`title`),
     `pid` = @process_pid;
 
--- 9. 插入物料管理菜单
+-- 9. 插入物料管理菜单（pid 用子查询，便于单独执行本段）
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
-VALUES ('mes/material', '物料管理', 1, 1, 1, @mes_pid, 'fa fa-cubes', 11, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+SELECT 'mes/material', '物料管理', 1, 1, 1, id, 'fa fa-cubes', 11, UNIX_TIMESTAMP(), UNIX_TIMESTAMP() FROM (SELECT id FROM fa_auth_rule WHERE name = 'mes' LIMIT 1) t
 ON DUPLICATE KEY UPDATE 
     `title` = VALUES(`title`),
     `icon` = VALUES(`icon`),
     `sort` = VALUES(`sort`),
-    `pid` = @mes_pid;
+    `pid` = VALUES(`pid`);
 
 SET @material_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/material' LIMIT 1);
 
@@ -187,9 +187,29 @@ ON DUPLICATE KEY UPDATE
     `title` = VALUES(`title`),
     `pid` = @material_pid;
 
+-- 9.1 插入物料分类菜单（pid 用子查询，便于单独执行本段）
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+SELECT 'mes/material_category', '物料分类', 1, 1, 1, id, 'fa fa-folder', 12, UNIX_TIMESTAMP(), UNIX_TIMESTAMP() FROM (SELECT id FROM fa_auth_rule WHERE name = 'mes' LIMIT 1) t
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = VALUES(`pid`);
+
+SET @material_category_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/material_category' LIMIT 1);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/material_category/index', '物料分类列表', 2, 0, 1, @material_category_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/material_category/add', '添加物料分类', 2, 0, 1, @material_category_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/material_category/edit', '编辑物料分类', 2, 0, 1, @material_category_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/material_category/del', '删除物料分类', 2, 0, 1, @material_category_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = VALUES(`pid`);
+
 -- 10. 插入供应商管理菜单
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
-VALUES ('mes/supplier', '供应商管理', 1, 1, 1, @mes_pid, 'fa fa-truck', 12, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+VALUES ('mes/supplier', '供应商管理', 1, 1, 1, @mes_pid, 'fa fa-truck', 13, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
 ON DUPLICATE KEY UPDATE 
     `title` = VALUES(`title`),
     `icon` = VALUES(`icon`),
@@ -290,6 +310,30 @@ ON DUPLICATE KEY UPDATE
     `title` = VALUES(`title`),
     `pid` = @allocation_pid;
 
+-- 分工二维码管理菜单（直接子查询更新，可单独执行）
+UPDATE `fa_auth_rule` a
+INNER JOIN (SELECT id FROM `fa_auth_rule` WHERE name = 'mes' LIMIT 1) m ON 1=1
+SET a.`pid` = m.id, a.`title` = '分工二维码', a.`icon` = 'fa fa-qrcode', a.`sort` = 17, a.`update_time` = UNIX_TIMESTAMP()
+WHERE a.name = 'mes/allocation_qrcode';
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+SELECT 'mes/allocation_qrcode', '分工二维码', 1, 1, 1, m.id, 'fa fa-qrcode', 17, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+FROM (SELECT id FROM `fa_auth_rule` WHERE name = 'mes' LIMIT 1) m
+WHERE NOT EXISTS (SELECT 1 FROM `fa_auth_rule` WHERE name = 'mes/allocation_qrcode' LIMIT 1);
+
+UPDATE `fa_auth_rule` a
+INNER JOIN (SELECT id FROM `fa_auth_rule` WHERE name = 'mes/allocation_qrcode' LIMIT 1) p ON 1=1
+SET a.`pid` = p.id, a.`update_time` = UNIX_TIMESTAMP()
+WHERE a.name IN ('mes/allocation_qrcode/index', 'mes/allocation_qrcode/getInfo', 'mes/allocation_qrcode/regenerate');
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+SELECT r.name, r.title, 2, 0, 1, p.id, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+FROM (SELECT 'mes/allocation_qrcode/index' AS name, '二维码列表' AS title
+      UNION ALL SELECT 'mes/allocation_qrcode/getInfo', '查看二维码'
+      UNION ALL SELECT 'mes/allocation_qrcode/regenerate', '重新生成') r
+CROSS JOIN (SELECT id FROM `fa_auth_rule` WHERE name = 'mes/allocation_qrcode' LIMIT 1) p
+WHERE NOT EXISTS (SELECT 1 FROM `fa_auth_rule` WHERE name = r.name LIMIT 1);
+
 -- 工艺路线菜单
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
 VALUES ('mes/process_route', '工艺路线', 1, 1, 1, @mes_pid, 'fa fa-road', 8, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
@@ -322,9 +366,9 @@ ON DUPLICATE KEY UPDATE
 SET @wage_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/wage' LIMIT 1);
 
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
-('mes/wage/index', '工资明细', 2, 0, 1, @wage_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-('mes/wage/statistics', '工资统计', 2, 0, 1, @wage_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-('mes/wage/export', '导出工资', 2, 0, 1, @wage_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+('mes/wage/statistics', '工资统计', 2, 1, 1, @wage_pid, 'fa fa-chart-bar', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/wage/index', '工资明细', 2, 1, 1, @wage_pid, 'fa fa-list', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/wage/export', '导出工资', 2, 0, 1, @wage_pid, '', 3, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
 ON DUPLICATE KEY UPDATE 
     `title` = VALUES(`title`),
     `pid` = @wage_pid;

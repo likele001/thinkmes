@@ -1,27 +1,39 @@
-<view class="container">
-  <view class="header" wx:if="{{adminInfo}}">
-    <view class="welcome">管理端</view>
-    <view class="admin-name">{{adminInfo.nickname || adminInfo.username || ''}}</view>
+<view class="container admin-index">
+  <!-- 欢迎区（与员工端 / PC 一致） -->
+  <view class="welcome-card" wx:if="{{adminInfo && !loading}}">
+    <view class="welcome-title">欢迎，{{adminInfo.nickname || adminInfo.username || '管理员'}}</view>
+    <view class="welcome-sub">管理端</view>
+    <view class="welcome-date">{{todayDate}}</view>
   </view>
 
-  <view class="card stats" wx:if="{{dashboard && !loading}}">
-    <view class="stats-title">今日概览</view>
-    <view class="stats-row">
-      <view class="stats-item">
-        <text class="num">{{dashboard.today && dashboard.today.quantity ? dashboard.today.quantity : 0}}</text>
-        <text class="label">今日报工量</text>
-      </view>
-      <view class="stats-item">
-        <text class="num">{{dashboard.pending_reports || 0}}</text>
-        <text class="label">待审核</text>
-      </view>
+  <!-- 今日三指标（与员工端三色卡一致） -->
+  <view class="stats-row" wx:if="{{dashboard && !loading}}">
+    <view class="stat-card stat-report">
+      <view class="stat-num">{{dashboard.today && dashboard.today.quantity ? dashboard.today.quantity : 0}}</view>
+      <view class="stat-label">今日报工量</view>
+    </view>
+    <view class="stat-card stat-pending">
+      <view class="stat-num">{{dashboard.pending_reports || 0}}</view>
+      <view class="stat-label">待审核</view>
+    </view>
+    <view class="stat-card stat-active">
+      <view class="stat-num">{{dashboard.active_allocations || 0}}</view>
+      <view class="stat-label">进行中分工</view>
     </view>
   </view>
 
-  <view class="menu-grid">
+  <view class="card loading-card" wx:if="{{loading}}">加载中...</view>
+
+  <!-- 功能入口（分区标题 + 网格） -->
+  <view class="section-title">功能入口</view>
+  <view class="menu-grid" wx:if="{{!loading}}">
     <view class="menu-item" bindtap="goOrders">
       <view class="menu-icon">📋</view>
       <text class="menu-text">订单管理</text>
+    </view>
+    <view class="menu-item" bindtap="goCustomers">
+      <view class="menu-icon">👥</view>
+      <text class="menu-text">客户管理</text>
     </view>
     <view class="menu-item" bindtap="goAllocations">
       <view class="menu-icon">🔧</view>
@@ -35,6 +47,74 @@
       <view class="menu-icon">⚡</view>
       <text class="menu-text">待审核报工</text>
     </view>
+    <view class="menu-item" bindtap="goReportStatistics">
+      <view class="menu-icon">📊</view>
+      <text class="menu-text">报工统计</text>
+    </view>
+    <view class="menu-item" bindtap="goProducts">
+      <view class="menu-icon">📦</view>
+      <text class="menu-text">产品/型号</text>
+    </view>
+    <view class="menu-item" bindtap="goProcesses">
+      <view class="menu-icon">⚙️</view>
+      <text class="menu-text">工序/工价</text>
+    </view>
+    <view class="menu-item" bindtap="goProcessPrices">
+      <view class="menu-icon">💰</view>
+      <text class="menu-text">工序工价</text>
+    </view>
+    <view class="menu-item" bindtap="goMaterials">
+      <view class="menu-icon">🧱</view>
+      <text class="menu-text">物料</text>
+    </view>
+    <view class="menu-item" bindtap="goSuppliers">
+      <view class="menu-icon">🏢</view>
+      <text class="menu-text">供应商管理</text>
+    </view>
+    <view class="menu-item" bindtap="goWarehouses">
+      <view class="menu-icon">🏭</view>
+      <text class="menu-text">仓库</text>
+    </view>
+    <view class="menu-item" bindtap="goStock">
+      <view class="menu-icon">📊</view>
+      <text class="menu-text">库存</text>
+    </view>
+    <view class="menu-item" bindtap="goBom">
+      <view class="menu-icon">📑</view>
+      <text class="menu-text">BOM</text>
+    </view>
+    <view class="menu-item" bindtap="goPlans">
+      <view class="menu-icon">📅</view>
+      <text class="menu-text">生产计划</text>
+    </view>
+    <view class="menu-item" bindtap="goPurchases">
+      <view class="menu-icon">🛒</view>
+      <text class="menu-text">采购</text>
+    </view>
+    <view class="menu-item" bindtap="goShipments">
+      <view class="menu-icon">🚚</view>
+      <text class="menu-text">发货</text>
+    </view>
+    <view class="menu-item" bindtap="goQuality">
+      <view class="menu-icon">🔍</view>
+      <text class="menu-text">质检</text>
+    </view>
+    <view class="menu-item" bindtap="goAdminWages">
+      <view class="menu-icon">💵</view>
+      <text class="menu-text">工资</text>
+    </view>
+    <view class="menu-item" bindtap="goTrace">
+      <view class="menu-icon">🔗</view>
+      <text class="menu-text">追溯码</text>
+    </view>
+    <view class="menu-item" bindtap="goAftersales">
+      <view class="menu-icon">🛠️</view>
+      <text class="menu-text">售后</text>
+    </view>
+    <view class="menu-item" bindtap="goBi">
+      <view class="menu-icon">📈</view>
+      <text class="menu-text">BI看板</text>
+    </view>
     <view class="menu-item" bindtap="switchToUser">
       <view class="menu-icon">👷</view>
       <text class="menu-text">切换员工端</text>
@@ -43,5 +123,13 @@
       <view class="menu-icon">🔒</view>
       <text class="menu-text">退出登录</text>
     </view>
+  </view>
+
+  <!-- 快捷操作（与员工端一致） -->
+  <view class="section-title">快捷操作</view>
+  <view class="quick-actions" wx:if="{{!loading}}">
+    <view class="quick-btn primary" bindtap="goReports">报工审核</view>
+    <view class="quick-btn success" bindtap="goActiveReports">待审核报工</view>
+    <view class="quick-btn outline" bindtap="goBi">BI看板</view>
   </view>
 </view>

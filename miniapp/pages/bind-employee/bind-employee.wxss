@@ -1,0 +1,47 @@
+/* 绑定员工 - 与登录页统一风格 */
+.bind-page {
+  padding: 48rpx 40rpx 80rpx;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 100%);
+}
+
+.bind-page .title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20rpx;
+}
+
+.bind-page .desc {
+  font-size: 26rpx;
+  color: #64748b;
+  margin-bottom: 48rpx;
+  line-height: 1.6;
+}
+
+.bind-page .form-item {
+  margin-bottom: 28rpx;
+}
+
+.bind-page .input {
+  border: 2rpx solid #e2e8f0;
+  border-radius: 16rpx;
+  padding: 28rpx 24rpx;
+  background: #fff;
+  font-size: 28rpx;
+}
+
+.bind-page .btn-primary {
+  margin-top: 40rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  box-shadow: 0 8rpx 24rpx rgba(79, 70, 229, 0.3);
+}
+
+.bind-page .back-link {
+  margin-top: 40rpx;
+  text-align: center;
+  color: #6366f1;
+  font-size: 28rpx;
+  font-weight: 500;
+}

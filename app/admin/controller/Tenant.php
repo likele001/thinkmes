@@ -24,7 +24,7 @@ class Tenant extends Backend
         }
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '租户管理');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('tenant/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
@@ -86,7 +86,7 @@ class Tenant extends Backend
         $packages = TenantPackageModel::order('sort')->order('id')->select()->toArray();
         View::assign('packages', $packages);
         View::assign('data', []);
-        View::assign('title', '添加租户');
+        View::assign('title', __("add_title"));
         return $this->fetchWithLayout('tenant/add');
     }
 
@@ -183,7 +183,7 @@ class Tenant extends Backend
         $packages = TenantPackageModel::order('sort')->order('id')->select()->toArray();
         View::assign('packages', $packages);
         View::assign('data', $data);
-        View::assign('title', '编辑租户');
+        View::assign('title', __("edit_title"));
         return $this->fetchWithLayout('tenant/edit');
     }
 
@@ -254,9 +254,15 @@ class Tenant extends Backend
             $authRuleIds = [];
             if (!empty($features)) {
                 foreach ($features as $code) {
-                    $idsExact = Db::name('auth_rule')->where('status', 1)->where('name', $code)->column('id');
-                    $idsChildren = Db::name('auth_rule')->where('status', 1)->where('name', 'like', $code . '/%')->column('id');
+                    $codeSlash = str_replace('.', '/', $code);
+                    $idsExact = Db::name('auth_rule')->where('status', 1)->where('name', $codeSlash)->column('id');
+                    $idsChildren = Db::name('auth_rule')->where('status', 1)->where('name', 'like', $codeSlash . '/%')->column('id');
                     $authRuleIds = array_merge($authRuleIds, $idsExact, $idsChildren);
+                    if ($codeSlash === 'mes/allocation') {
+                        $qrExact = Db::name('auth_rule')->where('status', 1)->where('name', 'mes/allocation_qrcode')->column('id');
+                        $qrChildren = Db::name('auth_rule')->where('status', 1)->where('name', 'like', 'mes/allocation_qrcode/%')->column('id');
+                        $authRuleIds = array_merge($authRuleIds, $qrExact, $qrChildren);
+                    }
                 }
             }
             // 保底加入控制台菜单与首页权限

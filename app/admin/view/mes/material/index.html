@@ -26,6 +26,15 @@ $(function() {
         pk: 'id',
         sortName: 'id',
         sortOrder: 'desc',
+        pagination: true,
+        sidePagination: 'server',
+        pageSize: 20,
+        pageList: [10, 20, 50],
+        responseHandler: function(res) {
+            if (res && res.data)
+                return { total: res.data.total || 0, rows: res.data.list || [] };
+            return { total: 0, rows: [] };
+        },
         columns: [
             {field: 'id', title: 'ID', width: 80, sortable: true},
             {field: 'name', title: '物料名称', align: 'left'},

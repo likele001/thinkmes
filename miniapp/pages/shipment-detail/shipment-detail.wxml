@@ -1,0 +1,11 @@
+<view class="container" wx:if="{{detail}}">
+  <view class="card">
+    <view class="row"><text class="label">发货单号</text><text>{{detail.shipment_no || detail.order_no}}</text></view>
+    <view class="row"><text class="label">订单</text><text>{{detail.order_no || '-'}}</text></view>
+    <view class="row"><text class="label">客户</text><text>{{detail.customer_name || '-'}}</text></view>
+    <view class="row"><text class="label">状态</text><text>{{detail.status_text || detail.status}}</text></view>
+  </view>
+  <button class="btn-edit" bindtap="goEdit">编辑</button>
+</view>
+<view class="container" wx:elif="{{!loading}}">暂无数据</view>
+<view class="container" wx:else>加载中...</view>

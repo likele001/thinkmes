@@ -1,0 +1,45 @@
+<view class="container">
+  <view class="form-card">
+    <view class="form-item">
+      <text class="form-label">计划名称 *</text>
+      <input class="form-input" placeholder="计划名称" value="{{planName}}" bindinput="inputPlanName"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">关联订单 *</text>
+      <picker mode="selector" range="{{orderOptions}}" range-key="label" value="{{orderIndex}}" bindchange="pickOrder">
+        <view class="picker">{{orderLabel}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">产品型号 *</text>
+      <view class="picker" bindtap="openModelSelect">{{modelLabel}}</view>
+    </view>
+    <view class="form-item">
+      <text class="form-label">计划数量 *</text>
+      <input class="form-input" type="number" placeholder="计划数量" value="{{totalQuantity}}" bindinput="inputTotalQuantity"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">计划开始时间</text>
+      <picker mode="date" value="{{plannedStartDate}}" bindchange="pickStartDate">
+        <view class="picker">{{plannedStartDate || '选择日期'}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">计划结束时间</text>
+      <picker mode="date" value="{{plannedEndDate}}" bindchange="pickEndDate">
+        <view class="picker">{{plannedEndDate || '选择日期'}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">状态</text>
+      <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
+        <view class="picker">{{statusText}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">备注</text>
+      <textarea class="form-textarea" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
+    </view>
+  </view>
+  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+</view>

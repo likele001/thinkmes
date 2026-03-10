@@ -31,7 +31,7 @@ class Profile extends Backend
             }
             View::assign('admin', $adminData);
             View::assign('tenant', $tenantData);
-            View::assign('title', '个人中心');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('profile/index');
         }
         return $this->success('', []);

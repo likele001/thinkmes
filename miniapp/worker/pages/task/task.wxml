@@ -1,4 +1,4 @@
-<view class="container" wx:if="{{info}}">
+<view class="container page-with-footer" wx:if="{{info}}">
   <view class="card">
     <view class="task-name">{{info.product_name}} - {{info.model_name}}</view>
     <view class="text-muted">{{info.order_name || info.order_no}} · {{info.process_name}}</view>
@@ -31,6 +31,8 @@
       <view class="add-img" wx:if="{{images.length < 3}}" bindtap="chooseImage">+ 添加</view>
     </view>
   </view>
-  <button class="btn-primary" loading="{{submitting}}" bindtap="submit">提交报工</button>
+</view>
+<view class="footer-bar safe-area-bottom" wx:if="{{info}}">
+  <button class="btn-primary btn-block" loading="{{submitting}}" bindtap="submit">提交报工</button>
 </view>
 <view class="container" wx:else>加载中...</view>

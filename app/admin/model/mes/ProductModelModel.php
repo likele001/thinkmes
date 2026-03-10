@@ -10,12 +10,12 @@ class ProductModelModel extends Model
     protected $name = 'mes_product_model';
     
     protected $type = [
-        'tenant_id'   => 'integer',
-        'product_id'  => 'integer',
-        'status'      => 'integer',
-        'stock'       => 'decimal',
-        'create_time' => 'integer',
-        'update_time' => 'integer',
+        'tenant_id'     => 'integer',
+        'product_id'    => 'integer',
+        'status'        => 'integer',
+        'stock'         => 'decimal',
+        'create_time'   => 'integer',
+        'update_time'   => 'integer',
     ];
 
     // 关联产品
@@ -44,6 +44,14 @@ class ProductModelModel extends Model
         $fullName .= $modelName;
         if ($modelCode) {
             $fullName .= ' (' . $modelCode . ')';
+        }
+        $color = $data['color'] ?? '';
+        $spec = $data['specification'] ?? '';
+        if ($color) {
+            $fullName .= ' [' . $color . ']';
+        }
+        if ($spec) {
+            $fullName .= ' ' . $spec;
         }
         return $fullName;
     }

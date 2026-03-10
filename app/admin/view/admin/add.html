@@ -1,24 +1,24 @@
 <div class="card card-outline card-primary">
-    <div class="card-header"><h3 class="card-title">添加管理员</h3></div>
+    <div class="card-header"><h3 class="card-title">{:__('add_title')}</h3></div>
     <div class="card-body">
         <form id="form-add" method="post" class="form-horizontal">
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">账号</label>
-                <div class="col-sm-6"><input type="text" name="username" class="form-control" required placeholder="2-20字符"></div>
+                <label class="col-sm-2 col-form-label">{:__('username')}</label>
+                <div class="col-sm-6"><input type="text" name="username" class="form-control" required placeholder="{:__('placeholder_username')}"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">密码</label>
-                <div class="col-sm-6"><input type="password" name="password" class="form-control" required placeholder="6-32字符"></div>
+                <label class="col-sm-2 col-form-label">{:__('password')}</label>
+                <div class="col-sm-6"><input type="password" name="password" class="form-control" required placeholder="{:__('placeholder_password')}"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">昵称</label>
-                <div class="col-sm-6"><input type="text" name="nickname" class="form-control" placeholder="选填"></div>
+                <label class="col-sm-2 col-form-label">{:__('nickname')}</label>
+                <div class="col-sm-6"><input type="text" name="nickname" class="form-control" placeholder="{:__('placeholder_nickname')}"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">父级管理员</label>
+                <label class="col-sm-2 col-form-label">{:__('parent_admin')}</label>
                 <div class="col-sm-6">
                     <select name="pid" class="form-control">
-                        <option value="0">无（顶级）</option>
+                        <option value="0">{:__('none_top')}</option>
                         {volist name="parents" id="p"}
                         <option value="{$p.id}">{$p.username}（{$p.nickname|default='-'}）</option>
                         {/volist}
@@ -26,39 +26,39 @@
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">数据权限</label>
+                <label class="col-sm-2 col-form-label">{:__('data_scope')}</label>
                 <div class="col-sm-6">
                     <select name="data_scope" class="form-control">
-                        <option value="1">个人（仅自己）</option>
-                        <option value="2">子级（自己+下级）</option>
-                        <option value="3">全部</option>
+                        <option value="1">{:__('scope_self')}</option>
+                        <option value="2">{:__('scope_sub')}</option>
+                        <option value="3">{:__('scope_all')}</option>
                     </select>
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">角色</label>
+                <label class="col-sm-2 col-form-label">{:__('role')}</label>
                 <div class="col-sm-6">
                     <select name="role_ids[]" class="form-control" multiple>
                         {volist name="roles" id="r"}
                         <option value="{$r.id}">{$r.name}</option>
                         {/volist}
                     </select>
-                    <small class="text-muted">可多选；保存后将合并为逗号分隔的角色ID</small>
+                    <small class="text-muted">{:__('role_hint')}</small>
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">状态</label>
+                <label class="col-sm-2 col-form-label">{:__('status')}</label>
                 <div class="col-sm-6">
                     <select name="status" class="form-control">
-                        <option value="1">正常</option>
-                        <option value="0">禁用</option>
+                        <option value="1">{:__('status_normal')}</option>
+                        <option value="0">{:__('status_disabled')}</option>
                     </select>
                 </div>
             </div>
             <div class="form-group row">
                 <div class="col-sm-6 offset-sm-2">
-                    <button type="submit" class="btn btn-primary">提交</button>
-                    <a href="{:url('admin/index')}" class="btn btn-default ml-2">返回</a>
+                    <button type="submit" class="btn btn-primary">{:__('submit')}</button>
+                    <a href="{:url('admin/index')}" class="btn btn-default ml-2">{:__('back')}</a>
                 </div>
             </div>
         </form>

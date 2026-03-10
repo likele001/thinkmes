@@ -37,8 +37,22 @@ Page({
     this.load();
   },
 
+  goAdd() {
+    wx.navigateTo({ url: '/pages/order-edit/order-edit' });
+  },
   goDetail(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: '/pages/order-detail/order-detail?id=' + id });
+    if (id) wx.navigateTo({ url: '/pages/order-detail/order-detail?id=' + id });
+  },
+  goEdit(e) {
+    const id = e.currentTarget.dataset.id;
+    if (id) wx.navigateTo({ url: '/pages/order-edit/order-edit?id=' + id });
+  },
+  confirmDelete(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    wx.showModal({ title: '确认删除', content: '确定删除该订单？', success: (res) => {
+      if (res.confirm) adminApi.deleteOrder(id).then(() => { wx.showToast({ title: '已删除' }); this.setData({ page: 1, list: [], noMore: false }); this.load(); }).catch(() => {});
+    }});
   },
 });

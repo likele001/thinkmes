@@ -1,0 +1,37 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">批量添加型号及工序工价</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">选择产品后，逐行填写型号名称及对应工序工价；<strong>已存在的型号名称将自动跳过</strong>，不影响现有添加/编辑/删除。</p>
+        <form id="form-batch-models" method="post" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">选择产品 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="product_id" class="form-control" required>
+                        <option value="">请选择产品</option>
+                        {volist name="productList" id="name" key="pid"}
+                        <option value="{$pid}">{$name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">型号及工价</label>
+                <div class="col-sm-10">
+                    <div id="model-container">
+                        <!-- 由 JS 动态渲染 -->
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" id="add-model">添加一行型号</button>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">批量添加</button>
+                    <a href="{$config.moduleurl}/mes/product/index" class="btn btn-default">返回列表</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script type="application/json" id="process-data">{$processListJson|raw}</script>

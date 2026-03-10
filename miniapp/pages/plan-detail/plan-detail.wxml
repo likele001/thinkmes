@@ -1,0 +1,28 @@
+<view class="container" wx:if="{{detail}}">
+  <view class="card">
+    <view class="row"><text class="label">计划单号</text><text>{{detail.plan_code || detail.plan_no}}</text></view>
+    <view class="row"><text class="label">计划名称</text><text>{{detail.plan_name || detail.name}}</text></view>
+    <view class="row"><text class="label">状态</text><text>{{detail.status_text || detail.status}}</text></view>
+    <view class="row" wx:if="{{detail.order_no}}"><text class="label">关联订单</text><text>{{detail.order_no}}</text></view>
+    <view class="row" wx:if="{{detail.model}}"><text class="label">产品型号</text><text>{{detail.model.product ? detail.model.product.name : ''}} - {{detail.model.name || ''}}</text></view>
+  </view>
+  <view class="card" wx:if="{{allocations.length}}">
+    <view class="card-title">分工列表（分配给谁）</view>
+    <view class="alloc-row head"><text class="label">工序</text><text class="label">分配给</text><text class="label">数量</text><text class="label">已完成</text></view>
+    <view class="alloc-row" wx:for="{{allocations}}" wx:key="id" data-id="{{item.id}}" bindtap="goAllocation">
+      <text>{{item.process ? item.process.name : '-'}}</text>
+      <text>{{item.user ? (item.user.nickname || item.user.username) : '-'}}</text>
+      <text>{{item.quantity || 0}}</text>
+      <text>{{item.completed_quantity != null ? item.completed_quantity : '-'}}</text>
+    </view>
+  </view>
+  <view class="actions">
+    <button class="btn-action btn-allocate" size="mini" bindtap="goAllocate">分配工序</button>
+    <button class="btn-action btn-view" size="mini" bindtap="goAllocations">查看分工</button>
+    <button class="btn-action btn-stats" size="mini" bindtap="goProgressStats">进度统计</button>
+    <button class="btn-action btn-progress" size="mini" bindtap="goProgress">生产进度</button>
+  </view>
+  <button class="btn-edit" bindtap="goEdit">编辑</button>
+</view>
+<view class="container" wx:elif="{{!loading}}">暂无数据</view>
+<view class="container" wx:else>加载中...</view>

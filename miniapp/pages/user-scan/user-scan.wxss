@@ -1,0 +1,6 @@
+.scan-page { padding: 48rpx 40rpx; min-height: 100vh; background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 100%); }
+.scan-page .tip-card { text-align: center; padding: 48rpx 32rpx; margin-bottom: 48rpx; }
+.tip-title { font-size: 34rpx; font-weight: 700; color: #1e293b; margin-bottom: 20rpx; }
+.tip-desc { font-size: 26rpx; color: #64748b; line-height: 1.5; }
+.scan-btn { margin-top: 32rpx; }
+.back-link { margin-top: 40rpx; text-align: center; color: #6366f1; font-size: 28rpx; }

@@ -1,0 +1,10 @@
+.container { padding-bottom: 32rpx; }
+.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
+.row { display: flex; margin-bottom: 12rpx; font-size: 28rpx; }
+.label { color: #666; width: 160rpx; }
+.section-title { font-weight: bold; margin-bottom: 20rpx; font-size: 30rpx; }
+.alloc-row { display: flex; align-items: center; gap: 16rpx; margin-bottom: 20rpx; flex-wrap: wrap; }
+.picker-wrap { flex: 1; min-width: 180rpx; padding: 20rpx; border: 2rpx solid #eee; border-radius: 8rpx; font-size: 28rpx; color: #333; }
+.input-qty { width: 140rpx; padding: 20rpx; border: 2rpx solid #eee; border-radius: 8rpx; text-align: center; }
+.btn-add { margin-top: 16rpx; padding: 20rpx; border: 2rpx dashed #cbd5e1; border-radius: 12rpx; color: #64748b; text-align: center; }
+.btn-submit { margin: 32rpx 20rpx; background: #22c55e; color: #fff; }

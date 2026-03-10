@@ -84,13 +84,25 @@ $(function() {
                                 statusText = '<span class="label label-danger">已取消</span>';
                                 break;
                         }
+                        var ts = item.create_time;
+                        var dateStr = '-';
+                        if (ts != null && ts !== '') {
+                            var n = parseInt(ts, 10);
+                            if (!isNaN(n) && n > 0) {
+                                var d = new Date(n * 1000);
+                                if (!isNaN(d.getTime()) && d.getFullYear() >= 2000) {
+                                    var pad = function(x) { return (x < 10) ? '0' + x : '' + x; };
+                                    dateStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+                                }
+                            }
+                        }
                         html += '<tr>' +
                             '<td><input type="checkbox" name="id" value="' + item.id + '" /></td>' +
                             '<td>' + (item.request_no || '') + '</td>' +
                             '<td>' + (item.material ? item.material.name : '') + '</td>' +
                             '<td>' + (item.supplier ? item.supplier.name : '') + '</td>' +
-                            '<td>' + (item.quantity || 0) + '</td>' +
-                            '<td>' + (item.create_time ? new Date(item.create_time * 1000).toLocaleString() : '') + '</td>' +
+                            '<td>' + (item.required_quantity != null ? item.required_quantity : (item.quantity || 0)) + '</td>' +
+                            '<td>' + dateStr + '</td>' +
                             '<td>' + statusText + '</td>' +
                             '<td>' +
                                 '<a href="javascript:;" class="btn btn-xs btn-primary" onclick="audit(' + item.id + ', 1)">通过</a> ' +

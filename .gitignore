@@ -15,3 +15,5 @@ Thumbs.db
 /public/uploads/*
 !/public/uploads/.gitkeep
 /build/
+/dist/
+dist

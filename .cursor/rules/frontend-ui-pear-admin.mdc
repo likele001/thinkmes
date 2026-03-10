@@ -1,0 +1,23 @@
+---
+description: 前端 UI 统一使用 Pear Admin，后续所有前端页面与组件均按此规范
+globs: app/**/view/**/*.html, public/assets/**/*.{js,css}, docs/**/*.md
+alwaysApply: true
+---
+
+# 前端 UI：Pear Admin
+
+## 约定
+
+- **前端 UI 统一使用 Pear Admin**，不再使用 AdminLTE 或其他后台模板。
+- 后续新增或改版的前端页面、用户中心页面、后台管理页面，均基于 **Pear Admin** 的布局、组件与风格开发。
+
+## 当前项目中的使用
+
+- 后台（admin）布局：`app/admin/view/layout/default.html` 使用 `.pear-admin-wrap`、`.pear-header`、`.pear-side`、`.pear-main`、`.pear-tabs`、`.pear-content` 等 Pear Admin 结构。
+- 样式：`public/assets/css/pear-admin-theme.css`（Pear Admin Layui 风格），配合 Layui 图标与组件（如 `layui-icon-shrink-right` 等）。
+- 侧栏、标签页、iframe 内容区等交互逻辑在 `app/admin/view/common/script.html` 中与 Pear 结构配合。
+
+## 开发时注意
+
+- 新页面保持与现有 Pear Admin 主题一致（类名、配色、图标）。
+- 表格、表单、按钮等尽量复用 Pear Admin / Layui 组件，或使用与 `pear-admin-theme.css` 兼容的 Bootstrap 类（主题已做对齐）。

@@ -1,0 +1,18 @@
+<view class="container">
+  <view class="card">
+    <view class="form-item">
+      <text class="label">追溯码</text>
+      <input class="input" placeholder="请输入追溯码" value="{{code}}" bindinput="onCodeInput"/>
+    </view>
+    <button class="btn-primary" bindtap="query">查询</button>
+  </view>
+  <view class="card result" wx:if="{{result}}">
+    <view class="card-title">查询结果</view>
+    <view class="row"><text class="label">追溯码</text><text>{{result.trace_code || result.item_no}}</text></view>
+    <view class="row"><text class="label">订单号</text><text>{{result.order && result.order.order_no || result.order_no || '-'}}</text></view>
+    <view class="row"><text class="label">产品/型号</text><text>{{productName}}</text></view>
+    <view class="row"><text class="label">工序</text><text>{{result.process && result.process.name || result.process_name || '-'}}</text></view>
+    <view class="row" wx:if="{{result.report}}"><text class="label">报工ID</text><text>{{result.report.id}}</text></view>
+  </view>
+  <view class="empty" wx:if="{{searched && !result && !loading}}">未找到该追溯码</view>
+</view>

@@ -1,61 +1,67 @@
 <div class="card card-outline card-primary">
-    <div class="card-header"><h3 class="card-title">编辑权限规则</h3></div>
+    <div class="card-header"><h3 class="card-title">{:__('edit_title')}</h3></div>
     <div class="card-body">
         <form id="form-edit" method="post" class="form-horizontal">
             <input type="hidden" name="id" value="{$data.id|default=0}">
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">规则标识</label>
+                <label class="col-sm-2 col-form-label">{:__('rule_name')}</label>
                 <div class="col-sm-6"><input type="text" name="name" class="form-control" value="{$data.name|default=''}" required></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">标题</label>
+                <label class="col-sm-2 col-form-label">{:__('title_col')}</label>
                 <div class="col-sm-6"><input type="text" name="title" class="form-control" value="{$data.title|default=''}"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">类型</label>
+                <label class="col-sm-2 col-form-label">{:__('type')}</label>
                 <div class="col-sm-6">
                     <select name="type" class="form-control">
-                        <option value="1" {if condition="$data.type == 1"}selected{/if}>菜单</option>
-                        <option value="2" {if condition="$data.type == 2"}selected{/if}>按钮</option>
-                        <option value="3" {if condition="$data.type == 3"}selected{/if}>接口</option>
+                        <option value="1" {if condition="$data.type == 1"}selected{/if}>{:__('type_menu')}</option>
+                        <option value="2" {if condition="$data.type == 2"}selected{/if}>{:__('type_btn')}</option>
+                        <option value="3" {if condition="$data.type == 3"}selected{/if}>{:__('type_api')}</option>
                     </select>
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">是否菜单</label>
+                <label class="col-sm-2 col-form-label">{:__('ismenu_label')}</label>
                 <div class="col-sm-6">
                     <select name="ismenu" class="form-control">
-                        <option value="1" {if condition="($data.ismenu ?? 1) == 1"}selected{/if}>显示</option>
-                        <option value="0" {if condition="($data.ismenu ?? 1) == 0"}selected{/if}>隐藏</option>
+                        <option value="1" {if condition="($data.ismenu ?? 1) == 1"}selected{/if}>{:__('ismenu_show')}</option>
+                        <option value="0" {if condition="($data.ismenu ?? 1) == 0"}selected{/if}>{:__('ismenu_hide')}</option>
                     </select>
-                    <small class="text-muted">隐藏后不在菜单中显示，但仍可作为权限节点使用</small>
+                    <small class="text-muted">{:__('ismenu_hint')}</small>
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">父ID</label>
-                <div class="col-sm-6"><input type="number" name="pid" class="form-control" value="{$data.pid|default=0}"></div>
+                <label class="col-sm-2 col-form-label">{:__('parent_id')}</label>
+                <div class="col-sm-6">
+                    <select name="pid" class="form-control">
+                        {volist name="parentOptions" id="opt"}
+                        <option value="{$opt.id}" {if condition="isset($data.pid) && $data.pid == $opt.id"}selected{/if}>{$opt.title|raw}</option>
+                        {/volist}
+                    </select>
+                </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">图标</label>
+                <label class="col-sm-2 col-form-label">{:__('icon')}</label>
                 <div class="col-sm-6"><input type="text" name="icon" class="form-control" value="{$data.icon|default=''}"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">排序</label>
+                <label class="col-sm-2 col-form-label">{:__('sort')}</label>
                 <div class="col-sm-6"><input type="number" name="sort" class="form-control" value="{$data.sort|default=0}"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">状态</label>
+                <label class="col-sm-2 col-form-label">{:__('status')}</label>
                 <div class="col-sm-6">
                     <select name="status" class="form-control">
-                        <option value="1" {if condition="$data.status == 1"}selected{/if}>正常</option>
-                        <option value="0" {if condition="$data.status == 0"}selected{/if}>禁用</option>
+                        <option value="1" {if condition="$data.status == 1"}selected{/if}>{:__('status_normal')}</option>
+                        <option value="0" {if condition="$data.status == 0"}selected{/if}>{:__('status_disabled')}</option>
                     </select>
                 </div>
             </div>
             <div class="form-group row">
                 <div class="col-sm-6 offset-sm-2">
-                    <button type="submit" class="btn btn-primary">保存</button>
-                    <a href="{:url('auth_rule/index')}" class="btn btn-default ml-2">返回</a>
+                    <button type="submit" class="btn btn-primary">{:__('save')}</button>
+                    <a href="{:url('auth_rule/index')}" class="btn btn-default ml-2">{:__('back')}</a>
                 </div>
             </div>
         </form>

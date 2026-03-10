@@ -1,73 +1,101 @@
+<script>
+window.__L = {
+  msg_invalid_task: {:json_encode(lang('msg_invalid_task'))},
+  msg_load_fail: {:json_encode(lang('msg_load_fail'))},
+  msg_upload_fail: {:json_encode(lang('msg_upload_fail'))},
+  msg_select_item_no: {:json_encode(lang('msg_select_item_no'))},
+  msg_fill_hours: {:json_encode(lang('msg_fill_hours'))},
+  msg_report_ok: {:json_encode(lang('msg_report_ok'))},
+  msg_report_fail: {:json_encode(lang('msg_report_fail'))},
+  msg_no_recording: {:json_encode(lang('msg_no_recording'))},
+  msg_recording_start: {:json_encode(lang('msg_recording_start'))},
+  msg_mic_error: {:json_encode(lang('msg_mic_error'))},
+  msg_upload_audio_fail: {:json_encode(lang('msg_upload_audio_fail'))},
+  msg_transcribe_fail: {:json_encode(lang('msg_transcribe_fail'))},
+  msg_no_voice: {:json_encode(lang('msg_no_voice'))},
+  msg_parse_fail: {:json_encode(lang('msg_parse_fail'))},
+  msg_parse_request_fail: {:json_encode(lang('msg_parse_request_fail'))},
+  msg_no_parsed_data: {:json_encode(lang('msg_no_parsed_data'))},
+  msg_apply_parse_error: {:json_encode(lang('msg_apply_parse_error'))},
+  msg_voice_confirm: {:json_encode(lang('msg_voice_confirm'))},
+  msg_audio_url_prompt: {:json_encode(lang('msg_audio_url_prompt'))},
+  hint_upload_image: {:json_encode(lang('hint_upload_image'))},
+  msg_no_item_nos: {:json_encode(lang('msg_no_item_nos'))}
+};
+</script>
 <div class="container-main">
   <div class="member-layout">
     <div class="member-left">
       <div class="card">
         <div class="card-body">
           <ul class="nav nav-pills flex-column">
-            <li class="nav-item"><a class="nav-link" href="/index/user/index"><i class="fa fa-home mr-2"></i>会员中心</a></li>
-            <li class="nav-item"><a class="nav-link" href="/index/user/profile"><i class="fa fa-user mr-2"></i>个人资料</a></li>
-            <li class="nav-item"><a class="nav-link" href="/index/user/changepwd"><i class="fa fa-key mr-2"></i>修改密码</a></li>
-            <li class="nav-item"><a class="nav-link" href="/index/user/logout"><i class="fa fa-sign-out-alt mr-2"></i>退出</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/user/index"><i class="fa fa-home mr-2"></i>{:lang('member_center')}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/user/profile"><i class="fa fa-user mr-2"></i>{:lang('profile')}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/user/changepwd"><i class="fa fa-key mr-2"></i>{:lang('change_pwd')}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/user/logout"><i class="fa fa-sign-out-alt mr-2"></i>{:lang('logout')}</a></li>
           </ul>
         </div>
       </div>
     </div>
     <div class="member-right">
       <div class="card">
-        <div class="card-header">扫码报工</div>
+        <div class="card-header">{:lang('scan_title')}</div>
         <div class="card-body">
+          <div id="scan-empty-state" class="text-center py-5 px-3" style="display:none;">
+            <p class="text-muted mb-3">{:lang('scan_no_task_hint')}</p>
+            <a href="/index/worker/tasks" class="btn btn-primary">{:lang('scan_go_tasks')}</a>
+          </div>
           <div id="task-info" style="margin-bottom:15px;">
-            <div><strong>订单号：</strong><span id="order-no">-</span></div>
-            <div><strong>产品名称：</strong><span id="product-name">-</span></div>
-            <div><strong>型号：</strong><span id="model-name">-</span></div>
-            <div><strong>工序：</strong><span id="process-name">-</span></div>
-            <div><strong>分配数量：</strong><span id="assign-qty">0</span></div>
-            <div><strong>已报数量：</strong><span id="reported-qty">0</span></div>
-            <div><strong>待报数量：</strong><span id="pending-qty">0</span></div>
+            <div><strong>{:lang('label_order_no')}：</strong><span id="order-no">-</span></div>
+            <div><strong>{:lang('label_product_name')}：</strong><span id="product-name">-</span></div>
+            <div><strong>{:lang('label_model')}：</strong><span id="model-name">-</span></div>
+            <div><strong>{:lang('label_process')}：</strong><span id="process-name">-</span></div>
+            <div><strong>{:lang('label_assign_qty')}：</strong><span id="assign-qty">0</span></div>
+            <div><strong>{:lang('label_reported_qty')}：</strong><span id="reported-qty">0</span></div>
+            <div><strong>{:lang('label_pending_qty')}：</strong><span id="pending-qty">0</span></div>
           </div>
           <form id="form-report">
             <input type="hidden" id="allocation-id" value="{$allocation_id|default=0}">
             <div class="form-group">
-              <label>报工方式</label>
+              <label>{:lang('label_work_type')}</label>
               <select class="form-control" id="work-type" name="work_type">
-                <option value="piece">按件报工</option>
-                <option value="hour">按工时报工</option>
+                <option value="piece">{:lang('opt_piece')}</option>
+                <option value="hour">{:lang('opt_hour')}</option>
               </select>
             </div>
             <div class="form-group" id="field-itemnos">
-              <label>选择产品编号</label>
+              <label>{:lang('label_select_item_no')}</label>
               <div id="item-list" class="border rounded p-2" style="max-height:260px;overflow-y:auto;"></div>
-              <small class="form-text text-muted">已选择 <span id="selected-count">0</span> 个产品编号，每个编号可单独上传图片</small>
+              <small class="form-text text-muted">{:lang('hint_selected_left')}<span id="selected-count">0</span>{:lang('hint_selected_right')}</small>
             </div>
             <div class="form-group" id="field-hours" style="display:none;">
-              <label>工时（小时）</label>
-              <input type="number" class="form-control" id="work-hours" name="work_hours" min="0.1" step="0.1" placeholder="请输入本次工时">
+              <label>{:lang('label_hours')}</label>
+              <input type="number" class="form-control" id="work-hours" name="work_hours" min="0.1" step="0.1" placeholder="{:lang('placeholder_hours')}">
             </div>
-            <button type="submit" class="btn btn-primary">提交报工</button>
-            <button type="button" id="btn-voice-report" class="btn btn-outline-primary ms-2">语音报工</button>
+            <button type="submit" class="btn btn-primary">{:lang('btn_submit')}</button>
+            <button type="button" id="btn-voice-report" class="btn btn-outline-primary ms-2">{:lang('btn_voice_report')}</button>
           </form>
-          <!-- 语音解析结果编辑模态 -->
           <div class="modal fade" id="voiceParseModal" tabindex="-1" role="dialog" aria-labelledby="voiceParseModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title" id="voiceParseModalLabel">解析结果确认</h5>
+                  <h5 class="modal-title" id="voiceParseModalLabel">{:lang('modal_parse_title')}</h5>
                   <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
                 </div>
                 <div class="modal-body">
-                  <div class="form-group mb-2"><label>订单号</label><input id="parsed-order-no" class="form-control" /></div>
-                  <div class="form-group mb-2"><label>型号</label><input id="parsed-model-name" class="form-control" /></div>
-                  <div class="form-group mb-2"><label>工序</label><input id="parsed-process-name" class="form-control" /></div>
-                  <div class="form-group mb-2"><label>数量</label><input id="parsed-quantity" type="number" class="form-control" /></div>
-                  <div class="form-group mb-2"><label>编号（逗号分隔）</label><input id="parsed-item-nos" class="form-control" /></div>
-                  <div class="form-group mb-2"><label>工时</label><input id="parsed-work-hours" type="number" step="0.1" class="form-control" /></div>
-                  <small class="text-muted">请确认并可在此处编辑解析结果，点击“应用到表单”将填充报工表单。</small>
+                  <div class="form-group mb-2"><label>{:lang('label_order_no')}</label><input id="parsed-order-no" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>{:lang('label_model')}</label><input id="parsed-model-name" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>{:lang('label_process')}</label><input id="parsed-process-name" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>{:lang('label_quantity')}</label><input id="parsed-quantity" type="number" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>{:lang('label_item_nos')}</label><input id="parsed-item-nos" class="form-control" /></div>
+                  <div class="form-group mb-2"><label>{:lang('label_work_hours')}</label><input id="parsed-work-hours" type="number" step="0.1" class="form-control" /></div>
+                  <small class="text-muted">{:lang('hint_confirm_edit')}</small>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                  <button type="button" class="btn btn-primary" id="apply-parsed-btn">应用到表单</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{:lang('btn_cancel')}</button>
+                  <button type="button" class="btn btn-primary" id="apply-parsed-btn">{:lang('btn_apply_form')}</button>
                 </div>
               </div>
             </div>
@@ -79,12 +107,14 @@
 </div>
 <script>
 $(function(){
-  var tk = localStorage.getItem('token')||'';
+  var tk = localStorage.getItem('token')||(document.cookie.match(/user_token=([^;]+)/)?RegExp.$1.trim():'');
   if(!tk){location.href='/index/user/login';return;}
   var allocationId = parseInt($('#allocation-id').val()||'0',10)||0;
   var itemImages = {};
   if(!allocationId){
-    alert('无效的任务信息');
+    $('#scan-empty-state').show();
+    $('#task-info').hide();
+    $('#form-report').hide();
     return;
   }
   $('#work-type').on('change', function(){
@@ -102,7 +132,7 @@ $(function(){
     data:{allocation_id:allocationId},
     headers:{'Authorization':'Bearer '+tk},
     success:function(r){
-      if(r.code!==1){alert(r.msg||'加载任务失败');return;}
+      if(r.code!==1){alert(r.msg||(window.__L&&window.__L.msg_load_fail)||'加载任务失败');return;}
       var d=r.data||{};
       $('#order-no').text(d.order_no||'-');
       $('#product-name').text(d.product_name||'-');
@@ -125,14 +155,14 @@ $(function(){
             +   '<div class="d-flex align-items-start">'
             +     '<div class="flex-grow-1">'
             +       '<input type="file" class="form-control form-control-sm item-image-input" accept="image/*" multiple>'
-            +       '<small class="form-text text-muted">为该产品上传图片，可多选</small>'
+            +       '<small class="form-text text-muted">'+(window.__L&&window.__L.hint_upload_image?window.__L.hint_upload_image:'为该产品上传图片，可多选')+'</small>'
             +     '</div>'
             +   '</div>'
             +   '<div class="item-image-preview mt-2 d-flex flex-wrap"></div>'
             + '</div>';
         });
       }else{
-        html = '<div class="text-muted">暂无可报工的产品编号</div>';
+        html = '<div class="text-muted">'+(window.__L&&window.__L.msg_no_item_nos?window.__L.msg_no_item_nos:'暂无可报工的产品编号')+'</div>';
       }
       $('#item-list').html(html);
 
@@ -181,11 +211,11 @@ $(function(){
                 $wrap.append($img).append($del);
                 $block.find('.item-image-preview').append($wrap);
               }else{
-                alert(r.msg||'上传失败');
+                alert(r.msg||(window.__L&&window.__L.msg_upload_fail)||'上传失败');
               }
             },
             error:function(){
-              alert('上传失败');
+              alert((window.__L&&window.__L.msg_upload_fail)||'上传失败');
             }
           });
         });
@@ -211,12 +241,12 @@ $(function(){
         }
       });
       if(!selectedItems.length){
-        alert('请选择要报工的产品编号');
+        alert((window.__L&&window.__L.msg_select_item_no)||'请选择要报工的产品编号');
         return;
       }
     }
     if(workType==='hour'&&hours<=0){
-      alert('请填写工时');
+      alert((window.__L&&window.__L.msg_fill_hours)||'请填写工时');
       return;
     }
     var payload={allocation_id:allocationId,work_type:workType};
@@ -243,10 +273,10 @@ $(function(){
       headers:{'Authorization':'Bearer '+tk},
       success:function(r){
         if(r.code===1){
-          alert('报工成功');
+          alert((window.__L&&window.__L.msg_report_ok)||'报工成功');
           location.href='/index/user/index';
         }else{
-          alert(r.msg||'报工失败');
+          alert(r.msg||(window.__L&&window.__L.msg_report_fail)||'报工失败');
         }
       }
     });
@@ -258,7 +288,7 @@ $(function(){
     var audioChunks = [];
     function startRecording(){
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('浏览器不支持录音，请使用音频文件 URL');
+        alert((window.__L&&window.__L.msg_no_recording)||'浏览器不支持录音，请使用音频文件 URL');
         return;
       }
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
@@ -272,9 +302,9 @@ $(function(){
         };
         mediaRecorder.start();
         var t = setTimeout(function(){ if(mediaRecorder && mediaRecorder.state==='recording'){ mediaRecorder.stop(); } }, 15000);
-        alert('开始录音（最长15秒），录音结束后自动上传并解析');
+        alert((window.__L&&window.__L.msg_recording_start)||'开始录音（最长15秒），录音结束后自动上传并解析');
       }).catch(function(err){
-        alert('无法访问麦克风：' + err.message);
+        alert(((window.__L&&window.__L.msg_mic_error)||'无法访问麦克风：') + err.message);
       });
     }
 
@@ -292,35 +322,35 @@ $(function(){
           if(r.code===1 && r.data && r.data.url){
             callTranscribe(r.data.url);
           } else {
-            alert(r.msg || '上传音频失败');
+            alert(r.msg || (window.__L&&window.__L.msg_upload_audio_fail) || '上传音频失败');
           }
         },
-        error: function(){ alert('上传音频失败'); }
+        error: function(){ alert((window.__L&&window.__L.msg_upload_audio_fail)||'上传音频失败'); }
       });
     }
 
     function callTranscribe(url){
       fetch('/api/ai/transcribe', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk}, body:JSON.stringify({audio_url: url})})
         .then(r=>r.json()).then(function(j){
-          if(!j || j.code!=1){ alert(j && j.msg ? j.msg : '转写失败'); return; }
+          if(!j || j.code!=1){ alert(j && j.msg ? j.msg : (window.__L&&window.__L.msg_transcribe_fail)||'转写失败'); return; }
           var text = j.data && j.data.text ? j.data.text : '';
-          if(!text){ alert('未识别到语音内容'); return; }
+          if(!text){ alert((window.__L&&window.__L.msg_no_voice)||'未识别到语音内容'); return; }
           if(!confirm('识别结果：\n' + text + '\n\n是否继续解析为报工？')) return;
           callParse(text);
-        }).catch(function(){ alert('转写请求失败'); });
+        }).catch(function(){ alert((window.__L&&window.__L.msg_transcribe_fail)||'转写失败'); });
     }
 
     function callParse(text){
       fetch('/api/ai/parse', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk}, body:JSON.stringify({text: text})})
         .then(r=>r.json()).then(function(j){
-          if(!j || j.code!=1){ alert(j && j.msg ? j.msg : '解析失败'); return; }
+          if(!j || j.code!=1){ alert(j && j.msg ? j.msg : (window.__L&&window.__L.msg_parse_fail)||'解析失败'); return; }
           var data = j.data && j.data.data ? j.data.data : j.data;
           applyParsedData(data);
-        }).catch(function(){ alert('解析请求失败'); });
+        }).catch(function(){ alert((window.__L&&window.__L.msg_parse_request_fail)||'解析请求失败'); });
     }
 
     function applyParsedData(data){
-      if(!data) { alert('未解析到结构化数据'); return; }
+      if(!data) { alert((window.__L&&window.__L.msg_no_parsed_data)||'未解析到结构化数据'); return; }
       // 填充模态并显示，允许用户编辑后应用
       try{
         var itemNos = data.item_nos || '';
@@ -338,7 +368,7 @@ $(function(){
         $('#parsed-work-hours').val(data.work_hours || '');
         // 使用 Bootstrap 5 modal show，如果不可用回退
         try{ var vm = new bootstrap.Modal(document.getElementById('voiceParseModal')); vm.show(); }catch(e){ $('#voiceParseModal').modal('show'); }
-      }catch(e){ console.error(e); alert('显示解析结果出错'); }
+      }catch(e){ console.error(e); alert((window.__L&&window.__L.msg_apply_parse_error)||'显示解析结果出错'); }
     }
 
     // 模态：应用解析结果到表单
@@ -384,10 +414,10 @@ $(function(){
 
     // 触发器按钮
     $(document).off('click', '#btn-voice-report').on('click', '#btn-voice-report', function(){
-      if(confirm('使用麦克风录音并自动解析？点击“否”可输入音频 URL')){
+      if(confirm((window.__L&&window.__L.msg_voice_confirm)||'使用麦克风录音并自动解析？点击“否”可输入音频 URL')){
         startRecording();
       } else {
-        var url = prompt('请输入音频文件 URL（http(s)://）或相对路径：');
+        var url = prompt((window.__L&&window.__L.msg_audio_url_prompt)||'请输入音频文件 URL（http(s)://）或相对路径：');
         if(url) uploadAudioByUrl(url);
       }
     });

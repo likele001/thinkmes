@@ -29,11 +29,15 @@ class Customer extends BaseController
         return (int) ($this->request->customerId ?? 0);
     }
 
+    /**
+     * 客户登录：不依赖域名绑定，先凭账号密码登录，再按客户所属租户使用。
+     * 未传租户时按 login_account 全局查找，唯一则用其 tenant_id；多个则提示指定租户。
+     */
     public function login(): Response
     {
         $tenantId = $this->getTenantId();
         if ($tenantId <= 0) {
-            return $this->error('未识别租户');
+            $tenantId = max(0, (int) $this->request->post('tenant_id', 0));
         }
 
         $account = trim((string) $this->request->post('login_account', ''));
@@ -46,10 +50,22 @@ class Customer extends BaseController
             return $this->error('密码长度需在 6-64 位之间');
         }
 
-        $customer = CustomerModel::where('tenant_id', $tenantId)
-            ->where('login_account', $account)
-            ->where('status', 1)
-            ->find();
+        $customer = null;
+        if ($tenantId > 0) {
+            $customer = CustomerModel::where('tenant_id', $tenantId)
+                ->where('login_account', $account)
+                ->where('status', 1)
+                ->find();
+        } else {
+            $list = CustomerModel::where('login_account', $account)->where('status', 1)->select();
+            $n = $list->count();
+            if ($n === 1) {
+                $customer = $list[0];
+                $tenantId = (int) $customer->tenant_id;
+            } elseif ($n > 1) {
+                return $this->error('存在多个账号，请通过指定租户的链接登录（如 ?tenant_id=1）');
+            }
+        }
         if (!$customer) {
             return $this->error('账号不存在或已禁用');
         }

@@ -1,5 +1,5 @@
 {
-  "description": "MES 工作台（员工端 + 租户管理端 整合）",
+  "description": "MES 工作台（员工端 + 租户管理端）。请将 appid 改为你在微信公众平台申请的小程序 AppID（开发-开发管理-开发设置中查看）",
   "packOptions": { "ignore": [] },
   "setting": {
     "urlCheck": true,
@@ -10,7 +10,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "2.19.4",
-  "appid": "请填写你的小程序 AppID",
+  "appid": "wxccf32ba082446a3d",
   "projectname": "mes-miniapp",
   "condition": {}
 }

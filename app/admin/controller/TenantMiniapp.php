@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace app\admin\controller;
 
 use app\admin\model\TenantMiniappModel;
+use app\admin\model\TenantModel;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 use think\Response;
@@ -18,6 +20,21 @@ class TenantMiniapp extends Backend
         $superId = (int) (config('auth.super_admin_id') ?? 1);
         if ($tenantId <= 0 && $adminId !== $superId) {
             return $this->error('仅租户管理员可配置小程序信息');
+        }
+        // 租户需具备套餐中的「小程序」功能才可访问
+        if ($tenantId > 0) {
+            $tenant = TenantModel::where('id', $tenantId)->field('package_id')->find();
+            $packageId = $tenant ? (int) ($tenant['package_id'] ?? 0) : 0;
+            if ($packageId <= 0) {
+                return $this->error('当前租户未分配套餐或套餐未包含小程序功能');
+            }
+            $hasMiniapp = Db::name('tenant_package_feature')
+                ->where('package_id', $packageId)
+                ->where('feature_code', 'admin/tenant/miniapp')
+                ->find();
+            if (!$hasMiniapp) {
+                return $this->error('当前套餐未开通小程序功能，请联系平台在「租户套餐」中为该套餐分配「小程序」功能');
+            }
         }
 
         $model = new TenantMiniappModel();

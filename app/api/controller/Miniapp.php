@@ -110,32 +110,97 @@ class Miniapp extends BaseController
             $bind->last_login_time = $now;
             $bind->update_time = $now;
             $bind->save();
+
+            $token = UserAuth::makeToken((int) $user->id, $tenantId);
+            $out = $user->toArray();
+            unset($out['password']);
+            $out['token'] = $token;
+            return $this->success('登录成功', $out);
+        }
+
+        // 未绑定：要求绑定用户中心已有员工，不自动建新用户
+        return $this->success('请绑定员工账号', ['need_bind' => true]);
+    }
+
+    /**
+     * 小程序绑定已有员工（用户中心账号+密码）
+     * POST: code, tenant_id, username, password
+     * 校验员工后建立 openid -> user_id 绑定并返回 token
+     */
+    public function bindWithEmployee(): Response
+    {
+        $tenantId = (int) $this->request->post('tenant_id', 0);
+        if ($tenantId <= 0) {
+            $tenantId = $this->getTenantId();
+        }
+        if ($tenantId <= 0) {
+            return $this->error('未识别租户');
+        }
+
+        $code = trim((string) $this->request->post('code', ''));
+        $username = trim((string) $this->request->post('username', ''));
+        $password = trim((string) $this->request->post('password', ''));
+        if ($code === '' || $username === '' || $password === '') {
+            return $this->error('请提供 code、用户名和密码');
+        }
+
+        $miniapp = TenantMiniappModel::where('tenant_id', $tenantId)
+            ->where('type', 'wechat')
+            ->where('status', 1)
+            ->find();
+        if (!$miniapp) {
+            return $this->error('当前租户未配置小程序信息');
+        }
+
+        $appId = (string) $miniapp['app_id'];
+        $appSecret = (string) $miniapp['app_secret'];
+        if ($appId === '' || $appSecret === '') {
+            return $this->error('小程序 AppID 或 AppSecret 未配置');
+        }
+
+        $wx = $this->code2session($appId, $appSecret, $code);
+        if (!$wx['success']) {
+            return $this->error($wx['msg']);
+        }
+        $openid = (string) ($wx['data']['openid'] ?? '');
+        $unionid = (string) ($wx['data']['unionid'] ?? '');
+        $sessionKey = (string) ($wx['data']['session_key'] ?? '');
+        if ($openid === '') {
+            return $this->error('未获取到 openid');
+        }
+
+        $user = UserModel::where('tenant_id', $tenantId)
+            ->where('username', $username)
+            ->where('status', 1)
+            ->find();
+        if (!$user) {
+            return $this->error('用户不存在或已禁用');
+        }
+        $passHash = (string) $user->getData('password');
+        if ($passHash === '' || !password_verify($password, $passHash)) {
+            return $this->error('密码错误');
+        }
+
+        $userId = (int) $user->id;
+        $now = time();
+        $bind = UserMiniappModel::where('tenant_id', $tenantId)
+            ->where('type', 'wechat')
+            ->where('openid', $openid)
+            ->find();
+        if ($bind && (int) $bind['user_id'] !== $userId) {
+            return $this->error('该微信已绑定其他员工，请更换微信或联系管理员');
+        }
+
+        if ($bind) {
+            $bind->session_key = $sessionKey;
+            $bind->unionid = $unionid;
+            $bind->last_login_time = $now;
+            $bind->update_time = $now;
+            $bind->save();
         } else {
-            $nickname = trim((string) $this->request->post('nickname', ''));
-            $avatar = trim((string) $this->request->post('avatar', ''));
-
-            $baseUsername = $nickname !== '' ? $nickname : ('wx_' . substr($openid, -6));
-            $username = $baseUsername;
-            $i = 1;
-            while (UserModel::where('tenant_id', $tenantId)->where('username', $username)->find()) {
-                $username = $baseUsername . $i;
-                $i++;
-            }
-
-            $user = new UserModel();
-            $user->tenant_id = $tenantId;
-            $user->username = $username;
-            $user->password = bin2hex(random_bytes(8));
-            $user->nickname = $nickname !== '' ? $nickname : $username;
-            $user->avatar = $avatar;
-            $user->status = 1;
-            $user->create_time = $now;
-            $user->update_time = $now;
-            $user->save();
-
             $bind = new UserMiniappModel();
             $bind->tenant_id = $tenantId;
-            $bind->user_id = (int) $user->id;
+            $bind->user_id = $userId;
             $bind->type = 'wechat';
             $bind->app_id = $appId;
             $bind->openid = $openid;
@@ -147,11 +212,11 @@ class Miniapp extends BaseController
             $bind->save();
         }
 
-        $token = UserAuth::makeToken((int) $user->id, $tenantId);
+        $token = UserAuth::makeToken($userId, $tenantId);
         $out = $user->toArray();
         unset($out['password']);
         $out['token'] = $token;
-        return $this->success('登录成功', $out);
+        return $this->success('绑定成功', $out);
     }
 
     /**

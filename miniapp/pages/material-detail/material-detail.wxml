@@ -1,0 +1,12 @@
+<view class="container" wx:if="{{detail}}">
+  <view class="card">
+    <view class="row"><text class="label">名称</text><text>{{detail.name}}</text></view>
+    <view class="row"><text class="label">编码</text><text>{{detail.code || '-'}}</text></view>
+    <view class="row"><text class="label">规格</text><text>{{detail.spec || '-'}}</text></view>
+    <view class="row"><text class="label">单位</text><text>{{detail.unit || '-'}}</text></view>
+    <view class="row" wx:if="{{detail.remark}}"><text class="label">备注</text><text>{{detail.remark}}</text></view>
+  </view>
+  <button class="btn-edit" bindtap="goEdit">编辑</button>
+</view>
+<view class="container" wx:elif="{{!loading}}">暂无数据</view>
+<view class="container" wx:else>加载中...</view>

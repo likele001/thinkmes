@@ -1,0 +1,68 @@
+<div class="card">
+  <div class="card-header"><i class="fas fa-edit me-2"></i>{$title|default='排期'}</div>
+  <div class="card-body">
+    <form id="schedule-form">
+      <input type="hidden" name="id" value="{$item.id|default=0}">
+      <div class="mb-3">
+        <label class="form-label">关联作品 <span class="text-danger">*</span></label>
+        <select name="relate" id="schedule-relate" class="form-control" required>
+          {volist name="relateOptions" id="opt"}
+          <option value="{$opt.value}">{$opt.label}</option>
+          {/volist}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">平台</label>
+        <select name="platform" class="form-control">
+          <option value="">不限</option>
+          <option value="xiaohongshu">小红书</option>
+          <option value="douyin">抖音</option>
+          <option value="wechat">公众号</option>
+          <option value="shipinhao">视频号</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">计划发布时间</label>
+        <input type="datetime-local" name="plan_time" class="form-control" value="{$item.plan_time|default=''}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">备注</label>
+        <input type="text" name="remark" class="form-control" value="{$item.remark|default=''}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">状态</label>
+        <select name="status" class="form-control">
+          <option value="0">待发布</option>
+          <option value="1">已发布</option>
+          <option value="2">已下架</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/index/wemedia/schedule/index" class="btn btn-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+var __scheduleItem = {$itemJson|raw};
+$(function(){
+  var rel = '';
+  if (__scheduleItem && __scheduleItem.relate_type && __scheduleItem.relate_id) rel = __scheduleItem.relate_type + '_' + __scheduleItem.relate_id;
+  if (rel) $('#schedule-relate').val(rel);
+  if (__scheduleItem && __scheduleItem.platform) $('select[name=platform]').val(__scheduleItem.platform);
+  if (__scheduleItem && __scheduleItem.status !== undefined) $('select[name=status]').val(String(__scheduleItem.status));
+  if (__scheduleItem && __scheduleItem.plan_time) {
+    var d = new Date(__scheduleItem.plan_time * 1000);
+    $('input[name=plan_time]').val(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'));
+  }
+});
+$('#schedule-form').on('submit', function(e){
+  e.preventDefault();
+  var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+  $.post('/index/wemedia/schedule/save', $(this).serialize(), function(r){
+    alert(r.msg || (r.code === 1 ? '保存成功' : '失败'));
+    if (r.code === 1) location.href = '/index/wemedia/schedule/index';
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+</script>

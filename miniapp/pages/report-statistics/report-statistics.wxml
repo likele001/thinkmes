@@ -1,0 +1,16 @@
+<view class="container">
+  <view class="filter-row">
+    <picker mode="date" value="{{startDate}}" end="{{todayStr}}" bindchange="onStartChange"><view class="picker">{{startDate}}</view></picker>
+    <text class="to">至</text>
+    <picker mode="date" value="{{endDate}}" end="{{todayStr}}" bindchange="onEndChange"><view class="picker">{{endDate}}</view></picker>
+    <button class="btn-sm" bindtap="load">查询</button>
+  </view>
+  <view class="card" wx:if="{{summary}}">
+    <view class="section-title">汇总</view>
+    <view class="row"><text class="label">报工条数</text><text class="value">{{summary.report_count}}</text></view>
+    <view class="row"><text class="label">总产量</text><text class="value">{{summary.total_quantity}}</text></view>
+    <view class="row"><text class="label">总工资</text><text class="value text-primary">¥{{summary.total_wage}}</text></view>
+  </view>
+  <view class="empty" wx:if="{{!loading && !summary}}">请选择日期范围并查询</view>
+  <view class="loading" wx:if="{{loading}}">加载中...</view>
+</view>

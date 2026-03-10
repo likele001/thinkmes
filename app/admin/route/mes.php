@@ -4,6 +4,20 @@
  */
 use think\facade\Route;
 
+// 库存模块单独显式路由，避免 pathinfo 被解析成控制器 Mes
+Route::get('mes/stock/index', 'mes.Stock/index');
+Route::get('mes/stock/alert', 'mes.Stock/alert');
+Route::get('mes/stock/check', 'mes.Stock/check');
+Route::get('mes/stock/log', 'mes.Stock/log');
+Route::get('mes/stock/outbound/index', 'mes.Stock/outbound');
+Route::get('mes/stock/outbound', 'mes.Stock/outbound');
+Route::get('mes/stock', 'mes.Stock/index');
+Route::post('mes/stock/in', 'mes.Stock/in');
+Route::post('mes/stock/out', 'mes.Stock/out');
+Route::post('mes/stock/del', 'mes.Stock/del');
+Route::post('mes/stock/check', 'mes.Stock/check');
+Route::post('mes/stock/outbound', 'mes.Stock/outbound');
+
 Route::group('mes', function () {
     Route::get('after_sales/add', 'mes.AfterSales/add');
     Route::get('after_sales/edit', 'mes.AfterSales/edit');
@@ -66,22 +80,38 @@ Route::group('mes', function () {
     Route::post('allocation/del', 'mes.Allocation/del');
     Route::post('allocation/batch', 'mes.Allocation/batch');
     Route::post('allocation/generateQrcode', 'mes.Allocation/generateQrcode');
+    Route::get('allocation/qrcodeInfo', 'mes.Allocation/qrcodeInfo');
+
+    // 子动作必须写在 index/默认路由前面，否则 GET allocation_qrcode/getInfo 会被当成 index 返回列表
+    Route::get('allocation_qrcode/getInfo', 'mes.AllocationQrcode/getInfo');
+    Route::post('allocation_qrcode/regenerate', 'mes.AllocationQrcode/regenerate');
+    Route::get('allocation_qrcode/index', 'mes.AllocationQrcode/index');
+    Route::get('allocation_qrcode', 'mes.AllocationQrcode/index');
 
     Route::get('order/add', 'mes.Order/add');
     Route::get('order/edit', 'mes.Order/edit');
+    Route::get('order/import', 'mes.Order/import');
+    Route::get('order/downloadTemplate', 'mes.Order/downloadTemplate');
     Route::get('order/materialList', 'mes.Order/materialList');
+    Route::get('order/applyPurchase', 'mes.Order/applyPurchase');
+    Route::post('order/applyPurchase', 'mes.Order/applyPurchase');
+    Route::get('order/applyPurchaseOne', 'mes.Order/applyPurchaseOne');
+    Route::post('order/applyPurchaseOne', 'mes.Order/applyPurchaseOne');
     Route::get('order/index', 'mes.Order/index');
     Route::get('order', 'mes.Order/index');
     Route::post('order/add', 'mes.Order/add');
     Route::post('order/edit', 'mes.Order/edit');
+    Route::post('order/import', 'mes.Order/import');
     Route::post('order/del', 'mes.Order/del');
 
     Route::get('product/add', 'mes.Product/add');
     Route::get('product/edit', 'mes.Product/edit');
+    Route::get('product/batchAddModels', 'mes.Product/batchAddModels');
     Route::get('product/index', 'mes.Product/index');
     Route::get('product', 'mes.Product/index');
     Route::post('product/add', 'mes.Product/add');
     Route::post('product/edit', 'mes.Product/edit');
+    Route::post('product/batchAddModels', 'mes.Product/batchAddModels');
     Route::post('product/del', 'mes.Product/del');
 
     Route::get('bom/add', 'mes.Bom/add');
@@ -147,6 +177,14 @@ Route::group('mes', function () {
     Route::post('process/edit', 'mes.Process/edit');
     Route::post('process/del', 'mes.Process/del');
 
+    Route::get('material_category/add', 'mes.MaterialCategory/add');
+    Route::get('material_category/edit', 'mes.MaterialCategory/edit');
+    Route::get('material_category/index', 'mes.MaterialCategory/index');
+    Route::get('material_category', 'mes.MaterialCategory/index');
+    Route::post('material_category/add', 'mes.MaterialCategory/add');
+    Route::post('material_category/edit', 'mes.MaterialCategory/edit');
+    Route::post('material_category/del', 'mes.MaterialCategory/del');
+
     Route::get('material/add', 'mes.Material/add');
     Route::get('material/edit', 'mes.Material/edit');
     Route::get('material/index', 'mes.Material/index');
@@ -167,6 +205,7 @@ Route::group('mes', function () {
     Route::get('stock/alert', 'mes.Stock/alert');
     Route::get('stock/check', 'mes.Stock/check');
     Route::get('stock/log', 'mes.Stock/log');
+    Route::get('stock/outbound/index', 'mes.Stock/outbound');
     Route::get('stock/outbound', 'mes.Stock/outbound');
     Route::get('stock', 'mes.Stock/index');
     Route::post('stock/in', 'mes.Stock/in');
@@ -185,7 +224,9 @@ Route::group('mes', function () {
 
     Route::get('purchase/index', 'mes.Purchase/index');
     Route::get('purchase/inbound', 'mes.Purchase/inbound');
+    Route::get('purchase/request/index', 'mes.Purchase/requestList');
     Route::get('purchase/request', 'mes.Purchase/requestList');
+    Route::post('purchase/auditRequest', 'mes.Purchase/auditRequest');
     Route::get('purchase', 'mes.Purchase/index');
     Route::post('purchase/add', 'mes.Purchase/add');
     Route::post('purchase/edit', 'mes.Purchase/edit');
@@ -195,18 +236,23 @@ Route::group('mes', function () {
     Route::get('quality/statistics', 'mes.Quality/statistics');
     Route::get('quality/check', 'mes.Quality/check');
     Route::get('quality/standard', 'mes.Quality/standard');
+    Route::get('quality/getTemplates', 'mes.Quality/getTemplates');
     Route::get('quality/addStandard', 'mes.Quality/addStandard');
     Route::get('quality/addCheck', 'mes.Quality/addCheck');
     Route::get('quality', 'mes.Quality/index');
     Route::post('quality/add', 'mes.Quality/add');
     Route::post('quality/edit', 'mes.Quality/edit');
     Route::post('quality/del', 'mes.Quality/del');
+    Route::post('quality/copyTemplate', 'mes.Quality/copyTemplate');
     Route::post('quality/addStandard', 'mes.Quality/addStandard');
     Route::post('quality/addCheck', 'mes.Quality/addCheck');
 
-    Route::get('wage', 'mes.Wage/index');
     Route::get('wage/index', 'mes.Wage/index');
     Route::get('wage/statistics', 'mes.Wage/statistics');
+    Route::get('wage', 'mes.Wage/statistics');
+    Route::rule('wage/getSummary', 'mes.Wage/getSummary', 'GET|POST');
+    Route::rule('wage/getChart', 'mes.Wage/getChart', 'GET|POST');
+    Route::get('wage/getReportUsers', 'mes.Wage/getReportUsers');
     Route::get('wage/export', 'mes.Wage/export');
 
     Route::get('trace_code', 'mes.TraceCode/index');

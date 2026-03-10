@@ -1,0 +1,220 @@
+/**
+ * 后台控制台首页样式：统一字体、对齐、配色，避免刺眼与错位
+ * 仅在 index/index 页面通过内联引用或 layout 按需加载
+ */
+.iframe-body .index-dashboard-content {
+  --dash-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --dash-fs-xs: 0.8125rem;
+  --dash-fs-sm: 0.875rem;
+  --dash-fs-base: 1rem;
+  --dash-fs-lg: 1.125rem;
+  --dash-fs-xl: 1.25rem;
+  --dash-fs-num: 1.75rem;
+  --dash-radius: 8px;
+  --dash-shadow: 0 1px 3px rgba(0,0,0,.06);
+  --dash-shadow-card: 0 2px 8px rgba(0,0,0,.06);
+  font-family: var(--dash-font);
+  padding: 4px 0 24px;
+  line-height: 1.5;
+}
+
+/* 描述与标题 */
+.iframe-body .index-dashboard-content > .text-muted {
+  font-size: var(--dash-fs-sm);
+  margin-bottom: 1rem;
+}
+.iframe-body .index-dashboard-content .card-title {
+  font-size: var(--dash-fs-lg);
+  font-weight: 600;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.iframe-body .index-dashboard-content .card-title i {
+  font-size: 1rem;
+  opacity: .85;
+}
+
+/* 图表卡片 */
+.iframe-body .index-dashboard-content .card {
+  border-radius: var(--dash-radius);
+  box-shadow: var(--dash-shadow);
+  border: 1px solid rgba(0,0,0,.06);
+  margin-bottom: 1.25rem;
+}
+.iframe-body .index-dashboard-content .card-header {
+  font-family: var(--dash-font);
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  background: #fafafa;
+}
+.iframe-body .index-dashboard-content .card-body {
+  padding: 16px;
+  font-size: var(--dash-fs-sm);
+}
+
+/* KPI 小卡片：图标与文字垂直居中、统一高度 */
+.iframe-body .index-dashboard-content .info-box {
+  display: flex;
+  align-items: center;
+  min-height: 80px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: var(--dash-radius);
+  box-shadow: var(--dash-shadow);
+  border: 1px solid rgba(0,0,0,.06);
+  margin-bottom: 1rem;
+  font-family: var(--dash-font);
+}
+.iframe-body .index-dashboard-content .info-box-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+/* KPI 小卡片图标色与主题协调 */
+.iframe-body .index-dashboard-content .info-box-icon.bg-info { background-color: #1aa094 !important; color: #fff !important; }
+.iframe-body .index-dashboard-content .info-box-icon.bg-success { background-color: #2d8a5e !important; color: #fff !important; }
+.iframe-body .index-dashboard-content .info-box-icon.bg-warning { background-color: #d49a0a !important; color: #fff !important; }
+.iframe-body .index-dashboard-content .info-box-icon.bg-primary { background-color: #1aa094 !important; color: #fff !important; }
+.iframe-body .index-dashboard-content .info-box-icon.bg-danger { background-color: #c94a4a !important; color: #fff !important; }
+.iframe-body .index-dashboard-content .info-box-icon.bg-purple { background-color: #6f42c1 !important; color: #fff !important; }
+.iframe-body .index-dashboard-content .info-box-icon.bg-teal { background-color: #20c997 !important; color: #fff !important; }
+.iframe-body .index-dashboard-content .info-box-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.iframe-body .index-dashboard-content .info-box-text {
+  font-size: var(--dash-fs-xs);
+  color: #6c757d;
+  font-weight: 500;
+}
+.iframe-body .index-dashboard-content .info-box-number {
+  font-size: var(--dash-fs-xl);
+  font-weight: 700;
+  color: #212529;
+  line-height: 1.2;
+}
+
+/* 主统计大卡片：柔和配色、统一圆角与阴影、内文对齐 */
+.iframe-body .index-dashboard-content .small-box {
+  border-radius: var(--dash-radius);
+  box-shadow: var(--dash-shadow-card);
+  border: 1px solid rgba(0,0,0,.06);
+  overflow: hidden;
+  padding: 20px 18px 44px;
+  position: relative;
+  min-height: 120px;
+  font-family: var(--dash-font);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.iframe-body .index-dashboard-content .small-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.iframe-body .index-dashboard-content .small-box .inner {
+  position: relative;
+  z-index: 1;
+}
+.iframe-body .index-dashboard-content .small-box .inner h3 {
+  font-size: var(--dash-fs-num);
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.1);
+}
+.iframe-body .index-dashboard-content .small-box .inner p {
+  margin: 0;
+  font-size: var(--dash-fs-sm);
+  color: rgba(255,255,255,.92);
+  font-weight: 500;
+}
+.iframe-body .index-dashboard-content .small-box .icon {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  font-size: 52px;
+  opacity: .22;
+  color: #fff;
+}
+.iframe-body .index-dashboard-content .small-box .small-box-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 18px;
+  font-size: var(--dash-fs-sm);
+  font-weight: 500;
+  color: rgba(255,255,255,.95);
+  background: rgba(0,0,0,.12);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .15s;
+}
+.iframe-body .index-dashboard-content .small-box .small-box-footer:hover {
+  background: rgba(0,0,0,.18);
+  color: #fff;
+}
+
+/* 主统计卡片配色：降低饱和度，与 Pear 主题协调 */
+.iframe-body .index-dashboard-content .small-box.bg-danger {
+  background: linear-gradient(135deg, #e07c7c 0%, #d64545 100%) !important;
+}
+.iframe-body .index-dashboard-content .small-box.bg-info {
+  background: linear-gradient(135deg, #5ab8d4 0%, #1aa094 100%) !important;
+}
+.iframe-body .index-dashboard-content .small-box.bg-success {
+  background: linear-gradient(135deg, #5cb88a 0%, #2d8a5e 100%) !important;
+}
+.iframe-body .index-dashboard-content .small-box.bg-warning {
+  background: linear-gradient(135deg, #e8b84d 0%, #d49a0a 100%) !important;
+}
+
+/* 租户统计区域 */
+.iframe-body .index-dashboard-content .card .card-body .row {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+.iframe-body .index-dashboard-content .card .card-body .info-box {
+  margin-bottom: 1rem;
+}
+
+/* 底部资源统计卡片 */
+.iframe-body .index-dashboard-content .card-primary .card-header,
+.iframe-body .index-dashboard-content .card-purple .card-header,
+.iframe-body .index-dashboard-content .card-dark .card-header,
+.iframe-body .index-dashboard-content .card-success .card-header {
+  font-family: var(--dash-font);
+  font-weight: 600;
+  font-size: var(--dash-fs-base);
+}
+.iframe-body .index-dashboard-content .card-body h4,
+.iframe-body .index-dashboard-content .card-body h5 {
+  font-family: var(--dash-font);
+  font-weight: 600;
+  font-size: var(--dash-fs-lg);
+}
+.iframe-body .index-dashboard-content .card-body .text-muted {
+  font-size: var(--dash-fs-xs);
+}
+
+/* 徽章与内联标签 */
+.iframe-body .index-dashboard-content .badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+}

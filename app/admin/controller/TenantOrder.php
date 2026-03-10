@@ -23,7 +23,7 @@ class TenantOrder extends Backend
         }
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '租户订单管理');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('tenant_order/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
@@ -80,7 +80,7 @@ class TenantOrder extends Backend
         View::assign('tenants', $tenants);
         View::assign('packages', $packages);
         View::assign('data', []);
-        View::assign('title', '创建订单');
+        View::assign('title', __("add_title"));
         return $this->fetchWithLayout('tenant_order/add');
     }
 

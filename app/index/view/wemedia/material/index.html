@@ -1,0 +1,42 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="fas fa-folder-open me-2"></i>素材管理</span>
+    <a href="/index/wemedia/material/add" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>上传素材</a>
+  </div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <input type="text" id="material-keyword" class="form-control form-control-sm" placeholder="关键词">
+      </div>
+      <div class="col-md-3">
+        <select id="material-type" class="form-control form-control-sm">
+          <option value="">全部类型</option>
+          <option value="image">图片</option>
+          <option value="video">视频</option>
+          <option value="audio">音频</option>
+          <option value="text">文案</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" id="material-search" class="btn btn-primary btn-sm">搜索</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th width="50">ID</th>
+            <th>名称</th>
+            <th width="80">类型</th>
+            <th width="90">大小</th>
+            <th width="160">上传时间</th>
+            <th width="160">操作</th>
+          </tr>
+        </thead>
+        <tbody id="material-tbody"></tbody>
+      </table>
+    </div>
+    <div id="material-pager" class="mt-2 small text-muted"></div>
+  </div>
+</div>
+<script src="/assets/js/wemedia/material.js"></script>

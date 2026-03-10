@@ -1,0 +1,243 @@
+<div class="card">
+  <div class="card-header"><i class="fas fa-cog me-2"></i>自媒体配置</div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">自媒体工作流为 <strong>KeleAdmin 框架级独立应用</strong>，与租户无关，全站共用本配置；用于用户中心「自媒体工作台」的开关、平台及 AI 模型。</p>
+    <p class="small mb-0"><strong>前端（用户中心）入口：</strong> <code>/index/wemedia/index</code>，需登录后访问；侧栏为选题、文案、素材、短视频、排期、数据复盘、合规检测。</p>
+    <form id="wemedia-config-form" class="form-horizontal">
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">启用自媒体工作台</label>
+        <div class="col-sm-6">
+          <label class="mb-0">
+            <input type="checkbox" name="enable" value="1" {$config.enable=='1' ? 'checked' : ''}> 开启后，用户中心显示「自媒体工作台」入口
+          </label>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">平台列表</label>
+        <div class="col-sm-8">
+          <div id="platforms-editor" data-platforms="{$config.platforms|default=''}">
+            <table class="table table-sm table-bordered mb-2">
+              <thead><tr><th style="width:160px">标识 (value)</th><th>显示名称 (label)</th><th style="width:80px">操作</th></tr></thead>
+              <tbody id="platforms-tbody"></tbody>
+            </table>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="platform-add-row"><i class="fas fa-plus me-1"></i>添加平台</button>
+          </div>
+          <input type="hidden" name="platforms" id="platforms-hidden" value="">
+          <small class="text-muted d-block mt-1">用于工作台平台选择；留空或未填时保存将使用默认：小红书、抖音、公众号、视频号</small>
+        </div>
+      </div>
+
+      <hr class="my-4">
+      <h6 class="text-muted mb-3">AI 模型配置（自媒体专用，与工厂 AI 无关）</h6>
+
+      <div class="alert alert-light border mb-3 small">
+        <strong>推荐免费/低价模型</strong>（多用户、轻量、低成本，适配 2～10 人小团队）<br>
+        <span class="text-muted">文本：</span>豆包、智谱 ChatGLM、讯飞星火（免费优先）→ GPT-3.5、文心一言（低价备选） &nbsp;|&nbsp;
+        <span class="text-muted">图片：</span>通义万相、Stable Diffusion 本地、剪映（免费）→ 通义按量、MidJourney（低价） &nbsp;|&nbsp;
+        <span class="text-muted">视频：</span>VideoCrafter 本地、Runway、讯飞听见（免费）→ Pika、阿里云视频（按量）
+      </div>
+
+      <div class="card bg-light mb-3">
+        <div class="card-body py-3">
+          <h6 class="card-title small">文本生成（选题扩写 / 文案 / 脚本）</h6>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <select name="ai_text_provider" class="form-control form-control-sm">
+                {volist name="aiProviderOptions" id="label" key="val"}
+                <option value="{$val}" {$config.ai_text_provider==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+            <div class="col-md-3"><input type="text" name="ai_text_model" class="form-control form-control-sm" value="{$config.ai_text_model|default=''}" placeholder="模型名"></div>
+            <div class="col-md-3"><input type="text" name="ai_text_api_key" class="form-control form-control-sm" value="{$config.ai_text_api_key|default=''}" placeholder="API Key（留空不修改）"></div>
+            <div class="col-md-3"><input type="text" name="ai_text_api_base" class="form-control form-control-sm" value="{$config.ai_text_api_base|default=''}" placeholder="API 地址（可选）"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-light mb-3">
+        <div class="card-body py-3">
+          <h6 class="card-title small">内容安全（合规检测）</h6>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <select name="ai_safe_provider" class="form-control form-control-sm">
+                {volist name="aiProviderOptions" id="label" key="val"}
+                <option value="{$val}" {$config.ai_safe_provider==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+            <div class="col-md-3"><input type="text" name="ai_safe_model" class="form-control form-control-sm" value="{$config.ai_safe_model|default=''}" placeholder="模型名"></div>
+            <div class="col-md-3"><input type="text" name="ai_safe_api_key" class="form-control form-control-sm" value="{$config.ai_safe_api_key|default=''}" placeholder="API Key（留空不修改）"></div>
+            <div class="col-md-3"><input type="text" name="ai_safe_api_base" class="form-control form-control-sm" value="{$config.ai_safe_api_base|default=''}" placeholder="API 地址（可选）"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-light mb-3">
+        <div class="card-body py-3">
+          <h6 class="card-title small">图片生成（配图 / 封面）</h6>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <select name="ai_image_provider" class="form-control form-control-sm">
+                {volist name="aiProviderOptions" id="label" key="val"}
+                <option value="{$val}" {$config.ai_image_provider==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+            <div class="col-md-3"><input type="text" name="ai_image_model" class="form-control form-control-sm" value="{$config.ai_image_model|default=''}" placeholder="模型名"></div>
+            <div class="col-md-3"><input type="text" name="ai_image_api_key" class="form-control form-control-sm" value="{$config.ai_image_api_key|default=''}" placeholder="API Key（留空不修改）"></div>
+            <div class="col-md-3"><input type="text" name="ai_image_api_base" class="form-control form-control-sm" value="{$config.ai_image_api_base|default=''}" placeholder="API 地址（可选）"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-light mb-3">
+        <div class="card-body py-3">
+          <h6 class="card-title small">AI 视频生成（图生视频 / 文生视频）</h6>
+          <p class="small text-muted mb-2">用于「短视频辅助」中根据封面图+文案生成 AI 视频。首帧图需公网可访问，请填写站点地址。</p>
+          <div class="row g-2 mb-2">
+            <div class="col-md-3">
+              <select name="ai_video_provider" class="form-control form-control-sm">
+                {volist name="aiVideoProviderOptions" id="label" key="val"}
+                <option value="{$val}" {$config.ai_video_provider==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select name="ai_video_model" class="form-control form-control-sm">
+                {volist name="aiVideoModelOptions" id="label" key="val"}
+                <option value="{$val}" {$config.ai_video_model==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+            <div class="col-md-3"><input type="text" name="ai_video_api_key" class="form-control form-control-sm" value="{$config.ai_video_api_key|default=''}" placeholder="API Key（留空不修改）"></div>
+            <div class="col-md-3"><input type="text" name="ai_video_api_base" class="form-control form-control-sm" value="{$config.ai_video_api_base|default=''}" placeholder="API 地址（可选）"></div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-8"><input type="text" name="ai_video_base_url" class="form-control form-control-sm" value="{$config.ai_video_base_url|default=''}" placeholder="站点公网地址（用于首帧图 URL，如 https://yourdomain.com）"></div>
+            <div class="col-md-4">
+              <select name="ai_video_duration" class="form-control form-control-sm">
+                <option value="5"  {$config.ai_video_duration=='5' ? 'selected' : ''}>5 秒</option>
+                <option value="10" {$config.ai_video_duration=='10' ? 'selected' : ''}>10 秒（推荐）</option>
+              </select>
+              <small class="text-muted">生成视频时长（万相支持 5/10 秒）</small>
+            </div>
+          </div>
+          <div class="row g-2 mt-1">
+            <div class="col-md-12">
+              <input type="number" name="ai_video_segment_chars" class="form-control form-control-sm" style="width:120px" value="{$config.ai_video_segment_chars|default='0'}" min="0" placeholder="0">
+              <small class="text-muted">文生视频分段拼接：填 0 不拼接；填 280 等则按句拆成多段（每段约 10 秒）生成后再拼接成长视频</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-light mb-3">
+        <div class="card-body py-3">
+          <h6 class="card-title small">数字人（文本→播报视频）</h6>
+          <p class="small text-muted mb-2">根据脚本文案生成数字人播报视频。阿里云需填写租户ID、应用ID；API Key 格式：阿里云 access_key_id|access_key_secret，腾讯云 secret_id|secret_key。</p>
+          <div class="row g-2 mb-2">
+            <div class="col-md-3">
+              <select name="digital_human_provider" class="form-control form-control-sm">
+                {volist name="digitalHumanProviderOptions" id="label" key="val"}
+                <option value="{$val}" {$config.digital_human_provider==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+            <div class="col-md-3"><input type="text" name="digital_human_api_key" class="form-control form-control-sm" value="{$config.digital_human_api_key|default=''}" placeholder="API Key（留空不修改）"></div>
+            <div class="col-md-3"><input type="text" name="digital_human_tenant_id" class="form-control form-control-sm" value="{$config.digital_human_tenant_id|default=''}" placeholder="阿里云 租户ID"></div>
+            <div class="col-md-3"><input type="text" name="digital_human_app_id" class="form-control form-control-sm" value="{$config.digital_human_app_id|default=''}" placeholder="阿里云 应用ID"></div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-12"><input type="text" name="digital_human_api_base" class="form-control form-control-sm" value="{$config.digital_human_api_base|default=''}" placeholder="API 地址（可选，阿里云默认 avatar.cn-hangzhou.aliyuncs.com）"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-light mb-3">
+        <div class="card-body py-3">
+          <h6 class="card-title small">语音合成 TTS（口播配音）</h6>
+          <p class="small text-muted mb-2">用于「短视频辅助」中根据脚本生成配音，再与封面图合成为口播视频。</p>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <select name="tts_provider" class="form-control form-control-sm">
+                {volist name="ttsProviderOptions" id="label" key="val"}
+                <option value="{$val}" {$config.tts_provider==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+            <div class="col-md-3"><input type="text" name="tts_api_key" class="form-control form-control-sm" value="{$config.tts_api_key|default=''}" placeholder="API Key（留空不修改）"></div>
+            <div class="col-md-3"><input type="text" name="tts_api_base" class="form-control form-control-sm" value="{$config.tts_api_base|default=''}" placeholder="API 地址（OpenAI 代理可选）"></div>
+            <div class="col-md-3">
+              <select name="tts_voice" class="form-control form-control-sm">
+                {volist name="ttsVoiceOptions" id="label" key="val"}
+                <option value="{$val}" {$config.tts_voice==$val ? 'selected' : ''}>{$label}</option>
+                {/volist}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <div class="col-sm-offset-2 col-sm-6">
+          <button type="submit" class="btn btn-primary">保存配置</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+(function(){
+  var $form = $('#wemedia-config-form');
+  var $tbody = $('#platforms-tbody');
+  var $hidden = $('#platforms-hidden');
+
+  function escapeHtml(s) {
+    var m = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+    return String(s).replace(/[&<>"]/g, function(c) { return m[c] || c; });
+  }
+  function parsePlatforms() {
+    var raw = $('#platforms-editor').attr('data-platforms') || '';
+    try { return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
+  }
+  function renderPlatforms() {
+    var list = parsePlatforms();
+    $tbody.empty();
+    list.forEach(function(item) {
+      var value = (item && item.value) ? String(item.value) : '';
+      var label = (item && item.label) ? String(item.label) : '';
+      $tbody.append(
+        '<tr><td><input type="text" class="form-control form-control-sm platform-value" value="' + escapeHtml(value) + '" placeholder="如 douyin"></td>' +
+        '<td><input type="text" class="form-control form-control-sm platform-label" value="' + escapeHtml(label) + '" placeholder="如 抖音"></td>' +
+        '<td><button type="button" class="btn btn-sm btn-outline-danger platform-del">删除</button></td></tr>'
+      );
+    });
+    syncPlatformsToHidden();
+  }
+  function syncPlatformsToHidden() {
+    var list = [];
+    $tbody.find('tr').each(function() {
+      var v = $(this).find('.platform-value').val();
+      var l = $(this).find('.platform-label').val();
+    if (v || l) list.push({ value: v || '', label: l || '' });
+    });
+    $hidden.val(list.length ? JSON.stringify(list) : '');
+  }
+  renderPlatforms();
+  $('#platform-add-row').on('click', function() {
+    $tbody.append(
+      '<tr><td><input type="text" class="form-control form-control-sm platform-value" placeholder="如 douyin"></td>' +
+      '<td><input type="text" class="form-control form-control-sm platform-label" placeholder="如 抖音"></td>' +
+      '<td><button type="button" class="btn btn-sm btn-outline-danger platform-del">删除</button></td></tr>'
+    );
+  });
+  $tbody.on('click', '.platform-del', function() { $(this).closest('tr').remove(); syncPlatformsToHidden(); });
+  $tbody.on('input', '.platform-value, .platform-label', syncPlatformsToHidden);
+
+  var postUrl = (window.location.pathname || '').replace(/\/$/, '') || '/admin/wemedia_config/index';
+  $form.on('submit', function(e){
+    e.preventDefault();
+    syncPlatformsToHidden();
+    var $btn = $form.find('button[type=submit]').prop('disabled', true);
+    $.post(postUrl, $form.serialize(), function(r){
+      if (r.code == 1) alert(r.msg || '保存成功'); else alert(r.msg || '保存失败');
+    }, 'json').always(function(){ $btn.prop('disabled', false); });
+  });
+})();
+</script>

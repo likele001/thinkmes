@@ -57,6 +57,11 @@ class Report extends Backend
             $query->where('status', (int) $status);
         }
 
+        $userId = $this->request->get('user_id');
+        if ($userId !== '' && $userId !== null) {
+            $query->where('user_id', (int) $userId);
+        }
+
         $total = $query->count();
         $list = $query->page($page, $limit)->select();
 
@@ -838,6 +843,7 @@ class Report extends Backend
                             TraceCodeModel::create([
                                 'tenant_id'    => $tenantId,
                                 'trace_code'   => $traceCode,
+                                'code_type'    => 1,
                                 'report_id'    => $report->id,
                                 'allocation_id'=> $allocation->id ?? 0,
                                 'order_id'     => $allocation->order_id ?? 0,

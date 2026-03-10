@@ -1,11 +1,45 @@
+<script>
+window.__LANG = {:json_encode(isset($currentLang)?$currentLang:'zh-cn')};
+window.__L = {
+  nav_place_order: {:json_encode(lang('nav_place_order'))},
+  nav_orders: {:json_encode(lang('nav_orders'))},
+  title_orders: {:json_encode(lang('title_orders'))},
+  th_order_no: {:json_encode(lang('th_order_no'))},
+  th_status: {:json_encode(lang('th_status'))},
+  th_amount: {:json_encode(lang('th_amount'))},
+  th_currency: {:json_encode(lang('th_currency'))},
+  th_time: {:json_encode(lang('th_time'))},
+  th_action: {:json_encode(lang('th_action'))},
+  btn_detail: {:json_encode(lang('btn_detail'))},
+  btn_confirm: {:json_encode(lang('btn_confirm'))},
+  btn_save: {:json_encode(lang('btn_save'))},
+  th_product: {:json_encode(lang('th_product'))},
+  th_qty: {:json_encode(lang('th_qty'))},
+  th_progress: {:json_encode(lang('th_progress'))},
+  btn_del: {:json_encode(lang('btn_del'))},
+  progress_done: {:json_encode(lang('progress_done'))},
+  progress_pending: {:json_encode(lang('progress_pending'))},
+  msg_load_fail: {:json_encode(lang('msg_load_fail'))},
+  msg_no_orders: {:json_encode(lang('msg_no_orders'))},
+  msg_keep_one_item: {:json_encode(lang('msg_keep_one_item'))},
+  msg_confirm_confirm: {:json_encode(lang('msg_confirm_confirm'))},
+  msg_operation_fail: {:json_encode(lang('msg_operation_fail'))},
+  status_0: {:json_encode(lang('status_0'))},
+  status_1: {:json_encode(lang('status_1'))},
+  status_2: {:json_encode(lang('status_2'))},
+  status_3: {:json_encode(lang('status_3'))},
+  status_4: {:json_encode(lang('status_4'))},
+  status_5: {:json_encode(lang('status_5'))}
+};
+</script>
 <div class="container-main">
   <div class="member-layout">
     <div class="member-left">
       <div class="card">
         <div class="card-body">
           <ul class="nav nav-pills flex-column">
-            <li class="nav-item"><a class="nav-link" href="/index/customer/index" data-i18n="nav_place_order"><i class="fa fa-shopping-cart mr-2"></i>下单</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/index/customer/orders" data-i18n="nav_orders"><i class="fa fa-list mr-2"></i>我的订单</a></li>
+            <li class="nav-item"><a class="nav-link" href="/index/customer/index"><i class="fa fa-shopping-cart mr-2"></i>{:lang('nav_place_order')}</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/index/customer/orders"><i class="fa fa-list mr-2"></i>{:lang('nav_orders')}</a></li>
           </ul>
         </div>
       </div>
@@ -13,19 +47,19 @@
     <div class="member-right">
       <div class="card">
         <div class="card-header">
-          <h5 class="card-title" data-i18n="title_orders">我的订单</h5>
+          <h5 class="card-title">{:lang('title_orders')}</h5>
         </div>
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-bordered">
               <thead>
                 <tr>
-                  <th data-i18n="th_order_no">订单号</th>
-                  <th data-i18n="th_status">状态</th>
-                  <th data-i18n="th_amount">金额</th>
-                  <th data-i18n="th_currency">币种</th>
-                  <th data-i18n="th_time">下单时间</th>
-                  <th data-i18n="th_action">操作</th>
+                  <th>{:lang('th_order_no')}</th>
+                  <th>{:lang('th_status')}</th>
+                  <th>{:lang('th_amount')}</th>
+                  <th>{:lang('th_currency')}</th>
+                  <th>{:lang('th_time')}</th>
+                  <th>{:lang('th_action')}</th>
                 </tr>
               </thead>
               <tbody id="order-list">

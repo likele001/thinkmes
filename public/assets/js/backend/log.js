@@ -1,4 +1,5 @@
 (function () {
+    var L = (typeof Config !== 'undefined' && Config.lang) ? Config.lang : {};
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var indexUrl = (typeof Config !== 'undefined' && Config.table_index_url) ? Config.table_index_url : (base + '/log/index');
 
@@ -13,11 +14,11 @@
                 pageList: [10, 20, 50],
                 columns: [
                     { field: 'id', title: 'ID', width: 60 },
-                    { field: 'admin_id', title: '管理员ID' },
-                    { field: 'type', title: '类型' },
-                    { field: 'content', title: '内容' },
+                    { field: 'admin_id', title: L.admin_id || '管理员ID' },
+                    { field: 'type', title: L.type || '类型' },
+                    { field: 'content', title: L.content || '内容' },
                     { field: 'ip', title: 'IP' },
-                    { field: 'create_time', title: '时间' }
+                    { field: 'create_time', title: L.time || '时间' }
                 ],
                 responseHandler: function (res) {
                     return { total: (res.data && res.data.total) ? res.data.total : 0, rows: (res.data && res.data.list) ? res.data.list : [] };

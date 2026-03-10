@@ -18,7 +18,7 @@ class Member extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '用户管理');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('member/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
@@ -55,7 +55,7 @@ class Member extends Backend
             return $this->addPost();
         }
         View::assign('data', []);
-        View::assign('title', '添加用户');
+        View::assign('title', __("add_title"));
         return $this->fetchWithLayout('member/add');
     }
 
@@ -114,7 +114,7 @@ class Member extends Backend
         $data = $data->toArray();
         unset($data['password']);
         View::assign('data', $data);
-        View::assign('title', '编辑用户');
+        View::assign('title', __("edit_title"));
         return $this->fetchWithLayout('member/edit');
     }
 

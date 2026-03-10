@@ -15,8 +15,10 @@ return [
     // 默认时区
     'default_timezone' => 'Asia/Shanghai',
 
-    // 应用映射（自动多应用模式有效）
-    'app_map'          => [],
+    // 应用映射：/lang/xxx 交给 index 应用，pathinfo 变为 xxx，便于实现简洁 URL
+    'app_map'          => [
+        'lang' => 'index',
+    ],
     // 域名绑定（自动多应用模式有效）
     'domain_bind'      => [],
     // 禁止URL访问的应用列表（自动多应用模式有效）
@@ -28,5 +30,5 @@ return [
     // 错误显示信息,非调试模式有效
     'error_message'    => '页面错误！请稍后再试～',
     // 显示错误信息
-    'show_error_msg'   => false,
+    'show_error_msg'   => true,
 ];

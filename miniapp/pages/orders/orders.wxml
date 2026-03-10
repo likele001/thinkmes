@@ -1,4 +1,5 @@
 <view class="container">
+  <view class="btn-bar"><button class="btn-add" bindtap="goAdd">新增订单</button></view>
   <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
     <view class="row">
       <text class="title">{{item.order_name || item.order_no}}</text>
@@ -6,6 +7,11 @@
     </view>
     <view class="text-muted">客户：{{item.customer_name || '-'}}</view>
     <view class="text-muted">数量：{{item.total_quantity || 0}}</view>
+    <view class="btn-wrap">
+      <button size="mini" data-id="{{item.id}}" catchtap="goDetail">详情</button>
+      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
+      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+    </view>
   </view>
   <view class="empty" wx:if="{{!loading && list.length===0}}">暂无订单</view>
   <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>

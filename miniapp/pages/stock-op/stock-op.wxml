@@ -1,0 +1,21 @@
+<view class="container">
+  <view class="form-card">
+    <view class="form-item">
+      <text class="form-label">物料ID *</text>
+      <input class="form-input" type="number" placeholder="物料ID（从物料列表查看）" value="{{materialId}}" bindinput="inputMaterialId"/>
+    </view>
+    <view class="form-item" wx:if="{{type !== 'check'}}">
+      <text class="form-label">数量 *</text>
+      <input class="form-input" type="digit" placeholder="数量" value="{{quantity}}" bindinput="inputQuantity"/>
+    </view>
+    <view class="form-item" wx:if="{{type === 'check'}}">
+      <text class="form-label">实盘数量 *</text>
+      <input class="form-input" type="digit" placeholder="实盘数量" value="{{actualQuantity}}" bindinput="inputActualQuantity"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">备注</text>
+      <input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
+    </view>
+  </view>
+  <button class="btn-submit" loading="{{loading}}" bindtap="submit">提交{{typeText}}</button>
+</view>

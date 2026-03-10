@@ -27,7 +27,13 @@ Page({
               wx.setStorageSync('user_token', data.data.token);
               wx.setStorageSync('user_info', data.data);
               wx.reLaunch({ url: '/pages/index/index' });
+              return;
             }
+            if (data.data && data.data.need_bind === true) {
+              wx.navigateTo({ url: '/pages/bind-employee/bind-employee' });
+              return;
+            }
+            wx.showToast({ title: '请绑定员工账号', icon: 'none' });
           })
           .catch(() => { this.setData({ loading: false }); });
       },

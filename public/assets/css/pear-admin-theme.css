@@ -4,11 +4,52 @@ body { margin: 0; overflow: hidden; }
 .pear-header {
   height: 50px; flex-shrink: 0; background: #1aa094;
   display: flex; align-items: center; padding: 0 16px; color: #fff;
+  position: relative;
+  z-index: 1020;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
 }
-.pear-header .logo { font-size: 18px; font-weight: 600; margin-right: 20px; color: #fff; text-decoration: none; }
-.pear-header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.pear-header .nav-right a { color: rgba(255,255,255,.9); text-decoration: none; }
+.pear-header .logo { font-size: 18px; font-weight: 600; margin-right: 20px; color: #fff; text-decoration: none; flex-shrink: 0; }
+.pear-header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 1; min-width: 0; }
+.pear-header .nav-right a { color: rgba(255,255,255,.9); text-decoration: none; white-space: nowrap; }
 .pear-header .nav-right a:hover { color: #fff; }
+.pear-header .nav-right > span:not(.lang-switcher) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 8em; }
+/* 小屏/平板：隐藏角标、压缩昵称，避免右上角互相遮挡；语言选择保留 */
+@media (max-width: 991px) {
+  .pear-header .nav-right .layui-badge-dot { display: none !important; }
+  .pear-header .nav-right { gap: 8px; }
+  .pear-header .nav-right > span:not(.lang-switcher) { max-width: 5em; }
+  .pear-header .nav-right a[href*="profile"],
+  .pear-header .nav-right a[href*="logout"] { font-size: 13px; padding: 2px 4px; }
+  .pear-header .nav-right .lang-switcher { font-size: 12px; margin-right: 6px; }
+  .pear-header .nav-right .lang-switcher a { padding: 0 2px; }
+}
+/* 手机端：顶栏可横向滑动，保证「退出」能滑到可见 */
+@media (max-width: 768px) {
+  .pear-header {
+    flex-wrap: nowrap;
+    min-height: 50px;
+    padding-left: 8px;
+    padding-right: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pear-header .logo {
+    font-size: 16px;
+    margin-right: 8px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pear-header .nav-right {
+    flex-shrink: 0;
+    justify-content: flex-end;
+    gap: 6px;
+    padding-right: 8px;
+  }
+  .pear-header .nav-right > span:not(.lang-switcher) { max-width: 4em; }
+}
 .pear-body { display: flex; flex: 1; min-height: 0; }
 .pear-side {
   width: 220px; flex-shrink: 0; background: #0d9488;
@@ -19,6 +60,8 @@ body { margin: 0; overflow: hidden; }
 .pear-tabs {
   flex-shrink: 0; background: #f2f2f2; border-bottom: 1px solid #e6e6e6;
   display: flex; align-items: center; padding: 0 8px; min-height: 40px;
+  position: relative;
+  z-index: 10;
 }
 .pear-tabs .tabs-list { flex: 1; display: flex; overflow-x: auto; padding: 4px 0; gap: 2px; }
 .pear-tabs .tabs-list { list-style: none; margin: 0; padding: 4px 0; }
@@ -48,6 +91,8 @@ body { margin: 0; overflow: hidden; }
   text-decoration: none; cursor: pointer; border-left: 3px solid transparent;
 }
 #menu-tree .menu-link:hover { background: rgba(0,0,0,.1); color: #fff; }
+#menu-tree .menu-item.active > .menu-link { background: rgba(0,0,0,.2); color: #fff; border-left-color: #fff; font-weight: 500; }
+#menu-tree .menu-children .menu-item.active > .menu-link { background: rgba(0,0,0,.25); }
 #menu-tree .menu-icon { width: 24px; flex-shrink: 0; text-align: center; }
 #menu-tree .menu-icon i { font-size: 14px; }
 #menu-tree .menu-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

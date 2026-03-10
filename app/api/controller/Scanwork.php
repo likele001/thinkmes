@@ -11,6 +11,7 @@ use app\admin\model\mes\OrderModelModel;
 use app\admin\model\mes\OrderMaterialModel;
 use app\admin\model\mes\AllocationModel;
 use app\admin\model\mes\ReportModel;
+use app\admin\model\mes\ReportMediaModel;
 use app\admin\model\mes\ProductModel;
 use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\ProcessModel;
@@ -526,6 +527,10 @@ class Scanwork extends BaseController
                     'product_id' => $product->id,
                     'name' => $name,
                     'model_code' => $m['model_code'] ?? '',
+                    'color' => $m['color'] ?? '',
+                    'specification' => $m['specification'] ?? '',
+                    'remark' => $m['remark'] ?? '',
+                    'description' => $m['description'] ?? '',
                     'status' => isset($m['status']) ? (int) $m['status'] : 1,
                 ]);
             }
@@ -584,6 +589,10 @@ class Scanwork extends BaseController
                         'product_id' => $id,
                         'name' => $name,
                         'model_code' => $m['model_code'] ?? '',
+                        'color' => $m['color'] ?? '',
+                        'specification' => $m['specification'] ?? '',
+                        'remark' => $m['remark'] ?? '',
+                        'description' => $m['description'] ?? '',
                         'status' => isset($m['status']) ? (int) $m['status'] : 1,
                     ]);
                 }
@@ -680,6 +689,87 @@ class Scanwork extends BaseController
             }
         }
         return $this->success('删除成功');
+    }
+
+    /**
+     * 批量添加型号及工序工价（型号重复则跳过）
+     * POST product_id, models: [ { name, model_code?, color?, specification?, remark?, description?, prices: [...] } ]
+     */
+    public function batchAddProductModels(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $productId = (int) $this->request->post('product_id', 0);
+        $models = $this->request->post('models/a') ?: [];
+        if ($productId <= 0 || empty($models)) {
+            return $this->error('请选择产品并至少添加一条型号');
+        }
+        $product = ProductModel::where('tenant_id', $tenantId)->find($productId);
+        if (!$product) {
+            return $this->error('产品不存在');
+        }
+        $existingNames = ProductModelModel::where('tenant_id', $tenantId)
+            ->where('product_id', $productId)
+            ->column('name');
+        $existingNames = array_map('trim', array_map('strval', $existingNames));
+        $existingNames = array_filter($existingNames);
+        $existingNames = array_unique($existingNames);
+
+        $added = 0;
+        $skipped = 0;
+        Db::startTrans();
+        try {
+            foreach ($models as $m) {
+                $name = trim((string) ($m['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                if (in_array($name, $existingNames, true)) {
+                    $skipped++;
+                    continue;
+                }
+                $modelRow = ProductModelModel::create([
+                    'tenant_id' => $tenantId,
+                    'product_id' => $productId,
+                    'name' => $name,
+                    'model_code' => $m['model_code'] ?? '',
+                    'color' => $m['color'] ?? '',
+                    'specification' => $m['specification'] ?? '',
+                    'remark' => $m['remark'] ?? '',
+                    'description' => $m['description'] ?? '',
+                    'status' => 1
+                ]);
+                $existingNames[] = $name;
+                $added++;
+
+                $prices = $m['prices'] ?? [];
+                if (is_array($prices)) {
+                    foreach ($prices as $p) {
+                        $processId = (int) ($p['process_id'] ?? 0);
+                        $price = (float) ($p['price'] ?? 0);
+                        $timePrice = (float) ($p['time_price'] ?? 0);
+                        if ($processId > 0 && ($price > 0 || $timePrice > 0)) {
+                            ProcessPriceModel::create([
+                                'tenant_id' => $tenantId,
+                                'model_id' => $modelRow->id,
+                                'process_id' => $processId,
+                                'price' => $price,
+                                'time_price' => $timePrice,
+                                'status' => 1
+                            ]);
+                        }
+                    }
+                }
+            }
+            Db::commit();
+            $msg = '批量添加完成：成功 ' . $added . ' 个型号';
+            if ($skipped > 0) {
+                $msg .= '，跳过重复 ' . $skipped . ' 个';
+            }
+            return $this->success($msg, ['added' => $added, 'skipped' => $skipped]);
+        } catch (\Throwable $e) {
+            Db::rollback();
+            return $this->error('批量添加失败：' . $e->getMessage());
+        }
     }
 
     // ---------- 工序工价 ----------
@@ -1458,6 +1548,7 @@ class Scanwork extends BaseController
         $limit = max(1, min(100, (int) $this->request->get('limit', 10)));
         $userId = $this->request->get('user_id', '');
         $status = $this->request->get('status', '');
+        $orderId = $this->request->get('order_id', '');
 
         $query = AllocationModel::with(['order', 'model.product', 'process', 'user'])
             ->where('tenant_id', $tenantId)
@@ -1467,6 +1558,9 @@ class Scanwork extends BaseController
         }
         if ($status !== '' && $status !== null) {
             $query->where('status', (int) $status);
+        }
+        if ($orderId !== '' && $orderId !== null && (int) $orderId > 0) {
+            $query->where('order_id', (int) $orderId);
         }
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
@@ -1653,6 +1747,28 @@ class Scanwork extends BaseController
     }
 
     // ---------- 报工与审核 ----------
+    /** 列表项扁平化，与 report 项目一致便于前端展示 */
+    private function flattenReportList($rows): array
+    {
+        $list = [];
+        foreach ($rows as $r) {
+            $arr = is_array($r) ? $r : $r->toArray();
+            $allocation = is_object($r) ? $r->allocation : ($r['allocation'] ?? null);
+            $order = $allocation && (is_object($allocation) ? $allocation->order : ($allocation['order'] ?? null));
+            $model = $allocation && (is_object($allocation) ? $allocation->model : ($allocation['model'] ?? null));
+            $product = $model && (is_object($model) ? $model->product : ($model['product'] ?? null));
+            $process = $allocation && (is_object($allocation) ? $allocation->process : ($allocation['process'] ?? null));
+            $user = is_object($r) ? $r->user : ($r['user'] ?? null);
+            $arr['order_no'] = $order ? (is_object($order) ? ($order->order_no ?? '') : ($order['order_no'] ?? '')) : '';
+            $arr['product_name'] = $product ? (is_object($product) ? ($product->name ?? '') : ($product['name'] ?? '')) : '';
+            $arr['model_name'] = $model ? (is_object($model) ? ($model->name ?? '') : ($model['name'] ?? '')) : '';
+            $arr['process_name'] = $process ? (is_object($process) ? ($process->name ?? '') : ($process['name'] ?? '')) : '';
+            $arr['user_name'] = $user ? (is_object($user) ? ($user->nickname ?? $user->username ?? '') : ($user['nickname'] ?? $user['username'] ?? '')) : '';
+            $list[] = $arr;
+        }
+        return $list;
+    }
+
     public function getReports(): Response
     {
         $tenantId = $this->getTenantId();
@@ -1667,7 +1783,8 @@ class Scanwork extends BaseController
             $query->where('status', (int) $status);
         }
         $total = $query->count();
-        $list = $query->page($page, $limit)->select()->toArray();
+        $rows = $query->page($page, $limit)->select();
+        $list = $this->flattenReportList($rows);
         return $this->success('获取成功', ['total' => $total, 'list' => $list]);
     }
 
@@ -1683,7 +1800,8 @@ class Scanwork extends BaseController
             ->where('status', 0)
             ->order('id', 'desc');
         $total = $query->count();
-        $list = $query->page($page, $limit)->select()->toArray();
+        $rows = $query->page($page, $limit)->select();
+        $list = $this->flattenReportList($rows);
         return $this->success('获取成功', ['total' => $total, 'list' => $list]);
     }
 
@@ -1694,16 +1812,87 @@ class Scanwork extends BaseController
         if ($reportId <= 0) {
             return $this->error('参数错误');
         }
-        $report = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'user'])
+        $report = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'user', 'media'])
             ->where('tenant_id', $tenantId)
             ->find($reportId);
         if (!$report) {
             return $this->error('报工记录不存在');
         }
-        return $this->success('获取成功', $report->toArray());
+        $out = $report->toArray();
+        $out['order_no'] = $report->allocation && $report->allocation->order ? $report->allocation->order->order_no : '';
+        $out['product_name'] = $report->allocation && $report->allocation->model && $report->allocation->model->product ? $report->allocation->model->product->name : '';
+        $out['model_name'] = $report->allocation && $report->allocation->model ? $report->allocation->model->name : '';
+        $out['process_name'] = $report->allocation && $report->allocation->process ? $report->allocation->process->name : '';
+        $out['user_name'] = $report->user ? ($report->user->nickname ?? $report->user->username) : '';
+        $out['images'] = [];
+        $out['audit_images'] = [];
+        $out['audit_videos'] = [];
+        if ($report->media && !$report->media->isEmpty()) {
+            foreach ($report->media as $m) {
+                $url = $m->url ?? '';
+                if ($url === '') {
+                    continue;
+                }
+                $type = $m->type ?? 'image';
+                $scene = $m->scene ?? '';
+                if ($type === 'video' && ($scene === 'audit' || $scene === '')) {
+                    $out['audit_videos'][] = $url;
+                } elseif ($type === 'image' && $scene === 'audit') {
+                    $out['audit_images'][] = $url;
+                } else {
+                    $out['images'][] = $url;
+                }
+            }
+        }
+        return $this->success('获取成功', $out);
     }
 
-    /** 审核报工 status 1通过 2拒绝 */
+    /**
+     * 报工统计（管理端报表：按日期范围汇总，可选按用户/工序）
+     * GET start_date, end_date, [user_id], [process_id]
+     */
+    public function getReportStatistics(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $startDate = $this->request->get('start_date', date('Y-m-01'));
+        $endDate = $this->request->get('end_date', date('Y-m-d'));
+        $userId = $this->request->get('user_id', '');
+        $processId = $this->request->get('process_id', '');
+
+        $startTime = strtotime($startDate . ' 00:00:00');
+        $endTime = strtotime($endDate . ' 23:59:59');
+
+        $query = ReportModel::alias('r')
+            ->join('mes_allocation a', 'r.allocation_id = a.id')
+            ->where('r.tenant_id', $tenantId)
+            ->where('r.status', 1)
+            ->where('r.create_time', 'between', [$startTime, $endTime])
+            ->field('r.user_id, a.process_id, SUM(r.quantity) as total_quantity, SUM(r.wage) as total_wage, COUNT(*) as report_count');
+        if ($userId !== '' && $userId !== null) {
+            $query->where('r.user_id', (int) $userId);
+        }
+        if ($processId !== '' && $processId !== null) {
+            $query->where('a.process_id', (int) $processId);
+        }
+        $query->group('r.user_id, a.process_id');
+        $rows = $query->select()->toArray();
+
+        $summary = ['total_quantity' => 0, 'total_wage' => 0.0, 'report_count' => 0];
+        foreach ($rows as $row) {
+            $summary['total_quantity'] += (int) ($row['total_quantity'] ?? 0);
+            $summary['total_wage'] += (float) ($row['total_wage'] ?? 0);
+            $summary['report_count'] += (int) ($row['report_count'] ?? 0);
+        }
+
+        return $this->success('', [
+            'summary' => $summary,
+            'list' => $rows,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+    }
+
+    /** 审核报工 status 1通过 2拒绝；支持审核备注、质检状态、审核图片/视频（与PC对齐） */
     public function auditReport(): Response
     {
         $tenantId = $this->getTenantId();
@@ -1711,8 +1900,16 @@ class Scanwork extends BaseController
         $reportId = (int) $this->request->post('report_id', 0);
         $status = (int) $this->request->post('status', 0);
         $auditReason = trim((string) $this->request->post('audit_reason', ''));
+        $auditNotes = trim((string) $this->request->post('audit_notes', ''));
+        $qualityStatus = (int) $this->request->post('quality_status', 1);
         if ($reportId <= 0 || !in_array($status, [1, 2], true)) {
             return $this->error('参数错误');
+        }
+        if ($status === 2 && $auditReason === '') {
+            return $this->error('拒绝审核必须填写拒绝原因');
+        }
+        if (!in_array($qualityStatus, [0, 1], true)) {
+            $qualityStatus = 1;
         }
 
         $report = ReportModel::where('tenant_id', $tenantId)->find($reportId);
@@ -1723,24 +1920,82 @@ class Scanwork extends BaseController
             return $this->error('该记录已审核');
         }
 
+        $auditImages = $this->parseMediaUrls($this->request->post('audit_images', ''));
+        $auditVideos = $this->parseMediaUrls($this->request->post('audit_videos', ''));
+
         $report->status = $status;
         $report->audit_user_id = $adminId;
         $report->audit_time = time();
-        if ($status === 2) {
-            $report->audit_reason = $auditReason;
-        }
+        $report->audit_reason = $auditReason;
+        $report->audit_notes = $auditNotes;
+        $report->quality_status = $qualityStatus;
         $report->save();
+
+        foreach ($auditImages as $url) {
+            $url = $this->normalizeReportMediaUrl($url);
+            if ($url) {
+                ReportMediaModel::create([
+                    'tenant_id' => $tenantId,
+                    'report_id' => $report->id,
+                    'type' => 'image',
+                    'scene' => 'audit',
+                    'url' => $url,
+                    'create_time' => time(),
+                ]);
+            }
+        }
+        foreach ($auditVideos as $url) {
+            $url = $this->normalizeReportMediaUrl($url);
+            if ($url) {
+                ReportMediaModel::create([
+                    'tenant_id' => $tenantId,
+                    'report_id' => $report->id,
+                    'type' => 'video',
+                    'scene' => 'audit',
+                    'url' => $url,
+                    'create_time' => time(),
+                ]);
+            }
+        }
+
         return $this->success('审核成功');
+    }
+
+    private function parseMediaUrls($raw): array
+    {
+        if (is_array($raw)) {
+            return array_filter(array_map('trim', $raw));
+        }
+        if (is_string($raw) && $raw !== '') {
+            $dec = json_decode($raw, true);
+            if (is_array($dec)) {
+                return array_filter(array_map('trim', $dec));
+            }
+            return array_filter(array_map('trim', preg_split('/[\s,]+/', $raw, -1, PREG_SPLIT_NO_EMPTY)));
+        }
+        return [];
+    }
+
+    private function normalizeReportMediaUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+        if (strpos($url, 'http') !== 0 && $url[0] !== '/') {
+            $url = '/' . $url;
+        }
+        return $url;
     }
 
     public function deleteReport(): Response
     {
         $tenantId = $this->getTenantId();
-        $ids = $this->request->post('ids');
-        if (empty($ids)) {
+        $ids = $this->request->post('ids') ?? $this->request->post('id');
+        if ($ids === null || $ids === '') {
             return $this->error('参数错误');
         }
-        $arr = is_array($ids) ? $ids : explode(',', $ids);
+        $arr = is_array($ids) ? $ids : explode(',', (string) $ids);
         foreach ($arr as $id) {
             $report = ReportModel::where('tenant_id', $tenantId)->find($id);
             if ($report) {
@@ -2102,7 +2357,7 @@ class Scanwork extends BaseController
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
         $userId = $this->request->get('user_id', '');
         $workDate = $this->request->get('work_date', '');
-        $query = WageModel::where('tenant_id', $tenantId)->order('work_date', 'desc')->order('id', 'desc');
+        $query = WageModel::with(['user'])->where('tenant_id', $tenantId)->order('work_date', 'desc')->order('id', 'desc');
         if ($userId !== '' && $userId !== null) {
             $query->where('user_id', (int) $userId);
         }
@@ -2123,7 +2378,7 @@ class Scanwork extends BaseController
             ->alias('w')
             ->join('fa_user u', 'w.user_id = u.id')
             ->where('w.tenant_id', $tenantId)
-            ->field('w.user_id, u.nickname, SUM(w.quantity) as total_quantity, SUM(w.wage) as total_wage, COUNT(*) as record_count')
+            ->field('w.user_id, u.nickname, SUM(w.quantity) as total_quantity, SUM(w.total_wage) as total_wage, COUNT(*) as record_count')
             ->group('w.user_id')
             ->order('total_wage', 'desc')
             ->page($page, $limit)
@@ -2381,6 +2636,91 @@ class Scanwork extends BaseController
         return $this->success('', $data);
     }
 
+    /**
+     * BI - 生产效率报表（按日期）
+     * GET start_date, end_date
+     */
+    public function getBiProductionEfficiency(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $startDate = $this->request->get('start_date', date('Y-m-01'));
+        $endDate = $this->request->get('end_date', date('Y-m-d'));
+        $startTime = strtotime($startDate . ' 00:00:00');
+        $endTime = strtotime($endDate . ' 23:59:59');
+
+        $query = ReportModel::alias('r')
+            ->join('mes_allocation a', 'r.allocation_id = a.id')
+            ->where('r.tenant_id', $tenantId)
+            ->where('r.status', 1)
+            ->where('r.create_time', 'between', [$startTime, $endTime])
+            ->field("DATE(FROM_UNIXTIME(r.create_time)) as stat_date, COUNT(DISTINCT r.user_id) as worker_count, SUM(r.quantity) as total_quantity, SUM(r.work_hours) as total_hours, SUM(r.wage) as total_wage, COUNT(*) as report_count")
+            ->group('stat_date')
+            ->order('stat_date', 'desc');
+        $list = $query->select()->toArray();
+        return $this->success('', ['total' => count($list), 'list' => $list]);
+    }
+
+    /**
+     * BI - 质量分析报表（按日期）
+     * GET start_date, end_date
+     */
+    public function getBiQualityAnalysis(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $startDate = $this->request->get('start_date', date('Y-m-01'));
+        $endDate = $this->request->get('end_date', date('Y-m-d'));
+        $startTime = strtotime($startDate . ' 00:00:00');
+        $endTime = strtotime($endDate . ' 23:59:59');
+
+        $query = ReportModel::where('tenant_id', $tenantId)
+            ->where('status', 1)
+            ->where('create_time', 'between', [$startTime, $endTime])
+            ->field("DATE(FROM_UNIXTIME(create_time)) as stat_date, COUNT(*) as total_count, SUM(CASE WHEN quality_status = 1 THEN 1 ELSE 0 END) as qualified_count, SUM(CASE WHEN quality_status = 2 THEN 1 ELSE 0 END) as unqualified_count")
+            ->group('stat_date')
+            ->order('stat_date', 'desc');
+        $list = $query->select()->toArray();
+        foreach ($list as &$row) {
+            $row['qualified_rate'] = ($row['total_count'] ?? 0) > 0
+                ? round(((float) ($row['qualified_count'] ?? 0) / (float) $row['total_count']) * 100, 2)
+                : 0;
+        }
+        return $this->success('', ['total' => count($list), 'list' => $list]);
+    }
+
+    /**
+     * BI - 成本分析报表（按订单）
+     * GET start_date, end_date
+     */
+    public function getBiCostAnalysis(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $startDate = $this->request->get('start_date', date('Y-m-01'));
+        $endDate = $this->request->get('end_date', date('Y-m-d'));
+        $startTime = strtotime($startDate . ' 00:00:00');
+        $endTime = strtotime($endDate . ' 23:59:59');
+
+        $wageTable = (new WageModel())->getTable();
+        $reportTable = (new ReportModel())->getTable();
+        $allocationTable = (new AllocationModel())->getTable();
+
+        $list = OrderModel::alias('o')
+            ->leftJoin('mes_order_material om', 'o.id = om.order_id')
+            ->where('o.tenant_id', $tenantId)
+            ->where('o.create_time', 'between', [$startTime, $endTime])
+            ->field("o.id, o.order_no, o.order_name, SUM(COALESCE(om.estimated_amount,0)) as material_cost, (SELECT COALESCE(SUM(w.total_wage),0) FROM {$wageTable} w INNER JOIN {$reportTable} r ON w.report_id = r.id INNER JOIN {$allocationTable} a ON r.allocation_id = a.id WHERE a.order_id = o.id) as labor_cost")
+            ->group('o.id')
+            ->order('o.id', 'desc')
+            ->select()
+            ->toArray();
+
+        foreach ($list as &$row) {
+            $row['material_cost'] = (float) ($row['material_cost'] ?? 0);
+            $row['labor_cost'] = (float) ($row['labor_cost'] ?? 0);
+            $row['total_cost'] = $row['material_cost'] + $row['labor_cost'];
+        }
+        return $this->success('', ['total' => count($list), 'list' => $list]);
+    }
+
     // ---------- 上传（审核图/报工图） ----------
     public function uploadAuditImage(): Response
     {
@@ -2390,6 +2730,32 @@ class Scanwork extends BaseController
     public function uploadReportImage(): Response
     {
         return $this->uploadImage('report');
+    }
+
+    /** 审核视频上传（与PC对齐） */
+    public function uploadAuditVideo(): Response
+    {
+        $file = $this->request->file('file') ?? $this->request->file('video');
+        if (!$file || !$file->isValid()) {
+            return $this->error('请选择视频');
+        }
+        $ext = strtolower(pathinfo($file->getOriginalName(), PATHINFO_EXTENSION));
+        if (!in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'm4v'], true)) {
+            return $this->error('仅支持 mp4/mov/avi/webm/m4v');
+        }
+        $relDir = 'uploads/scanwork/audit/' . date('Ymd') . '/';
+        $root = app()->getRootPath();
+        $fullDir = $root . 'public/' . $relDir;
+        if (!is_dir($fullDir)) {
+            @mkdir($fullDir, 0755, true);
+        }
+        $filename = uniqid() . '.' . $ext;
+        $info = $file->move($fullDir, $filename);
+        if (!$info) {
+            return $this->error('上传失败');
+        }
+        $url = '/' . $relDir . $filename;
+        return $this->success('上传成功', ['url' => $url]);
     }
 
     private function uploadImage(string $subDir): Response

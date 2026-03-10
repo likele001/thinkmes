@@ -6,6 +6,7 @@ namespace app\admin\controller;
 use app\common\controller\BaseController;
 use app\common\lib\Auth;
 use think\facade\Db;
+use think\facade\Lang;
 use think\facade\Session;
 use think\facade\View;
 
@@ -23,7 +24,44 @@ abstract class Backend extends BaseController
     protected function initialize(): void
     {
         parent::initialize();
-        
+
+        // 后台入口处根据 Cookie 强制切换语言（确保在渲染视图前生效）
+        $cookieVar = $this->app->config->get('lang.cookie_var', 'think_lang');
+        $lang = $this->request->cookie($cookieVar, '');
+        $allow = $this->app->config->get('lang.allow_lang_list', []);
+        if ($lang !== '' && is_array($allow) && in_array($lang, $allow, true)) {
+            Lang::switchLangSet($lang);
+        }
+
+        // 按控制器加载语言包：lang/语言/Backend.php + lang/语言/控制器名.php（与 FastAdmin 一致）
+        $langSet = Lang::getLangSet();
+        // 后台只有 en 目录无 en-us，统一用 en 加载英文
+        $langDir = $langSet;
+        if ($langSet === 'en-us') {
+            $langDir = 'en';
+        }
+        $controllerName = $this->request->controller();
+        if (strpos($controllerName, '.') !== false) {
+            $parts = explode('.', $controllerName);
+            $controllerName = end($parts);
+        }
+        $base = root_path() . 'app' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'lang' . DIRECTORY_SEPARATOR . $langDir . DIRECTORY_SEPARATOR;
+        $files = [$base . 'Backend.php'];
+        $ctrlFile = $base . $controllerName . '.php';
+        if (is_file($ctrlFile)) {
+            $files[] = $ctrlFile;
+        } else {
+            $ctrlFileAlt = $base . ucfirst(strtolower($controllerName)) . '.php';
+            if (is_file($ctrlFileAlt)) {
+                $files[] = $ctrlFileAlt;
+            }
+        }
+        foreach ($files as $f) {
+            if (is_file($f)) {
+                Lang::load($f);
+            }
+        }
+
         $this->auth = new Auth();
         
         // 定义是否Dialog请求
@@ -117,6 +155,8 @@ abstract class Backend extends BaseController
             // 表格/菜单：adminBase + 控制器/index，保证只有两段 admin（应用+控制器）
             'table_index_url' => $adminBase . '/' . $controllername . '/index',
             'menu_url'        => $adminBase . '/index/menu',
+            // 当前语言包（Backend + 当前控制器已合并），供 JS 使用
+            'lang'           => Lang::get(),
         ];
 
         View::assign('config', $config);
@@ -255,7 +295,29 @@ abstract class Backend extends BaseController
     protected function fetchWithLayout(string $template): string
     {
         $content = View::fetch($template);
-        
+        $pathinfo = trim((string) $this->request->pathinfo(), '/');
+        $hasAddtabs = ($this->request->get('addtabs') === '1');
+        $hasIframe = ($this->request->get('iframe') === '1');
+
+        // 首页且 URL 无 addtabs/iframe 时一律用完整布局（含左侧导航），换语言或直接打开都会带侧栏
+        $isIndexIndex = ($pathinfo === 'index/index' || str_ends_with($pathinfo, '/index/index'));
+        if ($isIndexIndex && !$hasAddtabs && !$hasIframe) {
+            View::assign('__CONTENT__', $content);
+            if (!View::get('fixedmenu')) {
+                $indexUrl = (string) url('index/index');
+                View::assign('fixedmenu', [
+                    'id'         => 'index',
+                    'url'        => $indexUrl,
+                    'iframe_src' => $indexUrl . (strpos($indexUrl, '?') !== false ? '&' : '?') . 'addtabs=1',
+                    'title'      => '首页',
+                ]);
+            }
+            if (!View::get('referermenu')) {
+                View::assign('referermenu', null);
+            }
+            return View::fetch('layout/default');
+        }
+
         // 检测是否在 iframe 中加载
         // 重要：只有当页面确实在 iframe 中加载时才使用简化布局
         // 如果用户直接访问带 iframe=1 参数的 URL，应该使用完整布局（因为这是主页面）

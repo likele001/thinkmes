@@ -1,31 +1,31 @@
 <div class="card card-outline card-primary">
-    <div class="card-header"><h3 class="card-title">添加套餐</h3></div>
+    <div class="card-header"><h3 class="card-title">{:__('add_package')}</h3></div>
     <div class="card-body">
         <form id="form-add" method="post" class="form-horizontal">
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">套餐名称</label>
-                <div class="col-sm-6"><input type="text" name="name" class="form-control" required placeholder="必填"></div>
+                <label class="col-sm-2 col-form-label">{:__('package_name')}</label>
+                <div class="col-sm-6"><input type="text" name="name" class="form-control" required placeholder="{:__('required_placeholder')}"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">最大管理员数</label>
+                <label class="col-sm-2 col-form-label">{:__('max_admin')}</label>
                 <div class="col-sm-6"><input type="number" name="max_admin" class="form-control" value="10" min="0" required></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">最大用户数</label>
+                <label class="col-sm-2 col-form-label">{:__('max_user')}</label>
                 <div class="col-sm-6"><input type="number" name="max_user" class="form-control" value="1000" min="0" required></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">默认有效期（天）</label>
-                <div class="col-sm-6"><input type="number" name="expire_days" class="form-control" placeholder="留空为永久" min="1"></div>
+                <label class="col-sm-2 col-form-label">{:__('default_validity_days')}</label>
+                <div class="col-sm-6"><input type="number" name="expire_days" class="form-control" placeholder="{:__('placeholder_permanent')}" min="1"></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">排序</label>
+                <label class="col-sm-2 col-form-label">{:__('sort')}</label>
                 <div class="col-sm-6"><input type="number" name="sort" class="form-control" value="0"></div>
             </div>
             <div class="form-group row">
                 <div class="col-sm-6 offset-sm-2">
-                    <button type="submit" class="btn btn-primary">提交</button>
-                    <a href="{:url('tenant_package/index')}" class="btn btn-default ml-2">返回</a>
+                    <button type="submit" class="btn btn-primary">{:__('submit')}</button>
+                    <a href="{:url('tenant_package/index')}" class="btn btn-default ml-2">{:__('back')}</a>
                 </div>
             </div>
         </form>
@@ -34,6 +34,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var L = (typeof Config !== 'undefined' && Config.lang) ? Config.lang : {};
     var form = document.getElementById('form-add');
     form.setAttribute('action', base + '/tenant_package/add');
     form.addEventListener('submit', function (e) {
@@ -44,10 +45,10 @@ document.addEventListener('DOMContentLoaded', function () {
             method: 'POST',
             body: fd,
         }).then(function (res) { return res.json(); }).then(function (r) {
-            alert(r.msg || (r.code === 1 ? '提交成功' : '提交失败'));
+            alert(r.msg || (r.code === 1 ? (L.submit_success || '提交成功') : (L.submit_fail || '提交失败')));
             if (r.code === 1) location.href = base + '/tenant_package/index';
         }).catch(function () {
-            alert('请求失败，请检查网络连接');
+            alert(L.request_failed || '请求失败，请检查网络连接');
         });
     });
 });

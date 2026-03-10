@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="form-card">
+    <view class="form-item">
+      <text class="form-label">关联订单 *</text>
+      <picker mode="selector" range="{{orderOptions}}" range-key="label" value="{{orderIndex}}" bindchange="pickOrder">
+        <view class="picker">{{orderLabel}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">产品型号 *</text>
+      <view class="picker" bindtap="openModelSelect">{{modelLabel}}</view>
+    </view>
+    <view class="form-item">
+      <text class="form-label">工序 *</text>
+      <picker mode="selector" range="{{processOptions}}" range-key="name" value="{{processIndex}}" bindchange="pickProcess">
+        <view class="picker">{{processLabel}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">分配员工 *</text>
+      <picker mode="selector" range="{{userOptions}}" range-key="label" value="{{userIndex}}" bindchange="pickUser">
+        <view class="picker">{{userLabel}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">分配数量 *</text>
+      <input class="form-input" type="number" placeholder="分配数量" value="{{quantity}}" bindinput="inputQuantity"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">状态</text>
+      <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
+        <view class="picker">{{statusText}}</view>
+      </picker>
+    </view>
+  </view>
+  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+</view>

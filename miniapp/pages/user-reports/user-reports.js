@@ -27,11 +27,19 @@ Page({
         const d = res.data || {};
         const rawList = d.list || [];
         const list = rawList.map((item) => {
-          const t = item.create_time;
+          let t = item.create_time;
+          if (typeof t === 'string') t = parseInt(t, 10);
           let str = '';
-          if (t) {
+          if (t && !isNaN(t)) {
             const date = new Date(t * 1000);
-            str = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + (date.getMinutes() < 10 ? '0' : '') + date.getMinutes();
+            const y = date.getFullYear();
+            const m = date.getMonth() + 1;
+            const d_ = date.getDate();
+            const h = date.getHours();
+            const min = date.getMinutes();
+            str = y + '-' + (m < 10 ? '0' : '') + m + '-' + (d_ < 10 ? '0' : '') + d_ + ' ' + (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
+          } else {
+            str = '-';
           }
           return { ...item, create_time_str: str };
         });
@@ -45,6 +53,11 @@ Page({
         });
       })
       .catch(() => { this.setData({ loading: false }); });
+  },
+
+  goDetail(e) {
+    const id = e.currentTarget.dataset.id;
+    if (id) wx.navigateTo({ url: '/pages/report-detail/report-detail?id=' + id + '&from=user' });
   },
 
   onReachBottom() {

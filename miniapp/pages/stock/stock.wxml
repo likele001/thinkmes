@@ -1,0 +1,13 @@
+<view class="container">
+  <view class="btn-bar">
+    <button class="btn-add" bindtap="goOp" data-type="in">入库</button>
+    <button class="btn-add" bindtap="goOp" data-type="out">出库</button>
+    <button class="btn-add" bindtap="goOp" data-type="check">盘点</button>
+  </view>
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <view class="row"><text class="title">{{item.material_name || item.warehouse_name || '-'}}</text></view>
+    <view class="text-muted">数量：{{item.quantity || 0}} {{item.warehouse_name || ''}} {{item.material_name || ''}}</view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无库存</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

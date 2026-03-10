@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{$title|default='会员中心'} - 报工系统</title>
+  <title>{:isset($title) && $title !== '' ? htmlspecialchars((string)$title) : lang('page_title_default')} - {:lang('site_name')}</title>
   <script src="/assets/lib/jquery/jquery.min.js"></script>
   <script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
   <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
@@ -14,16 +14,26 @@
 <body>
   <nav class="topbar">
     <div class="container d-flex align-items-center justify-content-between">
-      <a class="topbar-brand" href="/">报工系统</a>
+      <a class="topbar-brand" href="/">{:lang('site_name')}</a>
       <ul class="nav topbar-nav align-items-center">
-        <li class="nav-item"><a class="nav-link" href="/index/user/index"><i class="fa fa-home me-1"></i>会员中心</a></li>
+        <li class="nav-item"><a class="nav-link" href="/index/user/index"><i class="fa fa-home me-1"></i>{:lang('member_center')}</a></li>
+        <li class="nav-item"><a class="nav-link" href="/index/worker/index"><i class="fa fa-tasks me-1"></i>{:lang('worker_center')}</a></li>
+        <li class="nav-item"><a class="nav-link" href="/index/wemedia/index"><i class="fa fa-pen-fancy me-1"></i>{:lang('wemedia_workspace')}</a></li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fa fa-user me-1"></i>账号</a>
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" title="语言"><i class="fa fa-globe me-1"></i><span class="d-none d-md-inline">Lang</span></a>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="/index/user/profile"><i class="fa fa-id-card me-1"></i>个人资料</a></li>
-            <li><a class="dropdown-item" href="/index/user/changepwd"><i class="fa fa-key me-1"></i>修改密码</a></li>
+            <li><a class="dropdown-item" href="/index/lang/zh-cn">简体中文</a></li>
+            <li><a class="dropdown-item" href="/index/lang/en-us">English</a></li>
+            <li><a class="dropdown-item" href="/index/lang/ko">한국어</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="fa fa-user me-1"></i>{:lang('account')}</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/index/user/profile"><i class="fa fa-id-card me-1"></i>{:lang('profile')}</a></li>
+            <li><a class="dropdown-item" href="/index/user/changepwd"><i class="fa fa-key me-1"></i>{:lang('change_pwd')}</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="/index/user/logout"><i class="fa fa-sign-out-alt me-1"></i>退出</a></li>
+            <li><a class="dropdown-item" href="/index/user/logout"><i class="fa fa-sign-out-alt me-1"></i>{:lang('logout')}</a></li>
           </ul>
         </li>
       </ul>
@@ -33,7 +43,7 @@
     {$__CONTENT__|raw}
   </div>
   <div class="footer">
-    Copyright © 2026 报工系统 All Rights Reserved
+    {:lang('footer_copyright')}
   </div>
 </body>
 </html>

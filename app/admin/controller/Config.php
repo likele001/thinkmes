@@ -28,7 +28,7 @@ class Config extends Backend
             $list = ConfigModel::where('group', $g)->order('sort', 'asc')->order('id', 'asc')->select()->toArray();
             return $this->success('', $list);
         }
-        View::assign('title', '系统配置');
+        View::assign('title', __("title"));
         return $this->fetchWithLayout('config/index');
     }
 

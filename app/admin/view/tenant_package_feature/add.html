@@ -6,10 +6,12 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">选择功能</label>
                 <div class="col-sm-8">
-                    {volist name="allFeatures" id="name" key="code"}
+                    {volist name="allFeaturesList" id="item"}
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="feature_codes[]" value="{$code}" id="feature_{$code}" {in name="code" value="$existingFeatures"}checked{/in}>
-                        <label class="form-check-label" for="feature_{$code}">{$name}</label>
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="checkbox" name="feature_codes[]" value="{$item.code}" {in name="item.code" value="$existingFeatures"}checked{/in}>
+                            {$item.name}
+                        </label>
                     </div>
                     {/volist}
                 </div>
@@ -30,7 +32,11 @@ $(function () {
     $('#form-add').on('submit', function (e) {
         e.preventDefault();
         $.post($(this).attr('action'), $(this).serialize(), function (r) {
-            alert(r.msg);
+            var msg = r.msg || '';
+            if (r.code === 1 && r.data && r.data.added !== undefined) {
+                msg += '，本次新增 ' + r.data.added + ' 个功能';
+            }
+            alert(msg);
             if (r.code === 1) location.href = base + '/tenant_package_feature/index?package_id={$package.id}';
         }, 'json');
     });

@@ -1,10 +1,10 @@
 <view class="container">
-  <view class="card" wx:for="{{list}}" wx:key="id">
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
     <view class="row">
-      <text class="title">{{item.allocation && item.allocation.model && item.allocation.model.product ? item.allocation.model.product.name : ''}} - {{item.allocation && item.allocation.model ? item.allocation.model.name : ''}}</text>
+      <text class="title">{{item.product_name || (item.allocation && item.allocation.model && item.allocation.model.product ? item.allocation.model.product.name : '')}} - {{item.model_name || (item.allocation && item.allocation.model ? item.allocation.model.name : '')}}</text>
       <text class="status {{item.status===1?'pass':'pending'}}">{{item.status===1?'已通过':(item.status===2?'已拒绝':'待审核')}}</text>
     </view>
-    <view class="text-muted">{{item.allocation && item.allocation.process ? item.allocation.process.name : ''}} · 数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</view>
+    <view class="text-muted">{{item.process_name || (item.allocation && item.allocation.process ? item.allocation.process.name : '')}} · 数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</view>
     <view class="text-muted" style="margin-top:8rpx;">{{item.create_time_str}}</view>
   </view>
   <view class="empty" wx:if="{{!loading && list.length===0}}">暂无报工记录</view>

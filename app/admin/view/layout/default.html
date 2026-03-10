@@ -24,14 +24,21 @@
 <body>
 <div class="pear-admin-wrap">
     <header class="pear-header">
-        <button type="button" class="pear-toggle layui-icon layui-icon-shrink-right" id="pear-side-toggle" title="收起侧栏" aria-label="收起/展开侧栏"></button>
+        <button type="button" class="pear-toggle layui-icon layui-icon-shrink-right" id="pear-side-toggle" title="{:__('sidebar_collapse')}" data-title-expand="{:__('sidebar_expand')}" data-title-collapse="{:__('sidebar_collapse')}" aria-label="{:__('sidebar_collapse')}"></button>
         <a href="{:url('index/index')}" class="logo">KeleAdmin</a>
         <div class="nav-right">
-            <a href="javascript:;" id="btn-clear-cache" data-url="{:url('index/clearCache')}" title="清除缓存"><i class="layui-icon layui-icon-refresh"></i></a>
+            <span class="lang-switcher" style="display:inline-block;margin-right:10px;font-size:13px;">
+                <a href="{:url('index/setLang', ['lang'=>'zh-cn'])}" target="_top">中文</a>
+                <span style="margin:0 6px;color:#ccc;">|</span>
+                <a href="{:url('index/setLang', ['lang'=>'en'])}" target="_top">English</a>
+                <span style="margin:0 6px;color:#ccc;">|</span>
+                <a href="{:url('index/setLang', ['lang'=>'ko'])}" target="_top">한국어</a>
+            </span>
+            <a href="javascript:;" id="btn-clear-cache" data-url="{:url('index/clearCache')}" title="{:__('clear_cache')}"><i class="layui-icon layui-icon-refresh"></i></a>
             <span class="layui-badge-dot"></span>
             <span>{$admin.nickname|default=$admin.username}</span>
-            <a href="{:url('profile/index')}" addtabs="profile" url="{:url('profile/index')}" title="个人资料">个人资料</a>
-            <a href="{:url('index/logout')}" title="退出登录">退出</a>
+            <a href="{:url('profile/index')}" addtabs="profile" url="{:url('profile/index')}" title="{:__('profile')}">{:__('profile')}</a>
+            <a href="{:url('index/logout')}" title="{:__('logout_title')}">{:__('logout')}</a>
         </div>
     </header>
     <div class="pear-body">
@@ -45,20 +52,20 @@
                 <ul class="tabs-list" id="nav-addtabs" role="tablist">
                     {if isset($fixedmenu) && $fixedmenu}
                     <li role="presentation" id="tab_{$fixedmenu.id}" class="tab-item {:isset($referermenu) && $referermenu ? '' : 'active'}">
-                        <a href="#con_{$fixedmenu.id}" node-id="{$fixedmenu.id}" role="tab" data-toggle="tab">{$fixedmenu.title|default='首页'} <i class="layui-icon layui-icon-close close-tab" title="关闭"></i></a>
+                        <a href="#con_{$fixedmenu.id}" node-id="{$fixedmenu.id}" role="tab" data-toggle="tab">{if $fixedmenu.title}{$fixedmenu.title}{else}{:__('home')}{/if} <i class="layui-icon layui-icon-close close-tab" title="{:__('close')}"></i></a>
                     </li>
                     {/if}
                     {if isset($referermenu) && $referermenu}
                     <li role="presentation" id="tab_{$referermenu.id}" class="tab-item active">
-                        <a href="#con_{$referermenu.id}" node-id="{$referermenu.id}" role="tab" data-toggle="tab">{$referermenu.title|default=$referermenu.id} <i class="layui-icon layui-icon-close close-tab" title="关闭"></i></a>
+                        <a href="#con_{$referermenu.id}" node-id="{$referermenu.id}" role="tab" data-toggle="tab">{$referermenu.title|default=$referermenu.id} <i class="layui-icon layui-icon-close close-tab" title="{:__('close')}"></i></a>
                     </li>
                     {/if}
                 </ul>
                 <div class="tabs-close" id="addtabs-close-wrap">
-                    <button type="button" class="layui-btn layui-btn-xs" id="addtabs-close-btn">关闭</button>
+                    <button type="button" class="layui-btn layui-btn-xs" id="addtabs-close-btn">{:__('close')}</button>
                     <div id="pear-close-dropdown" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid #e6e6e6;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.1);z-index:999;min-width:100px;">
-                        <a href="javascript:;" data-addtabs-close="all" style="display:block;padding:8px 12px;color:#333;text-decoration:none;">关闭全部</a>
-                        <a href="javascript:;" data-addtabs-close="other" style="display:block;padding:8px 12px;color:#333;text-decoration:none;">关闭其他</a>
+                        <a href="javascript:;" data-addtabs-close="all" style="display:block;padding:8px 12px;color:#333;text-decoration:none;">{:__('close_all')}</a>
+                        <a href="javascript:;" data-addtabs-close="other" style="display:block;padding:8px 12px;color:#333;text-decoration:none;">{:__('close_other')}</a>
                     </div>
                 </div>
             </div>

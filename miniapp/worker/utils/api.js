@@ -1,21 +1,32 @@
 const { request } = require('./request.js');
 const { BASE_URL, TENANT_ID } = require('./config.js');
 
+function getTenantId() {
+  const app = getApp();
+  if (app && app.globalData && app.globalData.tenantId) {
+    return app.globalData.tenantId;
+  }
+  const stored = wx.getStorageSync('tenant_id');
+  if (stored) return stored;
+  return TENANT_ID || 0;
+}
+
 // 员工端 API 封装
 const api = {
-  // 登录（微信 code + 租户ID）
+  // 登录（微信 code + 租户ID，租户来自 getConfig 或 config 兜底）
   login(code, nickname, avatar) {
+    const tenantId = getTenantId();
     return new Promise((resolve, reject) => {
       wx.request({
         url: BASE_URL + '/miniapp/login',
         method: 'POST',
-        data: { code, tenant_id: TENANT_ID, nickname: nickname || '', avatar: avatar || '' },
+        data: { code, tenant_id: tenantId, nickname: nickname || '', avatar: avatar || '' },
         header: { 'content-type': 'application/json' },
         success(res) {
           if (res.statusCode === 200 && res.data && res.data.code === 1) {
             resolve(res.data);
           } else {
-            wx.showToast({ title: (res.data && res.data.msg) || '登录失败', icon: 'none' });
+            if (res.data && res.data.msg) wx.showToast({ title: res.data.msg, icon: 'none' });
             reject(res.data);
           }
         },

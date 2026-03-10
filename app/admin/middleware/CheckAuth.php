@@ -55,11 +55,16 @@ class CheckAuth
         'admin/index/logout',
         'admin/index/captcha',
         'admin/index/error',  // 无权限提示页，避免二次拦截
+        'admin/index/setlang', // 语言切换，无需登录即可设置 Cookie
+        'admin/index/langdebug', // 多语言调试接口（可删）
         'admin/register/index',
         'admin/register/save',
         'admin/ai/config/testaudio',  // 语音识别测试用音频，阿里云需公网拉取
     ];
     protected array $loginOnlyList = [
+        // 菜单接口：已登录即可拉取，菜单树在接口内按权限过滤
+        'admin/index/menu',
+        'index/menu',
         // 个人中心：任何已登录管理员可访问
         'admin/profile/index',
         'admin/profile/updateprofile',

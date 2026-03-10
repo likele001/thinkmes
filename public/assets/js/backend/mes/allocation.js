@@ -8,6 +8,7 @@
     var editUrl = base + '/mes/allocation/edit';
     var delUrl = base + '/mes/allocation/del';
     var generateQrcodeUrl = base + '/mes/allocation/generateQrcode';
+    var qrcodeInfoUrl = base + '/mes/allocation/qrcodeInfo';
 
     function statusFmt(v) {
         var statusMap = {0: '待开始', 1: '进行中', 2: '已完成'};
@@ -79,11 +80,7 @@
                             }
                         },
                         'click .btn-qrcode': function(e, value, row) {
-                            if (confirm('确定要重新生成二维码吗？')) {
-                                $.post(generateQrcodeUrl, {id: row.id}, function(r) {
-                                    alert(r.msg || (r.code == 1 ? '二维码生成成功' : '生成失败'));
-                                }, 'json');
-                            }
+                            Controller.api.showQrcodeModal(row.id);
                         }
                     }, formatter: operFmt}
                 ],
@@ -95,6 +92,30 @@
             // 刷新按钮
             $(document).off('click', '.btn-refresh').on('click', '.btn-refresh', function () {
                 $table.bootstrapTable('refresh');
+            });
+            // 二维码弹窗：复制链接
+            $(document).off('click', '#qrcode-modal-copy').on('click', '#qrcode-modal-copy', function () {
+                var $input = $('#qrcode-modal-url');
+                $input.select();
+                try {
+                    document.execCommand('copy');
+                    alert('已复制到剪贴板');
+                } catch (e) {
+                    alert('复制失败，请手动选择复制');
+                }
+            });
+            // 二维码弹窗：重新生成
+            $(document).off('click', '#qrcode-modal-regenerate').on('click', '#qrcode-modal-regenerate', function () {
+                var id = $('#qrcodeModal').data('allocation-id');
+                if (!id) return;
+                if (!confirm('确定要重新生成二维码吗？')) return;
+                $.post(generateQrcodeUrl, { id: id }, function (r) {
+                    alert(r.msg || (r.code == 1 ? '二维码生成成功' : '生成失败'));
+                    if (r.code == 1) {
+                        $('#qrcodeModal').modal('hide');
+                        Controller.api.showQrcodeModal(id);
+                    }
+                }, 'json');
             });
             
             // 编辑按钮（工具栏，只绑定到工具栏的按钮，避免影响表格行的编辑按钮）
@@ -148,6 +169,26 @@
             Controller.api.bindevent();
         },
         api: {
+            showQrcodeModal: function (allocationId) {
+                var $modal = $('#qrcodeModal');
+                var $imgWrap = $('#qrcode-modal-img-wrap');
+                var $url = $('#qrcode-modal-url');
+                $imgWrap.html('<p class="text-muted">加载中...</p>');
+                $url.val('');
+                $modal.data('allocation-id', allocationId).modal('show');
+                $.get(qrcodeInfoUrl, { id: allocationId }, function (r) {
+                    if (r.code !== 1 || !r.data || !r.data.url) {
+                        $imgWrap.html('<p class="text-danger">' + (r.msg || '获取二维码失败') + '</p>');
+                        return;
+                    }
+                    var url = r.data.url;
+                    $url.val(url);
+                    var qrImgUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+                    $imgWrap.html('<img src="' + qrImgUrl + '" alt="二维码" style="max-width:200px;height:auto;">');
+                }, 'json').fail(function () {
+                    $imgWrap.html('<p class="text-danger">请求失败</p>');
+                });
+            },
             bindevent: function () {
                 var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
                 var form = $('form#form-add, form#form-edit, form#form-batch');

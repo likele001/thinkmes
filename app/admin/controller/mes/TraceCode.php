@@ -29,7 +29,9 @@ class TraceCode extends Backend
         
         $tenantId = $this->getTenantId();
         $query = TraceCodeModel::with(['order', 'model.product', 'process', 'report'])
-            ->where('code_type', 1)
+            ->where(function ($q) {
+                $q->where('code_type', 1)->whereOr('report_id', '>', 0);
+            })
             ->order('id', 'desc');
         if ($tenantId > 0) {
             $query->where('tenant_id', $tenantId);

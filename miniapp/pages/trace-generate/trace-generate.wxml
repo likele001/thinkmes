@@ -1,0 +1,14 @@
+<view class="container">
+  <view class="card">
+    <view class="form-item">
+      <text class="label">报工ID</text>
+      <input class="input" type="number" placeholder="请输入报工记录ID" value="{{reportId}}" bindinput="onReportIdInput"/>
+    </view>
+    <button class="btn-primary" bindtap="generate">生成追溯码</button>
+  </view>
+  <view class="card result" wx:if="{{result}}">
+    <view class="card-title">生成结果</view>
+    <view class="row"><text class="label">追溯码</text><text class="value">{{result.trace_code}}</text></view>
+    <view class="row" wx:if="{{result.qr_url}}"><text class="label">二维码链接</text><text class="value small">{{result.qr_url}}</text></view>
+  </view>
+</view>

@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="form-card">
+    <view class="form-item">
+      <text class="form-label">BOM编号</text>
+      <input class="form-input" placeholder="留空自动生成" value="{{bom_no}}" bindinput="inputBomNo"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">BOM名称 *</text>
+      <input class="form-input" placeholder="BOM名称" value="{{bom_name}}" bindinput="inputBomName"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">产品 *</text>
+      <picker mode="selector" range="{{productOptions}}" range-key="label" value="{{productIndex}}" bindchange="pickProduct">
+        <view class="picker">{{productLabel}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">产品型号 *</text>
+      <view class="picker" bindtap="openModelSelect">{{modelLabel}}</view>
+    </view>
+    <view class="form-item">
+      <text class="form-label">版本号</text>
+      <input class="form-input" placeholder="如 1.0" value="{{version}}" bindinput="inputVersion"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">基准数量</text>
+      <input class="form-input" type="number" placeholder="基准数量" value="{{base_quantity}}" bindinput="inputBaseQuantity"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">状态</text>
+      <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
+        <view class="picker">{{statusText}}</view>
+      </picker>
+    </view>
+  </view>
+  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+</view>

@@ -1,0 +1,13 @@
+<view class="container">
+  <view class="btn-bar"><button class="btn-add" bindtap="goAdd">新增工序工价</button></view>
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
+    <view class="row" bindtap="goEdit" data-id="{{item.id}}"><text class="title">型号{{item.model_name || item.model_id}} / 工序{{item.process_name || item.process_id}}</text></view>
+    <view class="text-muted">件价：{{item.price}} 时价：{{item.time_price || '-'}}</view>
+    <view class="btn-wrap">
+      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
+      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+    </view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无工序工价</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

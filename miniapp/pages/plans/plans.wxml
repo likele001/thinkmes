@@ -1,0 +1,24 @@
+<view class="container">
+  <view class="btn-bar"><button class="btn-add" bindtap="goAdd">新增计划</button></view>
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
+    <view class="row" bindtap="goDetail" data-id="{{item.id}}">
+      <text class="title">{{item.plan_name || item.name || item.plan_code || '-'}}</text>
+    </view>
+    <view class="text-muted">单号：{{item.plan_code || '-'}} · 数量：{{item.total_quantity || 0}} · 已完成：{{item.completed_quantity || 0}} · 进度 {{item.progress || 0}}%</view>
+    <view class="text-muted" wx:if="{{item.model}}">产品：{{item.model.product ? item.model.product.name : ''}} - {{item.model.name || ''}}</view>
+    <view class="text-muted" wx:if="{{item.status_text}}">状态：{{item.status_text}}</view>
+    <view class="actions">
+      <button class="btn-action btn-allocate" size="mini" data-id="{{item.id}}" catchtap="goAllocate">分配工序</button>
+      <button class="btn-action btn-view" size="mini" data-id="{{item.id}}" catchtap="goAllocations">查看分工</button>
+      <button class="btn-action btn-stats" size="mini" data-id="{{item.id}}" catchtap="goProgressStats">进度统计</button>
+      <button class="btn-action btn-progress" size="mini" data-id="{{item.id}}" catchtap="goProgress">生产进度</button>
+    </view>
+    <view class="btn-wrap">
+      <button size="mini" data-id="{{item.id}}" catchtap="goDetail">详情</button>
+      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
+      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+    </view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无生产计划</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

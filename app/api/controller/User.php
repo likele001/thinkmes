@@ -158,15 +158,38 @@ class User extends BaseController
             return $this->error('请填写用户名或手机号');
         }
 
-        $query = UserModel::where('tenant_id', $tenantId)->where('status', 1);
+        // 域名绑定为可选；未解析到租户时用请求参数 tenant_id，或按用户名/手机号唯一匹配
+        if ($tenantId <= 0) {
+            $tenantId = max(0, (int) $this->request->post('tenant_id', 0));
+        }
+        $query = UserModel::where('tenant_id', $tenantId);
         if ($username !== '') {
             $query->where('username', $username);
         } else {
             $query->where('mobile', $mobile);
         }
         $user = $query->find();
+        // 未指定租户且当前租户下未找到时，尝试按用户名/手机号在全部租户中查找唯一启用用户
+        if (!$user && $tenantId <= 0) {
+            $q = UserModel::where('status', 1);
+            if ($username !== '') {
+                $q->where('username', $username);
+            } else {
+                $q->where('mobile', $mobile);
+            }
+            $users = $q->select();
+            if ($users->count() === 1) {
+                $user = $users[0];
+                $tenantId = (int) $user->tenant_id;
+            } elseif ($users->count() > 1) {
+                return $this->error('存在多个账号，请通过指定租户的链接登录（如 ?tenant_id=1）');
+            }
+        }
         if (!$user) {
-            return $this->error('账号不存在或已禁用');
+            return $this->error('账号不存在');
+        }
+        if ((int) $user->status !== 1) {
+            return $this->error('账号已禁用，请联系管理员');
         }
         if (!password_verify($password, $user->password)) {
             return $this->error('密码错误');

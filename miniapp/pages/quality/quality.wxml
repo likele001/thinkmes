@@ -1,0 +1,20 @@
+<view class="container">
+  <view class="tabs">
+    <view class="tab {{tab==='standards'?'active':''}}" data-tab="standards" bindtap="switchTab">质检标准</view>
+    <view class="tab {{tab==='checks'?'active':''}}" data-tab="checks" bindtap="switchTab">质检记录</view>
+  </view>
+  <view wx:if="{{tab==='standards'}}">
+    <view class="card" wx:for="{{standards}}" wx:key="id">
+      <view class="row"><text class="title">{{item.name || item.standard_name || '-'}}</text></view>
+      <view class="text-muted" wx:if="{{item.product_name}}">产品：{{item.product_name}}</view>
+    </view>
+    <view class="empty" wx:if="{{standards.length===0}}">暂无质检标准</view>
+  </view>
+  <view wx:if="{{tab==='checks'}}">
+    <view class="card" wx:for="{{checks}}" wx:key="id">
+      <view class="row"><text class="title">{{item.record_no || item.check_no || '记录'}}</text></view>
+      <view class="text-muted">结果：{{item.result || item.status || '-'}}</view>
+    </view>
+    <view class="empty" wx:if="{{checks.length===0}}">暂无质检记录</view>
+  </view>
+</view>

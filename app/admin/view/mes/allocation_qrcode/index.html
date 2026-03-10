@@ -1,0 +1,36 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>分工二维码管理</em> 查看、打印与重新生成任务报工二维码</div>
+    </div>
+    <div class="card-body">
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+<!-- 查看二维码弹窗：关闭/叉号用 JS 显式绑定，避免在 iframe 内 data-dismiss 失效 -->
+<div class="modal fade" id="qrcodeModal" tabindex="-1" role="dialog" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="pointer-events: auto;">
+            <div class="modal-header" style="position:relative; z-index: 2;">
+                <h5 class="modal-title">任务二维码</h5>
+                <button type="button" class="close" id="qrcode-modal-btn-close-x" aria-label="关闭"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-muted small mb-2">员工扫码后可进入报工页面</p>
+                <div id="qrcode-modal-img-wrap" class="mb-3"></div>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="qrcode-modal-url" readonly>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="qrcode-modal-copy">复制链接</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="position:relative; z-index: 2;">
+                <button type="button" class="btn btn-secondary" id="qrcode-modal-btn-close">关闭</button>
+                <button type="button" class="btn btn-info" id="qrcode-modal-regenerate">重新生成</button>
+            </div>
+        </div>
+    </div>
+</div>

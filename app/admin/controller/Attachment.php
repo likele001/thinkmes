@@ -17,7 +17,7 @@ class Attachment extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '文件管理');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('attachment/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));

@@ -1,0 +1,294 @@
+<div class="card">
+  <div class="card-header"><i class="fas fa-edit me-2"></i>{$title|default='脚本'}</div>
+  <div class="card-body">
+    <p class="alert alert-light border small mb-3"><strong>推荐流程：</strong>生成文案 → 生成/润色脚本 → 文生图做封面。成本低、够用；视频成片按需使用（消耗较高）。</p>
+    <form id="video-form">
+      <input type="hidden" name="id" value="{$item.id|default=0}">
+      <div class="mb-3">
+        <label class="form-label">标题 <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control" value="{$item.title|default=''}" required>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">平台</label>
+          <select name="platform" class="form-control">
+            <option value="">不限</option>
+            <option value="douyin">抖音</option>
+            <option value="xiaohongshu">小红书</option>
+            <option value="shipinhao">视频号</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">关联选题</label>
+          <select name="topic_id" class="form-control">
+            <option value="0">不关联</option>
+            {volist name="topics" id="t"}
+            <option value="{$t.id}">{$t.title}</option>
+            {/volist}
+          </select>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">预计时长（秒）</label>
+        <input type="number" name="duration" class="form-control" value="{$item.duration|default=0}" min="0">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">分镜/脚本内容</label>
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+          <button type="button" id="video-gen-script" class="btn btn-outline-primary btn-sm">AI 生成分镜脚本</button>
+          <button type="button" id="video-gen-from-copy" class="btn btn-outline-success btn-sm">从文案生成口播脚本</button>
+          <button type="button" id="video-tip-video" class="btn btn-outline-secondary btn-sm">图/文生成视频说明</button>
+        </div>
+        <textarea name="script_content" class="form-control" rows="8" placeholder="可手动填写，或使用上方「AI 生成」「从文案生成」">{$item.script_content|default=''}</textarea>
+        <div id="video-script-model-hint" class="small text-muted mt-1" style="display:none;"></div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">封面图</label>
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+          <input type="text" name="cover_path" id="video-cover-path" class="form-control flex-grow-1" style="max-width:400px" value="{$item.cover_path|default=''}" placeholder="文生图生成或本地上传">
+          <button type="button" id="video-gen-cover" class="btn btn-outline-primary btn-sm">文生图生成封面</button>
+        </div>
+        <p class="small text-muted mb-0">根据脚本/标题生成封面图，成本低。</p>
+        <div id="video-cover-preview" class="mt-2" style="display:none;"><img src="" alt="封面预览" class="img-thumbnail" style="max-height:120px"></div>
+      </div>
+      <div class="mb-3 border rounded p-3 bg-light">
+        <a class="d-inline-block mb-2 text-secondary text-decoration-none" data-bs-toggle="collapse" href="#video-optional-section" aria-expanded="false"><i class="fas fa-chevron-down me-1"></i>可选：配音与成片（消耗较高，按需使用）</a>
+        <div class="collapse" id="video-optional-section">
+          <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+            <button type="button" id="video-gen-audio" class="btn btn-outline-primary btn-sm">生成配音</button>
+            <button type="button" id="video-gen-video" class="btn btn-outline-success btn-sm">合成口播视频</button>
+            <button type="button" id="video-gen-ai-video-text" class="btn btn-outline-info btn-sm">文生视频</button>
+            <button type="button" id="video-gen-ai-video" class="btn btn-outline-info btn-sm">图生视频</button>
+            <button type="button" id="video-gen-digital-human" class="btn btn-outline-secondary btn-sm">数字人口播</button>
+          </div>
+          <div id="video-audio-box" class="small mb-2" style="display:none;">
+            <span class="text-muted">配音：</span>
+            <a href="" id="video-audio-link" target="_blank" class="me-2">播放/下载</a>
+          </div>
+          <div id="video-video-box" class="small mb-2" style="display:none;">
+            <span class="text-muted">成片：</span>
+            <a href="" id="video-video-link" target="_blank" class="me-2">播放/下载</a>
+          </div>
+          <div id="video-ai-video-box" class="small mb-2" style="display:none;">
+            <span class="text-muted">AI 视频：</span>
+            <a href="" id="video-ai-video-link" target="_blank" class="me-2">播放/下载</a>
+          </div>
+          <div id="video-digital-human-box" class="small mb-2" style="display:none;">
+            <span class="text-muted">数字人视频：</span>
+            <a href="" id="video-digital-human-link" target="_blank" class="me-2">播放/下载</a>
+          </div>
+          <p class="small text-muted mb-0">文生/图生视频、数字人按量计费，耗时长，建议以文案+脚本+封面为主。</p>
+        </div>
+        <input type="hidden" name="audio_path" value="{$item.audio_path|default=''}">
+        <input type="hidden" name="video_path" value="{$item.video_path|default=''}">
+        <input type="hidden" name="ai_video_path" value="{$item.ai_video_path|default=''}">
+        <input type="hidden" name="digital_human_path" value="{$item.digital_human_path|default=''}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">状态</label>
+        <select name="status" class="form-control">
+          <option value="0">草稿</option>
+          <option value="1">已完成</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/index/wemedia/video/index" class="btn btn-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- 从文案生成口播脚本 弹窗 -->
+<div class="modal fade" id="video-from-copy-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">从文案生成口播脚本</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label">选择我的文案</label>
+          <select id="video-copy-id" class="form-control">
+            <option value="0">-- 选择文案 --</option>
+            {volist name="copies" id="c"}
+            <option value="{$c.id}">{$c.title|default='无标题'}</option>
+            {/volist}
+          </select>
+        </div>
+        <p class="small text-muted mb-2">或直接粘贴正文到下方，再点生成</p>
+        <textarea id="video-paste-content" class="form-control" rows="4" placeholder="粘贴文案正文（选文案时可不填）"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" id="video-do-from-copy" class="btn btn-primary">生成口播脚本</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var __videoItem = {$itemJson|raw};
+var __fromCopyId = {$from_copy_id|default=0};
+var base = '/index/wemedia/video';
+$(function(){
+  if (__videoItem && __videoItem.platform) $('select[name=platform]').val(__videoItem.platform);
+  if (__videoItem && __videoItem.topic_id) $('select[name=topic_id]').val(String(__videoItem.topic_id));
+  if (__videoItem && __videoItem.status !== undefined) $('select[name=status]').val(String(__videoItem.status));
+  if (__fromCopyId) { $('#video-copy-id').val(String(__fromCopyId)); $('#video-gen-from-copy').click(); }
+  if (__videoItem && __videoItem.audio_path) {
+    $('#video-audio-link').attr('href', '/' + __videoItem.audio_path).text('播放/下载');
+    $('input[name=audio_path]').val(__videoItem.audio_path);
+    $('#video-audio-box').show();
+  }
+  if (__videoItem && __videoItem.video_path) {
+    $('#video-video-link').attr('href', '/' + __videoItem.video_path).text('播放/下载');
+    $('input[name=video_path]').val(__videoItem.video_path);
+    $('#video-video-box').show();
+  }
+  if (__videoItem && __videoItem.ai_video_path) {
+    $('#video-ai-video-link').attr('href', '/' + __videoItem.ai_video_path).text('播放/下载');
+    $('input[name=ai_video_path]').val(__videoItem.ai_video_path);
+    $('#video-ai-video-box').show();
+  }
+  if (__videoItem && __videoItem.digital_human_path) {
+    $('#video-digital-human-link').attr('href', '/' + __videoItem.digital_human_path).text('播放/下载');
+    $('input[name=digital_human_path]').val(__videoItem.digital_human_path);
+    $('#video-digital-human-box').show();
+  }
+  if (__videoItem && __videoItem.cover_path) {
+    $('#video-cover-preview img').attr('src', '/' + __videoItem.cover_path);
+    $('#video-cover-preview').show();
+  }
+});
+$('#video-gen-script').on('click', function(){
+  var topicId = $('select[name=topic_id]').val();
+  if (!topicId || topicId === '0') { alert('请先选择关联选题'); return; }
+  var $btn = $(this).prop('disabled', true);
+  $.post(base + '/generateScript', {
+    topic_id: topicId,
+    duration: $('input[name=duration]').val() || 60,
+    platform: $('select[name=platform]').val(),
+    title: $('input[name=title]').val()
+  }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    $('textarea[name=script_content]').val(r.data.script_content || '');
+    if (r.data.model_used) $('#video-script-model-hint').text('由 ' + r.data.model_used + ' 生成').show();
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-gen-from-copy').on('click', function(){ $('#video-from-copy-modal').modal('show'); });
+$('#video-do-from-copy').on('click', function(){
+  var copyId = $('#video-copy-id').val() || '0';
+  var content = $('#video-paste-content').val() || '';
+  if (copyId === '0' && !content.trim()) { alert('请选择一篇文案或粘贴正文'); return; }
+  var $btn = $('#video-do-from-copy').prop('disabled', true);
+  $.post(base + '/generateFromCopy', { copy_id: copyId, content: content.trim() }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    $('textarea[name=script_content]').val(r.data.script_content || '');
+    $('#video-from-copy-modal').modal('hide');
+    if (r.data.model_used) $('#video-script-model-hint').text('由 ' + r.data.model_used + ' 生成').show();
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-tip-video').on('click', function(){
+  $.get(base + '/videoGenerateTip', function(r){
+    if (r.code === 1 && r.data.tip) alert(r.data.tip); else alert('图/文生成视频需对接 Runway、可灵、智影等；当前支持生成口播脚本与 TTS 口播成片。');
+  }, 'json');
+});
+$('#video-gen-audio').on('click', function(){
+  var scriptId = $('input[name=id]').val() || '0';
+  var content = $('textarea[name=script_content]').val() || '';
+  if (!content.trim()) { alert('请先填写脚本内容'); return; }
+  var $btn = $(this).prop('disabled', true);
+  $.post(base + '/generateAudio', { script_id: scriptId, script_content: content }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var p = r.data.audio_path;
+    $('input[name=audio_path]').val(p);
+    $('#video-audio-link').attr('href', '/' + p).text('播放/下载');
+    $('#video-audio-box').show();
+    alert('配音已生成');
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-gen-video').on('click', function(){
+  var scriptId = $('input[name=id]').val() || '0';
+  var audioPath = $('input[name=audio_path]').val() || '';
+  var coverPath = $('input[name=cover_path]').val() || '';
+  if (!audioPath) { alert('请先生成配音'); return; }
+  if (!coverPath) { alert('请先填写封面图路径'); return; }
+  var $btn = $(this).prop('disabled', true);
+  $.post(base + '/generateVideo', { script_id: scriptId, audio_path: audioPath, cover_path: coverPath }, function(r){
+    if (r.code !== 1) { alert(r.msg || '合成失败'); return; }
+    var p = r.data.video_path;
+    $('input[name=video_path]').val(p);
+    $('#video-video-link').attr('href', '/' + p).text('播放/下载');
+    $('#video-video-box').show();
+    alert('口播视频已合成');
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-gen-cover').on('click', function(){
+  var scriptId = $('input[name=id]').val() || '0';
+  var prompt = $('textarea[name=script_content]').val() ? $('textarea[name=script_content]').val().replace(/\s+/g, ' ').substring(0, 500) : ($('input[name=title]').val() || '').trim();
+  if (!prompt) { alert('请先填写脚本内容或标题作为画面描述'); return; }
+  var $btn = $(this).prop('disabled', true);
+  $.post(base + '/generateCoverImage', { script_id: scriptId, prompt: prompt }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var p = r.data.cover_path;
+    $('#video-cover-path').val(p);
+    $('input[name=cover_path]').val(p);
+    $('#video-cover-preview img').attr('src', '/' + p);
+    $('#video-cover-preview').show();
+    alert('封面图已生成');
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-gen-ai-video-text').on('click', function(){
+  var scriptId = $('input[name=id]').val() || '0';
+  var prompt = $('textarea[name=script_content]').val() ? $('textarea[name=script_content]').val().replace(/\s+/g, ' ').substring(0, 1500) : ($('input[name=title]').val() || '').trim();
+  if (!prompt) { alert('请先填写脚本内容或标题'); return; }
+  var $btn = $(this).prop('disabled', true);
+  $.post(base + '/generateAiVideoFromText', { script_id: scriptId, prompt: prompt }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var p = r.data.ai_video_path;
+    $('input[name=ai_video_path]').val(p);
+    $('#video-ai-video-link').attr('href', '/' + p).text('播放/下载');
+    $('#video-ai-video-box').show();
+    alert('文生视频已生成');
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-gen-ai-video').on('click', function(){
+  var scriptId = $('input[name=id]').val() || '0';
+  var coverPath = $('input[name=cover_path]').val() || '';
+  var prompt = $('textarea[name=script_content]').val() ? $('textarea[name=script_content]').val().replace(/\s+/g, ' ').substring(0, 500) : '';
+  if (!coverPath) { alert('请先填写封面图路径或使用「文生图生成封面」'); return; }
+  if (!prompt) { prompt = prompt || $('input[name=title]').val() || ''; }
+  if (!prompt) { alert('请填写画面描述/提示词，或先填写脚本内容'); return; }
+  var $btn = $(this).prop('disabled', true);
+  $.post(base + '/generateAiVideo', { script_id: scriptId, cover_path: coverPath, prompt: prompt }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var p = r.data.ai_video_path;
+    $('input[name=ai_video_path]').val(p);
+    $('#video-ai-video-link').attr('href', '/' + p).text('播放/下载');
+    $('#video-ai-video-box').show();
+    alert('图生视频已生成');
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-gen-digital-human').on('click', function(){
+  var scriptId = $('input[name=id]').val() || '0';
+  var content = $('textarea[name=script_content]').val() || '';
+  if (!content.trim()) { alert('请先填写脚本内容'); return; }
+  var $btn = $(this).prop('disabled', true);
+  $.post(base + '/generateDigitalHuman', { script_id: scriptId, script_content: content }, function(r){
+    if (r.code !== 1) { alert(r.msg || '生成失败'); return; }
+    var p = r.data.digital_human_path;
+    $('input[name=digital_human_path]').val(p);
+    $('#video-digital-human-link').attr('href', '/' + p).text('播放/下载');
+    $('#video-digital-human-box').show();
+    alert('数字人视频已生成');
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+$('#video-form').on('submit', function(e){
+  e.preventDefault();
+  var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+  $.post(base + '/save', $(this).serialize(), function(r){
+    alert(r.msg || (r.code === 1 ? '保存成功' : '失败'));
+    if (r.code === 1) location.href = base + '/index';
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+</script>

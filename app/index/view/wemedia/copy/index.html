@@ -1,0 +1,40 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="fas fa-pen-fancy me-2"></i>文案创作</span>
+    <a href="/index/wemedia/copy/add" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>添加文案</a>
+  </div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <input type="text" id="copy-keyword" class="form-control form-control-sm" placeholder="关键词检索标题/正文/标签">
+      </div>
+      <div class="col-md-3">
+        <select id="copy-status" class="form-control form-control-sm">
+          <option value="">全部状态</option>
+          <option value="0">草稿</option>
+          <option value="1">已发布</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" id="copy-search" class="btn btn-primary btn-sm">搜索</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th width="50">ID</th>
+            <th>标题</th>
+            <th width="90">平台</th>
+            <th width="80">状态</th>
+            <th width="160">更新时间</th>
+            <th width="140">操作</th>
+          </tr>
+        </thead>
+        <tbody id="copy-tbody"></tbody>
+      </table>
+    </div>
+    <div id="copy-pager" class="mt-2 small text-muted"></div>
+  </div>
+</div>
+<script src="/assets/js/wemedia/copy.js"></script>

@@ -1,5 +1,9 @@
 <view class="container login-page">
-  <view class="mode-select" wx:if="{{!selectedMode}}">
+  <view class="mode-select" wx:if="{{waitingAuto}}">
+    <view class="logo">MES 工作台</view>
+    <view class="mode-title">正在登录...</view>
+  </view>
+  <view class="mode-select" wx:elif="{{!selectedMode}}">
     <view class="logo">MES 工作台</view>
     <view class="mode-title">请选择身份</view>
     <view class="mode-card admin-card" bindtap="selectAdminMode">

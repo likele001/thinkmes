@@ -18,7 +18,7 @@ class Admin extends Backend
         // 表格数据请求：带 limit 或 Ajax 时返回 JSON
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '管理员管理');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('admin/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
@@ -56,7 +56,7 @@ class Admin extends Backend
                 $tenantMap = [];
             }
         }
-        $scopeText = [1 => '个人', 2 => '子级', 3 => '全部'];
+        $scopeText = [1 => __("scope_self_short"), 2 => __("scope_sub_short"), 3 => __("scope_all_short")];
         foreach ($list as &$row) {
             unset($row['password'], $row['salt']);
             $ts = $row['login_time'] ?? null;
@@ -91,7 +91,7 @@ class Admin extends Backend
         View::assign('roles', $roles);
         View::assign('parents', $parents);
         View::assign('data', []);
-        View::assign('title', '添加管理员');
+        View::assign('title', __("add_title"));
         return $this->fetchWithLayout('admin/add');
     }
 
@@ -165,7 +165,7 @@ class Admin extends Backend
         View::assign('parents', $parents);
         View::assign('data', $data);
         View::assign('roleIdsArr', $roleIdsArr);
-        View::assign('title', '编辑管理员');
+        View::assign('title', __("edit_title"));
         return $this->fetchWithLayout('admin/edit');
     }
 

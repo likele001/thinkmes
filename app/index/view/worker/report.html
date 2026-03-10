@@ -1,0 +1,186 @@
+<div class="py-4">
+  <h2 class="mb-4 text-primary">{:lang('title_report')}</h2>
+  {if isset($error) && $error}
+  <div class="alert alert-danger">{$error} <a href="/index/worker/tasks" class="alert-link">{:lang('go_tasks')}</a></div>
+  {/if}
+  {if isset($allocation) && $allocation}
+  <div class="card shadow-sm mb-4">
+    <div class="card-body bg-light">
+      <div class="small text-secondary mb-1">{:lang('task_info')}</div>
+      <div class="mb-1">{:lang('label_order_no')}：<strong>{$allocation.order_no}</strong></div>
+      <div class="mb-1">{:lang('label_product')}：<strong>{$allocation.product_name}</strong> {:lang('label_model')}：<strong>{$allocation.model_name}</strong> {:lang('label_process')}：<strong>{$allocation.process_name}</strong></div>
+      <div class="mb-1">{:lang('label_assign_qty')}：<strong>{$allocation.quantity}</strong> {:lang('label_reported')}：<strong>{$allocation.reported_quantity}</strong> {:lang('label_pending')}：<strong class="text-primary">{$allocation.remaining_quantity}</strong></div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form id="report-form">
+        <input type="hidden" name="allocation_id" value="{$allocation.id}">
+        <div class="mb-3">
+          <label class="form-label">{:lang('label_work_type_form')}</label>
+          <select name="work_type" id="work_type" class="form-select">
+            <option value="piece">{:lang('opt_piece_label')}</option>
+            <option value="hour">{:lang('opt_hour_label')}</option>
+          </select>
+        </div>
+        <div id="piece_section" class="work-section">
+          <label class="form-label">{:lang('label_select_item_no')}</label>
+          <div class="border rounded p-3 bg-light" style="max-height:200px;overflow-y:auto;">
+            {if !empty($productItems)}
+            {volist name="productItems" id="item"}
+            <div class="form-check mb-2 product-item" data-item-no="{$item.item_no}">
+              <input class="form-check-input item-checkbox" type="checkbox" name="item_nos[]" value="{$item.item_no}" id="item_{$item.item_no}">
+              <label class="form-check-label" for="item_{$item.item_no}">{$item.item_no}</label>
+              <div class="mt-1"><input type="file" class="form-control form-control-sm item-file-input" accept="image/*" multiple></div>
+              <div class="item-preview mt-1 d-flex flex-wrap"></div>
+            </div>
+            {/volist}
+            {else/}
+            <p class="text-muted small mb-0">{:lang('no_product_items')}</p>
+            {/if}
+          </div>
+          <p class="small text-muted mt-1">{:lang('hint_selected_left')}<span id="selected_count">0</span>{:lang('hint_selected_right')}</p>
+        </div>
+        <div id="hour_section" class="work-section" style="display:none;">
+          <label class="form-label">{:lang('label_hours')}</label>
+          <input type="number" name="work_hours" id="work_hours" class="form-control" step="0.1" min="0.1" placeholder="{:lang('placeholder_work_hours')}">
+          <div class="mt-2">
+            <label class="form-label small">{:lang('time_images')}</label>
+            <input type="file" id="time_images" class="form-control" accept="image/*" multiple>
+            <div id="time_preview" class="d-flex flex-wrap mt-2"></div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{:lang('label_remark')}</label>
+          <input type="text" name="remark" class="form-control" placeholder="{:lang('placeholder_optional')}">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit">{:lang('btn_submit')}</button>
+        <a href="/index/worker/tasks" class="btn btn-outline-secondary ms-2">{:lang('back_tasks')}</a>
+      </form>
+    </div>
+  </div>
+  {/if}
+</div>
+<script>
+window.__workerLang = {
+  msg_please_login: {:json_encode(lang('msg_please_login'))},
+  msg_invalid_task: {:json_encode(lang('msg_invalid_task'))},
+  msg_select_item_no: {:json_encode(lang('msg_select_item_no'))},
+  msg_fill_hours: {:json_encode(lang('msg_fill_hours'))},
+  msg_report_ok: {:json_encode(lang('msg_report_ok'))},
+  msg_report_fail: {:json_encode(lang('msg_report_fail'))},
+  msg_request_fail: {:json_encode(lang('msg_request_fail'))},
+  msg_upload_fail: {:json_encode(lang('msg_upload_fail'))}
+};
+</script>
+<script>
+(function(){
+  function getToken(){
+    var m = document.cookie.match(/user_token=([^;]+)/);
+    return m ? m[1].trim() : '';
+  }
+  var L = window.__workerLang || {};
+  var apiReportUrl = '{$apiReportUrl|default="/api/worker/report"}';
+  var apiUploadUrl = '{$apiUploadUrl|default="/api/worker/uploadImage"}';
+  $('#work_type').on('change', function(){
+    var v = $(this).val();
+    $('#piece_section').toggle(v === 'piece');
+    $('#hour_section').toggle(v === 'hour');
+  });
+  $('.item-checkbox').on('change', function(){
+    var n = $('.item-checkbox:checked').length;
+    $('#selected_count').text(n);
+  });
+  $('#report-form').on('submit', function(e){
+    e.preventDefault();
+    var token = getToken();
+    if(!token){ alert(L.msg_please_login || 'Please login'); location.href='/index/user/login'; return; }
+    var workType = $('#work_type').val();
+    var allocationId = parseInt($('input[name="allocation_id"]').val(), 10) || 0;
+    if(!allocationId){ alert(L.msg_invalid_task || 'Invalid task'); return; }
+    var payload = { allocation_id: allocationId, work_type: workType };
+    if(workType === 'piece'){
+      var nos = [];
+      $('.item-checkbox:checked').each(function(){ nos.push($(this).val()); });
+      if(nos.length === 0){ alert(L.msg_select_item_no || 'Select item no'); return; }
+      payload.item_nos = JSON.stringify(nos);
+      var imgMap = {};
+      $('.product-item').each(function(){
+        var no = $(this).data('item-no');
+        var urls = $(this).find('.item-preview img').map(function(){ return $(this).data('url'); }).get().filter(Boolean);
+        if(urls.length) imgMap[no] = urls;
+      });
+      if(Object.keys(imgMap).length) payload.images = JSON.stringify(imgMap);
+    } else {
+      var hours = parseFloat($('#work_hours').val() || '0') || 0;
+      if(hours <= 0){ alert(L.msg_fill_hours || 'Fill hours'); return; }
+      payload.work_hours = hours;
+      var timeUrls = $('#time_preview img').map(function(){ return $(this).data('url'); }).get().filter(Boolean);
+      if(timeUrls.length) payload.images = JSON.stringify({ images: timeUrls });
+    }
+    $('#btn-submit').prop('disabled', true);
+    $.ajax({
+      url: apiReportUrl,
+      method: 'POST',
+      data: payload,
+      headers: { 'Authorization': 'Bearer ' + token },
+      success: function(r){
+        if(r && r.code === 1){
+          alert(r.msg || L.msg_report_ok || 'OK');
+          location.href = '/index/worker/tasks';
+        } else {
+          alert(r && r.msg ? r.msg : (L.msg_report_fail || 'Failed'));
+          $('#btn-submit').prop('disabled', false);
+        }
+      },
+      error: function(){ alert(L.msg_request_fail || 'Request failed'); $('#btn-submit').prop('disabled', false); }
+    });
+  });
+  function uploadFile(file, done){
+    var token = getToken();
+    var fd = new FormData();
+    fd.append('file', file);
+    $.ajax({
+      url: apiUploadUrl,
+      type: 'POST',
+      data: fd,
+      processData: false,
+      contentType: false,
+      headers: { 'Authorization': 'Bearer ' + token },
+      success: function(r){
+        if(r && r.code === 1 && r.data && r.data.url) done(null, r.data.url);
+        else done(r && r.msg ? r.msg : (L.msg_upload_fail || 'Upload failed'));
+      },
+      error: function(){ done(L.msg_upload_fail || 'Upload failed'); }
+    });
+  }
+  $(document).on('change', '.product-item .item-file-input', function(){
+    var $item = $(this).closest('.product-item');
+    var files = this.files;
+    if(!files || !files.length) return;
+    var $preview = $item.find('.item-preview');
+    Array.prototype.forEach.call(files, function(file){
+      uploadFile(file, function(err, url){
+        if(err){ alert(err); return; }
+        var $img = $('<img>').attr('src', url).data('url', url).css({width:50,height:50,'object-fit':'cover',margin:2,'border-radius':4});
+        $preview.append($img);
+      });
+    });
+    this.value = '';
+  });
+  $('#time_images').on('change', function(){
+    var files = this.files;
+    if(!files || !files.length) return;
+    var $preview = $('#time_preview');
+    Array.prototype.forEach.call(files, function(file){
+      uploadFile(file, function(err, url){
+        if(err){ alert(err); return; }
+        var $img = $('<img>').attr('src', url).data('url', url).css({width:50,height:50,'object-fit':'cover',margin:2,'border-radius':4});
+        $preview.append($img);
+      });
+    });
+    this.value = '';
+  });
+})();
+</script>

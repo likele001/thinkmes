@@ -9,6 +9,8 @@ Route::post('index/logout', 'Index/logout');
 Route::get('index/captcha', 'Index/captcha');
 Route::get('index/error', 'Index/errorPage');
 Route::get('index/index', 'Index/index');
+Route::get('index/setLang', 'Index/setLang');
+Route::get('index/langDebug', 'Index/langDebug');
 Route::get('index/menu', 'Index/menu');
 
 // 个人中心
@@ -151,6 +153,24 @@ Route::post('app_center/install', 'AppCenter/install');
 Route::post('app_center/uninstall', 'AppCenter/uninstall');
 Route::post('app_center/upload', 'AppCenter/upload');
 
+// 自媒体工作流（配置 + 各模块管理）
+Route::get('wemedia_config/index', 'WemediaConfig/index');
+Route::post('wemedia_config/index', 'WemediaConfig/index');
+Route::get('wemedia_topic/index', 'WemediaTopic/index');
+Route::post('wemedia_topic/del', 'WemediaTopic/del');
+Route::get('wemedia_copy/index', 'WemediaCopy/index');
+Route::post('wemedia_copy/del', 'WemediaCopy/del');
+Route::get('wemedia_material/index', 'WemediaMaterial/index');
+Route::post('wemedia_material/del', 'WemediaMaterial/del');
+Route::get('wemedia_video/index', 'WemediaVideo/index');
+Route::post('wemedia_video/del', 'WemediaVideo/del');
+Route::get('wemedia_schedule/index', 'WemediaSchedule/index');
+Route::post('wemedia_schedule/del', 'WemediaSchedule/del');
+Route::get('wemedia_report/index', 'WemediaReport/index');
+Route::post('wemedia_report/del', 'WemediaReport/del');
+Route::get('wemedia_compliance/index', 'WemediaCompliance/index');
+Route::post('wemedia_compliance/del', 'WemediaCompliance/del');
+
 // 套餐功能占位（报表统计、数据导出、API、自定义字段、工作流、消息通知、数据备份）
 Route::get('report/index', 'Report/index');
 Route::get('export/index', 'Export/index');
@@ -161,6 +181,7 @@ Route::get('notification/index', 'Notification/index');
 Route::get('backup/index', 'Backup/index');
 
 // 按需加载应用路由（应用包安装时合并对应 crm.php / mes.php）
+
 if (is_file(__DIR__ . '/crm.php')) {
     require __DIR__ . '/crm.php';
 }

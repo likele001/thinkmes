@@ -1,8 +1,27 @@
-<view class="container" wx:if="{{detail}}">
+<view class="container page-with-footer" wx:if="{{detail}}">
   <view class="card">
     <view class="row"><text class="label">报工ID</text><text>{{detail.id}}</text></view>
-    <view class="row"><text class="label">数量</text><text>{{detail.quantity}}</text></view>
-    <view class="row"><text class="label">工资</text><text>¥{{detail.wage || '0'}}</text></view>
+    <view class="row"><text class="label">订单/产品/型号</text><text>{{detail.order_no}} · {{detail.product_name}} / {{detail.model_name}}</text></view>
+    <view class="row"><text class="label">工序</text><text>{{detail.process_name}}</text></view>
+    <view class="row"><text class="label">数量/工资</text><text>{{detail.quantity}} · ¥{{detail.wage || '0'}}</text></view>
+  </view>
+  <view class="card" wx:if="{{detail.images && detail.images.length}}">
+    <view class="section-title">报工图片</view>
+    <view class="img-list">
+      <image wx:for="{{detail.images}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill"/>
+    </view>
+  </view>
+  <view class="card" wx:if="{{detail.audit_images && detail.audit_images.length}}">
+    <view class="section-title">已有审核图片</view>
+    <view class="img-list">
+      <image wx:for="{{detail.audit_images}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill"/>
+    </view>
+  </view>
+  <view class="card" wx:if="{{detail.audit_videos && detail.audit_videos.length}}">
+    <view class="section-title">已有审核视频</view>
+    <view class="video-list">
+      <video wx:for="{{detail.audit_videos}}" wx:key="*this" class="video-item" src="{{item}}" controls show-center-play-btn/>
+    </view>
   </view>
   <view class="card">
     <view class="form-label">审核结果</view>
@@ -11,10 +30,48 @@
       <label><radio value="2" checked="{{status===2}}"/> 拒绝</label>
     </radio-group>
   </view>
-  <view class="card" wx:if="{{status===2}}">
-    <view class="form-label">拒绝原因（选填）</view>
-    <textarea placeholder="请输入原因" value="{{auditReason}}" bindinput="inputReason" class="textarea"/>
+  <view class="card">
+    <view class="form-label">质检结果</view>
+    <radio-group bindchange="qualityChange">
+      <label><radio value="1" checked="{{qualityStatus===1}}"/> 合格</label>
+      <label><radio value="0" checked="{{qualityStatus===0}}"/> 不合格</label>
+    </radio-group>
   </view>
-  <button class="btn-primary" loading="{{submitting}}" bindtap="submit">提交审核</button>
+  <view class="card" wx:if="{{status===2}}">
+    <view class="form-label">拒绝原因（必填）</view>
+    <textarea placeholder="请输入拒绝原因" value="{{auditReason}}" bindinput="inputReason" class="textarea"/>
+  </view>
+  <view class="card">
+    <view class="form-label">审核备注（选填）</view>
+    <textarea placeholder="可选，补充说明" value="{{auditNotes}}" bindinput="inputNotes" class="textarea"/>
+  </view>
+  <view class="card">
+    <view class="form-label">上传审核图片</view>
+    <view class="upload-row">
+      <view class="upload-btn" bindtap="chooseAuditImage">+ 选择图片</view>
+      <view class="img-list">
+        <view wx:for="{{uploadedAuditImages}}" wx:key="*this" class="thumb-wrap">
+          <image class="thumb" src="{{item}}" mode="aspectFill"/>
+          <text class="del" data-index="{{index}}" bindtap="delAuditImage">×</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  <view class="card">
+    <view class="form-label">上传审核视频</view>
+    <view class="upload-row">
+      <view class="upload-btn" bindtap="chooseAuditVideo">+ 选择视频</view>
+      <view class="video-preview-list">
+        <view wx:for="{{uploadedAuditVideos}}" wx:key="*this" class="video-preview-item">
+          <text>视频 {{index+1}}</text>
+          <text class="del" data-index="{{index}}" bindtap="delAuditVideo">×</text>
+        </view>
+      </view>
+    </view>
+  </view>
 </view>
-<view class="container" wx:else-if="{{!detail}}">加载中...</view>
+<view class="footer-bar safe-area-bottom" wx:if="{{detail}}">
+  <button class="btn-primary btn-block" loading="{{submitting}}" bindtap="submit">提交审核</button>
+</view>
+<view class="container" wx:elif="{{!detail && !loading}}">暂无数据</view>
+<view class="container" wx:else>加载中...</view>

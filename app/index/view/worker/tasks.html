@@ -1,0 +1,43 @@
+<div class="py-4">
+  <h2 class="mb-4"><i class="fa fa-tasks text-primary me-2"></i>{:lang('title_my_tasks')}</h2>
+  {if empty($tasks)}
+  <div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="fa fa-inbox fa-3x text-muted mb-3"></i>
+      <p class="text-muted mb-0">{:lang('no_tasks')}</p>
+    </div>
+  </div>
+  {else/}
+  <div class="list-group list-group-flush">
+    {volist name="tasks" id="task"}
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col">
+            <div class="mb-2">
+              <span class="fw-semibold text-secondary">{:lang('label_order_no')}：</span><span class="ms-1">{$task.order_no|default='-'}</span>
+              <span class="fw-semibold text-secondary ms-3">{:lang('label_product')}：</span><span class="ms-1">{$task.product_name|default='-'}</span>
+              <span class="fw-semibold text-secondary ms-3">{:lang('label_model')}：</span><span class="ms-1">{$task.model_name|default='-'}</span>
+            </div>
+            <div class="mb-2">
+              <span class="fw-semibold text-secondary">{:lang('label_process')}：</span><span class="ms-1">{$task.process_name|default='-'}</span>
+              <span class="fw-semibold text-secondary ms-3">{:lang('label_assign_qty')}：</span><span class="ms-1">{$task.quantity}</span>
+              <span class="fw-semibold text-secondary ms-3">{:lang('label_reported')}：</span><span class="ms-1">{$task.reported_quantity|default=0}</span>
+              <span class="fw-semibold text-secondary ms-3">{:lang('label_pending')}：</span><span class="ms-1 fw-bold text-primary">{$task.remaining_quantity|default=$task.quantity}</span>
+            </div>
+            <div class="small text-muted">
+              {:lang('th_status')}：{if $task.status == 0}<span class="text-warning">{:lang('status_ongoing')}</span>{elseif $task.status == 1 /}<span class="text-success">{:lang('status_ongoing')}</span>{else /}<span class="text-secondary">{:lang('status_done')}</span>{/if}
+              <span class="ms-3">{:lang('created_at')}：{:date('Y-m-d H:i', $task['createtime'])}</span>
+            </div>
+          </div>
+          <div class="col-auto text-end">
+            <a href="/index/worker/report?id={$task.id}" class="btn btn-primary"><i class="fa fa-edit me-1"></i>{:lang('btn_report')}</a>
+            <div class="small text-muted mt-1">{:lang('pending')}：{$task.remaining_quantity|default=$task.quantity}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {/volist}
+  </div>
+  {/if}
+</div>

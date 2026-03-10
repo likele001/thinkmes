@@ -94,6 +94,9 @@ class Product extends Backend
                                 'product_id' => $product->id,
                                 'name' => $modelData['name'],
                                 'model_code' => $modelData['model_code'] ?? '',
+                                'color' => $modelData['color'] ?? '',
+                                'specification' => $modelData['specification'] ?? '',
+                                'remark' => $modelData['remark'] ?? '',
                                 'description' => $modelData['description'] ?? '',
                                 'status' => 1
                             ]);
@@ -201,6 +204,9 @@ class Product extends Backend
                                 'product_id' => $ids,
                                 'name' => $modelData['name'],
                                 'model_code' => $modelData['model_code'] ?? '',
+                                'color' => $modelData['color'] ?? '',
+                                'specification' => $modelData['specification'] ?? '',
+                                'remark' => $modelData['remark'] ?? '',
                                 'description' => $modelData['description'] ?? '',
                                 'status' => 1
                             ]);
@@ -325,5 +331,109 @@ class Product extends Backend
             Db::rollback();
             return $this->error('删除失败');
         }
+    }
+
+    /**
+     * 批量添加型号及工序工价（独立入口，不影响现有添加/编辑/删除）
+     * 型号名称重复的跳过不添加
+     */
+    public function batchAddModels(): string|Response
+    {
+        $tenantId = $this->getTenantId();
+        $productList = ProductModel::where('tenant_id', $tenantId)
+            ->where('status', 1)
+            ->order('id', 'desc')
+            ->column('name', 'id');
+        $processList = ProcessModel::where('tenant_id', $tenantId)
+            ->where('status', 1)
+            ->order('sort', 'asc')
+            ->select();
+        $processListForJs = $processList->map(fn($item) => ['id' => $item->id, 'name' => $item->name])->toArray();
+
+        if ($this->request->isPost()) {
+            $productId = (int) $this->request->post('product_id', 0);
+            $models = $this->request->post('models/a') ?: [];
+            $prices = $this->request->post('prices/a') ?: [];
+
+            if ($productId <= 0) {
+                return $this->error('请选择产品');
+            }
+            $product = ProductModel::where('tenant_id', $tenantId)->find($productId);
+            if (!$product) {
+                return $this->error('产品不存在');
+            }
+
+            $existingNames = ProductModelModel::where('tenant_id', $tenantId)
+                ->where('product_id', $productId)
+                ->column('name');
+            $existingNames = array_map('trim', array_map('strval', $existingNames));
+            $existingNames = array_filter($existingNames);
+            $existingNames = array_unique($existingNames);
+
+            $added = 0;
+            $skipped = 0;
+            Db::startTrans();
+            try {
+                foreach ($models as $index => $modelData) {
+                    $name = trim((string) ($modelData['name'] ?? ''));
+                    if ($name === '') {
+                        continue;
+                    }
+                    if (in_array($name, $existingNames, true)) {
+                        $skipped++;
+                        continue;
+                    }
+                    $modelRow = ProductModelModel::create([
+                        'tenant_id' => $tenantId,
+                        'product_id' => $productId,
+                        'name' => $name,
+                        'model_code' => $modelData['model_code'] ?? '',
+                        'color' => $modelData['color'] ?? '',
+                        'specification' => $modelData['specification'] ?? '',
+                        'remark' => $modelData['remark'] ?? '',
+                        'description' => $modelData['description'] ?? '',
+                        'status' => 1
+                    ]);
+                    $existingNames[] = $name;
+                    $added++;
+
+                    if (!empty($prices)) {
+                        foreach ($prices as $processId => $priceData) {
+                            $processId = (string) $processId;
+                            if (strpos($processId, '_time') !== false) {
+                                continue;
+                            }
+                            $priceVal = isset($priceData[$index]) ? (float) $priceData[$index] : 0;
+                            $timePrice = isset($prices[$processId . '_time'][$index]) ? (float) $prices[$processId . '_time'][$index] : 0;
+                            if ($priceVal > 0 || $timePrice > 0) {
+                                ProcessPriceModel::create([
+                                    'tenant_id' => $tenantId,
+                                    'model_id' => $modelRow->id,
+                                    'process_id' => (int) $processId,
+                                    'price' => $priceVal,
+                                    'time_price' => $timePrice,
+                                    'status' => 1
+                                ]);
+                            }
+                        }
+                    }
+                }
+                Db::commit();
+                $msg = '批量添加完成：成功 ' . $added . ' 个型号';
+                if ($skipped > 0) {
+                    $msg .= '，跳过重复 ' . $skipped . ' 个';
+                }
+                return $this->success($msg, ['added' => $added, 'skipped' => $skipped]);
+            } catch (\Exception $e) {
+                Db::rollback();
+                return $this->error('批量添加失败：' . $e->getMessage());
+            }
+        }
+
+        View::assign('productList', $productList);
+        View::assign('processList', $processList);
+        View::assign('processListJson', json_encode($processListForJs, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        View::assign('title', '批量添加型号');
+        return $this->fetchWithLayout('mes/product/batch_add_models');
     }
 }

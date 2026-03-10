@@ -1,36 +1,36 @@
 <div class="card card-outline card-primary">
-    <div class="card-header"><h3 class="card-title">编辑角色</h3></div>
+    <div class="card-header"><h3 class="card-title">{:__('edit_title')}</h3></div>
     <div class="card-body">
         <form id="form-edit" method="post" class="form-horizontal">
             <input type="hidden" name="id" value="{$data.id|default=0}">
             <input type="hidden" name="rules" id="input-rules" value="{$data.rules|default=''}">
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">角色名称</label>
+                <label class="col-sm-2 col-form-label">{:__('role_name')}</label>
                 <div class="col-sm-6"><input type="text" name="name" class="form-control" value="{$data.name|default=''}" required></div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">权限</label>
+                <label class="col-sm-2 col-form-label">{:__('rules')}</label>
                 <div class="col-sm-8">
                     <div class="border rounded p-3 bg-light" style="max-height:400px;overflow:auto">
-                        <label class="mb-2"><input type="checkbox" id="rule-check-all"> 全选</label>
+                        <label class="mb-2"><input type="checkbox" id="rule-check-all"> {:__('check_all')}</label>
                         <div id="rule-tree" class="rule-tree ml-2"></div>
                     </div>
-                    <small class="text-muted">勾选该角色可访问的菜单与权限节点</small>
+                    <small class="text-muted">{:__('rules_hint')}</small>
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">状态</label>
+                <label class="col-sm-2 col-form-label">{:__('status')}</label>
                 <div class="col-sm-6">
                     <select name="status" class="form-control">
-                        <option value="1" {if condition="$data.status == 1"}selected{/if}>正常</option>
-                        <option value="0" {if condition="$data.status == 0"}selected{/if}>禁用</option>
+                        <option value="1" {if condition="$data.status == 1"}selected{/if}>{:__('status_normal')}</option>
+                        <option value="0" {if condition="$data.status == 0"}selected{/if}>{:__('status_disabled')}</option>
                     </select>
                 </div>
             </div>
             <div class="form-group row">
                 <div class="col-sm-6 offset-sm-2">
-                    <button type="submit" class="btn btn-primary">保存</button>
-                    <a href="{:url('role/index')}" class="btn btn-default ml-2">返回</a>
+                    <button type="submit" class="btn btn-primary">{:__('save')}</button>
+                    <a href="{:url('role/index')}" class="btn btn-default ml-2">{:__('back')}</a>
                 </div>
             </div>
         </form>

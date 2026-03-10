@@ -1,11 +1,21 @@
 <div class="card panel-intro">
     <div class="card-header">
-        <div class="panel-lead"><em>工资明细</em> 查看员工的工资明细记录</div>
+        <h5 class="card-title mb-0">工资明细列表</h5>
+        <div class="panel-lead text-muted small mt-1">逐条显示报工记录：员工、订单号、产品、工序、报工数量、计件工资、状态（已确认/待确认）、报工时间；可按状态筛选</div>
     </div>
     <div class="card-body">
         <div id="toolbar" class="toolbar mb-2">
             <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
             <a href="{$config.moduleurl}/mes/wage/statistics" class="btn btn-info" title="工资统计"><i class="fas fa-chart-bar"></i> 工资统计</a>
+            <form id="form-filter" class="form-inline d-inline-block ml-2">
+                <select name="status" class="form-control form-control-sm" style="width:auto;">
+                    <option value="">全部状态</option>
+                    <option value="0">待确认</option>
+                    <option value="1">已确认</option>
+                    <option value="2">已拒绝</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-secondary ml-1" id="btn-filter">筛选</button>
+            </form>
         </div>
         <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
     </div>

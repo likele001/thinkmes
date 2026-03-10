@@ -1,0 +1,38 @@
+<view class="container" wx:if="{{detail}}">
+  <view class="card">
+    <view class="row"><text class="label">报工ID</text><text>{{detail.id}}</text></view>
+    <view class="row"><text class="label">订单号</text><text>{{detail.order_no}}</text></view>
+    <view class="row"><text class="label">产品/型号</text><text>{{detail.product_name}} / {{detail.model_name}}</text></view>
+    <view class="row"><text class="label">工序</text><text>{{detail.process_name}}</text></view>
+    <view class="row"><text class="label">报工数量</text><text>{{detail.quantity}}</text></view>
+    <view class="row"><text class="label">工时</text><text>{{detail.work_hours || 0}}</text></view>
+    <view class="row"><text class="label">工资</text><text>¥{{detail.wage || '0'}}</text></view>
+    <view class="row"><text class="label">状态</text><text class="status-{{detail.status}}">{{detail.status===1?'已通过':(detail.status===2?'已拒绝':'待审核')}}</text></view>
+    <view class="row"><text class="label">报工时间</text><text>{{detail.create_time_str || '-'}}</text></view>
+    <view class="row" wx:if="{{detail.audit_reason}}"><text class="label">审核说明</text><text>{{detail.audit_reason}}</text></view>
+  </view>
+  <view class="card" wx:if="{{detail.images && detail.images.length}}">
+    <view class="section-title">报工图片</view>
+    <view class="img-list">
+      <image wx:for="{{detail.images}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill"/>
+    </view>
+  </view>
+  <view class="card" wx:if="{{detail.audit_images && detail.audit_images.length}}">
+    <view class="section-title">审核图片</view>
+    <view class="img-list">
+      <image wx:for="{{detail.audit_images}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill"/>
+    </view>
+  </view>
+  <view class="card" wx:if="{{detail.audit_videos && detail.audit_videos.length}}">
+    <view class="section-title">审核视频</view>
+    <view class="video-list">
+      <video wx:for="{{detail.audit_videos}}" wx:key="*this" class="video-item" src="{{item}}" controls show-center-play-btn/>
+    </view>
+  </view>
+  <view class="btn-row" wx:if="{{!fromUser}}">
+    <button class="btn-primary" wx:if="{{detail.status===0}}" bindtap="goAudit">审核</button>
+    <button class="btn-danger" bindtap="confirmDelete">删除</button>
+  </view>
+</view>
+<view class="container" wx:elif="{{!loading}}">暂无数据</view>
+<view class="container" wx:else>加载中...</view>

@@ -172,14 +172,15 @@
         return ul;
     }
 
+    var homeTitle = (typeof Config !== 'undefined' && Config.lang && Config.lang.home) ? Config.lang.home : '首页';
     function fallbackMenu() {
         var $menu = $('#menu-tree');
         if ($menu.length) {
             var indexUrl = (typeof Config !== 'undefined' && Config.moduleurl) ? (Config.moduleurl + '/index/index') : '/admin/index/index';
             $menu.html(
                 '<li class="menu-item">' +
-                '<a href="' + indexUrl + '" class="menu-link" data-url="' + indexUrl + '" data-addtabs="index" data-title="首页">' +
-                '<span class="menu-icon"><i class="fas fa-tachometer-alt"></i></span><span class="menu-text">首页</span></a></li>'
+                '<a href="' + indexUrl + '" class="menu-link" data-url="' + indexUrl + '" data-addtabs="index" data-title="' + homeTitle + '">' +
+                '<span class="menu-icon"><i class="fas fa-tachometer-alt"></i></span><span class="menu-text">' + homeTitle + '</span></a></li>'
             );
         }
     }
@@ -212,17 +213,20 @@
                 $menu.empty();
                 var filteredData = filterIndexMenu(res.data);
                 var indexUrl = (typeof Config !== 'undefined' && Config.moduleurl) ? (Config.moduleurl + '/index/index') : '/admin/index/index';
+                var homeText = (typeof Config !== 'undefined' && Config.lang && Config.lang.home) ? Config.lang.home : '首页';
                 var $homeItem = $(
                     '<li class="menu-item">' +
-                    '<a href="' + indexUrl + '" class="menu-link" data-url="' + indexUrl + '" data-addtabs="index" data-title="首页">' +
-                    '<span class="menu-icon"><i class="fas fa-tachometer-alt"></i></span><span class="menu-text">首页</span></a></li>'
+                    '<a href="' + indexUrl + '" class="menu-link" data-url="' + indexUrl + '" data-addtabs="index" data-title="' + homeText + '">' +
+                    '<span class="menu-icon"><i class="fas fa-tachometer-alt"></i></span><span class="menu-text">' + homeText + '</span></a></li>'
                 );
                 $menu.append($homeItem);
                 var $menuItems = renderMenu(filteredData);
                 $menuItems.children().each(function() {
                     $menu.append(this);
                 });
-                // 不再使用 AdminLTE treeview，避免 overlay/点击被拦截
+                if (typeof window.syncMenuActiveByTab === 'function') {
+                    setTimeout(window.syncMenuActiveByTab, 0);
+                }
             } else {
                 fallbackMenu();
             }

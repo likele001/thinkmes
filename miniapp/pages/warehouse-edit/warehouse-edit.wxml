@@ -1,0 +1,33 @@
+<view class="container">
+  <view class="form-card">
+    <view class="form-item">
+      <text class="form-label">仓库名称 *</text>
+      <input class="form-input" placeholder="仓库名称" value="{{name}}" bindinput="inputName"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">仓库编码</text>
+      <input class="form-input" placeholder="仓库编码" value="{{code}}" bindinput="inputCode"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">仓库地址</text>
+      <input class="form-input" placeholder="仓库地址" value="{{address}}" bindinput="inputAddress"/>
+    </view>
+    <view class="form-item">
+      <text class="form-label">状态</text>
+      <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
+        <view class="picker">{{statusText}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">设为默认</text>
+      <picker mode="selector" range="{{isDefaultList}}" range-key="text" value="{{isDefaultIndex}}" bindchange="pickIsDefault">
+        <view class="picker">{{isDefaultText}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">备注</text>
+      <input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
+    </view>
+  </view>
+  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+</view>

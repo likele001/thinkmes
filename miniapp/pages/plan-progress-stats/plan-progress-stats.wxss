@@ -1,0 +1,9 @@
+.container { padding-bottom: 32rpx; }
+.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
+.row { display: flex; margin-bottom: 12rpx; font-size: 28rpx; }
+.label { color: #666; width: 160rpx; }
+.stats .stat-row { display: flex; justify-content: space-between; padding: 20rpx 0; font-size: 30rpx; border-bottom: 1rpx solid #f0f0f0; }
+.stats .stat-row:last-child { border-bottom: none; }
+.value { font-weight: 600; }
+.value.highlight { color: #1989fa; font-size: 36rpx; }
+.loading { text-align: center; color: #999; padding: 32rpx; }

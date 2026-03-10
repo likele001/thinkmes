@@ -1,0 +1,107 @@
+<div class="py-4">
+  <div class="card shadow-sm mb-4">
+    <div class="card-body text-center py-5">
+      <h3 class="card-title mb-2">
+        <i class="fa fa-user text-primary me-2"></i>{$workerWelcome|raw}
+      </h3>
+      <p class="text-muted mb-4"><i class="fa fa-calendar-alt me-2 opacity-75"></i>{$workerWelcomeDate|raw}</p>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="rounded-3 p-4 bg-primary text-white shadow-sm">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+              <i class="fa fa-tasks fa-lg opacity-90" aria-hidden="true"></i>
+              <span class="fs-2 fw-bold">{$todayTaskCount|default=0}</span>
+            </div>
+            <div class="small text-white text-opacity-90">{:lang('today_tasks')}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="rounded-3 p-4 bg-success text-white shadow-sm">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+              <i class="fa fa-clipboard-list fa-lg opacity-90" aria-hidden="true"></i>
+              <span class="fs-2 fw-bold">{$todayReportCount|default=0}</span>
+            </div>
+            <div class="small text-white text-opacity-90">{:lang('today_reports')}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="rounded-3 p-4 text-white shadow-sm" style="background-color: #6f42c1;">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+              <i class="fa fa-coins fa-lg opacity-90" aria-hidden="true"></i>
+              <span class="fs-2 fw-bold">¥{$todayWage|default='0.00'}</span>
+            </div>
+            <div class="small text-white text-opacity-90">{:lang('today_wage')}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <a href="/index/worker/tasks" class="card shadow-sm text-decoration-none text-dark h-100 hover-shadow">
+        <div class="card-body text-center py-4">
+          <div class="text-primary mb-2"><i class="fa fa-tasks fa-2x"></i></div>
+          <div class="fw-bold">{:lang('menu_my_tasks')}</div>
+          <div class="small text-muted">{:lang('menu_my_tasks_desc')}</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-6 col-md-4">
+      <a href="/index/worker/report" class="card shadow-sm text-decoration-none text-dark h-100">
+        <div class="card-body text-center py-4">
+          <div class="text-primary mb-2"><i class="fa fa-plus-circle fa-2x"></i></div>
+          <div class="fw-bold">{:lang('menu_report')}</div>
+          <div class="small text-muted">{:lang('menu_report_desc')}</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-6 col-md-4">
+      <a href="/index/worker/scan" class="card shadow-sm text-decoration-none text-dark h-100">
+        <div class="card-body text-center py-4">
+          <div class="text-primary mb-2"><i class="fa fa-qrcode fa-2x"></i></div>
+          <div class="fw-bold">{:lang('menu_scan')}</div>
+          <div class="small text-muted">{:lang('menu_scan_desc')}</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-6 col-md-4">
+      <a href="/index/worker/records" class="card shadow-sm text-decoration-none text-dark h-100">
+        <div class="card-body text-center py-4">
+          <div class="text-primary mb-2"><i class="fa fa-list-alt fa-2x"></i></div>
+          <div class="fw-bold">{:lang('menu_records')}</div>
+          <div class="small text-muted">{:lang('menu_records_desc')}</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-6 col-md-4">
+      <a href="/index/worker/wage" class="card shadow-sm text-decoration-none text-dark h-100">
+        <div class="card-body text-center py-4">
+          <div class="text-primary mb-2"><i class="fa fa-money fa-2x"></i></div>
+          <div class="fw-bold">{:lang('menu_wage')}</div>
+          <div class="small text-muted">{:lang('menu_wage_desc')}</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-6 col-md-4">
+      <a href="/index/user/logout" class="card shadow-sm text-decoration-none text-dark h-100">
+        <div class="card-body text-center py-4">
+          <div class="text-danger mb-2"><i class="fa fa-sign-out-alt fa-2x"></i></div>
+          <div class="fw-bold">{:lang('menu_logout')}</div>
+          <div class="small text-muted">{:lang('menu_logout_desc')}</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3"><i class="fa fa-bolt text-primary me-2"></i>{:lang('quick_actions')}</h5>
+      <div class="row g-2">
+        <div class="col-md-4"><a href="/index/worker/tasks" class="btn btn-primary w-100"><i class="fa fa-tasks me-2"></i>{:lang('btn_view_tasks')}</a></div>
+        <div class="col-md-4"><a href="/index/worker/scan" class="btn btn-success w-100"><i class="fa fa-qrcode me-2"></i>{:lang('btn_scan_report')}</a></div>
+        <div class="col-md-4"><a href="/index/worker/records" class="btn btn-outline-primary w-100"><i class="fa fa-list-alt me-2"></i>{:lang('btn_records')}</a></div>
+      </div>
+    </div>
+  </div>
+</div>

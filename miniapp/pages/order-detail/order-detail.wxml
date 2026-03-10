@@ -1,9 +1,47 @@
 <view class="container" wx:if="{{detail}}">
   <view class="card">
+    <view class="card-title">订单信息</view>
     <view class="row"><text class="label">订单名称</text><text>{{detail.order_name || detail.order_no}}</text></view>
+    <view class="row"><text class="label">订单号</text><text>{{detail.order_no || '-'}}</text></view>
     <view class="row"><text class="label">客户</text><text>{{detail.customer_name || '-'}}</text></view>
-    <view class="row"><text class="label">数量</text><text>{{detail.total_quantity}}</text></view>
+    <view class="row"><text class="label">订单总数量</text><text>{{detail.total_quantity || 0}}</text></view>
+    <view class="row"><text class="label">状态</text><text class="status-{{detail.status}}">{{detail.status === 0 ? '待生产' : (detail.status === 1 ? '进行中' : (detail.status === 2 ? '已完成' : '已取消'))}}</text></view>
+  </view>
+
+  <view class="card" wx:if="{{modelRows && modelRows.length > 0}}">
+    <view class="card-title">产品 / 型号 / 数量 / 完成情况</view>
+    <view class="table-head">
+      <text class="col-product">产品</text>
+      <text class="col-model">型号</text>
+      <text class="col-num">订单数量</text>
+      <text class="col-done">已完成</text>
+    </view>
+    <view class="table-row" wx:for="{{modelRows}}" wx:key="index">
+      <text class="col-product">{{item.product_name}}</text>
+      <text class="col-model">{{item.model_name}}</text>
+      <text class="col-num">{{item.quantity}}</text>
+      <text class="col-done">{{item.completed}}</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">分工信息</view>
+    <view class="alloc-list">
+      <view class="alloc-item" wx:for="{{allocations}}" wx:key="id" data-id="{{item.id}}" bindtap="goAllocationDetail">
+        <view class="alloc-row">
+          <text class="alloc-name">{{item.product_name}} - {{item.model_name}}</text>
+          <text class="alloc-status status-{{item.status}}">{{item.status_text}}</text>
+        </view>
+        <view class="alloc-meta">工序 {{item.process_name}} · 分配 {{item.quantity}} 已完成 {{item.completed_quantity}} · {{item.user_name}}</view>
+      </view>
+    </view>
+    <view class="empty-tip" wx:if="{{allocations.length === 0}}">暂无分工</view>
+  </view>
+
+  <view class="btn-row">
+    <button size="mini" bindtap="goEdit">编辑</button>
+    <button size="mini" type="warn" bindtap="confirmDelete">删除</button>
   </view>
 </view>
-<view class="container" wx:else-if="{{!loading}}">暂无数据</view>
+<view class="container" wx:elif="{{!loading}}">暂无数据</view>
 <view class="container" wx:else>加载中...</view>

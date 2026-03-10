@@ -4,11 +4,12 @@ declare(strict_types=1);
 namespace app\admin\model\mes;
 
 use app\common\model\BaseModel as Model;
+use app\common\model\UserModel;
 
 class WageModel extends Model
 {
     protected $name = 'mes_wage';
-    
+
     protected $type = [
         'tenant_id'   => 'integer',
         'user_id'     => 'integer',
@@ -20,6 +21,12 @@ class WageModel extends Model
         'total_wage'  => 'float',
         'create_time' => 'integer',
     ];
+
+    // 关联员工
+    public function user()
+    {
+        return $this->belongsTo(UserModel::class, 'user_id', 'id');
+    }
 
     // 关联报工记录
     public function report()

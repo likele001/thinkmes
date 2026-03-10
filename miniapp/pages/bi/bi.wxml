@@ -1,0 +1,120 @@
+<view class="bi-page">
+  <view class="tabs">
+    <view class="tab {{currentTab === 0 ? 'active' : ''}}" data-tab="0" bindtap="switchTab">概览</view>
+    <view class="tab {{currentTab === 1 ? 'active' : ''}}" data-tab="1" bindtap="switchTab">生产效率</view>
+    <view class="tab {{currentTab === 2 ? 'active' : ''}}" data-tab="2" bindtap="switchTab">质量分析</view>
+    <view class="tab {{currentTab === 3 ? 'active' : ''}}" data-tab="3" bindtap="switchTab">成本分析</view>
+  </view>
+
+  <view class="tab-content" wx:if="{{currentTab === 0}}">
+    <view class="card" wx:if="{{overview && !loadingOverview}}">
+      <view class="section-title">今日数据</view>
+      <view class="row"><text class="label">今日报工量</text><text class="value">{{overview.today.quantity || 0}}</text></view>
+      <view class="row"><text class="label">今日工资</text><text class="value">¥ {{overview.today.wage || '0.00'}}</text></view>
+      <view class="row"><text class="label">报工条数</text><text class="value">{{overview.today.report_count || 0}}</text></view>
+      <view class="row"><text class="label">待审核</text><text class="value">{{overview.pending_reports || 0}}</text></view>
+      <view class="row"><text class="label">进行中分工</text><text class="value">{{overview.active_allocations || 0}}</text></view>
+    </view>
+    <view class="card" wx:if="{{overview && overview.trend && overview.trend.length && !loadingOverview}}">
+      <view class="section-title">近7日报工趋势</view>
+      <view class="trend-item" wx:for="{{overview.trend}}" wx:key="date">
+        <text class="date">{{item.date}}</text>
+        <text class="qty">量 {{item.quantity}}</text>
+        <text class="wage">¥ {{item.wage}}</text>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{currentTab === 0 && !loadingOverview && !overview}}">暂无数据</view>
+    <view class="loading" wx:if="{{currentTab === 0 && loadingOverview}}">加载中...</view>
+  </view>
+
+  <view class="tab-content" wx:if="{{currentTab === 1}}">
+    <view class="filter-row">
+      <picker mode="date" value="{{startDate}}" start="2020-01-01" end="{{todayStr}}" bindchange="onStartDateChange">
+        <view class="picker">{{startDate}}</view>
+      </picker>
+      <text class="to">至</text>
+      <picker mode="date" value="{{endDate}}" start="2020-01-01" end="{{todayStr}}" bindchange="onEndDateChange">
+        <view class="picker">{{endDate}}</view>
+      </picker>
+      <button class="btn-sm" bindtap="loadEfficiency">查询</button>
+    </view>
+    <view class="card list-card" wx:if="{{efficiencyList.length && !loadingEfficiency}}">
+      <view class="table-row head">
+        <text>日期</text>
+        <text>人数</text>
+        <text>产量</text>
+        <text>工时</text>
+        <text>工资</text>
+      </view>
+      <view class="table-row" wx:for="{{efficiencyList}}" wx:key="stat_date">
+        <text>{{item.stat_date}}</text>
+        <text>{{item.worker_count}}</text>
+        <text>{{item.total_quantity}}</text>
+        <text>{{item.total_hours || 0}}</text>
+        <text>¥{{item.total_wage}}</text>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{currentTab === 1 && !loadingEfficiency && efficiencyList.length === 0}}">暂无数据</view>
+    <view class="loading" wx:if="{{currentTab === 1 && loadingEfficiency}}">加载中...</view>
+  </view>
+
+  <view class="tab-content" wx:if="{{currentTab === 2}}">
+    <view class="filter-row">
+      <picker mode="date" value="{{qualityStart}}" start="2020-01-01" end="{{todayStr}}" bindchange="onQualityStartChange">
+        <view class="picker">{{qualityStart}}</view>
+      </picker>
+      <text class="to">至</text>
+      <picker mode="date" value="{{qualityEnd}}" start="2020-01-01" end="{{todayStr}}" bindchange="onQualityEndChange">
+        <view class="picker">{{qualityEnd}}</view>
+      </picker>
+      <button class="btn-sm" bindtap="loadQuality">查询</button>
+    </view>
+    <view class="card list-card" wx:if="{{qualityList.length && !loadingQuality}}">
+      <view class="table-row head">
+        <text>日期</text>
+        <text>总数</text>
+        <text>合格</text>
+        <text>不合格</text>
+        <text>合格率%</text>
+      </view>
+      <view class="table-row" wx:for="{{qualityList}}" wx:key="stat_date">
+        <text>{{item.stat_date}}</text>
+        <text>{{item.total_count}}</text>
+        <text>{{item.qualified_count}}</text>
+        <text>{{item.unqualified_count}}</text>
+        <text>{{item.qualified_rate}}</text>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{currentTab === 2 && !loadingQuality && qualityList.length === 0}}">暂无数据</view>
+    <view class="loading" wx:if="{{currentTab === 2 && loadingQuality}}">加载中...</view>
+  </view>
+
+  <view class="tab-content" wx:if="{{currentTab === 3}}">
+    <view class="filter-row">
+      <picker mode="date" value="{{costStart}}" start="2020-01-01" end="{{todayStr}}" bindchange="onCostStartChange">
+        <view class="picker">{{costStart}}</view>
+      </picker>
+      <text class="to">至</text>
+      <picker mode="date" value="{{costEnd}}" start="2020-01-01" end="{{todayStr}}" bindchange="onCostEndChange">
+        <view class="picker">{{costEnd}}</view>
+      </picker>
+      <button class="btn-sm" bindtap="loadCost">查询</button>
+    </view>
+    <view class="card list-card" wx:if="{{costList.length && !loadingCost}}">
+      <view class="table-row head">
+        <text>订单号</text>
+        <text>物料成本</text>
+        <text>人工成本</text>
+        <text>总成本</text>
+      </view>
+      <view class="table-row" wx:for="{{costList}}" wx:key="id">
+        <text class="ellipsis">{{item.order_no}}</text>
+        <text>¥{{item.material_cost}}</text>
+        <text>¥{{item.labor_cost}}</text>
+        <text>¥{{item.total_cost}}</text>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{currentTab === 3 && !loadingCost && costList.length === 0}}">暂无数据</view>
+    <view class="loading" wx:if="{{currentTab === 3 && loadingCost}}">加载中...</view>
+  </view>
+</view>

@@ -5,6 +5,8 @@ namespace app\admin\controller\mes;
 
 use app\admin\controller\Backend;
 use app\admin\model\mes\MaterialModel;
+use app\admin\model\mes\MaterialCategoryModel;
+use app\admin\model\mes\SupplierModel;
 use think\facade\View;
 use think\Response;
 
@@ -76,6 +78,15 @@ class Material extends Backend
             }
         }
 
+        $tenantId = $this->getTenantId();
+        $categoryList = MaterialCategoryModel::where(function ($q) use ($tenantId) {
+            $q->where('tenant_id', $tenantId)->whereOr('tenant_id', 0);
+        })->where('status', 1)->order('sort', 'asc')->column('name', 'id');
+        $supplierList = SupplierModel::where('tenant_id', $tenantId)->where('status', 'active')->column('name', 'id');
+        $model = new MaterialModel();
+        View::assign('categoryList', $categoryList ?: []);
+        View::assign('supplierList', $supplierList ?: []);
+        View::assign('unitList', $model->getUnitList());
         View::assign('title', '添加物料');
         return $this->fetchWithLayout('mes/material/add');
     }
@@ -107,6 +118,15 @@ class Material extends Backend
             }
         }
 
+        $tenantId = $this->getTenantId();
+        $categoryList = MaterialCategoryModel::where(function ($q) use ($tenantId) {
+            $q->where('tenant_id', $tenantId)->whereOr('tenant_id', 0);
+        })->where('status', 1)->order('sort', 'asc')->column('name', 'id');
+        $supplierList = SupplierModel::where('tenant_id', $tenantId)->where('status', 'active')->column('name', 'id');
+        $model = new MaterialModel();
+        View::assign('categoryList', $categoryList ?: []);
+        View::assign('supplierList', $supplierList ?: []);
+        View::assign('unitList', $model->getUnitList());
         View::assign('row', $row);
         View::assign('ids', $ids);
         View::assign('title', '编辑物料');

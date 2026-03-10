@@ -1,0 +1,14 @@
+<view class="container">
+  <view class="btn-bar"><button class="btn-add" bindtap="goAdd">新增物料</button></view>
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
+    <view class="row" bindtap="goDetail" data-id="{{item.id}}"><text class="title">{{item.name || item.material_name || '-'}}</text></view>
+    <view class="text-muted">编码：{{item.code || '-'}} 规格：{{item.spec || '-'}}</view>
+    <view class="btn-wrap">
+      <button size="mini" data-id="{{item.id}}" catchtap="goDetail">详情</button>
+      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
+      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+    </view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无物料</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+</view>

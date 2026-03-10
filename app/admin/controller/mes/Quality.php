@@ -51,12 +51,63 @@ class Quality extends Backend
 
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
+        foreach ($list as &$row) {
+            $row['is_template'] = false;
+        }
+        unset($row);
 
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
     /**
-     * 添加质检标准
+     * 获取行业质检标准模板列表（tenant_id=0 系统模板）
+     */
+    public function getTemplates(): Response
+    {
+        $list = QualityStandardModel::with(['process', 'model'])
+            ->where('tenant_id', 0)
+            ->where('status', 1)
+            ->order('id', 'asc')
+            ->select()
+            ->toArray();
+        return $this->success('', ['list' => $list]);
+    }
+
+    /**
+     * 从模板复制一条质检标准到当前租户
+     */
+    public function copyTemplate(): Response
+    {
+        $templateId = (int) $this->request->post('template_id');
+        if ($templateId <= 0) {
+            return $this->error('请选择要复制的模板');
+        }
+
+        $tenantId = $this->getTenantId();
+        if ($tenantId <= 0) {
+            return $this->error('租户环境下才能复制模板');
+        }
+
+        $template = QualityStandardModel::where('id', $templateId)->where('tenant_id', 0)->find();
+        if (!$template) {
+            return $this->error('模板不存在或无权使用');
+        }
+
+        $row = [
+            'tenant_id'      => $tenantId,
+            'name'          => $template->name,
+            'process_id'    => 0,
+            'model_id'      => 0,
+            'check_items'   => $template->check_items,
+            'qualified_rate' => $template->qualified_rate,
+            'status'        => 1,
+        ];
+        $new = QualityStandardModel::create($row);
+        return $this->success('复制成功', ['id' => $new->id]);
+    }
+
+    /**
+     * 添加/编辑质检标准
      */
     public function addStandard(): string|Response
     {
@@ -74,34 +125,64 @@ class Quality extends Backend
                 $params['check_items'] = json_encode($params['check_items'], JSON_UNESCAPED_UNICODE);
             }
 
+            $allowFields = ['name', 'process_id', 'model_id', 'check_items', 'qualified_rate', 'status'];
+            $data = array_intersect_key($params, array_flip($allowFields));
+            $data['tenant_id'] = $tenantId;
+
             try {
-                $standard = QualityStandardModel::create($params);
+                $id = isset($params['id']) ? (int) $params['id'] : 0;
+                if ($id > 0) {
+                    $standard = QualityStandardModel::where('id', $id)->where('tenant_id', $tenantId)->find();
+                    if (!$standard) {
+                        return $this->error('记录不存在');
+                    }
+                    $standard->save($data);
+                    return $this->success('保存成功', ['id' => $standard->id]);
+                }
+                $standard = QualityStandardModel::create($data);
                 return $this->success('添加成功', ['id' => $standard->id]);
             } catch (\Exception $e) {
-                return $this->error('添加失败');
+                return $this->error('操作失败');
             }
         }
 
         $tenantId = $this->getTenantId();
-        // 获取工序列表
+        // 获取工序列表，并增加「通用」选项（便于从模板复制后编辑）
         $processList = ProcessModel::where('tenant_id', $tenantId)
             ->where('status', 1)
             ->column('name', 'id');
-        View::assign('processList', $processList ?: []);
+        $processList = $processList ?: [];
+        $processList = [0 => '通用'] + $processList;
+        View::assign('processList', $processList);
 
-        // 获取型号列表
+        // 获取型号列表，并增加「通用」选项
         $modelList = ProductModelModel::with('product')
             ->where('tenant_id', $tenantId)
             ->where('status', 1)
             ->select();
-        $modelOptions = [];
+        $modelOptions = [0 => '通用'];
         foreach ($modelList as $model) {
             $displayName = $model->product->name . ' - ' . $model->name;
             $modelOptions[$model->id] = $displayName;
         }
         View::assign('modelList', $modelOptions);
 
-        View::assign('title', '添加质检标准');
+        $id = (int) $this->request->get('id');
+        $row = null;
+        if ($id > 0) {
+            $row = QualityStandardModel::where('id', $id)->where('tenant_id', $tenantId)->find();
+            if ($row) {
+                $row = $row->toArray();
+                if (!empty($row['check_items'])) {
+                    $row['check_items'] = is_string($row['check_items']) ? json_decode($row['check_items'], true) : $row['check_items'];
+                }
+            } else {
+                $row = null;
+            }
+        }
+        View::assign('id', $id);
+        View::assign('row', $row);
+        View::assign('title', $id > 0 && $row ? '编辑质检标准' : '添加质检标准');
         return $this->fetchWithLayout('mes/quality/add_standard');
     }
 

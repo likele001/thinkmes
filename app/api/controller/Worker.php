@@ -55,6 +55,12 @@ class Worker extends BaseController
             ->where('status', 0)
             ->count();
 
+        $todayTaskCount = (int) AllocationModel::where('tenant_id', $tenantId)
+            ->where('user_id', $userId)
+            ->where('create_time', '>=', $todayStart)
+            ->where('create_time', '<=', $todayEnd)
+            ->count();
+
         $allocations = AllocationModel::with(['order', 'model.product', 'process'])
             ->where('tenant_id', $tenantId)
             ->where('user_id', $userId)
@@ -110,6 +116,7 @@ class Worker extends BaseController
 
         return $this->success('ok', [
             'metrics' => [
+                'today_task_count' => $todayTaskCount,
                 'today_report_quantity' => $todayReportQuantity,
                 'today_wage' => $todayWage,
                 'pending_reports' => $pendingReports,
@@ -411,7 +418,7 @@ class Worker extends BaseController
         $page = max(1, (int) $this->request->get('page', 1));
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
 
-        $query = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process'])
+        $query = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'media'])
             ->where('tenant_id', $tenantId)
             ->where('user_id', $userId)
             ->order('id', 'desc');
@@ -422,9 +429,73 @@ class Worker extends BaseController
         }
 
         $total = $query->count();
-        $list = $query->page($page, $limit)->select()->toArray();
+        $rows = $query->page($page, $limit)->select();
+        $list = [];
+        foreach ($rows as $r) {
+            $arr = $r->toArray();
+            $allocation = $r->allocation;
+            $order = $allocation && $allocation->order ? $allocation->order : null;
+            $model = $allocation && $allocation->model ? $allocation->model : null;
+            $product = $model && $model->product ? $model->product : null;
+            $process = $allocation && $allocation->process ? $allocation->process : null;
+            $arr['order_no'] = $order ? ($order->order_no ?? '') : '';
+            $arr['product_name'] = $product ? ($product->name ?? '') : '';
+            $arr['model_name'] = $model ? ($model->name ?? '') : '';
+            $arr['process_name'] = $process ? ($process->name ?? '') : '';
+            $arr['images'] = [];
+            if ($r->media && !$r->media->isEmpty()) {
+                foreach ($r->media as $m) {
+                    $arr['images'][] = $m->url ?? '';
+                }
+            }
+            $list[] = $arr;
+        }
 
         return $this->success('', ['total' => $total, 'list' => $list]);
+    }
+
+    /** 员工端：报工详情（仅能查看自己的报工，含审核结果、报工/审核图片视频） */
+    public function reportDetail(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $userId = $this->getUserId();
+        $reportId = (int) $this->request->get('report_id', 0) ?: (int) $this->request->get('id', 0);
+        if ($reportId <= 0) {
+            return $this->error('参数错误');
+        }
+        $report = ReportModel::with(['allocation.order', 'allocation.model.product', 'allocation.process', 'media'])
+            ->where('tenant_id', $tenantId)
+            ->where('user_id', $userId)
+            ->find($reportId);
+        if (!$report) {
+            return $this->error('报工记录不存在或无权查看');
+        }
+        $out = $report->toArray();
+        $out['order_no'] = $report->allocation && $report->allocation->order ? $report->allocation->order->order_no : '';
+        $out['product_name'] = $report->allocation && $report->allocation->model && $report->allocation->model->product ? $report->allocation->model->product->name : '';
+        $out['model_name'] = $report->allocation && $report->allocation->model ? $report->allocation->model->name : '';
+        $out['process_name'] = $report->allocation && $report->allocation->process ? $report->allocation->process->name : '';
+        $out['images'] = [];
+        $out['audit_images'] = [];
+        $out['audit_videos'] = [];
+        if ($report->media && !$report->media->isEmpty()) {
+            foreach ($report->media as $m) {
+                $url = $m->url ?? '';
+                if ($url === '') {
+                    continue;
+                }
+                $type = $m->type ?? 'image';
+                $scene = $m->scene ?? '';
+                if ($type === 'video' && ($scene === 'audit' || $scene === '')) {
+                    $out['audit_videos'][] = $url;
+                } elseif ($type === 'image' && $scene === 'audit') {
+                    $out['audit_images'][] = $url;
+                } else {
+                    $out['images'][] = $url;
+                }
+            }
+        }
+        return $this->success('', $out);
     }
 
     public function wages(): Response
@@ -437,6 +508,7 @@ class Worker extends BaseController
 
         $page = max(1, (int) $this->request->get('page', 1));
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
+        $month = $this->request->get('month', '');
 
         $query = WageModel::where('tenant_id', $tenantId)
             ->where('user_id', $userId)
@@ -447,11 +519,34 @@ class Worker extends BaseController
         if ($workDate) {
             $query->where('work_date', $workDate);
         }
+        if ($month !== '' && $month !== null) {
+            $start = $month . '-01';
+            $end = date('Y-m-t', strtotime($start));
+            $query->where('work_date', 'between', [$start, $end]);
+        }
 
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
 
-        return $this->success('', ['total' => $total, 'list' => $list]);
+        $totalWage = 0.0;
+        if ($month !== '' && $month !== null) {
+            $totalWage = (float) WageModel::where('tenant_id', $tenantId)
+                ->where('user_id', $userId)
+                ->where('work_date', '>=', $month . '-01')
+                ->where('work_date', '<=', date('Y-m-t', strtotime($month . '-01')))
+                ->sum('total_wage');
+        } else {
+            foreach ($list as $row) {
+                $totalWage += (float) ($row['total_wage'] ?? 0);
+            }
+        }
+
+        return $this->success('', [
+            'total' => $total,
+            'list' => $list,
+            'totalWage' => round($totalWage, 2),
+            'month' => $month ?: date('Y-m'),
+        ]);
     }
 
     /**

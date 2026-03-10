@@ -29,7 +29,9 @@
         "aliyuncs/oss-sdk-php": "^2.7",
         "qcloud/cos-sdk-v5": "^2.6",
         "qiniu/php-sdk": "^7.14",
-        "upyun/sdk": "^2.2"
+        "upyun/sdk": "^2.2",
+        "endroid/qr-code": "^5.1",
+        "phpoffice/phpspreadsheet": "^1.29"
     },
     "require-dev": {
         "topthink/think-dumper": "^1.0",

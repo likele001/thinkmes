@@ -1,0 +1,61 @@
+<div class="card">
+  <div class="card-header"><i class="fas fa-edit me-2"></i>{$title|default='选题'}</div>
+  <div class="card-body">
+    <form id="topic-form">
+      <input type="hidden" name="id" value="{$item.id|default=0}">
+      <div class="mb-3">
+        <label class="form-label">选题标题 <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control" value="{$item.title|default=''}" placeholder="选题方向/标题" required>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">平台</label>
+          <select name="platform" class="form-control">
+            <option value="">不限</option>
+            <option value="xiaohongshu">小红书</option>
+            <option value="douyin">抖音</option>
+            <option value="wechat">公众号</option>
+          </select>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">领域关键词</label>
+          <input type="text" name="field_keyword" class="form-control" value="{$item.field_keyword|default=''}" placeholder="如：美妆、职场">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">核心亮点</label>
+        <textarea name="highlight" class="form-control" rows="3" placeholder="可选">{$item.highlight|default=''}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">备注</label>
+        <input type="text" name="remark" class="form-control" value="{$item.remark|default=''}" placeholder="可选">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">状态</label>
+        <select name="status" class="form-control">
+          <option value="0">待创作</option>
+          <option value="1">已完成</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/index/wemedia/topic/index" class="btn btn-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+var __topicItem = {$itemJson|raw};
+$(function(){
+  if (__topicItem && __topicItem.platform) $('select[name=platform]').val(__topicItem.platform);
+  if (__topicItem && __topicItem.status !== undefined) $('select[name=status]').val(String(__topicItem.status));
+});
+$('#topic-form').on('submit', function(e){
+  e.preventDefault();
+  var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+  $.post('/index/wemedia/topic/save', $(this).serialize(), function(r){
+    alert(r.msg || (r.code === 1 ? '保存成功' : '失败'));
+    if (r.code === 1) location.href = '/index/wemedia/topic/index';
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+</script>

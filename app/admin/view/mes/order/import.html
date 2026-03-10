@@ -1,0 +1,78 @@
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <h3 class="card-title">订单 Excel 批量导入</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">
+            Excel 表格列：<strong>序号、产品名称、颜色、型号、数量</strong>。一个产品对应多个型号，用“型号”列区分；产品名称可写“30055”或“30055-10”（带“-”时“-”前为产品、“-”后可当型号，若型号列已填则以型号列为准）。<br>
+            客户、订单名称、交货日期、备注在<strong>本页下方</strong>填写。请先<a href="{$config.moduleurl}/mes/order/downloadTemplate" class="btn btn-link btn-sm p-0">下载模板</a>，填写后上传。
+        </p>
+        <form id="form-import" method="post" enctype="multipart/form-data" class="form-horizontal">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Excel 文件 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <input type="file" name="file" accept=".xlsx,.xls" class="form-control-file" required>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">客户 <span class="text-danger">*</span></label>
+                <div class="col-sm-6">
+                    <select name="customer_id" class="form-control" required>
+                        <option value="">请选择客户</option>
+                        {volist name="customerOptions" id="vo"}
+                        <option value="{$vo.id}">{$vo.customer_name}（ID:{$vo.id}）</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">订单名称</label>
+                <div class="col-sm-6">
+                    <input type="text" name="order_name" class="form-control" placeholder="不填则自动生成" value="">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">交货日期</label>
+                <div class="col-sm-6">
+                    <input type="text" name="delivery_time" class="form-control" placeholder="如 2025-12-31">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">备注</label>
+                <div class="col-sm-6">
+                    <textarea name="remark" class="form-control" rows="2" placeholder="选填"></textarea>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-8 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">开始导入</button>
+                    <a href="{$config.moduleurl}/mes/order/index" class="btn btn-default">返回列表</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function() {
+    var form = document.getElementById('form-import');
+    if (!form) return;
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var fd = new FormData(form);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', base + '/mes/order/import');
+        xhr.onload = function() {
+            var r;
+            try { r = JSON.parse(xhr.responseText); } catch(err) { alert('响应解析失败'); return; }
+            if (r.msg) alert(r.msg);
+            if (r.code === 1) {
+                if (confirm('导入成功，是否前往订单列表？')) {
+                    location.href = base + '/mes/order/index';
+                }
+            }
+        };
+        xhr.send(fd);
+    });
+})();
+</script>

@@ -2,9 +2,20 @@ const { userApi } = require('../../utils/api.js');
 
 Page({
   data: {
-    metrics: { today_report_quantity: 0, today_wage: 0, pending_reports: 0 },
+    welcomeName: '员工',
+    todayDate: '',
+    metrics: { today_task_count: 0, today_report_quantity: 0, today_wage: 0, pending_reports: 0 },
     tasks: [],
     loading: true,
+  },
+
+  onLoad() {
+    const app = getApp();
+    const userInfo = app.globalData.userInfo || wx.getStorageSync('user_info') || {};
+    this.setData({
+      welcomeName: userInfo.nickname || userInfo.username || '员工',
+      todayDate: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+    });
   },
 
   onShow() {
@@ -21,7 +32,7 @@ Page({
       .then((res) => {
         const d = res.data || {};
         this.setData({
-          metrics: d.metrics || { today_report_quantity: 0, today_wage: 0, pending_reports: 0 },
+          metrics: d.metrics || { today_task_count: 0, today_report_quantity: 0, today_wage: 0, pending_reports: 0 },
           tasks: d.tasks || [],
           loading: false,
         });
@@ -50,5 +61,25 @@ Page({
     } else {
       wx.showToast({ title: '请先登录管理端', icon: 'none' });
     }
+  },
+
+  goTasks() {
+    wx.pageScrollTo({ selector: '#taskSection', scrollWithAnimation: true });
+  },
+
+  goScan() {
+    wx.navigateTo({ url: '/pages/user-scan/user-scan' });
+  },
+
+  goReports() {
+    wx.switchTab({ url: '/pages/user-reports/user-reports' });
+  },
+
+  goWages() {
+    wx.switchTab({ url: '/pages/user-wages/user-wages' });
+  },
+
+  goProfile() {
+    wx.switchTab({ url: '/pages/user-profile/user-profile' });
   },
 });

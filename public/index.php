@@ -86,7 +86,18 @@ if (!defined('ADMIN_ENTRY_REQUEST')) {
 }
 
 // 执行HTTP应用并响应
-$http = (new App())->http;
+$app = new App();
+$http = $app->http;
+
+// 补偿：当请求为 /index/xxx 且 MultiApp 未正确切换时，入口预先绑定 index 应用并加载 app/index/route（路由只在应用下 app/index/route/app.php）
+if (!$isInstall && strpos($path, '/index/') === 0) {
+    $_GET['s'] = substr($path, 7);
+    $indexAppPath = $app->getBasePath() . 'index' . DIRECTORY_SEPARATOR;
+    $http->name('index');
+    $app->setAppPath($indexAppPath);
+    $app->setNamespace('app\\index');
+    $http->setRoutePath($indexAppPath . 'route' . DIRECTORY_SEPARATOR);
+}
 
 $response = $http->run();
 

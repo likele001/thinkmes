@@ -18,6 +18,8 @@ Route::get('miniapp/getConfig', 'Miniapp/getConfig');
 Route::post('miniapp/getConfig', 'Miniapp/getConfig');
 // 小程序登录（无需登录，按租户隔离）
 Route::post('miniapp/login', 'Miniapp/login');
+// 小程序绑定已有员工（无需登录）
+Route::post('miniapp/bindWithEmployee', 'Miniapp/bindWithEmployee');
 
 // C端用户：需登录
 Route::get('user/profile', 'User/profile')->middleware(\app\api\middleware\UserAuth::class);
@@ -55,6 +57,7 @@ Route::get('worker/dashboard', 'Worker/dashboard')->middleware(\app\api\middlewa
 Route::get('worker/taskInfo', 'Worker/taskInfo')->middleware(\app\api\middleware\UserAuth::class);
 Route::post('worker/report', 'Worker/report')->middleware(\app\api\middleware\UserAuth::class);
 Route::get('worker/reports', 'Worker/reports')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/reportDetail', 'Worker/reportDetail')->middleware(\app\api\middleware\UserAuth::class);
 Route::get('worker/wages', 'Worker/wages')->middleware(\app\api\middleware\UserAuth::class);
 Route::post('worker/uploadImage', 'Worker/uploadImage')->middleware(\app\api\middleware\UserAuth::class);
 
@@ -78,8 +81,10 @@ Route::post('scanwork/createAllocation', 'Scanwork/createAllocation')->middlewar
 Route::get('scanwork/getReports', 'Scanwork/getReports')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getActiveReports', 'Scanwork/getActiveReports')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getReportDetail', 'Scanwork/getReportDetail')->middleware(\app\api\middleware\AdminAuth::class);
+Route::get('scanwork/getReportStatistics', 'Scanwork/getReportStatistics')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/auditReport', 'Scanwork/auditReport')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/uploadAuditImage', 'Scanwork/uploadAuditImage')->middleware(\app\api\middleware\AdminAuth::class);
+Route::post('scanwork/uploadAuditVideo', 'Scanwork/uploadAuditVideo')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/uploadReportImage', 'Scanwork/uploadReportImage')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getProducts', 'Scanwork/getProducts')->middleware(\app\api\middleware\AdminAuth::class);
 Route::get('scanwork/getModels', 'Scanwork/getModels')->middleware(\app\api\middleware\AdminAuth::class);
@@ -115,6 +120,7 @@ Route::post('scanwork/deleteProduct', 'Scanwork/deleteProduct')->middleware(\app
 Route::post('scanwork/createProductModel', 'Scanwork/createProductModel')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/updateProductModel', 'Scanwork/updateProductModel')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/deleteProductModel', 'Scanwork/deleteProductModel')->middleware(\app\api\middleware\AdminAuth::class);
+Route::post('scanwork/batchAddProductModels', 'Scanwork/batchAddProductModels')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/createProcessPrice', 'Scanwork/createProcessPrice')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/updateProcessPrice', 'Scanwork/updateProcessPrice')->middleware(\app\api\middleware\AdminAuth::class);
 Route::post('scanwork/deleteProcessPrice', 'Scanwork/deleteProcessPrice')->middleware(\app\api\middleware\AdminAuth::class);
@@ -196,3 +202,6 @@ Route::post('scanwork/updateAfterSales', 'Scanwork/updateAfterSales')->middlewar
 Route::post('scanwork/deleteAfterSales', 'Scanwork/deleteAfterSales')->middleware(\app\api\middleware\AdminAuth::class);
 // BI
 Route::get('scanwork/getDashboardData', 'Scanwork/getDashboardData')->middleware(\app\api\middleware\AdminAuth::class);
+Route::get('scanwork/getBiProductionEfficiency', 'Scanwork/getBiProductionEfficiency')->middleware(\app\api\middleware\AdminAuth::class);
+Route::get('scanwork/getBiQualityAnalysis', 'Scanwork/getBiQualityAnalysis')->middleware(\app\api\middleware\AdminAuth::class);
+Route::get('scanwork/getBiCostAnalysis', 'Scanwork/getBiCostAnalysis')->middleware(\app\api\middleware\AdminAuth::class);

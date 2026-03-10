@@ -11,6 +11,7 @@ use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\ProcessModel;
 use app\admin\model\mes\AllocationQrcodeModel;
 use app\admin\model\mes\TraceCodeModel;
+use app\common\lib\QrCodeService;
 use app\common\model\UserModel;
 use think\facade\Db;
 use think\facade\View;
@@ -193,6 +194,9 @@ class Allocation extends Backend
             $params['update_time'] = time();
             try {
                 $allocation->save($params);
+                if (empty($allocation->qr_content)) {
+                    $this->doGenerateQrcode($allocation->id, $tenantId);
+                }
                 return $this->success('保存成功', ['id' => $allocation->id]);
             } catch (\Exception $e) {
                 return $this->error('保存失败');
@@ -290,9 +294,9 @@ class Allocation extends Backend
     }
 
     /**
-     * 生成二维码（内部方法）
+     * 生成二维码（分工保存后调用，也可供分工二维码管理重新生成调用）
      */
-    protected function doGenerateQrcode(int $allocationId, int $tenantId): void
+    public function doGenerateQrcode(int $allocationId, int $tenantId): void
     {
         $allocation = AllocationModel::with(['order', 'model.product', 'process'])
             ->where('tenant_id', $tenantId)
@@ -304,17 +308,16 @@ class Allocation extends Backend
         
         $this->createTraceItems($allocation, $tenantId);
         
-        // 生成二维码内容（URL格式）
+        // 生成二维码内容（报工链接 URL）
         $domain = $this->request->domain();
         $qrContent = $domain . '/index/worker/scan?allocation_id=' . $allocationId;
         
-        // 生成二维码图片（使用简单的文本二维码，实际项目中可以使用QRCode库）
-        // 这里先存储URL，实际二维码图片可以通过前端或专门的二维码服务生成
-        $qrImage = ''; // 可以后续集成二维码生成库
+        // 使用 endroid/qr-code 生成 PNG 并保存到本地，路径写入数据库
+        $qrImagePath = QrCodeService::generateAndSave($qrContent, $tenantId, $allocationId);
         
-        // 更新分工分配的二维码信息
+        // 更新分工分配的二维码信息（qr_image 存相对路径，如 uploads/qrcode/1/allocation_23.png）
         $allocation->qr_content = $qrContent;
-        $allocation->qr_image = $qrImage;
+        $allocation->qr_image = $qrImagePath;
         $allocation->save();
         
         // 保存到二维码表
@@ -324,7 +327,7 @@ class Allocation extends Backend
         
         if ($exists) {
             $exists->qrcode_content = $qrContent;
-            $exists->qrcode_image = $qrImage;
+            $exists->qrcode_image = $qrImagePath;
             $exists->qrcode_url = $qrContent;
             $exists->update_time = time();
             $exists->save();
@@ -333,13 +336,43 @@ class Allocation extends Backend
                 'tenant_id' => $tenantId,
                 'allocation_id' => $allocationId,
                 'qrcode_content' => $qrContent,
-                'qrcode_image' => $qrImage,
+                'qrcode_image' => $qrImagePath,
                 'qrcode_url' => $qrContent,
                 'status' => 1,
                 'create_time' => time(),
                 'update_time' => time(),
             ]);
         }
+    }
+
+    /**
+     * 查看/获取分工二维码信息（无则先生成）
+     */
+    public function qrcodeInfo(): Response
+    {
+        $id = (int) $this->request->get('id');
+        if (!$id) {
+            return $this->error('请指定分工ID');
+        }
+        $tenantId = $this->getTenantId();
+        $allocation = AllocationModel::where('tenant_id', $tenantId)->find($id);
+        if (!$allocation) {
+            return $this->error('分工不存在');
+        }
+        $url = $allocation->qr_content ?? '';
+        if ($url === '') {
+            try {
+                $this->doGenerateQrcode($id, $tenantId);
+                $allocation->refresh();
+                $url = $allocation->qr_content ?? '';
+            } catch (\Exception $e) {
+                return $this->error('二维码生成失败');
+            }
+        }
+        return $this->success('', [
+            'url' => $url,
+            'allocation_id' => $id,
+        ]);
     }
 
     /**

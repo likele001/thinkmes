@@ -1,0 +1,71 @@
+<div class="py-4">
+  <h2 class="mb-4"><i class="fa fa-money text-primary me-2"></i>{:lang('title_wage')}</h2>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" action="" class="row g-3 align-items-end">
+        <div class="col-auto">
+          <label for="start_date" class="form-label">{:lang('start_date')}</label>
+          <input type="date" class="form-control" id="start_date" name="start_date" value="{$start_date}">
+        </div>
+        <div class="col-auto">
+          <label for="end_date" class="form-label">{:lang('end_date')}</label>
+          <input type="date" class="form-control" id="end_date" name="end_date" value="{$end_date}">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">{:lang('btn_query')}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-primary">
+        <div class="card-body text-center">
+          <div class="fs-4 fw-bold text-primary">{$total_quantity|default=0}</div>
+          <div class="small text-muted">{:lang('total_quantity')}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm border-success">
+        <div class="card-body text-center">
+          <div class="fs-4 fw-bold text-success">¥{$total_wage|default='0.00'}</div>
+          <div class="small text-muted">{:lang('total_wage_amount')}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-header">{:lang('wage_detail')}</div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>{:lang('th_date')}</th>
+              <th>{:lang('th_quantity')}</th>
+              <th>{:lang('th_hours')}</th>
+              <th>{:lang('th_unit_price')}</th>
+              <th>{:lang('th_wage_amount')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {if empty($detail_list)}
+            <tr><td colspan="5" class="text-center text-muted py-4">{:lang('no_detail')}</td></tr>
+            {else/}
+            {volist name="detail_list" id="row"}
+            <tr>
+              <td>{$row.work_date}</td>
+              <td>{$row.quantity}</td>
+              <td>{$row.work_hours}</td>
+              <td>{$row.unit_price}</td>
+              <td>¥{$row.total_wage}</td>
+            </tr>
+            {/volist}
+            {/if}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

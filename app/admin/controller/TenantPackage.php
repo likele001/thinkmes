@@ -21,7 +21,7 @@ class TenantPackage extends Backend
         }
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '套餐管理');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('tenant_package/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
@@ -50,7 +50,7 @@ class TenantPackage extends Backend
             return $this->addPost();
         }
         View::assign('data', []);
-        View::assign('title', '添加套餐');
+        View::assign('title', __("add_package"));
         return $this->fetchWithLayout('tenant_package/add');
     }
 
@@ -106,7 +106,7 @@ class TenantPackage extends Backend
             return $this->error('记录不存在');
         }
         View::assign('data', $data->toArray());
-        View::assign('title', '编辑套餐');
+        View::assign('title', __("edit_package"));
         return $this->fetchWithLayout('tenant_package/edit');
     }
 
@@ -167,9 +167,16 @@ class TenantPackage extends Backend
             $authRuleIds = [];
             if (!empty($features)) {
                 foreach ($features as $code) {
-                    $idsExact = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', $code)->column('id');
-                    $idsChildren = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'like', $code . '/%')->column('id');
+                    $codeSlash = str_replace('.', '/', $code);
+                    $idsExact = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', $codeSlash)->column('id');
+                    $idsChildren = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'like', $codeSlash . '/%')->column('id');
                     $authRuleIds = array_merge($authRuleIds, $idsExact, $idsChildren);
+                    // 有分工权限时同时带上分工二维码
+                    if ($codeSlash === 'mes/allocation') {
+                        $qrExact = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'mes/allocation_qrcode')->column('id');
+                        $qrChildren = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'like', 'mes/allocation_qrcode/%')->column('id');
+                        $authRuleIds = array_merge($authRuleIds, $qrExact, $qrChildren);
+                    }
                 }
             }
             $baseIds = \think\facade\Db::name('auth_rule')->where('status', 1)->whereIn('name', ['dashboard','admin/index','admin/index/index'])->column('id');

@@ -1,0 +1,75 @@
+<div class="card">
+  <div class="card-header"><i class="fas fa-edit me-2"></i>{$title|default='素材'}</div>
+  <div class="card-body">
+    <form id="material-form">
+      <input type="hidden" name="id" value="{$item.id|default=0}">
+      <input type="hidden" name="path" id="material-path" value="{$item.path|default=''}">
+      <input type="hidden" name="size" id="material-size" value="{$item.size|default=0}">
+      <input type="hidden" name="mime" id="material-mime" value="{$item.mime|default=''}">
+      <div class="mb-3">
+        <label class="form-label">类型</label>
+        <select name="type" class="form-control">
+          <option value="image">图片</option>
+          <option value="video">视频</option>
+          <option value="audio">音频</option>
+          <option value="text">文案</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">名称 <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-control" value="{$item.name|default=''}" placeholder="文件名或标题">
+      </div>
+      <div class="mb-3" id="material-upload-area">
+        <label class="form-label">文件</label>
+        <input type="file" id="material-file" class="form-control" accept="image/*,video/*,audio/*,.txt,.md">
+        <small class="text-muted">上传后自动填充路径；已有素材可只改名称与备注。</small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">备注</label>
+        <input type="text" name="remark" class="form-control" value="{$item.remark|default=''}" placeholder="可选">
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/index/wemedia/material/index" class="btn btn-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+var __materialItem = {$itemJson|raw};
+$(function(){
+  if (__materialItem && __materialItem.type) $('select[name=type]').val(__materialItem.type);
+});
+$('#material-file').on('change', function(){
+  var f = this.files[0];
+  if (!f) return;
+  var fd = new FormData();
+  fd.append('file', f);
+  $.ajax({
+    url: '/api/common/upload',
+    type: 'POST',
+    data: fd,
+    processData: false,
+    contentType: false,
+    headers: { 'Authorization': 'Bearer ' + (document.cookie.match(/user_token=([^;]+)/) ? RegExp.$1 : '') },
+    success: function(r){
+      if (r.code === 1 && r.data && r.data.url) {
+        $('#material-path').val(r.data.url);
+        $('#material-size').val(r.data.size || 0);
+        $('#material-mime').val(r.data.mime || '');
+        if (!$('input[name=name]').val()) $('input[name=name]').val(f.name);
+      } else {
+        alert(r.msg || '上传失败');
+      }
+    }
+  });
+});
+$('#material-form').on('submit', function(e){
+  e.preventDefault();
+  var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+  $.post('/index/wemedia/material/save', $(this).serialize(), function(r){
+    alert(r.msg || (r.code === 1 ? '保存成功' : '失败'));
+    if (r.code === 1) location.href = '/index/wemedia/material/index';
+  }, 'json').always(function(){ $btn.prop('disabled', false); });
+});
+</script>

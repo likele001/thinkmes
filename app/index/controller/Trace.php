@@ -6,13 +6,34 @@ namespace app\index\controller;
 use app\admin\model\mes\TraceCodeModel;
 use app\admin\model\mes\ReportMediaModel;
 use think\facade\View;
+use think\facade\Lang;
 use think\response\Json;
 use think\Response;
 
 class Trace
 {
+    /** 按 cookie 设置语言并加载当前控制器语言包 */
+    private function ensureLang(): void
+    {
+        $cookieVar = config('lang.cookie_var', 'think_lang');
+        $cookieVal = request()->cookie($cookieVar, '');
+        if ($cookieVal !== '' && $cookieVal !== null) {
+            $allow = config('lang.allow_lang_list', []);
+            if (is_array($allow) && in_array($cookieVal, $allow, true)) {
+                Lang::setLangSet($cookieVal);
+            }
+        }
+        $langSet = Lang::getLangSet();
+        $ctrl = (new \ReflectionClass($this))->getShortName();
+        $path = app()->getAppPath() . 'lang' . DIRECTORY_SEPARATOR . $langSet . DIRECTORY_SEPARATOR . $ctrl . '.php';
+        if (is_file($path)) {
+            Lang::load($path);
+        }
+    }
+
     private function fetchWithLayout(string $template): string
     {
+        $this->ensureLang();
         $content = View::fetch($template);
         View::assign('__CONTENT__', $content);
         return View::fetch('layout/default');

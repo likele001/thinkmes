@@ -1,0 +1,68 @@
+<div class="py-4">
+  <h2 class="mb-4"><i class="fa fa-list-alt text-primary me-2"></i>{:lang('title_records')}</h2>
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>{:lang('th_report_time')}</th>
+              <th>{:lang('label_order_no')}</th>
+              <th>{:lang('th_product')}</th>
+              <th>{:lang('th_model')}</th>
+              <th>{:lang('th_process')}</th>
+              <th>{:lang('th_quantity')}</th>
+              <th>{:lang('th_unit_price')}</th>
+              <th>{:lang('th_wage_amount')}</th>
+              <th>{:lang('th_status')}</th>
+              <th>{:lang('th_images')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {if empty($records)}
+            <tr><td colspan="10" class="text-center text-muted py-4">{:lang('no_records')}</td></tr>
+            {else/}
+            {volist name="records" id="rec"}
+            <tr>
+              <td>{:date('Y-m-d H:i', $rec['create_time'])}</td>
+              <td>{$rec.order_no|default='-'}</td>
+              <td>{$rec.product_name|default='-'}</td>
+              <td>{$rec.model_name|default='-'}</td>
+              <td>{$rec.process_name|default='-'}</td>
+              <td>{$rec.quantity}</td>
+              <td>{$rec.unit_price|default=0}</td>
+              <td>¥{$rec.wage}</td>
+              <td>
+                {if $rec.status == 1}<span class="badge bg-success">{:lang('status_approved')}</span>
+                {elseif $rec.status == 2 /}<span class="badge bg-danger">{:lang('status_rejected')}</span>
+                {else/}<span class="badge bg-warning text-dark">{:lang('status_pending_audit')}</span>{/if}
+              </td>
+              <td>
+                {if !empty($rec.images)}
+                {volist name="rec.images" id="img"}
+                <a href="{$img}" target="_blank" class="me-1"><img src="{$img}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;"></a>
+                {/volist}
+                {else/}-{/if}
+              </td>
+            </tr>
+            {/volist}
+            {/if}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {if $total > $limit}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <span class="small text-muted">{$totalCountText}</span>
+      <nav>
+        {if $page > 1}
+        <a href="?page={$page-1}&limit={$limit}" class="btn btn-sm btn-outline-primary me-1">{:lang('prev_page')}</a>
+        {/if}
+        {if $page * $limit < $total}
+        <a href="?page={$page+1}&limit={$limit}" class="btn btn-sm btn-outline-primary">{:lang('next_page')}</a>
+        {/if}
+      </nav>
+    </div>
+    {/if}
+  </div>
+</div>

@@ -33,7 +33,7 @@ class TenantPackageFeature extends Backend
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
             View::assign('package', $package->toArray());
-            View::assign('title', '套餐功能管理 - ' . $package->name);
+            View::assign('title', __("title") . ' - ' . $package->name);
             return $this->fetchWithLayout('tenant_package_feature/index');
         }
         
@@ -65,11 +65,17 @@ class TenantPackageFeature extends Backend
         // 预定义的功能列表（可根据实际业务调整）
         $allFeatures = $this->getAllFeatures();
         $existingFeatures = TenantPackageFeatureModel::where('package_id', $packageId)->column('feature_code');
+        // 转为 [['code'=>'...','name'=>'...'], ...] 避免模板对键名含 / 的处理问题
+        $allFeaturesList = [];
+        foreach ($allFeatures as $code => $name) {
+            $allFeaturesList[] = ['code' => $code, 'name' => $name];
+        }
         
         View::assign('package', $package->toArray());
         View::assign('allFeatures', $allFeatures);
+        View::assign('allFeaturesList', $allFeaturesList);
         View::assign('existingFeatures', $existingFeatures);
-        View::assign('title', '添加功能 - ' . $package->name);
+        View::assign('title', __("add_feature") . ' - ' . $package->name);
         return $this->fetchWithLayout('tenant_package_feature/add');
     }
 
@@ -98,9 +104,20 @@ class TenantPackageFeature extends Backend
         $added = 0;
         
         foreach ($featureCodes as $code) {
-            if (!isset($allFeatures[$code])) {
-                continue; // 跳过无效的功能代码
+            $code = is_string($code) ? trim($code) : '';
+            if ($code === '') {
+                continue;
             }
+            // 兼容：部分环境会把 POST 里的 admin/tenant/miniapp 转成 admin_tenant_miniapp
+            if (!isset($allFeatures[$code])) {
+                $codeWithSlash = str_replace('_', '/', $code);
+                if (isset($allFeatures[$codeWithSlash])) {
+                    $code = $codeWithSlash;
+                } else {
+                    continue;
+                }
+            }
+            $featureName = $allFeatures[$code];
             // 检查是否已存在
             $exists = TenantPackageFeatureModel::where('package_id', $packageId)
                 ->where('feature_code', $code)
@@ -109,7 +126,7 @@ class TenantPackageFeature extends Backend
                 TenantPackageFeatureModel::create([
                     'package_id' => $packageId,
                     'feature_code' => $code,
-                    'feature_name' => $allFeatures[$code],
+                    'feature_name' => $featureName,
                     'create_time' => $now,
                 ]);
                 $added++;
@@ -118,7 +135,7 @@ class TenantPackageFeature extends Backend
         
         $this->log('add', '为套餐ID=' . $packageId . '添加' . $added . '个功能');
         $this->ensureDefaultRoleForPackage($packageId);
-        return $this->success('添加成功', ['added' => $added]);
+        return $this->success('添加成功', ['added' => $added, 'received' => $featureCodes]);
     }
 
     protected function ensureDefaultRoleForPackage(int $packageId): int
@@ -138,9 +155,16 @@ class TenantPackageFeature extends Backend
             $authRuleIds = [];
             if (!empty($features)) {
                 foreach ($features as $code) {
-                    $idsExact = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', $code)->column('id');
-                    $idsChildren = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'like', $code . '/%')->column('id');
+                    $codeSlash = str_replace('.', '/', $code);
+                    $idsExact = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', $codeSlash)->column('id');
+                    $idsChildren = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'like', $codeSlash . '/%')->column('id');
                     $authRuleIds = array_merge($authRuleIds, $idsExact, $idsChildren);
+                    // 有分工权限时同时带上分工二维码（不单独占套餐功能，与分工一体）
+                    if ($codeSlash === 'mes/allocation') {
+                        $qrExact = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'mes/allocation_qrcode')->column('id');
+                        $qrChildren = \think\facade\Db::name('auth_rule')->where('status', 1)->where('name', 'like', 'mes/allocation_qrcode/%')->column('id');
+                        $authRuleIds = array_merge($authRuleIds, $qrExact, $qrChildren);
+                    }
                 }
             }
             $baseIds = \think\facade\Db::name('auth_rule')->where('status', 1)->whereIn('name', ['dashboard','admin/index','admin/index/index'])->column('id');
@@ -191,6 +215,7 @@ class TenantPackageFeature extends Backend
     {
         return [
             'ai' => '工厂 AI（附加收费/按应用开通）',
+            'admin/tenant/miniapp' => '小程序（租户小程序配置）',
             'crm' => 'CRM 客户关系管理',
             'order' => '订单管理',
             'product' => '产品管理',

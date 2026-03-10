@@ -1,0 +1,114 @@
+<div class="card mb-3">
+  <div class="card-header"><i class="fas fa-chart-line me-2"></i>数据概览</div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-md-2">
+        <select id="report-chart-platform" class="form-control form-control-sm">
+          <option value="">全部平台</option>
+          <option value="xiaohongshu">小红书</option>
+          <option value="douyin">抖音</option>
+          <option value="wechat">公众号</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select id="report-chart-days" class="form-control form-control-sm">
+          <option value="7">近7天</option>
+          <option value="30" selected>近30天</option>
+          <option value="90">近90天</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" id="report-chart-refresh" class="btn btn-primary btn-sm">刷新图表</button>
+      </div>
+    </div>
+    <div id="report-chart" style="height:260px;"></div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>数据录入</span>
+    <button type="button" id="report-add-btn" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>录入数据</button>
+  </div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-md-2">
+        <input type="date" id="report-date" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <select id="report-platform" class="form-control form-control-sm">
+          <option value="">全部平台</option>
+          <option value="xiaohongshu">小红书</option>
+          <option value="douyin">抖音</option>
+          <option value="wechat">公众号</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" id="report-search" class="btn btn-primary btn-sm">搜索</button>
+      </div>
+    </div>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th width="50">ID</th>
+          <th width="100">日期</th>
+          <th width="90">平台</th>
+          <th width="100">指标类型</th>
+          <th width="100">数值</th>
+          <th width="140">操作</th>
+        </tr>
+      </thead>
+      <tbody id="report-tbody"></tbody>
+    </table>
+    <div id="report-pager" class="mt-2 small text-muted"></div>
+  </div>
+</div>
+<div class="modal fade" id="report-edit-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">录入/编辑数据</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="report-edit-id" value="0">
+        <div class="mb-2">
+          <label class="form-label">数据日期</label>
+          <input type="date" id="report-edit-date" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">平台</label>
+          <select id="report-edit-platform" class="form-control">
+            <option value="">不限</option>
+            <option value="xiaohongshu">小红书</option>
+            <option value="douyin">抖音</option>
+            <option value="wechat">公众号</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">指标类型</label>
+          <select id="report-edit-metric" class="form-control">
+            <option value="view">播放/阅读</option>
+            <option value="like">点赞</option>
+            <option value="comment">评论</option>
+            <option value="share">分享</option>
+            <option value="fan">涨粉</option>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">数值</label>
+          <input type="number" id="report-edit-value" class="form-control" step="0.01" value="0" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">备注</label>
+          <input type="text" id="report-edit-remark" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" id="report-edit-save" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/assets/js/wemedia/report.js"></script>

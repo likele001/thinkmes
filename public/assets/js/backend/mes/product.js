@@ -127,6 +127,10 @@
             Controller.api.bindevent();
             Controller.api.initModelForm();
         },
+        batchaddmodels: function () {
+            Controller.api.bindevent();
+            Controller.api.initModelForm();
+        },
         api: {
             bindevent: function () {
                 var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
@@ -158,6 +162,36 @@
                         });
                     });
                 }
+                var batchForm = $('form#form-batch-models');
+                if (batchForm.length) {
+                    batchForm.attr('action', base + '/mes/product/batchAddModels');
+                    batchForm.on('submit', function (e) {
+                        e.preventDefault();
+                        $.post(base + '/mes/product/batchAddModels', $(this).serialize(), function (r) {
+                            if (r && r.msg) alert(r.msg);
+                            if (r && r.code === 1) {
+                                if (confirm(r.msg + '，是否继续批量添加？')) {
+                                    batchForm.find('#model-container').empty();
+                                    var processList = [];
+                                    try {
+                                        var processData = $('#process-data');
+                                        if (processData.length && processData.text()) processList = JSON.parse(processData.text());
+                                    } catch (err) {}
+                                    if (processList.length) Controller.api.renderModel(0, {}, {}, processList);
+                                } else {
+                                    location.href = base + '/mes/product/index';
+                                }
+                            }
+                        }, 'json').fail(function(xhr) {
+                            try {
+                                var r = JSON.parse(xhr.responseText);
+                                alert(r.msg || '操作失败');
+                            } catch(e) {
+                                alert('操作失败');
+                            }
+                        });
+                    });
+                }
             },
             initModelForm: function() {
                 // 获取工序数据（从页面中读取）
@@ -173,7 +207,7 @@
                 
                 var modelIndex = $('#model-container .model-item').length;
                 
-                // 编辑页面：渲染现有型号数据
+                // 编辑页面：渲染现有型号数据；批量添加页无 data-models
                 if ($('#model-container').attr('data-models')) {
                     try {
                         var modelsData = JSON.parse($('#model-container').attr('data-models'));
@@ -189,7 +223,7 @@
                     }
                 }
                 
-                // 如果没有型号，添加一个空型号
+                // 如果没有型号，添加一个空型号（添加/编辑/批量添加页通用）
                 if (modelIndex === 0) {
                     Controller.api.renderModel(0, {}, {}, processList);
                     modelIndex = 1;
@@ -218,6 +252,11 @@
                     '<div class="col-md-3"><label>型号编码:</label><input type="text" class="form-control" name="models[' + index + '][model_code]" value="' + (model.model_code || '') + '" placeholder="请输入型号编码"></div>' +
                     '<div class="col-md-3"><label>型号描述:</label><input type="text" class="form-control" name="models[' + index + '][description]" value="' + (model.description || '') + '" placeholder="请输入型号描述"></div>' +
                     '<div class="col-md-2"><label>&nbsp;</label><br><button type="button" class="btn btn-danger btn-sm remove-model">删除</button></div>' +
+                    '</div>' +
+                    '<div class="row" style="margin-bottom: 15px;">' +
+                    '<div class="col-md-4"><label>颜色:</label><input type="text" class="form-control" name="models[' + index + '][color]" value="' + (model.color || '') + '" placeholder="颜色"></div>' +
+                    '<div class="col-md-4"><label>规格:</label><input type="text" class="form-control" name="models[' + index + '][specification]" value="' + (model.specification || '') + '" placeholder="规格"></div>' +
+                    '<div class="col-md-4"><label>备注:</label><input type="text" class="form-control" name="models[' + index + '][remark]" value="' + (model.remark || '') + '" placeholder="备注"></div>' +
                     '</div>' +
                     '<h6 style="margin-bottom: 10px; color: #666;">工序工价设置</h6>' +
                     '<div class="price-table"><table class="table table-bordered table-hover"><thead><tr><th>工序</th><th>计件工价(元/件)</th><th>计时工价(元/小时)</th></tr></thead><tbody>';

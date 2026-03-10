@@ -13,3 +13,28 @@
         <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
     </div>
 </div>
+<!-- 查看二维码弹窗 -->
+<div class="modal fade" id="qrcodeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">任务二维码</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="关闭"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-muted small mb-2">员工扫码后可进入报工页面</p>
+                <div id="qrcode-modal-img-wrap" class="mb-3"></div>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="qrcode-modal-url" readonly>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="qrcode-modal-copy">复制链接</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-info" id="qrcode-modal-regenerate">重新生成</button>
+            </div>
+        </div>
+    </div>
+</div>

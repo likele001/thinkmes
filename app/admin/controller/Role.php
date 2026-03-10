@@ -17,7 +17,7 @@ class Role extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '角色管理');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('role/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
@@ -48,7 +48,7 @@ class Role extends Backend
         View::assign('rules', $rules);
         View::assign('rulesJson', json_encode($rules, JSON_UNESCAPED_UNICODE));
         View::assign('data', []);
-        View::assign('title', '添加角色');
+        View::assign('title', __("add_title"));
         return $this->fetchWithLayout('role/add');
     }
 
@@ -85,7 +85,7 @@ class Role extends Backend
         View::assign('rules', $rules);
         View::assign('rulesJson', json_encode($rules, JSON_UNESCAPED_UNICODE));
         View::assign('data', $data->toArray());
-        View::assign('title', '编辑角色');
+        View::assign('title', __("edit_title"));
         return $this->fetchWithLayout('role/edit');
     }
 

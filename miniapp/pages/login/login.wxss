@@ -1,12 +1,113 @@
-.login-page { padding: 60rpx 48rpx; }
-.logo { font-size: 40rpx; font-weight: bold; color: #1989fa; margin-bottom: 48rpx; text-align: center; }
-.mode-title { font-size: 30rpx; color: #666; margin-bottom: 32rpx; text-align: center; }
-.mode-card { background: #fff; border-radius: 16rpx; padding: 32rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06); }
-.mode-icon { font-size: 48rpx; margin-bottom: 16rpx; }
-.mode-text { font-weight: bold; font-size: 32rpx; margin-bottom: 8rpx; }
-.mode-desc { color: #999; font-size: 24rpx; }
-.back-btn { color: #1989fa; margin-bottom: 24rpx; }
-.form-title { font-size: 36rpx; margin-bottom: 48rpx; }
-.form-item { margin-bottom: 24rpx; }
-.form-item input { border: 2rpx solid #eee; border-radius: 12rpx; padding: 24rpx; }
-.admin-form .btn-primary { margin-top: 32rpx; }
+/* ========== 登录页 - 时尚版 ========== */
+.login-page {
+  padding: 0;
+  min-height: 100vh;
+  background: linear-gradient(165deg, #4f46e5 0%, #6366f1 40%, #818cf8 70%, #a5b4fc 100%);
+}
+
+.login-page .mode-select,
+.login-page .admin-form {
+  padding: 64rpx 40rpx 80rpx;
+}
+
+/* 顶部品牌区 */
+.login-page .logo {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 16rpx;
+  text-align: center;
+  letter-spacing: 2rpx;
+  text-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.15);
+}
+
+.login-page .mode-title {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 56rpx;
+  text-align: center;
+}
+
+/* 身份卡片 - 白色圆角悬浮 */
+.mode-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx 36rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.12), 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mode-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.1);
+}
+
+.mode-icon {
+  font-size: 56rpx;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.mode-text {
+  font-weight: 700;
+  font-size: 34rpx;
+  color: #1e293b;
+  margin-bottom: 10rpx;
+}
+
+.mode-desc {
+  color: #64748b;
+  font-size: 26rpx;
+  line-height: 1.4;
+}
+
+/* 管理员卡片强调色 */
+.admin-card .mode-text { color: #4f46e5; }
+.user-card .mode-text { color: #059669; }
+
+/* 管理员登录表单区 */
+.admin-form {
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  margin-top: 48rpx;
+  padding-top: 48rpx;
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+.back-btn {
+  color: #6366f1;
+  margin-bottom: 32rpx;
+  font-size: 28rpx;
+  padding: 8rpx 0;
+}
+
+.form-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 48rpx;
+}
+
+.form-item {
+  margin-bottom: 28rpx;
+}
+
+.form-item input {
+  border: 2rpx solid #e2e8f0;
+  border-radius: 16rpx;
+  padding: 28rpx 24rpx;
+  font-size: 28rpx;
+  background: #f8fafc;
+}
+
+.form-item input:focus {
+  border-color: #6366f1;
+  background: #fff;
+}
+
+.admin-form .btn-primary {
+  margin-top: 48rpx;
+  border-radius: 20rpx;
+}

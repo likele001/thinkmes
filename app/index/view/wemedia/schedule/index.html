@@ -1,0 +1,37 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="fas fa-calendar-alt me-2"></i>发布排期</span>
+    <a href="/index/wemedia/schedule/add" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>添加排期</a>
+  </div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <select id="schedule-status" class="form-control form-control-sm">
+          <option value="">全部状态</option>
+          <option value="0">待发布</option>
+          <option value="1">已发布</option>
+          <option value="2">已下架</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" id="schedule-search" class="btn btn-primary btn-sm">搜索</button>
+      </div>
+    </div>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th width="50">ID</th>
+          <th>类型</th>
+          <th>关联ID</th>
+          <th width="90">平台</th>
+          <th width="140">计划时间</th>
+          <th width="80">状态</th>
+          <th width="140">操作</th>
+        </tr>
+      </thead>
+      <tbody id="schedule-tbody"></tbody>
+    </table>
+    <div id="schedule-pager" class="mt-2 small text-muted"></div>
+  </div>
+</div>
+<script src="/assets/js/wemedia/schedule.js"></script>

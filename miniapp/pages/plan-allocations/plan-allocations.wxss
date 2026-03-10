@@ -1,0 +1,5 @@
+.container { padding-bottom: 32rpx; }
+.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
+.row { display: flex; margin-bottom: 12rpx; font-size: 28rpx; }
+.label { color: #666; width: 140rpx; }
+.empty, .loading { text-align: center; color: #999; padding: 32rpx; }

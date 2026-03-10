@@ -1,0 +1,53 @@
+<view class="container">
+  <view class="card">
+    <view class="form-item">
+      <text class="label">订单名称</text>
+      <input class="input" placeholder="请输入订单名称" value="{{order_name}}" bindinput="inputOrderName"/>
+    </view>
+    <view class="form-item">
+      <text class="label">客户</text>
+      <picker mode="selector" range="{{customerList}}" range-key="customer_name" value="{{customerIndex}}" bindchange="pickCustomer">
+        <view class="picker">{{customerName || '请选择客户'}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="label">客户名称</text>
+      <input class="input" placeholder="选择客户后自动填充" value="{{customer_name}}" bindinput="inputCustomerName"/>
+    </view>
+    <view class="form-item">
+      <text class="label">客户电话</text>
+      <input class="input" placeholder="选择客户后自动填充" value="{{customer_phone}}" bindinput="inputCustomerPhone"/>
+    </view>
+    <view class="form-item">
+      <text class="label">交货时间</text>
+      <picker mode="date" value="{{delivery_date}}" bindchange="pickDeliveryDate">
+        <view class="picker">{{delivery_date || '请选择交货日期'}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="label">订单状态</text>
+      <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
+        <view class="picker">{{statusText || '请选择状态'}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="label">备注</text>
+      <textarea class="textarea" placeholder="请输入备注" value="{{remark}}" bindinput="inputRemark"/>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">订单型号（产品/型号 + 数量）</view>
+    <view class="model-row" wx:for="{{modelRows}}" wx:key="index">
+      <view class="picker picker-model" data-row="{{index}}" bindtap="openModelSelect">{{item.model_label || '请选择型号（可搜索）'}}</view>
+      <input class="input-qty" type="number" placeholder="数量" value="{{item.quantity}}" data-row="{{index}}" bindinput="inputQty"/>
+      <view class="btn-del" data-row="{{index}}" bindtap="removeModel" wx:if="{{modelRows.length > 1}}">删除</view>
+    </view>
+    <view class="btn-add-model" bindtap="addModel">+ 添加型号</view>
+  </view>
+
+  <view class="btn-row">
+    <button class="btn-primary" loading="{{submitting}}" bindtap="submit">保存</button>
+    <button wx:if="{{id}}" type="warn" bindtap="confirmDelete">删除订单</button>
+  </view>
+</view>

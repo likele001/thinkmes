@@ -1,12 +1,31 @@
 <view class="container">
-  <view class="card" wx:for="{{list}}" wx:key="id">
-    <view class="row">
-      <text class="title">报工 #{{item.id}}</text>
-      <text class="status {{item.status===1?'pass':'pending'}}">{{item.status===1?'已通过':(item.status===2?'已拒绝':'待审核')}}</text>
+  <view class="filter-bar">
+    <view class="tab {{statusFilter===''?'active':''}}" data-status="" bindtap="setStatus">全部</view>
+    <view class="tab {{statusFilter==='0'?'active':''}}" data-status="0" bindtap="setStatus">待审核</view>
+    <view class="tab {{statusFilter==='1'?'active':''}}" data-status="1" bindtap="setStatus">已通过</view>
+    <view class="tab {{statusFilter==='2'?'active':''}}" data-status="2" bindtap="setStatus">已拒绝</view>
+  </view>
+  <view class="card report-item" wx:for="{{list}}" wx:key="id">
+    <view class="row head">
+      <text class="title">#{{item.id}}</text>
+      <text class="status status-{{item.status}}">{{item.status===1?'已通过':(item.status===2?'已拒绝':'待审核')}}</text>
     </view>
-    <view class="text-muted">数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</view>
-    <view class="btn-wrap"><button size="mini" type="primary" data-id="{{item.id}}" bindtap="goAudit" wx:if="{{item.status===0}}">审核</button></view>
+    <view class="row" bindtap="goDetail" data-id="{{item.id}}">
+      <text class="muted">{{item.order_no}} · {{item.product_name}} / {{item.model_name}}</text>
+    </view>
+    <view class="row">
+      <text class="muted">工序 {{item.process_name}} · 数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</text>
+    </view>
+    <view class="row" wx:if="{{item.user_name}}"><text class="muted">报工人 {{item.user_name}}</text></view>
+    <view class="btn-wrap">
+      <button size="mini" type="primary" data-id="{{item.id}}" bindtap="goAudit" wx:if="{{item.status===0}}">审核</button>
+      <button size="mini" data-id="{{item.id}}" bindtap="goDetail">详情</button>
+      <button size="mini" type="warn" data-id="{{item.id}}" bindtap="confirmDelete">删除</button>
+    </view>
   </view>
   <view class="empty" wx:if="{{!loading && list.length===0}}">暂无报工</view>
   <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+  <view class="link-row">
+    <navigator url="/pages/report-statistics/report-statistics">报工统计</navigator>
+  </view>
 </view>

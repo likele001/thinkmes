@@ -12,6 +12,7 @@ use app\common\model\UserModel;
 use app\common\lib\Auth;
 use app\common\lib\Hook;
 use think\facade\Db;
+use think\facade\Lang;
 use think\facade\Session;
 use think\facade\View;
 use think\Response;
@@ -88,7 +89,7 @@ class Index extends Backend
 
         $loginCaptcha = ConfigModel::where('group', 'safe')->where('name', 'login_captcha')->value('value');
         $loginCaptchaOn = $loginCaptcha === '1' || $loginCaptcha === 'true';
-        View::assign('title', '后台登录');
+        View::assign('title', __("login_title"));
         View::assign('url', $this->request->get('url', 'admin/index/index'));
         View::assign('loginCaptchaOn', $loginCaptchaOn);
         return View::fetch('index/login');
@@ -136,7 +137,7 @@ class Index extends Backend
     {
         $msg = $this->request->get('msg', '无权限访问');
         View::assign('msg', $msg);
-        View::assign('title', '无权限');
+        View::assign('title', __("error_title"));
         return View::fetch('index/error');
     }
 
@@ -273,7 +274,18 @@ class Index extends Backend
             ];
         }
         
-        View::assign('title', '控制台');
+        // 确保当前控制器的语言包已加载（避免 controller 名大小写导致未加载）
+        $langSet = Lang::getLangSet();
+        $langDir = ($langSet === 'en-us') ? 'en' : $langSet;
+        $langPath = app()->getAppPath() . 'lang' . DIRECTORY_SEPARATOR . $langDir . DIRECTORY_SEPARATOR . 'Index.php';
+        if (is_file($langPath)) {
+            Lang::load($langPath);
+        }
+        $title = Lang::get('dashboard_title');
+        if ($title === '' || $title === 'dashboard_title') {
+            $title = '控制台';
+        }
+        View::assign('title', $title);
         View::assign('stats', [
             'admin_count'      => (int) $adminQuery->count(),
             'role_count'       => (int) Db::name('role')->count(),
@@ -314,6 +326,44 @@ class Index extends Backend
         View::assign('referermenu', $referermenu);
         
         return $this->fetchWithLayout('index/index');
+    }
+
+    /**
+     * 切换语言：在重定向响应上直接设置 Cookie，再跳转
+     */
+    public function setLang(): Response
+    {
+        $cookieVar = $this->app->config->get('lang.cookie_var', 'think_lang');
+        $lang = trim((string) $this->request->param('lang', ''));
+        $allow = $this->app->config->get('lang.allow_lang_list', []);
+        $base = rtrim($this->request->domain(), '/') . $this->getAdminUrlPrefix();
+        $url = $base . '/index/index';
+        $response = redirect($url);
+        if ($lang !== '' && is_array($allow) && in_array($lang, $allow, true)) {
+            $response->cookie($cookieVar, $lang, ['expire' => 86400 * 365, 'path' => '/']);
+        }
+        return $response;
+    }
+
+    /**
+     * 调试：返回当前语言与 Cookie，用于排查多语言不生效（上线可删或加权限）
+     */
+    public function langDebug(): Response
+    {
+        $cookieVar = $this->app->config->get('lang.cookie_var', 'think_lang');
+        $cookieVal = $this->request->cookie($cookieVar, '');
+        $current = Lang::getLangSet();
+        $home = __("home");
+        return json([
+            'code' => 1,
+            'msg' => '',
+            'data' => [
+                'cookie_name' => $cookieVar,
+                'cookie_value' => $cookieVal,
+                'lang_current' => $current,
+                'sample_translation' => $home,
+            ],
+        ]);
     }
 
     /**
@@ -387,7 +437,9 @@ class Index extends Backend
             }
             // 如果菜单没有子菜单，尝试链接到对应的 index 页面
             $v['_original_url'] = $v['url'] ?? '';
-            $v['title'] = $v['title'] ?? '';
+            $menuKey = 'menu.' . ($v['name'] ?? '');
+            $translated = __($menuKey);
+            $v['title'] = ($translated !== $menuKey) ? $translated : ($v['title'] ?? '');
             $v['menuclass'] = '';
             $v['menutabs'] = 'addtabs="' . ($v['id'] ?? '') . '"';
         }
@@ -397,8 +449,8 @@ class Index extends Backend
         if ($this->getTenantId() === 0) {
             $present = array_map(function($it){ return strtolower($it['name'] ?? ''); }, $ruleList);
             $need = [
-                ['id' => 'virt_tenant_package', 'name' => 'tenant_package/index', 'title' => '套餐管理', 'icon' => 'fas fa-cubes', 'pid' => 11],
-                ['id' => 'virt_tenant_audit',   'name' => 'tenant_audit/index',   'title' => '租户审核', 'icon' => 'fas fa-user-check', 'pid' => 11],
+                ['id' => 'virt_tenant_package', 'name' => 'tenant_package/index', 'title' => __('menu.tenant_package/index'), 'icon' => 'fas fa-cubes', 'pid' => 11],
+                ['id' => 'virt_tenant_audit',   'name' => 'tenant_audit/index',   'title' => __('menu.tenant_audit/index'), 'icon' => 'fas fa-user-check', 'pid' => 11],
             ];
             foreach ($need as $it) {
                 if (!in_array(strtolower($it['name']), $present, true)) {
@@ -418,7 +470,7 @@ class Index extends Backend
         
         $presentAll = array_map(function($it){ return strtolower($it['name'] ?? ''); }, $ruleList);
         $needCommon = [
-            ['id' => 'virt_profile_center', 'name' => 'profile/index', 'title' => '个人中心', 'icon' => 'fas fa-user-cog', 'pid' => 0],
+            ['id' => 'virt_profile_center', 'name' => 'profile/index', 'title' => __('menu.profile/index'), 'icon' => 'fas fa-user-cog', 'pid' => 0],
         ];
         foreach ($needCommon as $it) {
             if (!in_array(strtolower($it['name']), $presentAll, true)) {

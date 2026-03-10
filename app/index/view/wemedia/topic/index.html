@@ -1,0 +1,163 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="fas fa-lightbulb me-2"></i>选题策划</span>
+    <div>
+      <button type="button" class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#topic-generate-modal"><i class="fas fa-magic me-1"></i>AI 生成选题</button>
+      <a href="/index/wemedia/topic/add" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>添加选题</a>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <input type="text" id="topic-keyword" class="form-control form-control-sm" placeholder="关键词检索">
+      </div>
+      <div class="col-md-3">
+        <select id="topic-status" class="form-control form-control-sm">
+          <option value="">全部状态</option>
+          <option value="0">待创作</option>
+          <option value="1">已完成</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" id="topic-search" class="btn btn-primary btn-sm">搜索</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover" id="topic-table">
+        <thead>
+          <tr>
+            <th width="50">ID</th>
+            <th>选题标题</th>
+            <th width="100">平台</th>
+            <th width="100">状态</th>
+            <th width="160">更新时间</th>
+            <th width="140">操作</th>
+          </tr>
+        </thead>
+        <tbody id="topic-tbody"></tbody>
+      </table>
+    </div>
+    <div id="topic-pager" class="mt-2"></div>
+  </div>
+</div>
+<!-- AI 生成选题 弹窗 -->
+<div class="modal fade" id="topic-generate-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">AI 生成选题</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label">领域关键词</label>
+          <input type="text" id="gen-keyword" class="form-control" placeholder="如：美妆、职场">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">平台</label>
+          <select id="gen-platform" class="form-control">
+            <option value="">不限</option>
+            <option value="xiaohongshu">小红书</option>
+            <option value="douyin">抖音</option>
+            <option value="wechat">公众号</option>
+          </select>
+        </div>
+        <div id="gen-result" class="mt-2"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+        <button type="button" id="gen-do" class="btn btn-primary">生成</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var base = '/index/wemedia/topic';
+  var page = 1, limit = 20;
+  function loadList(){
+    $.get(base + '/list', { page: page, limit: limit, keyword: $('#topic-keyword').val(), status: $('#topic-status').val() }, function(r){
+      if (r.code !== 1) { $('#topic-tbody').html('<tr><td colspan="6" class="text-center">' + (r.msg || '加载失败') + '</td></tr>'); return; }
+      var list = (r.data && r.data.list) ? r.data.list : [];
+      var total = (r.data && r.data.total) ? r.data.total : 0;
+      var html = '';
+      list.forEach(function(row){
+        var up = row.update_time ? new Date(row.update_time*1000).toLocaleString() : '-';
+        html += '<tr><td>' + row.id + '</td><td>' + (row.title || '-') + '</td><td>' + (row.platform || '-') + '</td><td>' + (row.status_text || '-') + '</td><td>' + up + '</td><td>';
+        html += '<a href="' + base + '/edit?id=' + row.id + '" class="btn btn-xs btn-success me-1">编辑</a>';
+        html += '<button type="button" class="btn btn-xs btn-danger btn-topic-del" data-id="' + row.id + '">删除</button></td></tr>';
+      });
+      $('#topic-tbody').html(html || '<tr><td colspan="6" class="text-center">暂无数据</td></tr>');
+      $('#topic-pager').text('共 ' + total + ' 条');
+    }, 'json');
+  }
+  $('#topic-search').on('click', function(){ page = 1; loadList(); });
+  $(document).on('click', '.btn-topic-del', function(){
+    if (!confirm('确定删除？')) return;
+    var id = $(this).data('id');
+    $.post(base + '/del', { id: id }, function(r){
+      alert(r.msg || (r.code === 1 ? '删除成功' : '失败'));
+      if (r.code === 1) loadList();
+    }, 'json');
+  });
+  var genList = [];
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  $('#gen-do').on('click', function(){
+    var kw = $('#gen-keyword').val() || '';
+    if (!kw) { alert('请输入领域关键词'); return; }
+    var $btn = $('#gen-do').prop('disabled', true);
+    $('#gen-result').html('<span class="text-muted">生成中…</span>');
+    $.post(base + '/generate', { field_keyword: kw, platform: $('#gen-platform').val() }, function(r){
+      if (r.code !== 1) { $('#gen-result').html('<span class="text-danger">' + (r.msg || '生成失败') + '</span>'); return; }
+      genList = (r.data && r.data.list) ? r.data.list : [];
+      var modelUsed = (r.data && r.data.model_used) ? r.data.model_used : '';
+      var tip = (r.data && r.data.tip) ? r.data.tip : '';
+      var h = '';
+      if (modelUsed) h += '<p class="small text-muted mb-2">由 <strong>' + modelUsed + '</strong> 生成</p>';
+      h += '<ul class="list-unstyled mb-2">';
+      genList.forEach(function(it, i){
+        h += '<li class="mb-2 d-flex justify-content-between align-items-start"><div><strong>' + esc(it.title||'') + '</strong><br><span class="text-muted small">' + esc(it.highlight||'') + '</span></div>';
+        h += '<button type="button" class="btn btn-outline-primary btn-sm ms-2 gen-add-one" data-idx="' + i + '">加入选题</button></li>';
+      });
+      h += '</ul>';
+      if (genList.length > 0) h += '<button type="button" class="btn btn-sm btn-success" id="gen-add-all">全部加入选题</button>';
+      if (tip) h += '<p class="text-info small mt-2 mb-0">' + tip + '</p>';
+      $('#gen-result').html(h);
+    }, 'json').always(function(){ $btn.prop('disabled', false); });
+  });
+  $(document).on('click', '.gen-add-one', function(){
+    var i = parseInt($(this).data('idx'), 10);
+    var it = genList[i];
+    if (!it) return;
+    var plat = $('#gen-platform').val() || '';
+    var kw = $('#gen-keyword').val() || '';
+    $.post(base + '/save', { id: 0, title: it.title, highlight: it.highlight, platform: plat, field_keyword: kw, status: 0 }, function(r){
+      alert(r.msg || (r.code === 1 ? '已加入选题' : '失败'));
+      if (r.code === 1) loadList();
+    }, 'json');
+  });
+  $(document).on('click', '#gen-add-all', function(){
+    if (genList.length === 0) return;
+    var plat = $('#gen-platform').val() || '';
+    var kw = $('#gen-keyword').val() || '';
+    var $btn = $('#gen-add-all').prop('disabled', true).text('加入中…');
+    var idx = 0, done = 0;
+    function saveNext(){
+      if (idx >= genList.length) {
+        $btn.prop('disabled', false).text('全部加入选题');
+        loadList();
+        alert('已全部加入选题，可关闭弹窗在下方列表中查看或编辑');
+        return;
+      }
+      var it = genList[idx];
+      $.post(base + '/save', { id: 0, title: it.title, highlight: it.highlight, platform: plat, field_keyword: kw, status: 0 }, function(r){
+        if (r.code === 1) done++;
+        idx++;
+        saveNext();
+      }, 'json');
+    }
+    saveNext();
+  });
+  loadList();
+})();
+</script>

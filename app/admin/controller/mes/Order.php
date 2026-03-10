@@ -7,6 +7,7 @@ use app\admin\controller\Backend;
 use app\admin\model\mes\OrderModel;
 use app\admin\model\mes\OrderModelModel;
 use app\admin\model\mes\OrderMaterialModel;
+use app\admin\model\mes\ProductModel;
 use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\CustomerModel;
 use app\admin\model\mes\BomModel;
@@ -484,10 +485,11 @@ class Order extends Backend
     }
 
     /**
-     * 自动检查库存并生成采购申请
+     * 自动检查库存并生成采购申请，返回本次新生成的申请数量
      */
-    private function autoGeneratePurchaseRequests(int $orderId, int $tenantId): void
+    private function autoGeneratePurchaseRequests(int $orderId, int $tenantId): int
     {
+        $created = 0;
         $orderMaterials = OrderMaterialModel::where('tenant_id', $tenantId)
             ->where('order_id', $orderId)
             ->with(['material'])
@@ -514,7 +516,8 @@ class Order extends Backend
                     ->where('status', '<', 2)
                     ->find();
 
-                if (!$recentRequest && $om->supplier_id) {
+                $supplierId = $om->supplier_id ?: ($material->default_supplier_id ?? 0);
+                if (!$recentRequest && $supplierId) {
                     PurchaseRequestModel::create([
                         'tenant_id' => $tenantId,
                         'request_no' => PurchaseRequestModel::generateRequestNo(),
@@ -524,12 +527,15 @@ class Order extends Backend
                         'required_quantity' => $shortageQty,
                         'estimated_price' => $material->current_price,
                         'estimated_amount' => $shortageQty * $material->current_price,
-                        'supplier_id' => $om->supplier_id ?: $material->default_supplier_id,
+                        'supplier_id' => $supplierId,
                         'status' => 0,
-                        'remark' => '订单需求自动生成'
+                        'remark' => '订单需求自动生成',
+                        'create_time' => time(),
+                        'update_time' => time(),
                     ]);
                     $om->purchase_status = 1;
                     $om->save();
+                    $created++;
                 }
             } else {
                 // 库存充足
@@ -537,6 +543,83 @@ class Order extends Backend
                 $om->save();
             }
         }
+        return $created;
+    }
+
+    /**
+     * 申请采购：根据当前订单物料缺料批量生成采购申请（供订单物料清单页「申请采购」按钮调用）
+     */
+    public function applyPurchase(): Response
+    {
+        $orderId = (int) $this->request->param('id', 0) ?: (int) $this->request->param('order_id', 0);
+        if ($orderId <= 0) {
+            return $this->error('参数错误');
+        }
+        $tenantId = $this->getTenantId();
+        $order = OrderModel::where('tenant_id', $tenantId)->find($orderId);
+        if (!$order) {
+            return $this->error('订单不存在');
+        }
+        $created = $this->autoGeneratePurchaseRequests($orderId, $tenantId);
+        if ($this->request->isAjax() || $this->request->get('ajax')) {
+            return $this->success($created > 0 ? '已生成 ' . $created . ' 条采购申请，请到「采购申请」查看' : '当前缺料已全部有未完成申请，或缺料物料未设置供应商', null, ['created' => $created]);
+        }
+        $msg = $created > 0 ? '已生成 ' . $created . ' 条采购申请' : '当前无新申请（缺料已申请或物料需先设置供应商）';
+        return redirect((string) url('mes/order/materialList', ['id' => $orderId]) . '?toast=' . urlencode($msg));
+    }
+
+    /**
+     * 单独申请：为某一条订单物料（缺料）生成一条采购申请
+     */
+    public function applyPurchaseOne(): Response
+    {
+        $orderMaterialId = (int) $this->request->param('order_material_id', 0);
+        if ($orderMaterialId <= 0) {
+            return $this->error('参数错误');
+        }
+        $tenantId = $this->getTenantId();
+        $om = OrderMaterialModel::with(['material'])->where('tenant_id', $tenantId)->find($orderMaterialId);
+        if (!$om || !$om->material) {
+            return $this->error('订单物料不存在');
+        }
+        $material = $om->material;
+        $requiredQty = $om->required_quantity;
+        $currentStock = (float) ($material->stock ?? 0);
+        if ($currentStock >= $requiredQty) {
+            return $this->error('该物料库存已充足，无需申请');
+        }
+        $shortageQty = $requiredQty - $currentStock;
+        $supplierId = $om->supplier_id ?: ($material->default_supplier_id ?? 0);
+        if (!$supplierId) {
+            return $this->error('该物料未设置供应商，请先在物料或订单物料中维护供应商');
+        }
+        $exists = PurchaseRequestModel::where('tenant_id', $tenantId)->where('order_material_id', $orderMaterialId)->where('status', '<', 2)->find();
+        if ($exists) {
+            return $this->error('该物料已有未完成的采购申请');
+        }
+        $om->stock_status = 1;
+        $om->save();
+        PurchaseRequestModel::create([
+            'tenant_id' => $tenantId,
+            'request_no' => PurchaseRequestModel::generateRequestNo(),
+            'material_id' => $material->id,
+            'order_id' => $om->order_id,
+            'order_material_id' => $om->id,
+            'required_quantity' => $shortageQty,
+            'estimated_price' => $material->current_price,
+            'estimated_amount' => $shortageQty * $material->current_price,
+            'supplier_id' => $supplierId,
+            'status' => 0,
+            'remark' => '订单物料清单单独申请',
+            'create_time' => time(),
+            'update_time' => time(),
+        ]);
+        $om->purchase_status = 1;
+        $om->save();
+        if ($this->request->isAjax() || $this->request->get('ajax')) {
+            return $this->success('已生成采购申请', null, ['created' => 1]);
+        }
+        return redirect((string) url('mes/order/materialList', ['id' => $om->order_id]) . '?toast=' . urlencode('已为该物料生成采购申请'));
     }
 
     /**
@@ -604,5 +687,398 @@ class Order extends Backend
         View::assign('shortageCount', $shortageCount);
         View::assign('title', '订单物料清单');
         return $this->fetchWithLayout('mes/order/material_list');
+    }
+
+    /**
+     * Excel 批量导入订单（按 产品名称、型号、型号备注(编号)、数量、客户资料 等）
+     */
+    public function import(): string|Response
+    {
+        $tenantId = $this->getTenantId();
+        // 仅显示当前租户的客户（传 id+name 列表，模板里用真实 id 作 option value，避免 volist key 为序号）
+        $customerList = CustomerModel::where('tenant_id', $tenantId)
+            ->where('status', 1)
+            ->order('id', 'desc')
+            ->column('customer_name', 'id');
+        $customerOptions = [];
+        foreach ($customerList ?: [] as $id => $name) {
+            $customerOptions[] = ['id' => (int) $id, 'customer_name' => $name];
+        }
+        View::assign('customerOptions', $customerOptions);
+
+        if ($this->request->isPost()) {
+            $file = $this->request->file('file');
+            if (!$file || !$file->getOriginalName()) {
+                return $this->error('请选择要上传的 Excel 文件');
+            }
+            $ext = strtolower(pathinfo($file->getOriginalName(), PATHINFO_EXTENSION));
+            if (!in_array($ext, ['xlsx', 'xls'], true)) {
+                return $this->error('仅支持 .xlsx 或 .xls 格式');
+            }
+
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+                $sheet = $spreadsheet->getActiveSheet();
+                $rows = $sheet->toArray();
+
+                // 模板列：A=0 序号, B=1 产品名称, C=2 颜色, D=3 型号(旧模板可能写规格), E=4 数量
+                $dataRows = [];
+                $startRow = 0;
+                if (count($rows) > 0) {
+                    $firstCell = isset($rows[0][1]) ? trim((string) $rows[0][1]) : '';
+                    if ($firstCell === '产品名称' || $firstCell === '产品名稱') {
+                        $startRow = 1;
+                    }
+                }
+                for ($i = $startRow, $len = count($rows); $i < $len; $i++) {
+                    $row = $rows[$i];
+                    $trimmed = array_map(function ($c) {
+                        $s = is_scalar($c) ? (string) $c : '';
+                        return trim($s);
+                    }, $row);
+                    if (array_filter($trimmed)) {
+                        $dataRows[] = $trimmed;
+                    }
+                }
+
+                $colIndex = 0;   // 序号
+                $colProduct = 1; // 产品名称
+                $colColor = 2;   // 颜色
+                $colModel = 3;   // 规格(即型号)，一个产品下多个型号用此列区分
+                $colQty = 4;     // 数量
+
+                $orderName = trim((string) $this->request->post('order_name', ''));
+                $customerId = (int) $this->request->post('customer_id', 0);
+                $deliveryTime = trim((string) $this->request->post('delivery_time', ''));
+                $remark = trim((string) $this->request->post('remark', ''));
+
+                if ($customerId <= 0) {
+                    return $this->error('请选择客户');
+                }
+                $importUseCustomerTenant = false; // 是否因平台管理员而使用了客户所属租户
+                $customer = CustomerModel::where('tenant_id', $tenantId)->find($customerId);
+                if (!$customer) {
+                    $other = CustomerModel::find($customerId);
+                    if ($other) {
+                        // 当前为平台管理员(租户0)时，允许按客户所属租户导入
+                        if ($tenantId === 0) {
+                            $tenantId = (int) $other->tenant_id;
+                            $customer = $other;
+                            $importUseCustomerTenant = true;
+                        } else {
+                            return $this->error('所选客户不在当前租户下，请选择本租户的客户或切换租户后重试（customer_id：' . $customerId . '，当前租户ID：' . $tenantId . '，客户租户ID：' . (int) $other->tenant_id . '）');
+                        }
+                    } else {
+                        return $this->error('所选客户不存在，请确认客户未删除且在当前租户下');
+                    }
+                }
+                if ($customer->status != 1) {
+                    return $this->error('所选客户已禁用');
+                }
+                $customerName = $customer->customer_name;
+                $customerPhone = $customer->contact_phone ?? '';
+
+                $productModels = [];
+                $skipped = [];
+                $remarkLines = []; // 完整产品名称（带-）用于写入订单备注
+
+                foreach ($dataRows as $rowIndex => $row) {
+                    $productNameCell = isset($row[$colProduct]) ? trim((string) $row[$colProduct]) : '';
+                    $color = isset($row[$colColor]) ? trim((string) $row[$colColor]) : '';
+                    $modelIdentifier = isset($row[$colModel]) ? trim((string) $row[$colModel]) : ''; // 规格列 = 型号
+                    $quantity = isset($row[$colQty]) ? (int) preg_replace('/[^0-9]/', '', (string) $row[$colQty]) : 0;
+
+                    if ($productNameCell === '' || $quantity <= 0) {
+                        continue;
+                    }
+
+                    // 产品名称：仅用“-”前部分作为产品名；若型号列为空且产品名带“-”，则用“-”后部分作为型号
+                    $productName = $productNameCell;
+                    if (strpos($productNameCell, '-') !== false) {
+                        $productName = trim((string) substr($productNameCell, 0, strpos($productNameCell, '-')));
+                        if ($modelIdentifier === '') {
+                            $modelIdentifier = trim((string) substr($productNameCell, strpos($productNameCell, '-') + 1));
+                        }
+                    }
+                    $remarkLines[] = $productNameCell . ' ' . $quantity . '件';
+
+                    // 按“产品 + 型号(规格列) + 颜色”匹配，一个产品对应多个型号
+                    $modelId = $this->findModelByProductAndModelAndColor($tenantId, $productName, $modelIdentifier, $color);
+                    if ($modelId === null) {
+                        $modelId = $this->ensureProductAndModel($tenantId, $productName, $modelIdentifier, $color);
+                    }
+                    if ($modelId === null) {
+                        $skipped[] = '第' . ($rowIndex + 2) . '行：未匹配且无法创建 产品「' . $productName . '」型号「' . $modelIdentifier . '」';
+                        continue;
+                    }
+
+                    $productModels[] = ['model_id' => $modelId, 'quantity' => $quantity];
+                }
+
+                if (empty($productModels)) {
+                    $msg = '没有可导入的明细';
+                    if (!empty($skipped)) {
+                        $msg .= '。' . implode('；', array_slice($skipped, 0, 5));
+                        if (count($skipped) > 5) {
+                            $msg .= '… 共 ' . count($skipped) . ' 行未匹配';
+                        }
+                    }
+                    return $this->error($msg);
+                }
+
+                $totalQty = array_sum(array_column($productModels, 'quantity'));
+                $finalOrderName = $orderName !== '' ? $orderName : ('Excel导入-' . date('Y-m-d H:i'));
+                $deliveryTs = $deliveryTime !== '' ? strtotime($deliveryTime) : null;
+                $remarkBase = $remark !== '' ? $remark : ('Excel导入 ' . date('Y-m-d H:i:s'));
+                $finalRemark = $remarkBase . "\n导入明细(原文)：\n" . implode("\n", $remarkLines);
+
+                Db::startTrans();
+                try {
+                    $order = OrderModel::create([
+                        'tenant_id' => $tenantId,
+                        'order_no' => OrderModel::generateOrderNo(),
+                        'order_name' => $finalOrderName,
+                        'customer_id' => $customerId,
+                        'customer_name' => $customerName,
+                        'customer_phone' => $customerPhone,
+                        'total_quantity' => $totalQty,
+                        'status' => 0,
+                        'delivery_time' => $deliveryTs,
+                        'remark' => $finalRemark,
+                    ]);
+
+                    $orderId = (int) $order->id;
+                    if ($orderId <= 0) {
+                        throw new \RuntimeException('订单创建后未获得有效ID');
+                    }
+
+                    $now = time();
+                    $orderModelRows = [];
+                    foreach ($productModels as $item) {
+                        $orderModelRows[] = [
+                            'tenant_id' => $tenantId,
+                            'order_id' => $orderId,
+                            'model_id' => (int) $item['model_id'],
+                            'quantity' => (int) $item['quantity'],
+                            'create_time' => $now,
+                        ];
+                    }
+                    if (!empty($orderModelRows)) {
+                        OrderModelModel::insertAll($orderModelRows);
+                    }
+
+                    $this->calculateMaterialsWithCost($orderId, $tenantId);
+                    $this->autoGeneratePurchaseRequests($orderId, $tenantId);
+
+                    Db::commit();
+                } catch (\Throwable $e) {
+                    Db::rollback();
+                    return $this->error('导入失败：' . $e->getMessage());
+                }
+
+                $msg = '导入成功，共 ' . count($productModels) . ' 条明细，总数量 ' . $totalQty;
+                if (!empty($skipped)) {
+                    $msg .= '；未匹配 ' . count($skipped) . ' 行';
+                }
+                if (!empty($importUseCustomerTenant)) {
+                    $msg .= '。订单所属租户ID：' . $tenantId . '，请在订单列表选择该租户查看';
+                }
+                return $this->success($msg, ['id' => $order->id]);
+            } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
+                return $this->error('Excel 读取失败：' . $e->getMessage());
+            } catch (\Throwable $e) {
+                return $this->error('处理失败：' . $e->getMessage());
+            }
+        }
+
+        View::assign('title', '订单 Excel 导入');
+        return $this->fetchWithLayout('mes/order/import');
+    }
+
+    /**
+     * 导入用：按“产品名称 + 型号(规格列) + 颜色”匹配，一个产品对应多个型号
+     */
+    private function findModelByProductAndModelAndColor(int $tenantId, string $productName, string $modelIdentifier, string $color): ?int
+    {
+        $product = ProductModel::where('tenant_id', $tenantId)
+            ->where('name', $productName)
+            ->where('status', 1)
+            ->find();
+        if (!$product) {
+            return null;
+        }
+
+        $query = ProductModelModel::where('tenant_id', $tenantId)
+            ->where('product_id', $product->id)
+            ->where('status', 1);
+
+        if ($modelIdentifier !== '') {
+            $m = (clone $query)->where('model_code', $modelIdentifier)->find();
+            if ($m) {
+                if ($color === '' || (string) $m->color === $color) {
+                    return (int) $m->id;
+                }
+            }
+            $m = (clone $query)->where('name', $modelIdentifier)->find();
+            if ($m) {
+                if ($color === '' || (string) $m->color === $color) {
+                    return (int) $m->id;
+                }
+            }
+        }
+
+        if ($color !== '') {
+            $query->where('color', $color);
+        }
+        $first = $query->find();
+        return $first ? (int) $first->id : null;
+    }
+
+    /**
+     * 根据产品名称、型号名称、型号备注(编号) 解析出 model_id，未找到返回 null（用于其他场景）
+     */
+    private function findModelByProductAndModel(int $tenantId, string $productName, string $modelName, string $modelCode): ?int
+    {
+        $product = ProductModel::where('tenant_id', $tenantId)
+            ->where('name', $productName)
+            ->where('status', 1)
+            ->find();
+        if (!$product) {
+            return null;
+        }
+
+        $query = ProductModelModel::where('tenant_id', $tenantId)
+            ->where('product_id', $product->id)
+            ->where('status', 1);
+
+        if ($modelCode !== '') {
+            $m = (clone $query)->where('model_code', $modelCode)->find();
+            if ($m) {
+                return (int) $m->id;
+            }
+        }
+        if ($modelName !== '') {
+            $m = (clone $query)->where('name', $modelName)->find();
+            if ($m) {
+                return (int) $m->id;
+            }
+        }
+        if ($modelCode === '' && $modelName === '') {
+            $first = $query->find();
+            if ($first) {
+                return (int) $first->id;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 导入时若产品/型号不存在则创建。规格列即型号，一个产品下可建多个型号。
+     * @return int|null 型号ID，失败返回 null
+     */
+    private function ensureProductAndModel(int $tenantId, string $productName, string $modelIdentifier, string $color): ?int
+    {
+        $productName = trim($productName);
+        if ($productName === '') {
+            return null;
+        }
+
+        $product = ProductModel::where('tenant_id', $tenantId)->where('name', $productName)->find();
+        if (!$product) {
+            $product = ProductModel::create([
+                'tenant_id' => $tenantId,
+                'name'      => $productName,
+                'code'      => $productName,
+                'status'    => 1,
+            ]);
+            if (!$product || (int) $product->id <= 0) {
+                return null;
+            }
+        }
+
+        $productId = (int) $product->id;
+        $modelName = $modelIdentifier !== '' ? $modelIdentifier : $productName;
+        $modelCode = $modelIdentifier;
+
+        $query = ProductModelModel::where('tenant_id', $tenantId)
+            ->where('product_id', $productId)
+            ->where('status', 1);
+        if ($modelCode !== '') {
+            $m = (clone $query)->where('model_code', $modelCode)->find();
+            if ($m) {
+                return (int) $m->id;
+            }
+        }
+        $m = (clone $query)->where('name', $modelName)->find();
+        if ($m) {
+            return (int) $m->id;
+        }
+        if ($color !== '') {
+            $m = (clone $query)->where('color', $color)->find();
+            if ($m) {
+                return (int) $m->id;
+            }
+        }
+
+        $modelRow = ProductModelModel::create([
+            'tenant_id'     => $tenantId,
+            'product_id'    => $productId,
+            'name'          => $modelName,
+            'model_code'    => $modelCode,
+            'color'         => $color,
+            'specification' => '', // 导入中“规格”列即型号，不再写入表里的规格字段
+            'status'        => 1,
+        ]);
+        return $modelRow && (int) $modelRow->id > 0 ? (int) $modelRow->id : null;
+    }
+
+    /**
+     * 下载订单导入 Excel 模板
+     */
+    public function downloadTemplate(): Response
+    {
+        try {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('订单导入');
+
+            $headers = ['序号', '产品名称', '颜色', '型号', '数量'];
+            $col = 'A';
+            foreach ($headers as $h) {
+                $sheet->setCellValue($col . '1', $h);
+                $col++;
+            }
+            $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+
+            $examples = [
+                [1, '30013', '白色', '7', 45],
+                [2, '30013', '黑色', '10', 30],
+            ];
+            $row = 2;
+            foreach ($examples as $r) {
+                $sheet->setCellValue('A' . $row, $r[0]);
+                $sheet->setCellValue('B' . $row, $r[1]);
+                $sheet->setCellValue('C' . $row, $r[2]);
+                $sheet->setCellValue('D' . $row, $r[3]);
+                $sheet->setCellValue('E' . $row, $r[4]);
+                $row++;
+            }
+
+            $sheet->getColumnDimension('A')->setWidth(8);
+            $sheet->getColumnDimension('B')->setWidth(16);
+            $sheet->getColumnDimension('C')->setWidth(10);
+            $sheet->getColumnDimension('D')->setWidth(12);
+            $sheet->getColumnDimension('E')->setWidth(10);
+
+            $filename = '订单导入模板_' . date('YmdHis') . '.xlsx';
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename*="UTF-8\'\'' . rawurlencode($filename) . '"');
+            header('Cache-Control: max-age=0');
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (\Throwable $e) {
+            return $this->error('模板生成失败：' . $e->getMessage());
+        }
     }
 }

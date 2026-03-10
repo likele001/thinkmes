@@ -17,7 +17,7 @@ class Log extends Backend
         $offsetParam = $this->request->get('offset');
         $isDataRequest = ($limitParam !== null && $limitParam !== '') || ($offsetParam !== null && $offsetParam !== '');
         if (!$isDataRequest && !$this->request->isAjax()) {
-            View::assign('title', '操作日志');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('log/index');
         }
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));

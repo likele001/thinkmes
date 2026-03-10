@@ -16,7 +16,7 @@ class AuthRule extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '权限规则');
+            View::assign('title', __("title"));
             return $this->fetchWithLayout('auth_rule/index');
         }
         // AJAX请求返回树形数据（用于前端表格显示）
@@ -37,10 +37,41 @@ class AuthRule extends Backend
         }
         $pid = (int) $this->request->get('pid', 0);
         $parents = (new AuthRuleModel())->getTree(0, false);
-        View::assign('parents', $parents);
+        View::assign('parentOptions', $this->buildParentOptions($parents, null));
         View::assign('data', ['pid' => $pid, 'type' => 1, 'ismenu' => 1, 'status' => 1, 'sort' => 0]);
-        View::assign('title', '添加权限规则');
+        View::assign('title', __("add_title"));
         return $this->fetchWithLayout('auth_rule/add');
+    }
+
+    /**
+     * 将树形规则转为父级下拉选项（主菜单 + 各级菜单），编辑时排除当前节点及其子节点
+     * @param array $tree getTree 返回的树
+     * @param int|null $excludeId 编辑时传入当前规则 id，不列入选项且不递归其子节点
+     * @return array [['id'=>0,'title'=>'主菜单'], ['id'=>1,'title'=>'  └ 标题'], ...]
+     */
+    private function buildParentOptions(array $tree, ?int $excludeId, int $level = 0): array
+    {
+        $options = [];
+        if ($level === 0) {
+            $options[] = ['id' => 0, 'title' => __('parent_main_menu'), 'level' => 0];
+        }
+        $prefix = str_repeat('　', $level) . ($level > 0 ? '└ ' : '');
+        foreach ($tree as $item) {
+            $id = (int) ($item['id'] ?? 0);
+            if ($id === $excludeId) {
+                continue;
+            }
+            $title = $prefix . ($item['title'] ?? $item['name'] ?? '');
+            $options[] = ['id' => $id, 'title' => $title, 'level' => $level];
+            $children = $item['children'] ?? [];
+            if (!empty($children)) {
+                $options = array_merge(
+                    $options,
+                    $this->buildParentOptions($children, $excludeId, $level + 1)
+                );
+            }
+        }
+        return $options;
     }
 
     public function addPost(): Response
@@ -91,9 +122,9 @@ class AuthRule extends Backend
             return $this->error('记录不存在');
         }
         $parents = (new AuthRuleModel())->getTree(0, false);
-        View::assign('parents', $parents);
+        View::assign('parentOptions', $this->buildParentOptions($parents, $id));
         View::assign('data', $data->toArray());
-        View::assign('title', '编辑权限规则');
+        View::assign('title', __("edit_title"));
         return $this->fetchWithLayout('auth_rule/edit');
     }
 
