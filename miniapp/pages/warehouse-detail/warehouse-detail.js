@@ -1,18 +1,25 @@
 const { adminApi } = require('../../utils/api.js');
 
 Page({
-  data: { id: 0, detail: null, loading: true },
+  data: { id: 0, detail: {}, loading: false },
+
   onLoad(options) {
-    const id = options.id || 0;
-    if (!id) { this.setData({ loading: false }); return; }
+    const id = options.id ? parseInt(options.id, 10) : 0;
     this.setData({ id });
-    adminApi.getWarehouseDetail(id)
+    if (id) this.load();
+  },
+
+  load() {
+    this.setData({ loading: true });
+    adminApi.getWarehouseDetail(this.data.id)
       .then((res) => {
-        this.setData({ detail: res.data || null, loading: false });
+        const detail = res.data && typeof res.data === 'object' ? res.data : null;
+        this.setData({ detail, loading: false });
       })
-      .catch(() => { this.setData({ loading: false }); });
+      .catch(() => { this.setData({ detail: null, loading: false }); });
   },
-  goEdit() {
-    if (this.data.id) wx.navigateTo({ url: '/pages/warehouse-edit/warehouse-edit?id=' + this.data.id });
-  },
+
+  goBack() { wx.navigateBack(); },
+  goEdit() { wx.navigateTo({ url: '/pages/warehouse-edit/warehouse-edit?id=' + this.data.id }); },
+  goStock() { wx.navigateTo({ url: '/pages/stock/stock?warehouse_id=' + this.data.id }); },
 });

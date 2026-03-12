@@ -1,1 +1,4 @@
-{ "navigationBarTitleText": "报工审核", "usingComponents": {} }
+{
+  "navigationBarTitleText": "报工管理",
+  "usingComponents": {}
+}

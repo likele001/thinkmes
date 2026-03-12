@@ -1,5 +1,9 @@
-<view class="container">
-  <view class="form-card">
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑分工' : '新增分工'}}</text>
+  </view>
+  <view class="card">
     <view class="form-item">
       <text class="form-label">关联订单 *</text>
       <picker mode="selector" range="{{orderOptions}}" range-key="label" value="{{orderIndex}}" bindchange="pickOrder">
@@ -33,5 +37,5 @@
       </picker>
     </view>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

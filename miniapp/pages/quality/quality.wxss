@@ -1,8 +1,1 @@
-.tabs { display: flex; padding: 20rpx; background: #fff; }
-.tab { flex: 1; text-align: center; padding: 16rpx; }
-.tab.active { color: #1989fa; font-weight: bold; border-bottom: 2rpx solid #1989fa; }
-.row { display: flex; justify-content: space-between; }
-.title { font-weight: bold; }
-.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
-.empty { text-align: center; color: #999; padding: 32rpx; }
-.text-muted { font-size: 26rpx; color: #666; margin-top: 8rpx; }
+/* 质量管理 - adminweixin 风格 */

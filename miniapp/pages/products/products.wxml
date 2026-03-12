@@ -1,16 +1,23 @@
-<view class="container">
-  <view class="btn-bar">
-    <button class="btn-add" bindtap="goAdd">新增产品</button>
-    <button class="btn-batch" bindtap="goBatchModels">批量添加型号</button>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goIndex">← 首页</view>
+    <text class="page-title">产品管理</text>
   </view>
-  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
-    <view class="row" bindtap="goEdit" data-id="{{item.id}}">
-      <text class="title">{{item.name || item.product_name || '-'}}</text>
-    </view>
-    <view class="text-muted" wx:if="{{item.code}}">编码：{{item.code}}</view>
+  <view class="btn-bar-admin">
+    <button class="btn-primary" bindtap="goAdd">新增产品</button>
+  </view>
+  <view class="filter-bar">
+    <picker bindchange="onStatusChange" value="{{statusIndex}}" range="{{statusList}}">
+      <view class="picker">{{statusList[statusIndex]}}</view>
+    </picker>
+  </view>
+  <view class="list-item" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
+    <view class="row" bindtap="goDetail" data-id="{{item.id}}"><text class="title">{{item.name || '-'}}</text><text class="status-{{item.status}}">{{item.status == 1 ? '启用' : '禁用'}}</text></view>
+    <view class="text-muted">{{item.specification || item.description || '暂无描述'}}</view>
     <view class="btn-wrap">
-      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
-      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+      <button data-id="{{item.id}}" catchtap="goEdit">编辑</button>
+      <button data-id="{{item.id}}" catchtap="goModels">型号</button>
+      <button type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
     </view>
   </view>
   <view class="empty" wx:if="{{!loading && list.length===0}}">暂无产品</view>

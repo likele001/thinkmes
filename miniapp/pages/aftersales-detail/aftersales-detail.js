@@ -12,6 +12,7 @@ Page({
       })
       .catch(() => { this.setData({ loading: false }); });
   },
+  goBack() { wx.navigateBack(); },
   goEdit() {
     if (this.data.id) wx.navigateTo({ url: '/pages/aftersales-edit/aftersales-edit?id=' + this.data.id });
   },

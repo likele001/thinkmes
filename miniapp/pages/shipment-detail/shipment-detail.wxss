@@ -1,4 +1,7 @@
-.row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #eee; }
-.label { color: #666; }
-.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
-.btn-edit { margin: 32rpx 20rpx; background: #1989fa; color: #fff; }
+/* 发货详情 - adminweixin 风格 */
+.loading-tip { padding: 24px; text-align: center; color: #999; }
+.detail-table { margin-top: 12px; }
+.table-row { display: flex; padding: 8px 0; border-bottom: 1px solid #eee; }
+.table-row.head { font-weight: bold; color: #666; }
+.col-name { flex: 1; }
+.col-qty { width: 80px; text-align: right; }

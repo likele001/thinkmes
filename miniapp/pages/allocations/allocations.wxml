@@ -1,17 +1,48 @@
-<view class="container">
-  <view class="btn-bar"><button class="btn-add" bindtap="goAdd">新增分工</button></view>
-  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
-    <view class="row" bindtap="goDetail" data-id="{{item.id}}">
-      <text class="title">{{item.model && item.model.product ? item.model.product.name : ''}} - {{item.model ? item.model.name : ''}}</text>
-    </view>
-    <view class="text-muted">订单：{{item.order && item.order.order_name ? item.order.order_name : item.order_no}}</view>
-    <view class="text-muted">工序：{{item.process ? item.process.name : ''}} · 数量 {{item.quantity}}</view>
-    <view class="btn-wrap">
-      <button size="mini" data-id="{{item.id}}" catchtap="goDetail">详情</button>
-      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
-      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+<view class="container admin-page">
+  <view class="top-nav">
+    <view class="nav-item" bindtap="goIndex"><text class="nav-text">首页</text></view>
+    <view class="nav-item active"><text class="nav-text">分工管理</text></view>
+    <view class="nav-item" bindtap="goReports"><text class="nav-text">报工管理</text></view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-text">订单管理</text></view>
+  </view>
+
+  <view class="header-actions">
+    <button class="btn-primary" bindtap="goAdd">新增分工</button>
+    <button class="btn-success" bindtap="refresh">刷新</button>
+  </view>
+
+  <view class="order-list">
+    <view class="allocation-item" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+      <view class="allocation-header">
+        <view class="allocation-title">{{item.model && item.model.product ? item.model.product.name : ''}} - {{item.model ? item.model.name : ''}}</view>
+        <view class="order-status {{item.status === 2 ? 'status-2' : item.status === 1 ? 'status-1' : 'status-0'}}">
+          {{item.status === 2 ? '已完成' : item.status === 1 ? '进行中' : '待开始'}}
+        </view>
+      </view>
+      <view class="allocation-info">
+        <view class="info-row"><text class="label">订单：</text><text class="value">{{item.order && item.order.order_name ? item.order.order_name : (item.order && item.order.order_no ? item.order.order_no : '-')}}</text></view>
+        <view class="info-row"><text class="label">工序：</text><text class="value">{{item.process ? item.process.name : '-'}}</text></view>
+        <view class="info-row"><text class="label">分配数量：</text><text class="value">{{item.quantity || 0}}</text></view>
+        <view class="info-row"><text class="label">已完成：</text><text class="value">{{item.completed_quantity || 0}}</text></view>
+        <view class="info-row"><text class="label">员工：</text><text class="value">{{item.user ? (item.user.nickname || item.user.username) : '-'}}</text></view>
+      </view>
+      <view class="order-actions" catchtap="stopPropagation">
+        <button class="btn-detail" catchtap="goDetail" data-id="{{item.id}}">详情</button>
+        <button class="btn-edit" catchtap="goEdit" data-id="{{item.id}}">编辑</button>
+        <button class="btn-delete" catchtap="confirmDelete" data-id="{{item.id}}">删除</button>
+      </view>
     </view>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无分工</view>
-  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+
+  <view class="empty" wx:if="{{!loading && list.length === 0}}">暂无分工记录</view>
+  <view class="load-more" wx:if="{{noMore === false && list.length > 0}}">
+    <button bindtap="loadMore" loading="{{loading}}">加载更多</button>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goIndex"><view class="nav-icon">🏠</view><text class="nav-text">首页</text></view>
+    <view class="nav-item active"><view class="nav-icon">📋</view><text class="nav-text">分工管理</text></view>
+    <view class="nav-item" bindtap="goReports"><view class="nav-icon">📊</view><text class="nav-text">报工管理</text></view>
+    <view class="nav-item" bindtap="goOrders"><view class="nav-icon">📦</view><text class="nav-text">订单管理</text></view>
+  </view>
 </view>

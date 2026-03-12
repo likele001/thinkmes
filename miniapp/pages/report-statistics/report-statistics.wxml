@@ -1,16 +1,21 @@
-<view class="container">
-  <view class="filter-row">
-    <picker mode="date" value="{{startDate}}" end="{{todayStr}}" bindchange="onStartChange"><view class="picker">{{startDate}}</view></picker>
-    <text class="to">至</text>
-    <picker mode="date" value="{{endDate}}" end="{{todayStr}}" bindchange="onEndChange"><view class="picker">{{endDate}}</view></picker>
-    <button class="btn-sm" bindtap="load">查询</button>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goIndex">← 首页</view>
+    <text class="page-title">报工统计</text>
   </view>
-  <view class="card" wx:if="{{summary}}">
-    <view class="section-title">汇总</view>
-    <view class="row"><text class="label">报工条数</text><text class="value">{{summary.report_count}}</text></view>
-    <view class="row"><text class="label">总产量</text><text class="value">{{summary.total_quantity}}</text></view>
-    <view class="row"><text class="label">总工资</text><text class="value text-primary">¥{{summary.total_wage}}</text></view>
+  <view class="card">
+    <view class="card-title">统计概览</view>
+    <view class="filter-section">
+      <picker mode="date" value="{{startDate}}" bindchange="onStartDateChange"><view class="picker">开始：{{startDate}}</view></picker>
+      <picker mode="date" value="{{endDate}}" bindchange="onEndDateChange"><view class="picker">结束：{{endDate}}</view></picker>
+      <button class="btn-primary" bindtap="load">查询</button>
+    </view>
+    <view class="metrics-section" wx:if="{{stats}}">
+      <view class="metric-item"><text class="metric-value">{{stats.total_count || 0}}</text><text class="metric-label">报工笔数</text></view>
+      <view class="metric-item"><text class="metric-value">¥{{stats.total_wage || 0}}</text><text class="metric-label">总工资</text></view>
+      <view class="metric-item"><text class="metric-value">{{stats.passed_count || 0}}</text><text class="metric-label">已通过</text></view>
+      <view class="metric-item"><text class="metric-value">{{stats.pending_count || 0}}</text><text class="metric-label">待审核</text></view>
+    </view>
   </view>
-  <view class="empty" wx:if="{{!loading && !summary}}">请选择日期范围并查询</view>
-  <view class="loading" wx:if="{{loading}}">加载中...</view>
+  <view class="empty" wx:if="{{!loading && !stats}}">选择日期后点击查询</view>
 </view>

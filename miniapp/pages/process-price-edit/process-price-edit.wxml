@@ -1,29 +1,13 @@
-<view class="container">
-  <view class="form-card">
-    <view class="form-item">
-      <text class="form-label">产品型号 *</text>
-      <view class="picker" bindtap="openModelSelect">{{modelLabel}}</view>
-    </view>
-    <view class="form-item">
-      <text class="form-label">工序 *</text>
-      <picker mode="selector" range="{{processOptions}}" range-key="name" value="{{processIndex}}" bindchange="pickProcess">
-        <view class="picker">{{processLabel}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">计件工价</text>
-      <input class="form-input" type="digit" placeholder="计件工价" value="{{price}}" bindinput="inputPrice"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">计时工价</text>
-      <input class="form-input" type="digit" placeholder="计时工价" value="{{timePrice}}" bindinput="inputTimePrice"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">状态</text>
-      <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
-        <view class="picker">{{statusText}}</view>
-      </picker>
-    </view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑工价' : '新增工价'}}</text>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <view class="card">
+    <view class="form-item"><text class="form-label">型号ID</text><input class="form-input" type="number" placeholder="型号ID" value="{{model_id}}" bindinput="inputModelId"/></view>
+    <view class="form-item"><text class="form-label">工序ID</text><input class="form-input" type="number" placeholder="工序ID" value="{{process_id}}" bindinput="inputProcessId"/></view>
+    <view class="form-item"><text class="form-label">单价 *</text><input class="form-input" type="digit" placeholder="单价" value="{{price}}" bindinput="inputPrice"/></view>
+    <view class="form-item"><text class="form-label">时价</text><input class="form-input" type="digit" placeholder="时价（可选）" value="{{time_price}}" bindinput="inputTimePrice"/></view>
+  </view>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

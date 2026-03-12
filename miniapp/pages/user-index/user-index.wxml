@@ -1,77 +1,113 @@
-<view class="container user-index">
-  <!-- 欢迎区（与 PC 一致） -->
-  <view class="welcome-card" wx:if="{{!loading}}">
-    <view class="welcome-title">欢迎，{{welcomeName}}</view>
-    <view class="welcome-date">{{todayDate}}</view>
-  </view>
-
-  <!-- 今日三指标（与 PC 三色块一致） -->
-  <view class="stats-row" wx:if="{{!loading}}">
-    <view class="stat-card stat-tasks">
-      <view class="stat-num">{{metrics.today_task_count || 0}}</view>
-      <view class="stat-label">今日任务</view>
-    </view>
-    <view class="stat-card stat-reports">
-      <view class="stat-num">{{metrics.today_report_quantity || 0}}</view>
-      <view class="stat-label">今日报工</view>
-    </view>
-    <view class="stat-card stat-wage">
-      <view class="stat-num">¥{{metrics.today_wage || '0'}}</view>
-      <view class="stat-label">今日工资</view>
+<view class="page-container">
+  <view class="top-nav">
+    <view class="nav-content">
+      <view class="nav-title">MES 工作台</view>
+      <view class="nav-actions">
+        <view class="nav-btn" bindtap="goProfile">
+          <text class="nav-icon">👤</text>
+        </view>
+      </view>
     </view>
   </view>
 
-  <view class="card loading-card" wx:if="{{loading}}">加载中...</view>
+  <view class="main-content">
+    <view class="user-card" wx:if="{{!loading}}">
+      <view class="user-header">
+        <view class="user-avatar">
+          <view class="avatar-placeholder">
+            <text class="avatar-text">{{avatarText}}</text>
+          </view>
+        </view>
+        <view class="user-info">
+          <text class="user-name">{{welcomeName}}</text>
+          <text class="user-id">{{todayDate}}</text>
+        </view>
+      </view>
+    </view>
 
-  <!-- 功能入口六宫格（与 PC 一致） -->
-  <view class="section-title">功能入口</view>
-  <view class="menu-grid" wx:if="{{!loading}}">
-    <view class="menu-tile" bindtap="goTasks">
-      <view class="menu-tile-icon">📋</view>
-      <view class="menu-tile-text">我的任务</view>
-      <view class="menu-tile-desc">查看分配任务</view>
+    <view class="stats-card" wx:if="{{!loading}}">
+      <view class="card-header">
+        <text class="card-title">今日概览</text>
+      </view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <view class="stat-content">
+            <text class="stat-number">{{metrics.today_task_count || 0}}</text>
+            <text class="stat-label">今日任务</text>
+          </view>
+          <view class="stat-icon task-icon"><text class="icon-text">📋</text></view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-content">
+            <text class="stat-number">{{metrics.today_report_quantity || 0}}</text>
+            <text class="stat-label">今日报工</text>
+          </view>
+          <view class="stat-icon report-icon"><text class="icon-text">📝</text></view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-content">
+            <text class="stat-number">¥{{metrics.today_wage || '0'}}</text>
+            <text class="stat-label">今日工资</text>
+          </view>
+          <view class="stat-icon wage-icon"><text class="icon-text">💰</text></view>
+        </view>
+      </view>
     </view>
-    <view class="menu-tile" bindtap="goScan">
-      <view class="menu-tile-icon">📷</view>
-      <view class="menu-tile-text">扫码报工</view>
-      <view class="menu-tile-desc">扫分工码报工</view>
+
+    <view class="loading-wrap" wx:if="{{loading}}">
+      <text class="loading-text">加载中...</text>
     </view>
-    <view class="menu-tile" bindtap="goReports">
-      <view class="menu-tile-icon">📝</view>
-      <view class="menu-tile-text">报工记录</view>
-      <view class="menu-tile-desc">历史报工列表</view>
+
+    <view class="quick-actions" wx:if="{{!loading}}">
+      <view class="action-item primary" bindtap="goTasks">
+        <view class="action-icon">📋</view>
+        <text class="action-text">我的任务</text>
+      </view>
+      <view class="action-item success" bindtap="goScan">
+        <view class="action-icon">📱</view>
+        <text class="action-text">扫码报工</text>
+      </view>
+      <view class="action-item warning" bindtap="goReports">
+        <view class="action-icon">📊</view>
+        <text class="action-text">报工记录</text>
+      </view>
+      <view class="action-item info" bindtap="goWages">
+        <view class="action-icon">💰</view>
+        <text class="action-text">我的工资</text>
+      </view>
+      <view class="action-item" bindtap="goProfile">
+        <view class="action-icon">👤</view>
+        <text class="action-text">个人中心</text>
+      </view>
+      <view class="action-item" bindtap="goAdmin">
+        <view class="action-icon">🔧</view>
+        <text class="action-text">管理端</text>
+      </view>
     </view>
-    <view class="menu-tile" bindtap="goWages">
-      <view class="menu-tile-icon">💰</view>
-      <view class="menu-tile-text">我的工资</view>
-      <view class="menu-tile-desc">工资明细</view>
-    </view>
-    <view class="menu-tile" bindtap="goProfile">
-      <view class="menu-tile-icon">👤</view>
-      <view class="menu-tile-text">个人中心</view>
-      <view class="menu-tile-desc">资料与设置</view>
-    </view>
-    <view class="menu-tile" bindtap="goAdmin">
-      <view class="menu-tile-icon">🔧</view>
-      <view class="menu-tile-text">管理端</view>
-      <view class="menu-tile-desc">进入管理后台</view>
+
+    <view class="menu-section" wx:if="{{!loading}}">
+      <view class="section-header">
+        <text class="section-title">我的任务</text>
+        <text class="section-desc">点击任务可进入报工</text>
+      </view>
+      <view class="task-list" wx:if="{{tasks.length > 0}}">
+        <view class="task-card" wx:for="{{tasks}}" wx:key="allocation_id" data-id="{{item.allocation_id}}" data-pending="{{item.pending_qty}}" bindtap="goTask">
+          <view class="task-header">
+            <text class="task-title">{{item.product_name}} - {{item.model_name}}</text>
+            <view class="task-status status-pending" wx:if="{{item.pending_qty > 0}}">
+              <text class="task-status-text">待报 {{item.pending_qty}}</text>
+            </view>
+            <view class="task-status status-success" wx:else>
+              <text class="task-status-text">已报满</text>
+            </view>
+          </view>
+          <view class="task-info">
+            <text class="info-text">{{item.order_name || item.order_no}} · {{item.process_name}}</text>
+            <text class="info-text">已报 {{item.reported_qty}} / 分配 {{item.assign_qty}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="empty" wx:else>暂无任务，请等待分工</view>
     </view>
   </view>
-
-  <!-- 快捷操作（与 PC 一致） -->
-  <view class="section-title">快捷操作</view>
-  <view class="quick-actions" wx:if="{{!loading}}">
-    <view class="quick-btn primary" bindtap="goTasks">查看任务</view>
-    <view class="quick-btn success" bindtap="goScan">扫码报工</view>
-    <view class="quick-btn outline" bindtap="goReports">报工记录</view>
-  </view>
-
-  <!-- 我的任务列表 -->
-  <view class="section-title" id="taskSection">我的任务</view>
-  <view class="card task-item" wx:for="{{tasks}}" wx:key="allocation_id" data-id="{{item.allocation_id}}" data-pending="{{item.pending_qty}}" bindtap="goTask" wx:if="{{!loading}}">
-    <view class="task-name">{{item.product_name}} - {{item.model_name}}</view>
-    <view class="text-muted">{{item.order_name || item.order_no}} · {{item.process_name}}</view>
-    <view class="task-qty">已报 {{item.reported_qty}} / 分配 {{item.assign_qty}} · 待报 <text class="text-primary">{{item.pending_qty}}</text></view>
-  </view>
-  <view class="empty" wx:if="{{!loading && tasks.length === 0}}">暂无任务，请等待分工</view>
 </view>

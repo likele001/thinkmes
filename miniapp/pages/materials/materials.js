@@ -22,6 +22,7 @@ Page({
   goAdd() { wx.navigateTo({ url: '/pages/material-edit/material-edit' }); },
   goDetail(e) { const id = e.currentTarget.dataset.id; if (id) wx.navigateTo({ url: '/pages/material-detail/material-detail?id=' + id }); },
   goEdit(e) { const id = e.currentTarget.dataset.id; if (id) wx.navigateTo({ url: '/pages/material-edit/material-edit?id=' + id }); },
+  goIndex() { wx.navigateTo({ url: '/pages/index/index' }); },
   confirmDelete(e) {
     const id = e.currentTarget.dataset.id;
     if (!id) return;

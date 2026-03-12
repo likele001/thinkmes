@@ -1,14 +1,11 @@
-<view class="container">
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">生成追溯码</text>
+  </view>
   <view class="card">
-    <view class="form-item">
-      <text class="label">报工ID</text>
-      <input class="input" type="number" placeholder="请输入报工记录ID" value="{{reportId}}" bindinput="onReportIdInput"/>
-    </view>
-    <button class="btn-primary" bindtap="generate">生成追溯码</button>
+    <view class="form-item"><text class="form-label">产品/型号ID</text><input class="form-input" type="number" placeholder="可选" value="{{model_id}}" bindinput="inputModelId"/></view>
+    <view class="form-item"><text class="form-label">数量 *</text><input class="form-input" type="number" placeholder="生成数量" value="{{count}}" bindinput="inputCount"/></view>
   </view>
-  <view class="card result" wx:if="{{result}}">
-    <view class="card-title">生成结果</view>
-    <view class="row"><text class="label">追溯码</text><text class="value">{{result.trace_code}}</text></view>
-    <view class="row" wx:if="{{result.qr_url}}"><text class="label">二维码链接</text><text class="value small">{{result.qr_url}}</text></view>
-  </view>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">生成</button>
 </view>

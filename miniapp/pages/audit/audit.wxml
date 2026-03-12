@@ -1,4 +1,8 @@
-<view class="container page-with-footer" wx:if="{{detail}}">
+<view class="container admin-page page-with-footer" wx:if="{{detail}}">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">报工审核</text>
+  </view>
   <view class="card">
     <view class="row"><text class="label">报工ID</text><text>{{detail.id}}</text></view>
     <view class="row"><text class="label">订单/产品/型号</text><text>{{detail.order_no}} · {{detail.product_name}} / {{detail.model_name}}</text></view>
@@ -39,11 +43,11 @@
   </view>
   <view class="card" wx:if="{{status===2}}">
     <view class="form-label">拒绝原因（必填）</view>
-    <textarea placeholder="请输入拒绝原因" value="{{auditReason}}" bindinput="inputReason" class="textarea"/>
+    <textarea placeholder="请输入拒绝原因" value="{{auditReason}}" bindinput="inputReason" class="textarea form-input"/>
   </view>
   <view class="card">
     <view class="form-label">审核备注（选填）</view>
-    <textarea placeholder="可选，补充说明" value="{{auditNotes}}" bindinput="inputNotes" class="textarea"/>
+    <textarea placeholder="可选，补充说明" value="{{auditNotes}}" bindinput="inputNotes" class="textarea form-input"/>
   </view>
   <view class="card">
     <view class="form-label">上传审核图片</view>
@@ -73,5 +77,5 @@
 <view class="footer-bar safe-area-bottom" wx:if="{{detail}}">
   <button class="btn-primary btn-block" loading="{{submitting}}" bindtap="submit">提交审核</button>
 </view>
-<view class="container" wx:elif="{{!detail && !loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>
+<view class="container admin-page" wx:elif="{{!detail && !loading}}">暂无数据</view>
+<view class="container admin-page" wx:else>加载中...</view>

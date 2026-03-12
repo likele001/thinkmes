@@ -1,21 +1,14 @@
-<view class="container">
-  <view class="form-card">
-    <view class="form-item">
-      <text class="form-label">物料ID *</text>
-      <input class="form-input" type="number" placeholder="物料ID（从物料列表查看）" value="{{materialId}}" bindinput="inputMaterialId"/>
-    </view>
-    <view class="form-item" wx:if="{{type !== 'check'}}">
-      <text class="form-label">数量 *</text>
-      <input class="form-input" type="digit" placeholder="数量" value="{{quantity}}" bindinput="inputQuantity"/>
-    </view>
-    <view class="form-item" wx:if="{{type === 'check'}}">
-      <text class="form-label">实盘数量 *</text>
-      <input class="form-input" type="digit" placeholder="实盘数量" value="{{actualQuantity}}" bindinput="inputActualQuantity"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">备注</text>
-      <input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
-    </view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">入库/出库</text>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">提交{{typeText}}</button>
+  <view class="card">
+    <view class="form-item"><text class="form-label">类型</text><picker mode="selector" range="{{opTypes}}" range-key="text" value="{{opIndex}}" bindchange="pickOp"><view class="picker">{{opTypes[opIndex].text}}</view></picker></view>
+    <view class="form-item"><text class="form-label">仓库ID *</text><input class="form-input" type="number" placeholder="仓库ID" value="{{warehouse_id}}" bindinput="inputWarehouseId"/></view>
+    <view class="form-item"><text class="form-label">物料ID *</text><input class="form-input" type="number" placeholder="物料ID" value="{{material_id}}" bindinput="inputMaterialId"/></view>
+    <view class="form-item"><text class="form-label">数量 *</text><input class="form-input" type="number" placeholder="数量" value="{{quantity}}" bindinput="inputQuantity"/></view>
+    <view class="form-item"><text class="form-label">备注</text><input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/></view>
+  </view>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">提交</button>
 </view>

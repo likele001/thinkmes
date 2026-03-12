@@ -51,7 +51,7 @@ $(function() {
     }
     // 初始化表格
     table.bootstrapTable({
-        url: '{:url("mes/stock/outbound")}',
+        url: '{:url("admin/mes.stock/outbound")}',
         method: 'get',
         pagination: true,
         sidePagination: 'server',
@@ -154,7 +154,7 @@ $(function() {
         var id = $(this).data('id');
         if (confirm('确定要确认出库吗？')) {
             $.ajax({
-                url: '{:url("mes/stock/confirmOutbound")}',
+                url: '{:url("admin/mes.stock/confirmOutbound")}',
                 type: 'post',
                 data: {
                     id: id

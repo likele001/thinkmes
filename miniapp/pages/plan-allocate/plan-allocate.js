@@ -18,6 +18,7 @@ Page({
       this.setData({ plan, processOptions, userOptions: uOpts, loading: false });
     }).catch(() => { this.setData({ loading: false }); });
   },
+  goBack() { wx.navigateBack(); },
   pickProcess(e) {
     const idx = parseInt(e.currentTarget.dataset.idx, 10);
     const list = this.data.processOptions;

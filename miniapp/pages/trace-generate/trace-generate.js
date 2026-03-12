@@ -1,20 +1,18 @@
 const { adminApi } = require('../../utils/api.js');
 
 Page({
-  data: { reportId: '', result: null },
-  onReportIdInput(e) {
-    this.setData({ reportId: (e.detail.value || '').trim(), result: null });
-  },
-  generate() {
-    const reportId = (this.data.reportId || '').trim();
-    if (!reportId) {
-      wx.showToast({ title: '请输入报工ID', icon: 'none' });
-      return;
-    }
-    adminApi.generateTraceCode({ report_id: parseInt(reportId, 10) }).then((res) => {
-      const d = res.data || {};
-      this.setData({ result: { trace_code: d.trace_code || '', qr_url: d.qr_url || '' } });
-      wx.showToast({ title: res.msg || '生成成功' });
-    }).catch(() => {});
+  data: { model_id: '', count: '1', loading: false },
+
+  goBack() { wx.navigateBack(); },
+  inputModelId(e) { this.setData({ model_id: e.detail.value }); },
+  inputCount(e) { this.setData({ count: e.detail.value }); },
+
+  submit() {
+    const count = parseInt(this.data.count, 10);
+    if (!count || count < 1) { wx.showToast({ title: '请输入数量', icon: 'none' }); return; }
+    this.setData({ loading: true });
+    const data = { count };
+    if (this.data.model_id) data.model_id = parseInt(this.data.model_id, 10);
+    adminApi.generateTraceCode(data).then(() => { wx.showToast({ title: '生成成功' }); setTimeout(() => wx.navigateBack(), 500); }).catch(() => {}).finally(() => { this.setData({ loading: false }); });
   },
 });

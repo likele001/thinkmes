@@ -1,11 +1,17 @@
-<view class="container">
-  <view class="btn-bar"><button class="btn-add" bindtap="goAdd">新增供应商</button></view>
-  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
-    <view class="row" bindtap="goEdit" data-id="{{item.id}}"><text class="title">{{item.name || '-'}}</text></view>
-    <view class="text-muted">电话：{{item.contact_phone || '-'}} 联系人：{{item.contact_person || '-'}}</view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goIndex">← 首页</view>
+    <text class="page-title">供应商</text>
+  </view>
+  <view class="btn-bar-admin">
+    <button class="btn-primary" bindtap="goAdd">新增供应商</button>
+  </view>
+  <view class="list-item" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}">
+    <view class="row"><text class="title">{{item.name || item.supplier_name || '-'}}</text></view>
+    <view class="text-muted">{{item.contact || ''}} {{item.phone || ''}}</view>
     <view class="btn-wrap">
-      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
-      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+      <button data-id="{{item.id}}" catchtap="goEdit">编辑</button>
+      <button type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
     </view>
   </view>
   <view class="empty" wx:if="{{!loading && list.length===0}}">暂无供应商</view>

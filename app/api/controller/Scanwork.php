@@ -1829,7 +1829,7 @@ class Scanwork extends BaseController
         $out['audit_videos'] = [];
         if ($report->media && !$report->media->isEmpty()) {
             foreach ($report->media as $m) {
-                $url = $m->url ?? '';
+                $url = trim((string) ($m->url ?? ''), " \t\n\r\0\x0B\"'");
                 if ($url === '') {
                     continue;
                 }
@@ -1963,22 +1963,25 @@ class Scanwork extends BaseController
 
     private function parseMediaUrls($raw): array
     {
+        $trimQuotes = function ($u) {
+            return trim((string) $u, " \t\n\r\0\x0B\"'");
+        };
         if (is_array($raw)) {
-            return array_filter(array_map('trim', $raw));
+            return array_filter(array_map($trimQuotes, $raw));
         }
         if (is_string($raw) && $raw !== '') {
             $dec = json_decode($raw, true);
             if (is_array($dec)) {
-                return array_filter(array_map('trim', $dec));
+                return array_filter(array_map($trimQuotes, $dec));
             }
-            return array_filter(array_map('trim', preg_split('/[\s,]+/', $raw, -1, PREG_SPLIT_NO_EMPTY)));
+            return array_filter(array_map($trimQuotes, preg_split('/[\s,]+/', $raw, -1, PREG_SPLIT_NO_EMPTY)));
         }
         return [];
     }
 
     private function normalizeReportMediaUrl(string $url): string
     {
-        $url = trim($url);
+        $url = trim($url, " \t\n\r\0\x0B\"'");
         if ($url === '') {
             return '';
         }

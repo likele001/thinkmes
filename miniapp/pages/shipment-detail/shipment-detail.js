@@ -1,18 +1,32 @@
 const { adminApi } = require('../../utils/api.js');
 
 Page({
-  data: { id: 0, detail: null, loading: true },
+  data: { id: 0, detail: {}, loading: false },
+
   onLoad(options) {
-    const id = options.id || 0;
-    if (!id) { this.setData({ loading: false }); return; }
+    const id = options.id ? parseInt(options.id, 10) : 0;
     this.setData({ id });
-    adminApi.getShipmentDetail(id)
+    if (id) this.load();
+  },
+
+  load() {
+    this.setData({ loading: true });
+    adminApi.getShipmentDetail(this.data.id)
       .then((res) => {
-        this.setData({ detail: res.data || null, loading: false });
+        const raw = res.data && typeof res.data === 'object' ? res.data : null;
+        if (!raw) {
+          this.setData({ detail: null, items: [], loading: false });
+          return;
+        }
+        const detail = raw;
+        if (detail.customer) detail.customer_name = detail.customer.name;
+        if (detail.order) detail.order_no = detail.order.order_no;
+        const items = detail.items || [];
+        this.setData({ detail, items, loading: false });
       })
-      .catch(() => { this.setData({ loading: false }); });
+      .catch(() => { this.setData({ detail: null, items: [], loading: false }); });
   },
-  goEdit() {
-    if (this.data.id) wx.navigateTo({ url: '/pages/shipment-edit/shipment-edit?id=' + this.data.id });
-  },
+
+  goBack() { wx.navigateBack(); },
+  goEdit() { wx.navigateTo({ url: '/pages/shipment-edit/shipment-edit?id=' + this.data.id }); },
 });

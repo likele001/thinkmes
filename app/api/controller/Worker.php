@@ -480,7 +480,7 @@ class Worker extends BaseController
         $out['audit_videos'] = [];
         if ($report->media && !$report->media->isEmpty()) {
             foreach ($report->media as $m) {
-                $url = $m->url ?? '';
+                $url = trim((string) ($m->url ?? ''), " \t\n\r\0\x0B\"'");
                 if ($url === '') {
                     continue;
                 }

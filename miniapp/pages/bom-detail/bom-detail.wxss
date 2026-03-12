@@ -3,6 +3,7 @@
 .card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
 .card-title { font-weight: bold; margin-bottom: 16rpx; }
 .head { color: #666; }
+.col-qty { min-width: 80rpx; text-align: right; }
 .btn-row { display: flex; gap: 20rpx; padding: 20rpx; }
 .btn-edit, .btn-approve { flex: 1; background: #1989fa; color: #fff; }
 .btn-approve { background: #10b981; }

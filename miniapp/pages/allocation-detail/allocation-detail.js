@@ -19,11 +19,11 @@ Page({
         d.product_name = product.name || '';
         d.model_name = model.name || '';
         d.process_name = (d.process && d.process.name) ? d.process.name : '';
-        d.assignee_name = (d.user && (d.user.nickname || d.user.username)) || '未分配';
       }
       this.setData({ detail: d, loading: false });
     }).catch(() => { this.setData({ loading: false }); });
   },
+  goBack() { wx.navigateBack(); },
   goEdit() {
     wx.navigateTo({ url: '/pages/allocation-edit/allocation-edit?id=' + this.data.id });
   },

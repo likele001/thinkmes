@@ -2,6 +2,7 @@ const { adminApi } = require('../../utils/api.js');
 
 Page({
   data: { id: 0, customer_name: '', contact_phone: '', contact_person: '', address: '', loading: false },
+  goBack() { wx.navigateBack(); },
   onLoad(options) {
     const id = options.id ? parseInt(options.id, 10) : 0;
     this.setData({ id });

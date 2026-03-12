@@ -1,6 +1,68 @@
-.scan-page { padding: 48rpx 40rpx; min-height: 100vh; background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 100%); }
-.scan-page .tip-card { text-align: center; padding: 48rpx 32rpx; margin-bottom: 48rpx; }
-.tip-title { font-size: 34rpx; font-weight: 700; color: #1e293b; margin-bottom: 20rpx; }
-.tip-desc { font-size: 26rpx; color: #64748b; line-height: 1.5; }
-.scan-btn { margin-top: 32rpx; }
-.back-link { margin-top: 40rpx; text-align: center; color: #6366f1; font-size: 28rpx; }
+/* 扫码报工 - adminweixin 风格 */
+.page-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.scan-area { text-align: center; padding: 60rpx 40rpx; }
+.scan-icon { font-size: 120rpx; margin-bottom: 40rpx; }
+.scan-title { font-size: 48rpx; font-weight: bold; color: #fff; margin-bottom: 20rpx; text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.2); }
+.scan-desc { font-size: 28rpx; color: rgba(255,255,255,0.9); margin-bottom: 60rpx; }
+
+.scan-btn {
+  background: rgba(255, 255, 255, 0.95);
+  color: #667eea;
+  border: none;
+  border-radius: 48rpx;
+  padding: 28rpx 80rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+}
+.scan-btn[disabled] { opacity: 0.7; color: #999; }
+
+.scan-result { width: 100%; max-width: 600rpx; }
+.result-header { text-align: center; margin-bottom: 40rpx; }
+.result-icon { font-size: 80rpx; margin-bottom: 20rpx; }
+.result-title { font-size: 36rpx; font-weight: bold; color: #fff; }
+
+.result-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.15);
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.result-item { display: flex; margin-bottom: 24rpx; }
+.result-item:last-child { margin-bottom: 0; }
+.item-label { width: 160rpx; font-size: 28rpx; color: #666; }
+.item-value { flex: 1; font-size: 28rpx; color: #333; font-weight: 500; }
+.text-primary { color: #667eea; font-weight: 600; }
+
+.result-actions { display: flex; flex-direction: column; gap: 20rpx; }
+.result-actions .btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  border-radius: 44rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.result-actions .btn-secondary {
+  background: rgba(255,255,255,0.9);
+  color: #667eea;
+  border: 2rpx solid #667eea;
+  border-radius: 44rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+}

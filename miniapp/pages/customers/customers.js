@@ -22,6 +22,7 @@ Page({
   },
   goAdd() { wx.navigateTo({ url: '/pages/customer-edit/customer-edit' }); },
   goEdit(e) { const id = e.currentTarget.dataset.id; if (id) wx.navigateTo({ url: '/pages/customer-edit/customer-edit?id=' + id }); },
+  goIndex() { wx.navigateTo({ url: '/pages/index/index' }); },
   confirmDelete(e) {
     const id = e.currentTarget.dataset.id;
     if (!id) return;

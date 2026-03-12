@@ -1,31 +1,47 @@
-<view class="container">
+<view class="container admin-page">
+  <view class="top-nav">
+    <view class="nav-item" bindtap="goIndex"><text class="nav-text">首页</text></view>
+    <view class="nav-item active"><text class="nav-text">报工管理</text></view>
+    <view class="nav-item" bindtap="goAllocations"><text class="nav-text">分工管理</text></view>
+    <view class="nav-item" bindtap="goOrders"><text class="nav-text">订单管理</text></view>
+  </view>
+
   <view class="filter-bar">
-    <view class="tab {{statusFilter===''?'active':''}}" data-status="" bindtap="setStatus">全部</view>
-    <view class="tab {{statusFilter==='0'?'active':''}}" data-status="0" bindtap="setStatus">待审核</view>
-    <view class="tab {{statusFilter==='1'?'active':''}}" data-status="1" bindtap="setStatus">已通过</view>
-    <view class="tab {{statusFilter==='2'?'active':''}}" data-status="2" bindtap="setStatus">已拒绝</view>
+    <picker bindchange="onStatusChange" value="{{statusIndex}}" range="{{statusList}}">
+      <view class="picker">{{statusList[statusIndex]}}</view>
+    </picker>
   </view>
-  <view class="card report-item" wx:for="{{list}}" wx:key="id">
-    <view class="row head">
-      <text class="title">#{{item.id}}</text>
-      <text class="status status-{{item.status}}">{{item.status===1?'已通过':(item.status===2?'已拒绝':'待审核')}}</text>
-    </view>
-    <view class="row" bindtap="goDetail" data-id="{{item.id}}">
-      <text class="muted">{{item.order_no}} · {{item.product_name}} / {{item.model_name}}</text>
-    </view>
-    <view class="row">
-      <text class="muted">工序 {{item.process_name}} · 数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</text>
-    </view>
-    <view class="row" wx:if="{{item.user_name}}"><text class="muted">报工人 {{item.user_name}}</text></view>
-    <view class="btn-wrap">
-      <button size="mini" type="primary" data-id="{{item.id}}" bindtap="goAudit" wx:if="{{item.status===0}}">审核</button>
-      <button size="mini" data-id="{{item.id}}" bindtap="goDetail">详情</button>
-      <button size="mini" type="warn" data-id="{{item.id}}" bindtap="confirmDelete">删除</button>
+
+  <view class="report-list">
+    <view class="report-item" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}" data-status="{{item.status}}">
+      <view class="report-header">
+        <view class="report-title">{{item.order_no}}</view>
+        <view class="report-status status-{{item.status}}">{{item.status === 0 ? '待审核' : item.status === 1 ? '已通过' : '已拒绝'}}</view>
+      </view>
+      <view class="report-info">
+        <view class="info-row"><text class="label">产品：</text><text class="value">{{item.product_name}} {{item.model_name}}</text></view>
+        <view class="info-row"><text class="label">工序：</text><text class="value">{{item.process_name}}</text></view>
+        <view class="info-row"><text class="label">员工：</text><text class="value">{{item.user_name}}</text></view>
+        <view class="info-row"><text class="label">报工数量：</text><text class="value">{{item.quantity}}</text></view>
+        <view class="info-row"><text class="label">工资：</text><text class="value">¥{{item.wage || 0}}</text></view>
+        <view class="info-row"><text class="label">报工时间：</text><text class="value">{{item.createtime_text || '-'}}</text></view>
+      </view>
+      <view class="report-actions" wx:if="{{item.status === 0}}" catchtap="stopPropagation">
+        <button class="btn-audit btn-pass" catchtap="auditReport" data-id="{{item.id}}" data-status="1">通过</button>
+        <button class="btn-audit btn-reject" catchtap="auditReport" data-id="{{item.id}}" data-status="2">拒绝</button>
+      </view>
     </view>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无报工</view>
-  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
-  <view class="link-row">
-    <navigator url="/pages/report-statistics/report-statistics">报工统计</navigator>
+
+  <view class="empty" wx:if="{{!loading && list.length === 0}}">暂无报工记录</view>
+  <view class="load-more" wx:if="{{!noMore && list.length > 0}}">
+    <button bindtap="loadMore" loading="{{loading}}">加载更多</button>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goIndex"><view class="nav-icon">🏠</view><text class="nav-text">首页</text></view>
+    <view class="nav-item active"><view class="nav-icon">📊</view><text class="nav-text">报工管理</text></view>
+    <view class="nav-item" bindtap="goAllocations"><view class="nav-icon">📋</view><text class="nav-text">分工管理</text></view>
+    <view class="nav-item" bindtap="goOrders"><view class="nav-icon">📦</view><text class="nav-text">订单管理</text></view>
   </view>
 </view>

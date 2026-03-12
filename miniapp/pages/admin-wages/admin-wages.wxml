@@ -1,54 +1,16 @@
-<view class="container">
-  <!-- 筛选（与PC一致：日期、员工） -->
-  <view class="card filter">
-    <view class="filter-row">
-      <text class="label">工作日期</text>
-      <picker mode="date" value="{{filterWorkDate}}" bindchange="onWorkDateChange">
-        <view class="picker">{{filterWorkDate || '全部'}}</view>
-      </picker>
-    </view>
-    <view class="filter-row">
-      <text class="label">员工</text>
-      <picker mode="selector" range="{{userOptions}}" range-key="name" value="{{filterUserIndex}}" bindchange="onUserChange">
-        <view class="picker">{{userOptions[filterUserIndex].name || '全部员工'}}</view>
-      </picker>
-    </view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goIndex">← 首页</view>
+    <text class="page-title">工资管理</text>
   </view>
-
-  <!-- 工资统计（按人汇总，与PC统计页一致） -->
   <view class="card stats" wx:if="{{stats && stats.list && stats.list.length}}">
     <view class="stats-title">工资统计（按人汇总）</view>
-    <view class="summary-row">
-      <text>人数 {{stats.total || 0}}</text>
-      <text>总金额 ¥{{totalWageSum}}</text>
-      <text>总数量 {{totalQuantitySum}}</text>
-    </view>
-    <view class="stats-table">
-      <view class="stats-head">
-        <text>员工</text><text>总数量</text><text>总工资</text><text>条数</text>
-      </view>
-      <view class="stats-row" wx:for="{{stats.list}}" wx:key="user_id">
-        <text>{{item.nickname || '用户'}}</text>
-        <text>{{item.total_quantity || 0}}</text>
-        <text>¥{{item.total_wage || 0}}</text>
-        <text>{{item.record_count || 0}}</text>
-      </view>
-    </view>
+    <view class="text-muted">人数：{{stats.total || 0}}</view>
   </view>
-
-  <!-- 工资明细列表（与PC明细一致） -->
-  <view class="card">
-    <view class="detail-title">工资明细</view>
-    <view class="detail-head">
-      <text>员工</text><text>工作日期</text><text>数量</text><text>总工资</text>
-    </view>
-    <view class="detail-row" wx:for="{{list}}" wx:key="id">
-      <text>{{item.user && item.user.nickname || item.nickname || '-'}}</text>
-      <text>{{item.work_date || '-'}}</text>
-      <text>{{item.quantity || 0}}</text>
-      <text>¥{{item.total_wage != null ? item.total_wage : 0}}</text>
-    </view>
+  <view class="list-item" wx:for="{{list}}" wx:key="id">
+    <view class="row"><text class="title">{{item.nickname || item.username || '用户'}} {{item.work_date || ''}}</text></view>
+    <view class="text-muted">工资金额：¥{{item.total_wage || item.wage || 0}} 数量：{{item.quantity || 0}}</view>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无工资明细</view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无工资数据</view>
   <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
 </view>

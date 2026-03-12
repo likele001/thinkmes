@@ -1,5 +1,9 @@
-<view class="container">
-  <view class="form-card">
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑物料' : '新增物料'}}</text>
+  </view>
+  <view class="card">
     <view class="form-item">
       <text class="form-label">物料名称 *</text>
       <input class="form-input" placeholder="物料名称" value="{{name}}" bindinput="inputName"/>
@@ -32,8 +36,8 @@
     </view>
     <view class="form-item">
       <text class="form-label">备注</text>
-      <textarea class="form-textarea" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
+      <textarea class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
     </view>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

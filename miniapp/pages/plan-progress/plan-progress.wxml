@@ -1,13 +1,14 @@
-<view class="container">
-  <view class="card" wx:if="{{plan}}">
-    <view class="row"><text class="label">计划</text><text>{{plan.plan_name || plan.plan_code}}</text></view>
-    <view class="row" wx:if="{{plan.model}}"><text class="label">产品型号</text><text>{{plan.model.product ? plan.model.product.name : ''}} - {{plan.model.name || ''}}</text></view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">计划进度</text>
   </view>
-  <view class="card progress-card">
-    <view class="stat-row"><text class="label">计划数量</text><text class="value">{{progress.total_quantity != null ? progress.total_quantity : (plan && plan.total_quantity) || 0}}</text></view>
-    <view class="stat-row"><text class="label">已完成</text><text class="value">{{progress.completed_quantity != null ? progress.completed_quantity : '-'}}</text></view>
-    <view class="stat-row"><text class="label">已报工数</text><text class="value">{{progress.reported_quantity != null ? progress.reported_quantity : '-'}}</text></view>
-    <view class="stat-row"><text class="label">完成进度</text><text class="value highlight">{{progress.progress != null ? progress.progress + '%' : '-'}}</text></view>
+  <view class="card" wx:if="{{planId}}">
+    <view class="card-title">进度明细</view>
+    <view class="list-item" wx:for="{{list}}" wx:key="id">
+      <view class="row"><text class="title">{{item.process_name || '工序'}}</text><text class="value">完成 {{item.finished_quantity || 0}} / {{item.plan_quantity || 0}}</text></view>
+      <view class="text-muted">{{item.user_name || ''}} {{item.createtime_text || ''}}</view>
+    </view>
+    <view class="empty" wx:if="{{!loading && list.length===0}}">暂无进度</view>
   </view>
-  <view class="loading" wx:if="{{loading}}">加载中...</view>
 </view>

@@ -1,7 +1,1 @@
-.btn-bar { padding: 20rpx; display: flex; gap: 20rpx; flex-wrap: wrap; }
-.btn-add { flex: 1; min-width: 160rpx; background: #1989fa; color: #fff; font-size: 28rpx; }
-.row { display: flex; justify-content: space-between; }
-.title { font-weight: bold; }
-.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
-.empty, .no-more { text-align: center; color: #999; padding: 32rpx; }
-.text-muted { font-size: 26rpx; color: #666; margin-top: 8rpx; }
+/* 库存 - adminweixin 风格 */

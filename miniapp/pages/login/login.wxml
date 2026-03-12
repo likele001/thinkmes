@@ -1,32 +1,74 @@
-<view class="container login-page">
-  <view class="mode-select" wx:if="{{waitingAuto}}">
-    <view class="logo">MES 工作台</view>
-    <view class="mode-title">正在登录...</view>
+<view class="login-container">
+  <view class="bg-decoration">
+    <view class="circle circle-1"></view>
+    <view class="circle circle-2"></view>
+    <view class="circle circle-3"></view>
   </view>
-  <view class="mode-select" wx:elif="{{!selectedMode}}">
-    <view class="logo">MES 工作台</view>
-    <view class="mode-title">请选择身份</view>
-    <view class="mode-card admin-card" bindtap="selectAdminMode">
-      <view class="mode-icon">👨‍💼</view>
-      <view class="mode-text">管理员登录</view>
-      <view class="mode-desc">管理订单、分工、报工审核等</view>
-    </view>
-    <view class="mode-card user-card" bindtap="selectUserMode">
-      <view class="mode-icon">👷</view>
-      <view class="mode-text">员工登录</view>
-      <view class="mode-desc">扫码报工、查看任务与工资</view>
+
+  <view class="login-mode-selector" wx:if="{{waitingAuto}}">
+    <view class="logo-section">
+      <view class="logo-icon">🏭</view>
+      <view class="logo-title">MES 工作台</view>
+      <view class="logo-subtitle">正在登录...</view>
     </view>
   </view>
 
-  <view class="admin-form" wx:if="{{selectedMode === 'admin'}}">
-    <view class="back-btn" bindtap="backToModeSelect">← 返回</view>
-    <view class="form-title">管理员登录</view>
-    <view class="form-item">
-      <input placeholder="用户名" value="{{username}}" bindinput="inputUsername"/>
+  <view class="login-mode-selector" wx:elif="{{!selectedMode}}">
+    <view class="logo-section">
+      <view class="logo-icon">🏭</view>
+      <view class="logo-title">MES 工作台</view>
+      <view class="logo-subtitle">请选择身份登录</view>
     </view>
-    <view class="form-item">
-      <input password placeholder="密码" value="{{password}}" bindinput="inputPassword"/>
+    <view class="mode-title">请选择您的身份</view>
+    <view class="mode-card admin-card" bindtap="selectAdminMode">
+      <view class="card-content">
+        <view class="mode-icon">👨‍💼</view>
+        <view class="mode-info">
+          <view class="mode-text">管理员登录</view>
+          <view class="mode-desc">管理订单、分工、报工审核等</view>
+        </view>
+        <view class="card-arrow">→</view>
+      </view>
     </view>
-    <button class="btn-primary" loading="{{loading}}" bindtap="adminLogin">登录</button>
+    <view class="mode-card user-card" bindtap="selectUserMode">
+      <view class="card-content">
+        <view class="mode-icon">👷</view>
+        <view class="mode-info">
+          <view class="mode-text">员工登录</view>
+          <view class="mode-desc">扫码报工、查看任务与工资</view>
+        </view>
+        <view class="card-arrow">→</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-form" wx:if="{{selectedMode === 'admin'}}">
+    <view class="form-header">
+      <view class="back-btn" bindtap="backToModeSelect">
+        <view class="back-icon">←</view>
+        <text>返回选择</text>
+      </view>
+      <view class="form-title">管理员登录</view>
+    </view>
+    <view class="form-content">
+      <view class="form-item">
+        <view class="input-wrapper">
+          <view class="input-icon">👤</view>
+          <input class="input" type="text" placeholder="请输入用户名" value="{{username}}" bindinput="inputUsername"/>
+        </view>
+      </view>
+      <view class="form-item">
+        <view class="input-wrapper">
+          <view class="input-icon">🔒</view>
+          <input class="input" type="password" placeholder="请输入密码" value="{{password}}" bindinput="inputPassword"/>
+        </view>
+      </view>
+      <view class="form-item">
+        <button class="btn-login" bindtap="adminLogin" loading="{{loading}}">
+          <text wx:if="{{!loading}}">登录系统</text>
+          <text wx:else>登录中...</text>
+        </button>
+      </view>
+    </view>
   </view>
 </view>

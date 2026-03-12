@@ -68,31 +68,20 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#4f46e5",
+    "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTitleText": "MES工作台",
-    "navigationBarTextStyle": "white"
+    "navigationBarTextStyle": "black"
   },
   "tabBar": {
-    "color": "#64748b",
-    "selectedColor": "#4f46e5",
-    "backgroundColor": "#fff",
+    "color": "#7A7E83",
+    "selectedColor": "#3cc51f",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
     "list": [
-      {
-        "pagePath": "pages/user-index/user-index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/user-reports/user-reports",
-        "text": "报工记录"
-      },
-      {
-        "pagePath": "pages/user-wages/user-wages",
-        "text": "我的工资"
-      },
-      {
-        "pagePath": "pages/user-profile/user-profile",
-        "text": "我的"
-      }
+      { "pagePath": "pages/user-index/user-index", "text": "首页" },
+      { "pagePath": "pages/user-reports/user-reports", "text": "报工记录" },
+      { "pagePath": "pages/user-wages/user-wages", "text": "我的工资" },
+      { "pagePath": "pages/user-profile/user-profile", "text": "我的" }
     ]
   },
   "sitemapLocation": "sitemap.json"

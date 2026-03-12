@@ -1,18 +1,77 @@
-<view class="container">
-  <view class="card" wx:for="{{list}}" wx:key="id">
-    <view class="row">
-      <text class="label">日期</text>
-      <text>{{item.work_date}}</text>
-    </view>
-    <view class="row">
-      <text class="label">数量</text>
-      <text>{{item.quantity}}</text>
-    </view>
-    <view class="row">
-      <text class="label">工资</text>
-      <text class="text-primary">¥ {{item.total_wage}}</text>
+<view class="page-container">
+  <view class="top-nav">
+    <view class="nav-content">
+      <view class="nav-title">我的工资</view>
+      <view class="nav-actions">
+        <view class="nav-btn" bindtap="refresh">
+          <text class="nav-icon">🔄</text>
+        </view>
+      </view>
     </view>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无工资记录</view>
-  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+
+  <view class="main-content">
+    <view class="wage-overview" wx:if="{{!loading && (totalWage > 0 || wageList.length > 0)}}">
+      <view class="overview-header">
+        <text class="overview-title">工资概览</text>
+        <text class="overview-period">{{selectedMonth || '本月'}}</text>
+      </view>
+      <view class="overview-stats">
+        <view class="overview-item">
+          <text class="overview-number">¥{{totalWage}}</text>
+          <text class="overview-label">总工资</text>
+        </view>
+        <view class="overview-item">
+          <text class="overview-number">{{totalQuantity}}</text>
+          <text class="overview-label">总报工数</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="loading-wrap">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <view wx:elif="{{wageList.length === 0}}" class="empty-wrap">
+      <view class="empty-icon">💰</view>
+      <text class="empty-title">暂无工资记录</text>
+      <text class="empty-desc">该时段没有报工记录</text>
+      <view class="empty-action" bindtap="refresh"><text class="action-text">刷新</text></view>
+    </view>
+
+    <view wx:else class="wage-list">
+      <view wx:for="{{wageList}}" wx:key="id" class="wage-card">
+        <view class="wage-header">
+          <view class="wage-title">
+            <text class="product-name">{{item.product_name || '产品'}}</text>
+            <text class="model-name">- {{item.model_name || ''}}</text>
+          </view>
+          <view class="wage-amount">
+            <text class="amount-text">¥{{item.wage || 0}}</text>
+          </view>
+        </view>
+        <view class="wage-info">
+          <view class="info-row">
+            <text class="info-label">订单</text>
+            <text class="info-value">{{item.order_no || '-'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">工序</text>
+            <text class="info-value">{{item.process_name || '-'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">数量</text>
+            <text class="info-value">{{item.quantity}}</text>
+          </view>
+        </view>
+        <view class="wage-footer">
+          <text class="time-text">🕒 {{item.createtime_text || item.createtime || ''}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!loading && hasMore && wageList.length > 0}}" class="load-more" bindtap="loadMore">
+      <text>加载更多</text>
+    </view>
+  </view>
 </view>

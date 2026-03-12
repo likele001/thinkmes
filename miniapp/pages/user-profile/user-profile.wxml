@@ -1,14 +1,63 @@
-<view class="container">
-  <view class="card" wx:if="{{userInfo}}">
-    <view class="profile-row">
-      <text class="label">昵称</text>
-      <text>{{userInfo.nickname || userInfo.username || '-'}}</text>
+<view class="page-container">
+  <view class="top-nav">
+    <view class="nav-content">
+      <view class="nav-title">我的</view>
     </view>
   </view>
-  <view class="card">
-    <view class="menu-item" bindtap="goAdmin">进入管理端</view>
-  </view>
-  <view class="card">
-    <button class="btn-logout" bindtap="logout">退出登录</button>
+
+  <view class="main-content">
+    <view class="user-card">
+      <view class="user-header">
+        <view class="user-avatar">
+          <view class="avatar-placeholder">
+            <text class="avatar-text">{{avatarText}}</text>
+          </view>
+        </view>
+        <view class="user-info">
+          <text class="user-name">{{userInfo.nickname || userInfo.username || '员工'}}</text>
+          <text class="user-id">{{userInfo.username || '工号'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="menu-sections">
+      <view class="menu-section">
+        <view class="section-header">
+          <text class="section-title">报工管理</text>
+          <text class="section-desc">查看报工记录和工资统计</text>
+        </view>
+        <view class="menu-grid">
+          <view class="menu-item" bindtap="goReports">
+            <view class="menu-icon">📝</view>
+            <text class="menu-text">报工记录</text>
+          </view>
+          <view class="menu-item" bindtap="goWages">
+            <view class="menu-icon">💰</view>
+            <text class="menu-text">工资统计</text>
+          </view>
+          <view class="menu-item" bindtap="goScan">
+            <view class="menu-icon">📱</view>
+            <text class="menu-text">扫码报工</text>
+          </view>
+          <view class="menu-item" bindtap="goIndex">
+            <view class="menu-icon">🏠</view>
+            <text class="menu-text">首页</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="menu-section">
+        <view class="section-header">
+          <text class="section-title">系统</text>
+          <text class="section-desc">账户与安全</text>
+        </view>
+        <view class="menu-grid">
+          <view class="menu-item" bindtap="logout">
+            <view class="menu-icon">🚪</view>
+            <text class="menu-text">退出登录</text>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

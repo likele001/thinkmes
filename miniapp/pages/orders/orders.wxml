@@ -1,18 +1,51 @@
-<view class="container">
-  <view class="btn-bar"><button class="btn-add" bindtap="goAdd">新增订单</button></view>
-  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
-    <view class="row">
-      <text class="title">{{item.order_name || item.order_no}}</text>
-      <text class="status">状态{{item.status}}</text>
-    </view>
-    <view class="text-muted">客户：{{item.customer_name || '-'}}</view>
-    <view class="text-muted">数量：{{item.total_quantity || 0}}</view>
-    <view class="btn-wrap">
-      <button size="mini" data-id="{{item.id}}" catchtap="goDetail">详情</button>
-      <button size="mini" data-id="{{item.id}}" catchtap="goEdit">编辑</button>
-      <button size="mini" type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
+<view class="container admin-page">
+  <view class="top-nav">
+    <view class="nav-item" bindtap="goIndex"><text class="nav-text">首页</text></view>
+    <view class="nav-item" bindtap="goAllocations"><text class="nav-text">分工管理</text></view>
+    <view class="nav-item" bindtap="goReports"><text class="nav-text">报工管理</text></view>
+    <view class="nav-item active"><text class="nav-text">订单管理</text></view>
+  </view>
+
+  <view class="header-actions">
+    <button class="btn-primary" bindtap="goAdd">新增订单</button>
+    <button class="btn-success" bindtap="refresh">刷新</button>
+  </view>
+
+  <view class="filter-bar">
+    <picker bindchange="onStatusChange" value="{{statusIndex}}" range="{{statusList}}">
+      <view class="picker">{{statusList[statusIndex]}}</view>
+    </picker>
+  </view>
+
+  <view class="order-list">
+    <view class="order-item" wx:for="{{list}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+      <view class="order-header">
+        <view class="order-title">{{item.order_no || item.order_name}}</view>
+        <view class="order-status status-{{item.status}}">{{item.status == 0 ? '待分配' : item.status == 1 ? '进行中' : '已完成'}}</view>
+      </view>
+      <view class="order-info">
+        <view class="info-row"><text class="label">客户名称：</text><text class="value">{{item.customer_name || '-'}}</text></view>
+        <view class="info-row"><text class="label">订单数量：</text><text class="value">{{item.total_quantity || 0}}</text></view>
+        <view class="info-row"><text class="label">交货日期：</text><text class="value">{{item.delivery_time || '-'}}</text></view>
+        <view class="info-row"><text class="label">创建时间：</text><text class="value">{{item.createtime_text || '-'}}</text></view>
+      </view>
+      <view class="order-actions" catchtap="stopPropagation">
+        <button class="btn-detail" catchtap="goDetail" data-id="{{item.id}}">详情</button>
+        <button class="btn-edit" catchtap="goEdit" data-id="{{item.id}}">编辑</button>
+        <button class="btn-delete" catchtap="confirmDelete" data-id="{{item.id}}">删除</button>
+      </view>
     </view>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无订单</view>
-  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+
+  <view class="empty" wx:if="{{!loading && list.length === 0}}">暂无订单记录</view>
+  <view class="load-more" wx:if="{{!noMore && list.length > 0}}">
+    <button bindtap="loadMore" loading="{{loading}}">加载更多</button>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goIndex"><view class="nav-icon">🏠</view><text class="nav-text">首页</text></view>
+    <view class="nav-item" bindtap="goAllocations"><view class="nav-icon">📋</view><text class="nav-text">分工管理</text></view>
+    <view class="nav-item" bindtap="goReports"><view class="nav-icon">📊</view><text class="nav-text">报工管理</text></view>
+    <view class="nav-item active"><view class="nav-icon">📦</view><text class="nav-text">订单管理</text></view>
+  </view>
 </view>

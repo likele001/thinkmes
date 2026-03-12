@@ -1,13 +1,15 @@
-<view class="container">
-  <view class="btn-bar">
-    <button class="btn-add" bindtap="goOp" data-type="in">入库</button>
-    <button class="btn-add" bindtap="goOp" data-type="out">出库</button>
-    <button class="btn-add" bindtap="goOp" data-type="check">盘点</button>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">库存</text>
   </view>
-  <view class="card" wx:for="{{list}}" wx:key="id">
-    <view class="row"><text class="title">{{item.material_name || item.warehouse_name || '-'}}</text></view>
-    <view class="text-muted">数量：{{item.quantity || 0}} {{item.warehouse_name || ''}} {{item.material_name || ''}}</view>
+  <view class="btn-bar-admin">
+    <button class="btn-primary" bindtap="goOp">入库/出库</button>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无库存</view>
+  <view class="list-item" wx:for="{{list}}" wx:key="id">
+    <view class="row"><text class="title">{{item.material_name || item.name || '-'}}</text><text class="value">数量 {{item.quantity || item.stock_quantity || 0}}</text></view>
+    <view class="text-muted">仓库：{{item.warehouse_name || '-'}}</view>
+  </view>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无库存记录</view>
   <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
 </view>

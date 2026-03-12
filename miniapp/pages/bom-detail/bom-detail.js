@@ -18,6 +18,7 @@ Page({
       this.setData({ items: (res.data && res.data.list) || res.data || [] });
     }).catch(() => {});
   },
+  goBack() { wx.navigateBack(); },
   goEdit() {
     if (this.data.id) wx.navigateTo({ url: '/pages/bom-edit/bom-edit?id=' + this.data.id });
   },

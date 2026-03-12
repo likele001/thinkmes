@@ -1,18 +1,33 @@
 const { adminApi } = require('../../utils/api.js');
 
 Page({
-  data: { id: 0, detail: null, loading: true },
+  data: { id: 0, detail: {}, loading: false },
+
   onLoad(options) {
-    const id = options.id || 0;
-    if (!id) { this.setData({ loading: false }); return; }
+    const id = options.id ? parseInt(options.id, 10) : 0;
     this.setData({ id });
-    adminApi.getPurchaseDetail(id)
-      .then((res) => {
-        this.setData({ detail: res.data || null, loading: false });
-      })
-      .catch(() => { this.setData({ loading: false }); });
+    if (id) this.load();
   },
-  goEdit() {
-    if (this.data.id) wx.navigateTo({ url: '/pages/purchase-edit/purchase-edit?id=' + this.data.id });
+
+  load() {
+    this.setData({ loading: true });
+    adminApi.getPurchaseDetail(this.data.id)
+      .then((res) => {
+        const detail = res.data && typeof res.data === 'object' ? res.data : null;
+        if (detail && detail.material) detail.material_name = detail.material.name;
+        if (detail && detail.supplier) detail.supplier_name = detail.supplier.name;
+        if (detail && detail.warehouse) detail.warehouse_name = detail.warehouse.name;
+        this.setData({ detail, loading: false });
+      })
+      .catch(() => { this.setData({ detail: null, loading: false }); });
+  },
+
+  goBack() { wx.navigateBack(); },
+  goEdit() { wx.navigateTo({ url: '/pages/purchase-edit/purchase-edit?id=' + this.data.id }); },
+  confirmInbound() {
+    adminApi.purchaseInbound(this.data.id).then(() => {
+      wx.showToast({ title: '已确认入库' });
+      this.load();
+    }).catch(() => {});
   },
 });

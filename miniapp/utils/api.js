@@ -16,9 +16,6 @@ const userApi = {
     if (status !== undefined && status !== '') data.status = status;
     return getAppRef().userRequest({ url: '/worker/reports', method: 'GET', data });
   },
-  getReportDetail(reportId) {
-    return getAppRef().userRequest({ url: '/worker/reportDetail', method: 'GET', data: { report_id: reportId } });
-  },
   getWages(page, limit, workDate) {
     const data = { page: page || 1, limit: limit || 20 };
     if (workDate) data.work_date = workDate;
@@ -54,8 +51,10 @@ const adminApi = {
   getDashboardData() {
     return getAppRef().request({ url: '/scanwork/getDashboardData', method: 'GET' });
   },
-  getOrders(page, limit) {
-    return getAppRef().request({ url: '/scanwork/getOrders', method: 'GET', data: { page: page || 1, limit: limit || 20 } });
+  getOrders(page, limit, status) {
+    const data = { page: page || 1, limit: limit || 20 };
+    if (status !== undefined && status !== '') data.status = status;
+    return getAppRef().request({ url: '/scanwork/getOrders', method: 'GET', data });
   },
   getOrderDetail(id) {
     return getAppRef().request({ url: '/scanwork/getOrderDetail', method: 'GET', data: { order_id: id } });
@@ -361,11 +360,8 @@ const adminApi = {
   getQualityChecks(page, limit) {
     return getAppRef().request({ url: '/scanwork/getQualityChecks', method: 'GET', data: { page: page || 1, limit: limit || 20 } });
   },
-  getWageList(page, limit, params) {
-    const data = { page: page || 1, limit: limit || 20 };
-    if (params && params.user_id !== undefined && params.user_id !== '') data.user_id = params.user_id;
-    if (params && params.work_date) data.work_date = params.work_date;
-    return getAppRef().request({ url: '/scanwork/getWageList', method: 'GET', data });
+  getWageList(page, limit) {
+    return getAppRef().request({ url: '/scanwork/getWageList', method: 'GET', data: { page: page || 1, limit: limit || 20 } });
   },
   getWageStatistics(params) {
     return getAppRef().request({ url: '/scanwork/getWageStatistics', method: 'GET', data: params || {} });

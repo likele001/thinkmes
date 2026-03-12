@@ -1,9 +1,13 @@
-<view class="container">
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">计划分工</text>
+  </view>
   <view class="card" wx:if="{{plan}}">
     <view class="row"><text class="label">计划</text><text>{{plan.plan_name || plan.plan_code}}</text></view>
     <view class="row" wx:if="{{plan.model}}"><text class="label">产品型号</text><text>{{plan.model.product ? plan.model.product.name : ''}} - {{plan.model.name || ''}}</text></view>
   </view>
-  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goAllocation">
+  <view class="list-item" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goAllocation">
     <view class="row"><text class="label">工序</text><text>{{item.process ? item.process.name : '-'}}</text></view>
     <view class="row"><text class="label">员工</text><text>{{item.user ? (item.user.nickname || item.user.username) : '-'}}</text></view>
     <view class="row"><text class="label">分配</text><text>{{item.quantity || 0}}</text></view>

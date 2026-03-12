@@ -1,12 +1,11 @@
-<view class="container">
-  <view class="card" wx:if="{{plan}}">
-    <view class="row"><text class="label">计划名称</text><text>{{plan.plan_name || plan.plan_code}}</text></view>
-    <view class="row" wx:if="{{plan.model}}"><text class="label">产品型号</text><text>{{plan.model.product ? plan.model.product.name : ''}} - {{plan.model.name || ''}}</text></view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">计划进度统计</text>
   </view>
-  <view class="card stats">
-    <view class="stat-row"><text class="label">计划数量</text><text class="value">{{stats.total_quantity || 0}}</text></view>
-    <view class="stat-row"><text class="label">已完成数量</text><text class="value">{{stats.completed_quantity || 0}}</text></view>
-    <view class="stat-row"><text class="label">完成进度</text><text class="value highlight">{{stats.progress != null ? stats.progress + '%' : '-'}}</text></view>
+  <view class="card">
+    <view class="card-title">统计</view>
+    <view class="info-row" wx:for="{{statsRows}}" wx:key="label"><text class="label">{{item.label}}：</text><text class="value">{{item.value}}</text></view>
   </view>
-  <view class="loading" wx:if="{{loading}}">加载中...</view>
+  <view class="empty" wx:if="{{!loading && !statsRows.length}}">暂无数据</view>
 </view>

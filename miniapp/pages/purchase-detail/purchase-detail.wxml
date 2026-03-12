@@ -1,10 +1,27 @@
-<view class="container" wx:if="{{detail}}">
-  <view class="card">
-    <view class="row"><text class="label">单号</text><text>{{detail.purchase_no || detail.order_no}}</text></view>
-    <view class="row"><text class="label">供应商</text><text>{{detail.supplier_name || '-'}}</text></view>
-    <view class="row"><text class="label">状态</text><text>{{detail.status_text || detail.status}}</text></view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">采购/入库详情</text>
   </view>
-  <button class="btn-edit" bindtap="goEdit">编辑</button>
+
+  <view class="loading-tip" wx:if="{{loading}}">加载中...</view>
+
+  <view class="card" wx:elif="{{detail && (detail.id || detail.in_no)}}">
+    <view class="card-title">入库单信息</view>
+    <view class="info-row"><text class="label">单号：</text><text class="value">{{detail.in_no || detail.purchase_no || detail.order_no || '-'}}</text></view>
+    <view class="info-row"><text class="label">物料：</text><text class="value">{{detail.material_name || (detail.material && detail.material.name) || detail.material_id || '-'}}</text></view>
+    <view class="info-row"><text class="label">供应商：</text><text class="value">{{detail.supplier_name || (detail.supplier && detail.supplier.name) || '-'}}</text></view>
+    <view class="info-row"><text class="label">仓库：</text><text class="value">{{detail.warehouse_name || (detail.warehouse && detail.warehouse.name) || '-'}}</text></view>
+    <view class="info-row"><text class="label">入库数量：</text><text class="value">{{detail.in_quantity != null ? detail.in_quantity : '-'}}</text></view>
+    <view class="info-row"><text class="label">状态：</text><text class="value">{{detail.status === 0 ? '待入库' : detail.status === 1 ? '已入库' : detail.status === 2 ? '已退货' : (detail.status_text || '-')}}</text></view>
+    <view class="info-row" wx:if="{{detail.createtime_text || detail.create_time}}"><text class="label">创建时间：</text><text class="value">{{detail.createtime_text || '已记录'}}</text></view>
+    <view class="info-row" wx:if="{{detail.remark}}"><text class="label">备注：</text><text class="value">{{detail.remark}}</text></view>
+
+    <view class="btn-row">
+      <button class="btn-primary" bindtap="goEdit">编辑</button>
+      <button class="btn-secondary" wx:if="{{detail.status === 0}}" bindtap="confirmInbound">确认入库</button>
+    </view>
+  </view>
+
+  <view class="empty" wx:else>暂无数据，或加载失败</view>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>

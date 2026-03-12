@@ -1,12 +1,19 @@
-<view class="container" wx:if="{{detail}}">
-  <view class="card">
-    <view class="row"><text class="label">名称</text><text>{{detail.name}}</text></view>
-    <view class="row"><text class="label">编码</text><text>{{detail.code || '-'}}</text></view>
-    <view class="row"><text class="label">规格</text><text>{{detail.spec || '-'}}</text></view>
-    <view class="row"><text class="label">单位</text><text>{{detail.unit || '-'}}</text></view>
-    <view class="row" wx:if="{{detail.remark}}"><text class="label">备注</text><text>{{detail.remark}}</text></view>
+<view class="container admin-page" wx:if="{{detail}}">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">物料详情</text>
   </view>
-  <button class="btn-edit" bindtap="goEdit">编辑</button>
+  <view class="card">
+    <view class="card-title">物料信息</view>
+    <view class="row"><text class="label">名称</text><text>{{detail.name || '-'}}</text></view>
+    <view class="row"><text class="label">编码</text><text>{{detail.code || '-'}}</text></view>
+    <view class="row"><text class="label">规格</text><text>{{detail.spec || detail.specification || '-'}}</text></view>
+    <view class="row"><text class="label">单位</text><text>{{detail.unit || '-'}}</text></view>
+    <view class="row" wx:if="{{detail.stock != null}}"><text class="label">库存</text><text>{{detail.stock}}</text></view>
+    <view class="row" wx:if="{{detail.remark}}"><text class="label">备注</text><text>{{detail.remark}}</text></view>
+    <view class="row" wx:if="{{detail.createtime_text}}"><text class="label">创建时间</text><text>{{detail.createtime_text}}</text></view>
+  </view>
+  <button class="btn-primary btn-block" bindtap="goEdit">编辑</button>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>
+<view class="container admin-page" wx:elif="{{!loading}}">暂无数据，或加载失败</view>
+<view class="container admin-page" wx:else>加载中...</view>

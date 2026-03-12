@@ -1,4 +1,8 @@
-<view class="container" wx:if="{{detail}}">
+<view class="container admin-page" wx:if="{{detail}}">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">订单详情</text>
+  </view>
   <view class="card">
     <view class="card-title">订单信息</view>
     <view class="row"><text class="label">订单名称</text><text>{{detail.order_name || detail.order_no}}</text></view>
@@ -39,9 +43,9 @@
   </view>
 
   <view class="btn-row">
-    <button size="mini" bindtap="goEdit">编辑</button>
-    <button size="mini" type="warn" bindtap="confirmDelete">删除</button>
+    <button bindtap="goEdit">编辑</button>
+    <button type="warn" bindtap="confirmDelete">删除</button>
   </view>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>
+<view class="container admin-page" wx:elif="{{!loading}}">暂无数据</view>
+<view class="container admin-page" wx:else>加载中...</view>

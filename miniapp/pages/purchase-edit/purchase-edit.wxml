@@ -1,41 +1,12 @@
-<view class="container">
-  <view class="form-card">
-    <view class="form-item">
-      <text class="form-label">物料 *</text>
-      <picker mode="selector" range="{{materialOptions}}" range-key="label" value="{{materialIndex}}" bindchange="pickMaterial">
-        <view class="picker">{{materialLabel}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">入库数量 *</text>
-      <input class="form-input" type="digit" placeholder="入库数量" value="{{in_quantity}}" bindinput="inputInQuantity"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">入库时间</text>
-      <picker mode="date" value="{{in_time_date}}" bindchange="pickInTime">
-        <view class="picker">{{in_time_date || '选择日期'}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">入库单号</text>
-      <input class="form-input" placeholder="留空自动生成" value="{{in_no}}" bindinput="inputInNo"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">供应商</text>
-      <picker mode="selector" range="{{supplierOptions}}" range-key="label" value="{{supplierIndex}}" bindchange="pickSupplier">
-        <view class="picker">{{supplierLabel}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">仓库</text>
-      <picker mode="selector" range="{{warehouseOptions}}" range-key="name" value="{{warehouseIndex}}" bindchange="pickWarehouse">
-        <view class="picker">{{warehouseLabel}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">备注</text>
-      <input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
-    </view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑采购' : '新增采购'}}</text>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <view class="card">
+    <view class="form-item"><text class="form-label">采购单号</text><input class="form-input" placeholder="单号" value="{{purchase_no}}" bindinput="inputNo"/></view>
+    <view class="form-item"><text class="form-label">供应商ID *</text><input class="form-input" type="number" placeholder="供应商ID" value="{{supplier_id}}" bindinput="inputSupplierId"/></view>
+    <view class="form-item"><text class="form-label">备注</text><input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/></view>
+  </view>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

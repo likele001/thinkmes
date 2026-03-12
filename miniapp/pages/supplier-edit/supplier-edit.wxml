@@ -1,21 +1,13 @@
-<view class="container">
-  <view class="form-card">
-    <view class="form-item">
-      <text class="form-label">供应商名称 *</text>
-      <input class="form-input" placeholder="供应商名称" value="{{name}}" bindinput="inputName"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">联系人</text>
-      <input class="form-input" placeholder="联系人" value="{{contact_person}}" bindinput="inputPerson"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">联系电话</text>
-      <input class="form-input" type="number" placeholder="联系电话" value="{{contact_phone}}" bindinput="inputPhone"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">地址</text>
-      <input class="form-input" placeholder="地址" value="{{address}}" bindinput="inputAddress"/>
-    </view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑供应商' : '新增供应商'}}</text>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <view class="card">
+    <view class="form-item"><text class="form-label">名称 *</text><input class="form-input" placeholder="供应商名称" value="{{name}}" bindinput="inputName"/></view>
+    <view class="form-item"><text class="form-label">联系人</text><input class="form-input" placeholder="联系人" value="{{contact}}" bindinput="inputContact"/></view>
+    <view class="form-item"><text class="form-label">电话</text><input class="form-input" placeholder="电话" value="{{phone}}" bindinput="inputPhone"/></view>
+    <view class="form-item"><text class="form-label">地址</text><input class="form-input" placeholder="地址" value="{{address}}" bindinput="inputAddress"/></view>
+  </view>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

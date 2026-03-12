@@ -24,6 +24,7 @@ Page({
       : fullList;
     this.setData({ keyword: e.detail.value, filteredList });
   },
+  goBack() { wx.navigateBack(); },
   onSelect(e) {
     const id = e.currentTarget.dataset.id;
     const label = e.currentTarget.dataset.label;

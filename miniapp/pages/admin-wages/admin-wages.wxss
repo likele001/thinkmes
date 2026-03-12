@@ -1,18 +1,7 @@
-.container { padding-bottom: 40rpx; }
+.stats { margin: 20rpx; }
+.stats-title { font-weight: bold; margin-bottom: 8rpx; }
+.row { display: flex; justify-content: space-between; }
+.title { font-weight: bold; }
 .card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
-.filter { display: flex; flex-wrap: wrap; gap: 24rpx; align-items: center; }
-.filter-row { display: flex; align-items: center; gap: 16rpx; }
-.filter-row .label { color: #666; }
-.filter-row .picker { color: #4f46e5; }
-.stats { }
-.stats-title { font-weight: bold; margin-bottom: 12rpx; }
-.summary-row { display: flex; gap: 24rpx; margin-bottom: 16rpx; font-size: 28rpx; color: #666; }
-.stats-table { }
-.stats-head, .stats-row { display: flex; padding: 12rpx 0; border-bottom: 1rpx solid #eee; }
-.stats-head text, .stats-row text { flex: 1; }
-.stats-head { font-weight: bold; color: #666; }
-.detail-title { font-weight: bold; margin-bottom: 12rpx; }
-.detail-head, .detail-row { display: flex; padding: 12rpx 0; border-bottom: 1rpx solid #eee; }
-.detail-head text, .detail-row text { flex: 1; }
-.detail-head { font-weight: bold; color: #666; }
 .empty, .no-more { text-align: center; color: #999; padding: 32rpx; }
+.text-muted { font-size: 26rpx; color: #666; margin-top: 8rpx; }

@@ -1,4 +1,5 @@
 const { adminApi } = require('../../utils/api.js');
+const { toFullImageUrl, toFullImageUrls } = require('../../utils/image.js');
 
 Page({
   data: {
@@ -14,6 +15,7 @@ Page({
     loading: true,
   },
 
+  goBack() { wx.navigateBack(); },
   onLoad(options) {
     const id = options.report_id || options.id || 0;
     if (!id) return;
@@ -22,11 +24,9 @@ Page({
       .then((res) => {
         const d = res.data || null;
         if (d) {
-          const origin = (getApp().globalData.baseUrl || '').replace(/\/api\/?$/, '');
-          const toFull = (u) => (typeof u !== 'string' || u.indexOf('http') === 0 ? u : (origin ? origin + (u[0] === '/' ? u : '/' + u) : u));
-          if (d.images) d.images = d.images.map(toFull);
-          if (d.audit_images) d.audit_images = d.audit_images.map(toFull);
-          if (d.audit_videos) d.audit_videos = d.audit_videos.map(toFull);
+          if (d.images) d.images = toFullImageUrls(d.images);
+          if (d.audit_images) d.audit_images = toFullImageUrls(d.audit_images);
+          if (d.audit_videos) d.audit_videos = toFullImageUrls(d.audit_videos);
         }
         this.setData({ detail: d, loading: false });
       })
@@ -60,7 +60,7 @@ Page({
         files.forEach((f) => {
           adminApi.uploadAuditImage(f.tempFilePath)
             .then((url) => {
-              list.push(url);
+              list.push(toFullImageUrl(url) || url);
               done++;
               if (done >= total) {
                 wx.hideLoading();
@@ -95,7 +95,7 @@ Page({
         files.forEach((f) => {
           adminApi.uploadAuditVideo(f.tempFilePath)
             .then((url) => {
-              list.push(url);
+              list.push(toFullImageUrl(url) || url);
               done++;
               if (done >= total) {
                 wx.hideLoading();

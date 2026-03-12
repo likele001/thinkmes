@@ -1,4 +1,8 @@
-<view class="container" wx:if="{{plan}}">
+<view class="container admin-page" wx:if="{{plan}}">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">分配分工</text>
+  </view>
   <view class="card">
     <view class="row"><text class="label">计划</text><text>{{plan.plan_name || plan.plan_code}}</text></view>
     <view class="row" wx:if="{{plan.model}}"><text class="label">产品型号</text><text>{{plan.model.product ? plan.model.product.name : ''}} - {{plan.model.name || ''}}</text></view>
@@ -9,11 +13,11 @@
     <view class="alloc-row" wx:for="{{rows}}" wx:key="idx">
       <view class="picker-wrap" bindtap="pickProcess" data-idx="{{idx}}">{{item.processLabel || '选择工序'}}</view>
       <view class="picker-wrap" bindtap="pickUser" data-idx="{{idx}}">{{item.userLabel || '选择员工'}}</view>
-      <input class="input-qty" type="number" placeholder="数量" value="{{item.quantity}}" data-idx="{{idx}}" bindinput="inputQty"/>
+      <input class="input-qty form-input" type="number" placeholder="数量" value="{{item.quantity}}" data-idx="{{idx}}" bindinput="inputQty"/>
     </view>
     <view class="btn-add" bindtap="addRow">+ 添加一行</view>
   </view>
-  <button class="btn-submit" loading="{{submitting}}" bindtap="submit">保存分配</button>
+  <button class="btn-primary btn-block" loading="{{submitting}}" bindtap="submit">保存分配</button>
 </view>
-<view class="container" wx:elif="{{!loading}}">计划不存在</view>
-<view class="container" wx:else>加载中...</view>
+<view class="container admin-page" wx:elif="{{!loading}}">计划不存在</view>
+<view class="container admin-page" wx:else>加载中...</view>

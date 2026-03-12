@@ -4,6 +4,7 @@ Page({
   data: {
     adminInfo: null,
     dashboard: null,
+    stats: null,
     loading: true,
     todayDate: '',
   },
@@ -27,7 +28,24 @@ Page({
     this.setData({ loading: true });
     adminApi.getDashboardData()
       .then((res) => {
-        this.setData({ dashboard: res.data || null, loading: false });
+        const d = res.data || {};
+        const orderData = d.order_data || { 0: 0, 1: 0, 2: 0, 3: 0 };
+        const planData = d.plan_data || { 0: 0, 1: 0, 2: 0, 3: 0 };
+        const totalOrders = (orderData[0] || 0) + (orderData[1] || 0) + (orderData[2] || 0) + (orderData[3] || 0);
+        const totalPlans = (planData[0] || 0) + (planData[1] || 0) + (planData[2] || 0) + (planData[3] || 0);
+        const today = d.today || {};
+        this.setData({
+          dashboard: d,
+          loading: false,
+          stats: {
+            totalOrders,
+            activeAllocations: d.active_allocations || 0,
+            pendingReports: d.pending_reports || 0,
+            todayQuantity: today.quantity ?? 0,
+            todayWage: (today.wage ?? 0).toFixed(2),
+            totalPlans,
+          },
+        });
       })
       .catch(() => { this.setData({ loading: false }); });
   },

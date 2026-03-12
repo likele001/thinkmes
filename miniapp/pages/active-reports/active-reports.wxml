@@ -1,9 +1,41 @@
-<view class="container">
-  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goAudit">
-    <view class="title">{{item.allocation && item.allocation.model ? (item.allocation.model.product ? item.allocation.model.product.name + ' - ' : '') + item.allocation.model.name : ''}}</view>
-    <view class="text-muted">数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</view>
-    <view class="audit-tip">点击审核</view>
+<view class="container admin-page">
+  <view class="top-nav">
+    <view class="nav-item" bindtap="goIndex"><text class="nav-text">首页</text></view>
+    <view class="nav-item" bindtap="goReports"><text class="nav-text">报工管理</text></view>
+    <view class="nav-item" bindtap="goAllocations"><text class="nav-text">分工管理</text></view>
+    <view class="nav-item active"><text class="nav-text">待审核报工</text></view>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无待审核</view>
-  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+
+  <view class="header-actions">
+    <button class="btn-success" bindtap="refresh">刷新</button>
+  </view>
+
+  <view class="report-list">
+    <view class="report-item" wx:for="{{list}}" wx:key="id" bindtap="goAudit" data-id="{{item.id}}">
+      <view class="report-header">
+        <view class="report-title">{{item.order_no}}</view>
+        <view class="report-status status-0">待审核</view>
+      </view>
+      <view class="report-info">
+        <view class="info-row"><text class="label">产品：</text><text class="value">{{item.product_name}} {{item.model_name}}</text></view>
+        <view class="info-row"><text class="label">工序：</text><text class="value">{{item.process_name}}</text></view>
+        <view class="info-row"><text class="label">员工：</text><text class="value">{{item.user_name}}</text></view>
+        <view class="info-row"><text class="label">数量：</text><text class="value">{{item.quantity}}</text></view>
+        <view class="info-row"><text class="label">工资：</text><text class="value">¥{{item.wage || 0}}</text></view>
+      </view>
+      <view class="audit-tip">点击审核</view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{!loading && list.length === 0}}">暂无待审核报工</view>
+  <view class="load-more" wx:if="{{!noMore && list.length > 0}}">
+    <button bindtap="loadMore" loading="{{loading}}">加载更多</button>
+  </view>
+
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goIndex"><view class="nav-icon">🏠</view><text class="nav-text">首页</text></view>
+    <view class="nav-item" bindtap="goReports"><view class="nav-icon">📊</view><text class="nav-text">报工管理</text></view>
+    <view class="nav-item" bindtap="goAllocations"><view class="nav-icon">📋</view><text class="nav-text">分工管理</text></view>
+    <view class="nav-item active"><view class="nav-icon">⚡</view><text class="nav-text">待审核</text></view>
+  </view>
 </view>

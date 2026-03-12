@@ -72,6 +72,7 @@ Page({
       });
   },
 
+  goBack() { wx.navigateBack(); },
   goEdit() {
     wx.navigateTo({ url: '/pages/order-edit/order-edit?id=' + this.data.id });
   },

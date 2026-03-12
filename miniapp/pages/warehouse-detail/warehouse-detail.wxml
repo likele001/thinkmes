@@ -1,11 +1,24 @@
-<view class="container" wx:if="{{detail}}">
-  <view class="card">
-    <view class="row"><text class="label">名称</text><text>{{detail.name}}</text></view>
-    <view class="row"><text class="label">编码</text><text>{{detail.code || '-'}}</text></view>
-    <view class="row"><text class="label">地址</text><text>{{detail.address || '-'}}</text></view>
-    <view class="row" wx:if="{{detail.remark}}"><text class="label">备注</text><text>{{detail.remark}}</text></view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">仓库详情</text>
   </view>
-  <button class="btn-edit" bindtap="goEdit">编辑</button>
+
+  <view class="loading-tip" wx:if="{{loading}}">加载中...</view>
+
+  <view class="card" wx:elif="{{detail && (detail.id || detail.warehouse_id)}}">
+    <view class="card-title">仓库信息</view>
+    <view class="info-row"><text class="label">名称：</text><text class="value">{{detail.name || detail.warehouse_name || '-'}}</text></view>
+    <view class="info-row"><text class="label">编码：</text><text class="value">{{detail.code || detail.warehouse_code || '-'}}</text></view>
+    <view class="info-row"><text class="label">地址：</text><text class="value">{{detail.address || '-'}}</text></view>
+    <view class="info-row" wx:if="{{detail.is_default != null}}"><text class="label">默认仓库：</text><text class="value">{{detail.is_default ? '是' : '否'}}</text></view>
+    <view class="info-row" wx:if="{{detail.createtime_text || detail.create_time}}"><text class="label">创建时间：</text><text class="value">{{detail.createtime_text || '已记录'}}</text></view>
+
+    <view class="btn-row">
+      <button class="btn-primary" bindtap="goEdit">编辑</button>
+      <button class="btn-secondary" bindtap="goStock">查看库存</button>
+    </view>
+  </view>
+
+  <view class="empty" wx:else>暂无数据，或加载失败</view>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>

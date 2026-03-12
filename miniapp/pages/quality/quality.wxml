@@ -1,20 +1,26 @@
-<view class="container">
-  <view class="tabs">
-    <view class="tab {{tab==='standards'?'active':''}}" data-tab="standards" bindtap="switchTab">质检标准</view>
-    <view class="tab {{tab==='checks'?'active':''}}" data-tab="checks" bindtap="switchTab">质检记录</view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goIndex">← 首页</view>
+    <text class="page-title">质量管理</text>
   </view>
-  <view wx:if="{{tab==='standards'}}">
-    <view class="card" wx:for="{{standards}}" wx:key="id">
+  <view class="top-nav">
+    <view class="nav-item {{tabIndex===0?'active':''}}" bindtap="setTab" data-index="0">质检标准</view>
+    <view class="nav-item {{tabIndex===1?'active':''}}" bindtap="setTab" data-index="1">质检记录</view>
+  </view>
+  <block wx:if="{{tabIndex===0}}">
+    <view class="list-item" wx:for="{{standards}}" wx:key="id">
       <view class="row"><text class="title">{{item.name || item.standard_name || '-'}}</text></view>
-      <view class="text-muted" wx:if="{{item.product_name}}">产品：{{item.product_name}}</view>
+      <view class="text-muted">{{item.description || item.remark || ''}}</view>
     </view>
-    <view class="empty" wx:if="{{standards.length===0}}">暂无质检标准</view>
-  </view>
-  <view wx:if="{{tab==='checks'}}">
-    <view class="card" wx:for="{{checks}}" wx:key="id">
-      <view class="row"><text class="title">{{item.record_no || item.check_no || '记录'}}</text></view>
-      <view class="text-muted">结果：{{item.result || item.status || '-'}}</view>
+    <view class="empty" wx:if="{{!loading && standards.length===0}}">暂无质检标准</view>
+  </block>
+  <block wx:if="{{tabIndex===1}}">
+    <view class="list-item" wx:for="{{checks}}" wx:key="id">
+      <view class="row"><text class="title">{{item.product_name || '-'}}</text><text class="status-{{item.result}}">{{item.result === 1 ? '合格' : '不合格'}}</text></view>
+      <view class="text-muted">{{item.check_time || item.createtime_text || ''}}</view>
     </view>
-    <view class="empty" wx:if="{{checks.length===0}}">暂无质检记录</view>
-  </view>
+    <view class="empty" wx:if="{{!loading && checks.length===0}}">暂无质检记录</view>
+  </block>
+  <view class="no-more" wx:if="{{tabIndex===0 && standards.length>0}}">没有更多了</view>
+  <view class="no-more" wx:if="{{tabIndex===1 && checks.length>0}}">没有更多了</view>
 </view>

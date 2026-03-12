@@ -1,38 +1,42 @@
-<view class="container">
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑订单' : '新增订单'}}</text>
+  </view>
   <view class="card">
     <view class="form-item">
-      <text class="label">订单名称</text>
-      <input class="input" placeholder="请输入订单名称" value="{{order_name}}" bindinput="inputOrderName"/>
+      <text class="form-label">订单名称</text>
+      <input class="form-input" placeholder="请输入订单名称" value="{{order_name}}" bindinput="inputOrderName"/>
     </view>
     <view class="form-item">
-      <text class="label">客户</text>
+      <text class="form-label">客户</text>
       <picker mode="selector" range="{{customerList}}" range-key="customer_name" value="{{customerIndex}}" bindchange="pickCustomer">
         <view class="picker">{{customerName || '请选择客户'}}</view>
       </picker>
     </view>
     <view class="form-item">
-      <text class="label">客户名称</text>
-      <input class="input" placeholder="选择客户后自动填充" value="{{customer_name}}" bindinput="inputCustomerName"/>
+      <text class="form-label">客户名称</text>
+      <input class="form-input" placeholder="选择客户后自动填充" value="{{customer_name}}" bindinput="inputCustomerName"/>
     </view>
     <view class="form-item">
-      <text class="label">客户电话</text>
-      <input class="input" placeholder="选择客户后自动填充" value="{{customer_phone}}" bindinput="inputCustomerPhone"/>
+      <text class="form-label">客户电话</text>
+      <input class="form-input" placeholder="选择客户后自动填充" value="{{customer_phone}}" bindinput="inputCustomerPhone"/>
     </view>
     <view class="form-item">
-      <text class="label">交货时间</text>
+      <text class="form-label">交货时间</text>
       <picker mode="date" value="{{delivery_date}}" bindchange="pickDeliveryDate">
         <view class="picker">{{delivery_date || '请选择交货日期'}}</view>
       </picker>
     </view>
     <view class="form-item">
-      <text class="label">订单状态</text>
+      <text class="form-label">订单状态</text>
       <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
         <view class="picker">{{statusText || '请选择状态'}}</view>
       </picker>
     </view>
     <view class="form-item">
-      <text class="label">备注</text>
-      <textarea class="textarea" placeholder="请输入备注" value="{{remark}}" bindinput="inputRemark"/>
+      <text class="form-label">备注</text>
+      <textarea class="textarea form-input" placeholder="请输入备注" value="{{remark}}" bindinput="inputRemark"/>
     </view>
   </view>
 

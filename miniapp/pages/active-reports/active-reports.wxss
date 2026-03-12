@@ -1,3 +1,16 @@
-.title { font-weight: bold; margin-bottom: 8rpx; }
-.audit-tip { margin-top: 16rpx; color: #1989fa; font-size: 24rpx; }
-.empty, .no-more { text-align: center; color: #999; padding: 32rpx; }
+/* 待审核报工 - 与 adminweixin 对齐 */
+.report-status.status-0 { background-color: #ff9500; color: #fff; }
+.audit-tip {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #667eea;
+}
+.load-more button {
+  background: #f0f0f0;
+  color: #666;
+  border: none;
+  border-radius: 25rpx;
+  padding: 15rpx 30rpx;
+  font-size: 26rpx;
+}

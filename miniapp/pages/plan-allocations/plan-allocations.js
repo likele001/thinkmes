@@ -14,6 +14,7 @@ Page({
       this.setData({ list, loading: false });
     }).catch(() => { this.setData({ loading: false }); });
   },
+  goBack() { wx.navigateBack(); },
   goAllocation(e) {
     const id = e.currentTarget.dataset.id;
     if (id) wx.navigateTo({ url: '/pages/allocation-detail/allocation-detail?id=' + id });

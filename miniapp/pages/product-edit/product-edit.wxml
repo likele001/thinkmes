@@ -1,27 +1,12 @@
-<view class="container">
-  <view class="form-card">
-    <view class="form-item">
-      <text class="form-label">产品名称 *</text>
-      <input class="form-input" placeholder="产品名称" value="{{name}}" bindinput="inputName"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">产品编码</text>
-      <input class="form-input" placeholder="产品编码" value="{{code}}" bindinput="inputCode"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">产品描述/规格</text>
-      <textarea class="form-textarea" placeholder="产品描述或规格" value="{{description}}" bindinput="inputDescription"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">状态</text>
-      <picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus">
-        <view class="picker">{{statusText}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">备注</text>
-      <input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
-    </view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑产品' : '新增产品'}}</text>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <view class="card">
+    <view class="form-item"><text class="form-label">产品名称 *</text><input class="form-input" placeholder="产品名称" value="{{name}}" bindinput="inputName"/></view>
+    <view class="form-item"><text class="form-label">规格/描述</text><input class="form-input" placeholder="规格或描述" value="{{specification}}" bindinput="inputSpec"/></view>
+    <view class="form-item"><text class="form-label">状态</text><picker mode="selector" range="{{statusList}}" range-key="text" value="{{statusIndex}}" bindchange="pickStatus"><view class="picker">{{statusText}}</view></picker></view>
+  </view>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

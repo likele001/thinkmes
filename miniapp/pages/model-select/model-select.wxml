@@ -1,9 +1,13 @@
-<view class="container">
-  <view class="search-bar">
-    <input class="search-input" placeholder="输入关键词模糊搜索型号" value="{{keyword}}" bindinput="onSearch" focus="{{focusSearch}}"/>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">选择型号</text>
+  </view>
+  <view class="card">
+    <input class="form-input" placeholder="输入关键词模糊搜索型号" value="{{keyword}}" bindinput="onSearch" focus="{{focusSearch}}"/>
   </view>
   <scroll-view class="list" scroll-y>
-    <view class="item" wx:for="{{filteredList}}" wx:key="id" data-id="{{item.id}}" data-label="{{item.label}}" bindtap="onSelect">
+    <view class="list-item item" wx:for="{{filteredList}}" wx:key="id" data-id="{{item.id}}" data-label="{{item.label}}" bindtap="onSelect">
       <text class="item-label">{{item.label}}</text>
     </view>
     <view class="empty" wx:if="{{filteredList.length === 0}}">暂无匹配型号</view>

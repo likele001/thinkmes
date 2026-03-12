@@ -2,49 +2,66 @@ const { userApi } = require('../../utils/api.js');
 
 Page({
   data: {
-    list: [],
-    total: 0,
+    wageList: [],
+    loading: true,
     page: 1,
     limit: 20,
-    loading: false,
-    noMore: false,
+    hasMore: true,
+    workDate: '',
+    selectedMonth: '',
+    totalWage: '0',
+    totalQuantity: 0,
   },
 
-  onShow() {
+  onLoad() {
     if (!getApp().checkUserLogin()) {
       wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
-    this.setData({ page: 1, noMore: false });
+    const now = new Date();
+    const ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    this.setData({ selectedMonth: ym });
     this.load();
   },
 
-  load() {
-    if (this.data.loading || this.data.noMore) return;
-    this.setData({ loading: true });
-    userApi.getWages(this.data.page, this.data.limit)
-      .then((res) => {
-        const d = res.data || {};
-        const list = this.data.page === 1 ? (d.list || []) : (this.data.list || []).concat(d.list || []);
-        this.setData({
-          list,
-          total: d.total || 0,
-          loading: false,
-          noMore: list.length >= (d.total || 0),
-        });
-      })
-      .catch(() => { this.setData({ loading: false }); });
+  onShow() {
+    if (getApp().checkUserLogin()) this.load();
   },
 
-  onReachBottom() {
-    if (this.data.noMore || this.data.loading) return;
+  onPullDownRefresh() {
+    this.setData({ page: 1, hasMore: true });
+    this.load().then(() => wx.stopPullDownRefresh());
+  },
+
+  load() {
+    this.setData({ loading: true });
+    const { page, limit, workDate } = this.data;
+    return userApi.getWages(page, limit, workDate || undefined)
+      .then((res) => {
+        const raw = res.data;
+        const list = raw && (raw.rows || raw.list || raw.data || (Array.isArray(raw) ? raw : [])) || [];
+        const wageList = Array.isArray(list) ? list : [];
+        const totalQuantity = wageList.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
+        const totalWage = wageList.reduce((s, r) => s + (Number(r.wage) || 0), 0).toFixed(2);
+        this.setData({
+          wageList: page === 1 ? wageList : [...(this.data.wageList || []), ...wageList],
+          loading: false,
+          hasMore: wageList.length >= limit,
+          totalWage,
+          totalQuantity,
+        });
+      })
+      .catch(() => this.setData({ loading: false }));
+  },
+
+  loadMore() {
+    if (this.data.loading || !this.data.hasMore) return;
     this.setData({ page: this.data.page + 1 });
     this.load();
   },
 
-  onPullDownRefresh() {
-    this.setData({ page: 1, noMore: false });
+  refresh() {
+    this.setData({ page: 1, hasMore: true });
     this.load();
-    wx.stopPullDownRefresh();
   },
 });

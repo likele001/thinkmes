@@ -19,6 +19,7 @@ Page({
     this.setData({ page: this.data.page + 1 });
     this.load();
   },
+  goIndex() { wx.navigateTo({ url: '/pages/index/index' }); },
   goAdd() { wx.navigateTo({ url: '/pages/bom-edit/bom-edit' }); },
   goDetail(e) { const id = e.currentTarget.dataset.id; if (id) wx.navigateTo({ url: '/pages/bom-detail/bom-detail?id=' + id }); },
   goEdit(e) { const id = e.currentTarget.dataset.id; if (id) wx.navigateTo({ url: '/pages/bom-edit/bom-edit?id=' + id }); },

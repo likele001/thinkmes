@@ -4,7 +4,8 @@ Page({
   data: {
     welcomeName: '员工',
     todayDate: '',
-    metrics: { today_task_count: 0, today_report_quantity: 0, today_wage: 0, pending_reports: 0 },
+    avatarText: '工',
+    metrics: { today_task_count: 0, today_report_quantity: 0, today_wage: 0 },
     tasks: [],
     loading: true,
   },
@@ -12,9 +13,11 @@ Page({
   onLoad() {
     const app = getApp();
     const userInfo = app.globalData.userInfo || wx.getStorageSync('user_info') || {};
+    const name = userInfo.nickname || userInfo.username || '员工';
     this.setData({
-      welcomeName: userInfo.nickname || userInfo.username || '员工',
+      welcomeName: name,
       todayDate: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+      avatarText: (name && String(name).charAt(0)) || '工',
     });
   },
 
@@ -23,6 +26,12 @@ Page({
       wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
+    const userInfo = getApp().globalData.userInfo || wx.getStorageSync('user_info') || {};
+    const name = userInfo.nickname || userInfo.username || '员工';
+    this.setData({
+      welcomeName: name,
+      avatarText: (name && String(name).charAt(0)) || '工',
+    });
     this.load();
   },
 
@@ -32,7 +41,7 @@ Page({
       .then((res) => {
         const d = res.data || {};
         this.setData({
-          metrics: d.metrics || { today_task_count: 0, today_report_quantity: 0, today_wage: 0, pending_reports: 0 },
+          metrics: d.metrics || { today_task_count: 0, today_report_quantity: 0, today_wage: 0 },
           tasks: d.tasks || [],
           loading: false,
         });
@@ -64,7 +73,7 @@ Page({
   },
 
   goTasks() {
-    wx.pageScrollTo({ selector: '#taskSection', scrollWithAnimation: true });
+    wx.pageScrollTo({ selector: '.menu-section', scrollWithAnimation: true });
   },
 
   goScan() {

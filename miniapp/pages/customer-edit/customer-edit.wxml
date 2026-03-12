@@ -1,5 +1,9 @@
-<view class="container">
-  <view class="form-card">
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑客户' : '新增客户'}}</text>
+  </view>
+  <view class="card">
     <view class="form-item">
       <text class="form-label">客户名称 *</text>
       <input class="form-input" placeholder="客户名称" value="{{customer_name}}" bindinput="inputName"/>
@@ -17,5 +21,5 @@
       <input class="form-input" placeholder="地址" value="{{address}}" bindinput="inputAddress"/>
     </view>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

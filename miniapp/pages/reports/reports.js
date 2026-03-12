@@ -6,71 +6,93 @@ Page({
     total: 0,
     page: 1,
     limit: 20,
-    statusFilter: '',
     loading: false,
     noMore: false,
+    statusIndex: 0,
+    statusList: ['全部', '待审核', '已通过', '已拒绝'],
   },
 
   onLoad() {
+    if (!getApp().checkAdminLogin()) {
+      wx.redirectTo({ url: '/pages/login/login' });
+      return;
+    }
     this.load();
   },
 
-  setStatus(e) {
-    const status = e.currentTarget.dataset.status;
-    this.setData({ statusFilter: status, page: 1, list: [], noMore: false });
-    this.load();
+  getStatusParam() {
+    const i = this.data.statusIndex;
+    if (i === 0) return '';
+    return i - 1;
   },
 
   load() {
-    if (this.data.loading || this.data.noMore) return;
+    if (this.data.loading) return;
+    if (this.data.noMore && this.data.page > 1) return;
     this.setData({ loading: true });
-    const status = this.data.statusFilter;
+    const status = this.getStatusParam();
     adminApi.getReports(this.data.page, this.data.limit, status)
       .then((res) => {
         const d = res.data || {};
-        const list = this.data.page === 1 ? (d.list || []) : (this.data.list || []).concat(d.list || []);
+        const newList = d.list || [];
+        const list = this.data.page === 1 ? newList : (this.data.list || []).concat(newList);
+        const total = d.total || 0;
         this.setData({
           list,
-          total: d.total || 0,
+          total,
           loading: false,
-          noMore: list.length >= (d.total || 0),
+          noMore: list.length >= total,
         });
       })
       .catch(() => { this.setData({ loading: false }); });
   },
 
-  onReachBottom() {
+  loadMore() {
     if (this.data.noMore || this.data.loading) return;
     this.setData({ page: this.data.page + 1 });
     this.load();
   },
 
+  onStatusChange(e) {
+    const i = parseInt(e.detail.value, 10);
+    this.setData({ statusIndex: i, page: 1, list: [], noMore: false });
+    this.load();
+  },
+
   goDetail(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: '/pages/report-detail/report-detail?report_id=' + id });
+    const status = e.currentTarget.dataset.status;
+    if (!id) return;
+    // 未审核(0) -> 审核页；已通过(1)/已拒绝(2) -> 报工详情
+    if (Number(status) === 0) {
+      wx.navigateTo({ url: '/pages/audit/audit?report_id=' + id });
+    } else {
+      wx.navigateTo({ url: '/pages/report-detail/report-detail?id=' + id });
+    }
   },
 
-  goAudit(e) {
+  auditReport(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: '/pages/audit/audit?report_id=' + id });
-  },
-
-  confirmDelete(e) {
-    const id = e.currentTarget.dataset.id;
+    const status = parseInt(e.currentTarget.dataset.status, 10);
+    if (!id) return;
+    const title = status === 1 ? '通过' : '拒绝';
     wx.showModal({
-      title: '确认删除',
-      content: '确定删除该报工记录？',
+      title: '确认' + title,
+      content: '确定' + title + '该报工？',
       success: (res) => {
         if (res.confirm) {
-          adminApi.deleteReport(id)
-            .then(() => {
-              wx.showToast({ title: '已删除' });
-              this.setData({ page: 1, list: [], noMore: false });
-              this.load();
-            })
-            .catch(() => {});
+          adminApi.auditReport(id, status).then(() => {
+            wx.showToast({ title: title + '成功' });
+            const list = (this.data.list || []).filter((item) => item.id !== id);
+            this.setData({ list, total: Math.max(0, (this.data.total || 0) - 1) });
+          }).catch(() => {});
         }
       },
     });
   },
+
+  goIndex() { wx.navigateTo({ url: '/pages/index/index' }); },
+  goAllocations() { wx.navigateTo({ url: '/pages/allocations/allocations' }); },
+  goOrders() { wx.navigateTo({ url: '/pages/orders/orders' }); },
+  stopPropagation() {},
 });

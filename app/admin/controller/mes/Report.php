@@ -898,17 +898,20 @@ class Report extends Backend
 
     protected function normalizeMediaUrl($val): string
     {
+        $trimUrl = function ($s) {
+            return trim((string) $s, " \t\n\r\0\x0B\"'");
+        };
         if (is_array($val)) {
             $flat = [];
             foreach ($val as $v) {
                 if (is_array($v)) {
                     foreach ($v as $vv) {
                         if ($vv !== '' && $vv !== null && $vv !== false) {
-                            $flat[] = (string) $vv;
+                            $flat[] = $trimUrl($vv);
                         }
                     }
                 } elseif ($v !== '' && $v !== null && $v !== false) {
-                    $flat[] = (string) $v;
+                    $flat[] = $trimUrl($v);
                 }
             }
             if ($flat) {

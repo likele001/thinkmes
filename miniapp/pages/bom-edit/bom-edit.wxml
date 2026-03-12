@@ -1,5 +1,9 @@
-<view class="container">
-  <view class="form-card">
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑BOM' : '新增BOM'}}</text>
+  </view>
+  <view class="card">
     <view class="form-item">
       <text class="form-label">BOM编号</text>
       <input class="form-input" placeholder="留空自动生成" value="{{bom_no}}" bindinput="inputBomNo"/>
@@ -33,5 +37,5 @@
       </picker>
     </view>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

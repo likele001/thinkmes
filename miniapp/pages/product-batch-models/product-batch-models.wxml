@@ -1,53 +1,20 @@
-<view class="container page-with-footer">
-  <view class="tip">选择产品后填写型号及工序工价，<text class="strong">已存在的型号名将自动跳过</text>。</view>
-  <view class="card">
-    <view class="form-item">
-      <text class="form-label">选择产品 *</text>
-      <picker mode="selector" range="{{productOptions}}" range-key="label" value="{{productIndex}}" bindchange="pickProduct">
-        <view class="picker">{{productLabel}}</view>
-      </picker>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">产品型号</text>
+  </view>
+  <view class="btn-bar-admin">
+    <button class="btn-primary" bindtap="goAdd">批量添加型号</button>
+  </view>
+  <view class="list-item" wx:for="{{list}}" wx:key="id">
+    <view class="row"><text class="title">{{item.name || item.model_name || item.model_code}}</text></view>
+    <view class="text-muted">{{item.description || ''}} 产品ID: {{item.product_id}}</view>
+    <view class="btn-wrap">
+      <button data-id="{{item.id}}" catchtap="goEdit">编辑</button>
+      <button data-id="{{item.id}}" catchtap="goPrices">工价</button>
+      <button type="warn" data-id="{{item.id}}" catchtap="confirmDelete">删除</button>
     </view>
   </view>
-  <view class="card" wx:for="{{rows}}" wx:key="index" data-index="{{index}}">
-    <view class="row-header">
-      <text class="row-title">型号 {{index + 1}}</text>
-      <text class="btn-remove" data-index="{{index}}" bindtap="removeRow" wx:if="{{rows.length > 1}}">删除</text>
-    </view>
-    <view class="form-item">
-      <text class="form-label">型号名称 *</text>
-      <input class="form-input" placeholder="请输入型号名称" value="{{item.name}}" data-index="{{index}}" bindinput="inputModelName"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">型号编码</text>
-      <input class="form-input" placeholder="选填" value="{{item.model_code}}" data-index="{{index}}" bindinput="inputModelCode"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">颜色</text>
-      <input class="form-input" placeholder="选填" value="{{item.color}}" data-index="{{index}}" bindinput="inputColor"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">规格</text>
-      <input class="form-input" placeholder="选填" value="{{item.specification}}" data-index="{{index}}" bindinput="inputSpecification"/>
-    </view>
-    <view class="form-item">
-      <text class="form-label">备注</text>
-      <input class="form-input" placeholder="选填" value="{{item.remark}}" data-index="{{index}}" bindinput="inputRemark"/>
-    </view>
-    <view class="form-item" wx:if="{{processOptions.length}}">
-      <text class="form-label">工序工价</text>
-      <view class="price-list">
-        <view class="price-row" wx:for="{{processOptions}}" wx:for-item="proc" wx:key="id">
-          <text class="price-name">{{proc.name}}</text>
-          <input type="digit" class="price-input" placeholder="计件" data-index="{{index}}" data-process-id="{{proc.id}}" bindinput="inputPrice" value="{{item.prices[proc.id] ? item.prices[proc.id].price : ''}}"/>
-          <input type="digit" class="price-input" placeholder="计时" data-index="{{index}}" data-process-id="{{proc.id}}" bindinput="inputTimePrice" value="{{item.prices[proc.id] ? item.prices[proc.id].time_price : ''}}"/>
-        </view>
-      </view>
-    </view>
-  </view>
-  <view class="card">
-    <view class="btn-add-row" bindtap="addRow">+ 添加一行型号</view>
-  </view>
-</view>
-<view class="footer-bar safe-area-bottom">
-  <button class="btn-primary btn-block" loading="{{submitting}}" bindtap="submit">批量添加</button>
+  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无型号，请先添加</view>
+  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
 </view>

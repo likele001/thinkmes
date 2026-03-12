@@ -27,6 +27,7 @@ Page({
     content: '',
     loading: false,
   },
+  goBack() { wx.navigateBack(); },
   onLoad(options) {
     const id = options.id ? parseInt(options.id, 10) : 0;
     this.setData({ id });

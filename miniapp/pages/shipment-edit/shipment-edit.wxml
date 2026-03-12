@@ -1,32 +1,12 @@
-<view class="container">
-  <view class="form-card">
-    <view class="form-item">
-      <text class="form-label">关联订单 *</text>
-      <picker mode="selector" range="{{orderOptions}}" range-key="label" value="{{orderIndex}}" bindchange="pickOrder">
-        <view class="picker">{{orderLabel}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">发货时间</text>
-      <picker mode="date" value="{{shipmentTimeDate}}" bindchange="pickShipmentTime">
-        <view class="picker">{{shipmentTimeDate || '选择日期'}}</view>
-      </picker>
-    </view>
-    <view class="form-item">
-      <text class="form-label">备注</text>
-      <input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/>
-    </view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">{{id ? '编辑发货' : '新增发货'}}</text>
   </view>
-  <view class="form-card">
-    <view class="section-title">发货明细（型号 + 数量）</view>
-    <block wx:for="{{models}}" wx:key="idx">
-      <view class="model-row">
-        <view class="picker-model" data-idx="{{idx}}" bindtap="openModelSelectForRow">{{item.modelLabel || '选择型号（可搜索）'}}</view>
-        <input class="input-qty" type="number" placeholder="数量" value="{{item.quantity}}" data-idx="{{idx}}" bindinput="inputModelQty"/>
-        <text class="btn-del" bindtap="delModelRow" data-idx="{{idx}}">删除</text>
-      </view>
-    </block>
-    <view class="btn-add-model" bindtap="addModelRow">+ 添加型号</view>
+  <view class="card">
+    <view class="form-item"><text class="form-label">发货单号</text><input class="form-input" placeholder="单号" value="{{shipment_no}}" bindinput="inputNo"/></view>
+    <view class="form-item"><text class="form-label">客户ID *</text><input class="form-input" type="number" placeholder="客户ID" value="{{customer_id}}" bindinput="inputCustomerId"/></view>
+    <view class="form-item"><text class="form-label">备注</text><input class="form-input" placeholder="备注" value="{{remark}}" bindinput="inputRemark"/></view>
   </view>
-  <button class="btn-submit" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
+  <button class="btn-primary btn-block" loading="{{loading}}" bindtap="submit">{{id ? '保存' : '添加'}}</button>
 </view>

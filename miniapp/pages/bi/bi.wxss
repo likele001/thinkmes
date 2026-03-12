@@ -1,24 +1,113 @@
-.bi-page { padding: 24rpx; padding-bottom: 60rpx; }
-.tabs { display: flex; background: #f5f5f5; border-radius: 12rpx; padding: 8rpx; margin-bottom: 24rpx; }
-.tab { flex: 1; text-align: center; padding: 16rpx; font-size: 26rpx; color: #666; border-radius: 8rpx; }
-.tab.active { background: #1989fa; color: #fff; }
+/* BI看板 - 与 adminweixin production-dashboard 对齐 */
+.dashboard-container {
+  padding: 20rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding-bottom: 60rpx;
+}
+
+.page-header { margin-bottom: 24rpx; }
+.header-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
+.title-icon { font-size: 48rpx; margin-right: 20rpx; }
+.title-text { font-size: 36rpx; font-weight: bold; color: #333; }
+
+.tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12rpx;
+  padding: 8rpx;
+  margin-bottom: 24rpx;
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx;
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.9);
+  border-radius: 8rpx;
+}
+.tab.active { background: #fff; color: #667eea; font-weight: 600; }
+
 .tab-content { min-height: 200rpx; }
-.card { background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06); }
+
+.filter-section {
+  margin-bottom: 24rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16rpx;
+}
+.picker-display {
+  padding: 16rpx 24rpx;
+  background: #f8f9fa;
+  border-radius: 10rpx;
+  border: 2rpx solid #e9ecef;
+  font-size: 28rpx;
+  color: #333;
+}
+.to { font-size: 26rpx; color: #666; }
+.btn-filter {
+  padding: 16rpx 28rpx;
+  font-size: 28rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12rpx;
+}
+
+.metrics-section { margin-bottom: 24rpx; }
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20rpx; }
+.metric-card {
+  position: relative;
+  padding: 32rpx 24rpx;
+  border-radius: 20rpx;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
+}
+.card-bg-icon { position: absolute; top: 16rpx; right: 16rpx; font-size: 64rpx; opacity: 0.3; }
+.card-content { position: relative; z-index: 2; }
+.metric-value { display: block; font-size: 48rpx; font-weight: bold; margin-bottom: 8rpx; }
+.metric-title { display: block; font-size: 26rpx; opacity: 0.95; }
+.card-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.card-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.card-pink { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.card-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
 .section-title { font-size: 30rpx; font-weight: bold; margin-bottom: 20rpx; color: #333; }
 .row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #eee; font-size: 28rpx; }
 .row .label { color: #666; }
 .row .value { color: #333; font-weight: 500; }
 .trend-item { display: flex; justify-content: space-between; padding: 12rpx 0; font-size: 26rpx; border-bottom: 1rpx solid #f0f0f0; }
 .trend-item .date { color: #666; }
-.trend-item .qty { color: #1989fa; }
-.trend-item .wage { color: #07c160; }
-.filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16rpx; margin-bottom: 24rpx; }
-.picker { padding: 16rpx 24rpx; background: #fff; border-radius: 12rpx; font-size: 26rpx; border: 2rpx solid #eee; }
-.to { font-size: 26rpx; color: #666; }
-.btn-sm { padding: 16rpx 28rpx; font-size: 26rpx; background: #1989fa; color: #fff; border-radius: 12rpx; }
+.trend-item .qty { color: #667eea; }
+.trend-item .wage { color: #34c759; }
+
 .list-card { overflow-x: auto; }
 .table-row { display: flex; font-size: 24rpx; padding: 16rpx 0; border-bottom: 1rpx solid #eee; }
 .table-row.head { font-weight: bold; color: #666; background: #f8f8f8; }
 .table-row text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .table-row text.ellipsis { max-width: 140rpx; }
-.empty, .loading { text-align: center; padding: 60rpx; color: #999; font-size: 28rpx; }
+
+.empty, .loading { text-align: center; padding: 60rpx; color: rgba(255,255,255,0.9); font-size: 28rpx; }

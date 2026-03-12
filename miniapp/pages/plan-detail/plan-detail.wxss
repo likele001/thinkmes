@@ -1,14 +1,5 @@
-.row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #eee; }
-.label { color: #666; }
-.card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }
-.actions { margin: 20rpx; display: flex; flex-wrap: wrap; gap: 16rpx; }
-.btn-action { margin: 0; font-size: 24rpx; }
-.btn-allocate { background: #22c55e; color: #fff; }
-.btn-view { background: #38bdf8; color: #fff; }
-.btn-stats { background: #eab308; color: #fff; }
-.btn-progress { background: #16a34a; color: #fff; }
-.btn-edit { margin: 32rpx 20rpx; background: #1989fa; color: #fff; }
-.card-title { font-weight: bold; margin-bottom: 16rpx; }
-.alloc-row { display: flex; padding: 12rpx 0; border-bottom: 1rpx solid #eee; }
-.alloc-row text { flex: 1; }
-.alloc-row.head .label { color: #666; font-weight: bold; }
+/* 计划详情 - adminweixin 风格 */
+.loading-tip { padding: 24px; text-align: center; color: #999; }
+.progress-bar { margin: 12px 0; }
+.progress-bg { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 4px; }

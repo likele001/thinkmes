@@ -1,12 +1,30 @@
-<view class="container bind-page">
-  <view class="title">绑定用户中心员工</view>
-  <view class="desc">请输入您在用户中心的账号和密码，绑定后可进行报工、查看任务与工资。</view>
-  <view class="form-item">
-    <input placeholder="用户名/工号" value="{{username}}" bindinput="inputUsername" class="input"/>
+<view class="bind-page">
+  <view class="bg-decoration">
+    <view class="circle circle-1"></view>
+    <view class="circle circle-2"></view>
+    <view class="circle circle-3"></view>
   </view>
-  <view class="form-item">
-    <input password placeholder="密码" value="{{password}}" bindinput="inputPassword" class="input"/>
+  <view class="bind-form card">
+    <view class="form-header">
+      <view class="back-btn" bindtap="backToLogin">
+        <text class="back-icon">←</text>
+        <text>返回</text>
+      </view>
+      <text class="form-title">绑定员工</text>
+    </view>
+    <view class="form-desc">请输入用户中心账号和密码，绑定后可报工、查看任务与工资。</view>
+    <view class="form-item">
+      <view class="input-wrapper">
+        <text class="input-icon">👤</text>
+        <input placeholder="用户名/工号" value="{{username}}" bindinput="inputUsername" class="input"/>
+      </view>
+    </view>
+    <view class="form-item">
+      <view class="input-wrapper">
+        <text class="input-icon">🔒</text>
+        <input password placeholder="密码" value="{{password}}" bindinput="inputPassword" class="input"/>
+      </view>
+    </view>
+    <button class="btn-login" loading="{{loading}}" bindtap="submit">绑定并登录</button>
   </view>
-  <button class="btn-primary" loading="{{loading}}" bindtap="submit">绑定并登录</button>
-  <view class="back-link" bindtap="backToLogin">返回登录页</view>
 </view>

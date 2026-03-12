@@ -1,8 +1,47 @@
-<view class="container scan-page">
-  <view class="card tip-card">
-    <view class="tip-title">扫描分工二维码</view>
-    <view class="tip-desc">将摄像头对准分工单上的二维码，即可快速进入报工</view>
+<view class="page-container">
+  <view wx:if="{{!scanResult}}" class="scan-area">
+    <view class="scan-icon">📱</view>
+    <view class="scan-title">扫码报工</view>
+    <view class="scan-desc">请扫描任务二维码进行报工</view>
+    <button class="scan-btn" bindtap="scanCode" disabled="{{scanning}}">
+      {{scanning ? '扫码中...' : '开始扫码'}}
+    </button>
   </view>
-  <button class="btn-primary scan-btn" bindtap="startScan">打开扫码</button>
-  <view class="back-link" bindtap="goBack">返回首页</view>
+
+  <view wx:else class="scan-result">
+    <view class="result-header">
+      <view class="result-icon">✅</view>
+      <view class="result-title">扫码成功</view>
+    </view>
+    <view class="result-card">
+      <view class="result-item">
+        <text class="item-label">产品</text>
+        <text class="item-value">{{scanResult.product_name}}</text>
+      </view>
+      <view class="result-item">
+        <text class="item-label">型号</text>
+        <text class="item-value">{{scanResult.model_name}}</text>
+      </view>
+      <view class="result-item">
+        <text class="item-label">工序</text>
+        <text class="item-value">{{scanResult.process_name}}</text>
+      </view>
+      <view class="result-item">
+        <text class="item-label">订单号</text>
+        <text class="item-value">{{scanResult.order_no}}</text>
+      </view>
+      <view class="result-item">
+        <text class="item-label">分配数量</text>
+        <text class="item-value">{{scanResult.assign_qty}}</text>
+      </view>
+      <view class="result-item">
+        <text class="item-label">剩余可报</text>
+        <text class="item-value text-primary">{{scanResult.pending_qty}}</text>
+      </view>
+    </view>
+    <view class="result-actions">
+      <button class="btn-primary" bindtap="goToReport">立即报工</button>
+      <button class="btn-secondary" bindtap="rescan">重新扫码</button>
+    </view>
+  </view>
 </view>

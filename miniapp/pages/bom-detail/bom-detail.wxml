@@ -1,22 +1,22 @@
-<view class="container" wx:if="{{detail}}">
+<view class="container admin-page" wx:if="{{detail}}">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">BOM详情</text>
+  </view>
   <view class="card">
     <view class="row"><text class="label">名称</text><text>{{detail.name || detail.product_name}}</text></view>
     <view class="row"><text class="label">编码</text><text>{{detail.code || '-'}}</text></view>
     <view class="row"><text class="label">状态</text><text>{{detail.status_text || detail.status}}</text></view>
   </view>
-  <view class="card" wx:if="{{items.length}}">
+  <view class="card" wx:if="{{items && items.length}}">
     <view class="card-title">BOM明细</view>
-    <view class="row head">
-      <text>物料/用量</text>
-    </view>
-    <view class="row" wx:for="{{items}}" wx:key="id">
-      <text>{{item.material_name || item.material_id}} / {{item.quantity || 0}}</text>
-    </view>
+    <view class="row head"><text>物料</text><text class="col-qty">用量</text></view>
+    <view class="row" wx:for="{{items}}" wx:key="id"><text>{{item.material_name || item.material_id || '-'}}</text><text class="col-qty">{{item.quantity != null ? item.quantity : 0}}</text></view>
   </view>
   <view class="btn-row">
-    <button class="btn-edit" bindtap="goEdit">编辑</button>
+    <button bindtap="goEdit">编辑</button>
     <button wx:if="{{detail && (detail.status === 0 || detail.status === 1)}}" class="btn-approve" bindtap="approveBom">审核通过</button>
   </view>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>
+<view class="container admin-page" wx:elif="{{!loading}}">暂无数据</view>
+<view class="container admin-page" wx:else>加载中...</view>

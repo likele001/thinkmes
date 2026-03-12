@@ -1,38 +1,54 @@
-<view class="container page-with-footer" wx:if="{{info}}">
-  <view class="card">
-    <view class="task-name">{{info.product_name}} - {{info.model_name}}</view>
-    <view class="text-muted">{{info.order_name || info.order_no}} · {{info.process_name}}</view>
-    <view class="task-qty">待报 <text class="text-primary">{{info.pending_qty}}</text> / 分配 {{info.assign_qty}}</view>
-  </view>
-  <view class="card">
-    <view class="form-label">报工方式</view>
-    <radio-group bindchange="switchWorkType">
-      <label><radio value="piece" checked="{{workType==='piece'}}"/> 按件</label>
-      <label><radio value="hour" checked="{{workType==='hour'}}"/> 按工时</label>
-    </radio-group>
-  </view>
-  <view class="card" wx:if="{{workType==='piece' && info.item_nos && info.item_nos.length}}">
-    <view class="form-label">选择产品编号</view>
-    <view class="item-nos">
-      <view class="item-no {{selectedItems.indexOf(item)>=0 ? 'active' : ''}}" wx:for="{{info.item_nos}}" wx:key="*this" data-no="{{item}}" bindtap="toggleItem">{{item}}</view>
-    </view>
-  </view>
-  <view class="card" wx:if="{{workType==='hour'}}">
-    <view class="form-label">工时（小时）</view>
-    <input type="digit" placeholder="请输入工时" value="{{workHours}}" bindinput="inputHours"/>
-  </view>
-  <view class="card">
-    <view class="form-label">报工图片（选填）</view>
-    <view class="images">
-      <view class="img-wrap" wx:for="{{images}}" wx:key="*this">
-        <image src="{{item}}" mode="aspectFill" class="thumb"/>
-        <view class="del" data-idx="{{index}}" bindtap="removeImage">×</view>
+<view class="page-container">
+  <view class="top-nav">
+    <view class="nav-content">
+      <view class="nav-title">任务报工</view>
+      <view class="nav-actions">
+        <view class="nav-btn" bindtap="goBack">
+          <text class="nav-icon">←</text>
+        </view>
       </view>
-      <view class="add-img" wx:if="{{images.length < 3}}" bindtap="chooseImage">+ 添加</view>
+    </view>
+  </view>
+
+  <view class="main-content">
+    <view wx:if="{{loading}}" class="loading-wrap">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <view wx:elif="{{task.allocation_id}}" class="task-detail">
+      <view class="task-card">
+        <view class="task-header">
+          <text class="task-title">{{task.product_name}} - {{task.model_name}}</text>
+          <view class="task-status status-pending" wx:if="{{task.pending_qty > 0}}">
+            <text class="task-status-text">待报 {{task.pending_qty}}</text>
+          </view>
+          <view class="task-status status-success" wx:else>
+            <text class="task-status-text">已报满</text>
+          </view>
+        </view>
+        <view class="task-info">
+          <text class="info-text">{{task.order_name || task.order_no}} · {{task.process_name}}</text>
+          <text class="info-text">已报 {{task.reported_qty}} / 分配 {{task.assign_qty}}</text>
+        </view>
+      </view>
+
+      <view class="form-card" wx:if="{{task.pending_qty > 0}}">
+        <view class="form-title">报工数量</view>
+        <view class="form-item">
+          <view class="input-wrapper">
+            <text class="input-icon">📋</text>
+            <input type="number" placeholder="请输入数量（1~{{task.pending_qty}}）" value="{{quantity}}" bindinput="inputQuantity" class="input"/>
+          </view>
+        </view>
+        <button class="btn-submit" loading="{{submitting}}" bindtap="submit">提交报工</button>
+      </view>
+
+      <view wx:else class="empty-tip">该任务已报满，无需再报</view>
+    </view>
+
+    <view wx:else class="empty-wrap">
+      <text class="empty-title">任务不存在或无权操作</text>
+      <view class="back-link" bindtap="goBack">返回</view>
     </view>
   </view>
 </view>
-<view class="footer-bar safe-area-bottom" wx:if="{{info}}">
-  <button class="btn-primary btn-block" loading="{{submitting}}" bindtap="submit">提交报工</button>
-</view>
-<view class="container" wx:else>加载中...</view>

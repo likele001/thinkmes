@@ -1,1 +1,4 @@
-{ "navigationBarTitleText": "报工", "usingComponents": {} }
+{
+  "navigationBarTitleText": "任务报工",
+  "usingComponents": {}
+}

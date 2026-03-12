@@ -1,11 +1,36 @@
-<view class="container" wx:if="{{detail}}">
-  <view class="card">
-    <view class="row"><text class="label">发货单号</text><text>{{detail.shipment_no || detail.order_no}}</text></view>
-    <view class="row"><text class="label">订单</text><text>{{detail.order_no || '-'}}</text></view>
-    <view class="row"><text class="label">客户</text><text>{{detail.customer_name || '-'}}</text></view>
-    <view class="row"><text class="label">状态</text><text>{{detail.status_text || detail.status}}</text></view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">发货详情</text>
   </view>
-  <button class="btn-edit" bindtap="goEdit">编辑</button>
+
+  <view class="loading-tip" wx:if="{{loading}}">加载中...</view>
+
+  <view class="card" wx:elif="{{detail && (detail.id || detail.shipment_no)}}">
+    <view class="card-title">发货单信息</view>
+    <view class="info-row"><text class="label">单号：</text><text class="value">{{detail.shipment_no || detail.order_no || '-'}}</text></view>
+    <view class="info-row"><text class="label">客户：</text><text class="value">{{detail.customer_name || (detail.customer && detail.customer.name) || '-'}}</text></view>
+    <view class="info-row"><text class="label">订单：</text><text class="value">{{detail.order_no || (detail.order && detail.order.order_no) || '-'}}</text></view>
+    <view class="info-row"><text class="label">状态：</text><text class="value">{{detail.status === 0 ? '待发货' : detail.status === 1 ? '已发货' : (detail.status_text || '-')}}</text></view>
+    <view class="info-row" wx:if="{{detail.createtime_text || detail.create_time}}"><text class="label">创建时间：</text><text class="value">{{detail.createtime_text || '已记录'}}</text></view>
+    <view class="info-row" wx:if="{{detail.remark}}"><text class="label">备注：</text><text class="value">{{detail.remark}}</text></view>
+
+    <view class="card-title" wx:if="{{items && items.length}}">发货明细</view>
+    <view class="detail-table" wx:if="{{items && items.length}}">
+      <view class="table-row head">
+        <text class="col-name">物料/产品</text>
+        <text class="col-qty">数量</text>
+      </view>
+      <view class="table-row" wx:for="{{items}}" wx:key="id">
+        <text class="col-name">{{item.material_name || item.product_name || item.material_id || '-'}}</text>
+        <text class="col-qty">{{item.quantity != null ? item.quantity : '-'}}</text>
+      </view>
+    </view>
+
+    <view class="btn-row">
+      <button class="btn-primary" bindtap="goEdit">编辑</button>
+    </view>
+  </view>
+
+  <view class="empty" wx:else>暂无数据，或加载失败</view>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>

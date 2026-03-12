@@ -16,6 +16,7 @@ Page({
     statusIndex: 0,
     loading: false,
   },
+  goBack() { wx.navigateBack(); },
   onLoad(options) {
     const id = options.id || 0;
     this.setData({ id: id ? parseInt(id, 10) : 0 });

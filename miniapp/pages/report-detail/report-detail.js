@@ -1,76 +1,41 @@
-const { adminApi, userApi } = require('../../utils/api.js');
+const { adminApi } = require('../../utils/api.js');
+const { toFullImageUrls } = require('../../utils/image.js');
 
 Page({
-  data: {
-    reportId: 0,
-    detail: null,
-    loading: true,
-    fromUser: false,
-  },
+  data: { id: 0, detail: {}, loading: false },
 
   onLoad(options) {
-    const id = options.report_id || options.id || 0;
-    const fromUser = options.from === 'user';
-    if (!id) {
-      wx.showToast({ title: '参数错误', icon: 'none' });
-      return;
-    }
-    this.setData({ reportId: id, fromUser });
-    if (fromUser) wx.setNavigationBarTitle({ title: '报工详情' });
-    this.load();
-  },
-
-  fullUrl(url) {
-    if (!url || url.indexOf('http') === 0) return url;
-    const base = (getApp().globalData.baseUrl || '').replace(/\/api\/?$/, '');
-    return base ? base + (url[0] === '/' ? url : '/' + url) : url;
+    const id = options.id ? parseInt(options.id, 10) : 0;
+    this.setData({ id });
+    if (id) this.load();
   },
 
   load() {
-    const api = this.data.fromUser ? userApi.getReportDetail(this.data.reportId) : adminApi.getReportDetail(this.data.reportId);
-    api.then((res) => {
-      const d = res.data || null;
-      if (d) {
-        const origin = (getApp().globalData.baseUrl || '').replace(/\/api\/?$/, '');
-        const toFull = (u) => (!u || u.indexOf('http') === 0 ? u : (origin ? origin + (u[0] === '/' ? u : '/' + u) : u));
-        if (d.images) d.images = d.images.map(toFull);
-        if (d.audit_images) d.audit_images = d.audit_images.map(toFull);
-        if (d.audit_videos) d.audit_videos = d.audit_videos.map(toFull);
-        let createTimeStr = '';
-        const t = d.create_time;
-        if (t != null && !isNaN(Number(t))) {
-          const date = new Date(Number(t) * 1000);
-          const y = date.getFullYear();
-          const m = date.getMonth() + 1;
-          const day = date.getDate();
-          const h = date.getHours();
-          const min = date.getMinutes();
-          createTimeStr = y + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day + ' ' + (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
-        }
-        d.create_time_str = createTimeStr || '-';
-      }
-      this.setData({ detail: d, loading: false });
-    }).catch(() => { this.setData({ loading: false }); });
+    this.setData({ loading: true });
+    adminApi.getReportDetail(this.data.id)
+      .then((res) => {
+        const raw = res.data;
+        const detail = raw && (typeof raw === 'object') ? raw : {};
+        // 接口返回的图片多为相对路径 /uploads/...，小程序需用完整 https 地址
+        if (detail.images && detail.images.length) detail.images = toFullImageUrls(detail.images);
+        if (detail.audit_images && detail.audit_images.length) detail.audit_images = toFullImageUrls(detail.audit_images);
+        if (detail.audit_videos && detail.audit_videos.length) detail.audit_videos = toFullImageUrls(detail.audit_videos);
+        this.setData({ detail, loading: false });
+      })
+      .catch(() => { this.setData({ detail: null, loading: false }); });
   },
 
-  goAudit() {
-    wx.navigateTo({ url: '/pages/audit/audit?report_id=' + this.data.reportId });
+  goBack() { wx.navigateBack(); },
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url;
+    const urls = e.currentTarget.dataset.urls || [url];
+    if (url) wx.previewImage({ current: url, urls: Array.isArray(urls) ? urls : [url] });
   },
-
-  confirmDelete() {
-    wx.showModal({
-      title: '确认删除',
-      content: '确定删除该报工记录？',
-      success: (res) => {
-        if (res.confirm) {
-          adminApi.deleteReport(this.data.reportId)
-            .then(() => {
-              wx.showToast({ title: '已删除' });
-              setTimeout(() => wx.navigateBack(), 500);
-            })
-            .catch(() => {});
-        }
-      },
-    });
+  audit(e) {
+    const status = e.currentTarget.dataset.status;
+    adminApi.auditReport(this.data.id, parseInt(status, 10)).then(() => {
+      wx.showToast({ title: status === '1' ? '已通过' : '已拒绝' });
+      this.load();
+    }).catch(() => {});
   },
 });

@@ -1,24 +1,27 @@
 const { adminApi } = require('../../utils/api.js');
 
 Page({
-  data: { list: [], total: 0, page: 1, limit: 20, loading: false, noMore: false },
+  data: { list: [], page: 1, limit: 20, loading: false, noMore: false },
+
   onLoad() { this.load(); },
+
   load() {
-    if (this.data.loading || this.data.noMore) return;
+    if (this.data.loading) return;
     this.setData({ loading: true });
     adminApi.getPurchaseList(this.data.page, this.data.limit)
       .then((res) => {
         const d = res.data || {};
-        const list = this.data.page === 1 ? (d.list || []) : (this.data.list || []).concat(d.list || []);
-        this.setData({ list, total: d.total || 0, loading: false, noMore: list.length >= (d.total || 0) });
+        const newList = d.list || d.rows || [];
+        const list = this.data.page === 1 ? newList : (this.data.list || []).concat(newList);
+        const total = d.total || list.length;
+        this.setData({ list, loading: false, noMore: list.length >= total });
       })
       .catch(() => { this.setData({ loading: false }); });
   },
-  onReachBottom() {
-    if (this.data.noMore || this.data.loading) return;
-    this.setData({ page: this.data.page + 1 });
-    this.load();
-  },
+
+  onReachBottom() { if (!this.data.noMore && !this.data.loading) { this.setData({ page: this.data.page + 1 }); this.load(); } },
+
+  goIndex() { wx.navigateTo({ url: '/pages/index/index' }); },
   goAdd() { wx.navigateTo({ url: '/pages/purchase-edit/purchase-edit' }); },
   goDetail(e) { const id = e.currentTarget.dataset.id; if (id) wx.navigateTo({ url: '/pages/purchase-detail/purchase-detail?id=' + id }); },
   goEdit(e) { const id = e.currentTarget.dataset.id; if (id) wx.navigateTo({ url: '/pages/purchase-edit/purchase-edit?id=' + id }); },

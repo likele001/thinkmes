@@ -19,7 +19,7 @@
         if ($table.length === 0 || typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) return;
         
         $table.bootstrapTable({
-            url: base + '/mes/stock/index',
+            url: base + '/mes.stock/index',
             pk: 'id',
             sortName: 'id',
             sortOrder: 'desc',
@@ -55,7 +55,7 @@
         };
         
         $table.bootstrapTable({
-            url: base + '/mes/stock/log',
+            url: base + '/mes.stock/log',
             pk: 'id',
             sortName: 'id',
             sortOrder: 'desc',
@@ -89,7 +89,7 @@
         if ($table.length === 0 || typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) return;
         
         $table.bootstrapTable({
-            url: base + '/mes/stock/outbound',
+            url: base + '/mes.stock/outbound',
             pk: 'id',
             sortName: 'id',
             sortOrder: 'desc',
@@ -124,7 +124,7 @@
         if ($table.length === 0 || typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) return;
         
         $table.bootstrapTable({
-            url: base + '/mes/stock/index',
+            url: base + '/mes.stock/index',
             pk: 'id',
             sortName: 'id',
             sortOrder: 'desc',
@@ -167,7 +167,7 @@
             var remark = prompt('请输入盘点备注（可选）:');
             
             $.ajax({
-                url: base + '/mes/stock/check',
+                url: base + '/mes.stock/check',
                 type: 'post',
                 data: {
                     material_id: id,
@@ -216,7 +216,7 @@
             var $table = $('#table');
             if ($table.length === 0 || typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) return;
             $table.bootstrapTable({
-                url: base + '/mes/stock/alert',
+                url: base + '/mes.stock/alert',
                 method: 'get',
                 sidePagination: 'server',
                 pagination: true,

@@ -1,28 +1,33 @@
-<view class="container" wx:if="{{detail}}">
-  <view class="card">
-    <view class="row"><text class="label">计划单号</text><text>{{detail.plan_code || detail.plan_no}}</text></view>
-    <view class="row"><text class="label">计划名称</text><text>{{detail.plan_name || detail.name}}</text></view>
-    <view class="row"><text class="label">状态</text><text>{{detail.status_text || detail.status}}</text></view>
-    <view class="row" wx:if="{{detail.order_no}}"><text class="label">关联订单</text><text>{{detail.order_no}}</text></view>
-    <view class="row" wx:if="{{detail.model}}"><text class="label">产品型号</text><text>{{detail.model.product ? detail.model.product.name : ''}} - {{detail.model.name || ''}}</text></view>
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">计划详情</text>
   </view>
-  <view class="card" wx:if="{{allocations.length}}">
-    <view class="card-title">分工列表（分配给谁）</view>
-    <view class="alloc-row head"><text class="label">工序</text><text class="label">分配给</text><text class="label">数量</text><text class="label">已完成</text></view>
-    <view class="alloc-row" wx:for="{{allocations}}" wx:key="id" data-id="{{item.id}}" bindtap="goAllocation">
-      <text>{{item.process ? item.process.name : '-'}}</text>
-      <text>{{item.user ? (item.user.nickname || item.user.username) : '-'}}</text>
-      <text>{{item.quantity || 0}}</text>
-      <text>{{item.completed_quantity != null ? item.completed_quantity : '-'}}</text>
+
+  <view class="loading-tip" wx:if="{{loading}}">加载中...</view>
+
+  <view class="card" wx:elif="{{detail && (detail.id || detail.plan_id)}}">
+    <view class="card-title">计划信息</view>
+    <view class="info-row"><text class="label">计划名称：</text><text class="value">{{detail.plan_name || detail.plan_code || '-'}}</text></view>
+    <view class="info-row"><text class="label">计划编码：</text><text class="value">{{detail.plan_code || '-'}}</text></view>
+    <view class="info-row"><text class="label">关联订单：</text><text class="value">{{detail.order_no || (detail.order && detail.order.order_no) || '-'}}</text></view>
+    <view class="info-row"><text class="label">产品：</text><text class="value">{{detail.product_name || (detail.model && detail.model.product && detail.model.product.name) || '-'}}</text></view>
+    <view class="info-row"><text class="label">型号：</text><text class="value">{{detail.product_model || (detail.model && detail.model.name) || '-'}}</text></view>
+    <view class="info-row"><text class="label">计划数量：</text><text class="value">{{detail.total_quantity != null ? detail.total_quantity : 0}}</text></view>
+    <view class="info-row"><text class="label">完成数量：</text><text class="value">{{detail.completed_quantity != null ? detail.completed_quantity : detail.actual_quantity || 0}}</text></view>
+    <view class="info-row"><text class="label">完成率：</text><text class="value">{{detail.progress != null ? detail.progress : 0}}%</text></view>
+    <view class="progress-bar" wx:if="{{detail.total_quantity > 0}}">
+      <view class="progress-bg"><view class="progress-fill" style="width: {{detail.progress != null ? detail.progress : 0}}%;"></view></view>
+    </view>
+    <view class="info-row"><text class="label">状态：</text><text class="value status-{{detail.status}}">{{detail.status == 0 ? '未开始' : detail.status == 1 ? '进行中' : '已完成'}}</text></view>
+    <view class="info-row" wx:if="{{detail.createtime_text}}"><text class="label">创建时间：</text><text class="value">{{detail.createtime_text}}</text></view>
+
+    <view class="btn-row">
+      <button class="btn-primary" bindtap="goEdit">编辑</button>
+      <button class="btn-secondary" bindtap="goAllocations">分工管理</button>
+      <button class="btn-secondary" bindtap="goProgress">进度明细</button>
     </view>
   </view>
-  <view class="actions">
-    <button class="btn-action btn-allocate" size="mini" bindtap="goAllocate">分配工序</button>
-    <button class="btn-action btn-view" size="mini" bindtap="goAllocations">查看分工</button>
-    <button class="btn-action btn-stats" size="mini" bindtap="goProgressStats">进度统计</button>
-    <button class="btn-action btn-progress" size="mini" bindtap="goProgress">生产进度</button>
-  </view>
-  <button class="btn-edit" bindtap="goEdit">编辑</button>
+
+  <view class="empty" wx:else>暂无数据，或加载失败</view>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>

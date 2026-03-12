@@ -1,17 +1,24 @@
-<view class="container" wx:if="{{detail}}">
+<view class="container admin-page" wx:if="{{detail}}">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">分工详情</text>
+  </view>
   <view class="card">
-    <view class="row"><text class="label">订单</text><text>{{detail.order_no || detail.order_name}}</text></view>
-    <view class="row"><text class="label">产品/型号</text><text>{{detail.product_name}} / {{detail.model_name}}</text></view>
-    <view class="row"><text class="label">工序</text><text>{{detail.process_name}}</text></view>
-    <view class="row"><text class="label">数量</text><text>{{detail.quantity}}</text></view>
-    <view class="row"><text class="label">分配给</text><text>{{detail.assignee_name || '未分配'}}</text></view>
-    <view class="row"><text class="label">状态</text><text>{{detail.status_text || detail.status}}</text></view>
+    <view class="card-title">分工信息</view>
+    <view class="row"><text class="label">订单</text><text>{{detail.order_no || detail.order_name || '-'}}</text></view>
+    <view class="row"><text class="label">产品/型号</text><text>{{detail.product_name || '-'}} / {{detail.model_name || '-'}}</text></view>
+    <view class="row"><text class="label">工序</text><text>{{detail.process_name || '-'}}</text></view>
+    <view class="row"><text class="label">分配数量</text><text>{{detail.quantity != null ? detail.quantity : '-'}}</text></view>
+    <view class="row"><text class="label">已完成数量</text><text>{{detail.completed_quantity != null ? detail.completed_quantity : 0}}</text></view>
+    <view class="row"><text class="label">状态</text><text class="status-{{detail.status}}">{{detail.status_text || (detail.status === 0 ? '待生产' : detail.status === 1 ? '进行中' : '已完成')}}</text></view>
+    <view class="row" wx:if="{{detail.user_name}}"><text class="label">报工人</text><text>{{detail.user_name}}</text></view>
+    <view class="row" wx:if="{{detail.createtime_text}}"><text class="label">创建时间</text><text>{{detail.createtime_text}}</text></view>
   </view>
   <view class="btn-row">
-    <button size="mini" bindtap="goEdit">编辑</button>
-    <button size="mini" class="btn-qrcode" bindtap="generateQrcode">生成二维码</button>
-    <button size="mini" type="warn" bindtap="confirmDelete">删除</button>
+    <button class="btn-primary" bindtap="goEdit">编辑</button>
+    <button class="btn-secondary" bindtap="generateQrcode">生成二维码</button>
+    <button type="warn" bindtap="confirmDelete">删除</button>
   </view>
 </view>
-<view class="container" wx:elif="{{!loading}}">暂无数据</view>
-<view class="container" wx:else>加载中...</view>
+<view class="container admin-page" wx:elif="{{!loading}}">暂无数据，或加载失败</view>
+<view class="container admin-page" wx:else>加载中...</view>

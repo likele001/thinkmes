@@ -1,12 +1,94 @@
-<view class="container">
-  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="goDetail">
-    <view class="row">
-      <text class="title">{{item.product_name || (item.allocation && item.allocation.model && item.allocation.model.product ? item.allocation.model.product.name : '')}} - {{item.model_name || (item.allocation && item.allocation.model ? item.allocation.model.name : '')}}</text>
-      <text class="status {{item.status===1?'pass':'pending'}}">{{item.status===1?'已通过':(item.status===2?'已拒绝':'待审核')}}</text>
+<view class="page-container">
+  <view class="top-nav">
+    <view class="nav-content">
+      <view class="nav-title">报工记录</view>
+      <view class="nav-actions">
+        <view class="nav-btn" bindtap="refresh">
+          <text class="nav-icon">🔄</text>
+        </view>
+      </view>
     </view>
-    <view class="text-muted">{{item.process_name || (item.allocation && item.allocation.process ? item.allocation.process.name : '')}} · 数量 {{item.quantity}} · 工资 ¥{{item.wage || '0'}}</view>
-    <view class="text-muted" style="margin-top:8rpx;">{{item.create_time_str}}</view>
   </view>
-  <view class="empty" wx:if="{{!loading && list.length===0}}">暂无报工记录</view>
-  <view class="no-more" wx:if="{{noMore && list.length>0}}">没有更多了</view>
+
+  <view class="main-content">
+    <view class="stats-card" wx:if="{{!loading && (totalQuantity > 0 || totalWage > 0 || records.length > 0)}}">
+      <view class="stats-header">
+        <text class="stats-title">记录概览</text>
+        <text class="stats-count">{{records.length}} 条</text>
+      </view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <view class="stat-content">
+            <text class="stat-number">{{totalQuantity}}</text>
+            <text class="stat-label">总报工数</text>
+          </view>
+          <view class="stat-icon quantity-icon"><text class="icon-text">📊</text></view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-content">
+            <text class="stat-number">¥{{totalWage}}</text>
+            <text class="stat-label">总工资</text>
+          </view>
+          <view class="stat-icon wage-icon"><text class="icon-text">💰</text></view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-content">
+            <text class="stat-number">{{pendingCount}}</text>
+            <text class="stat-label">待审核</text>
+          </view>
+          <view class="stat-icon pending-icon"><text class="icon-text">⏳</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="loading-wrap">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <view wx:elif="{{records.length === 0}}" class="empty-wrap">
+      <view class="empty-icon">📝</view>
+      <text class="empty-title">暂无报工记录</text>
+      <text class="empty-desc">您还没有提交过报工</text>
+      <view class="empty-action" bindtap="refresh"><text class="action-text">刷新</text></view>
+    </view>
+
+    <view wx:else class="records-list">
+      <view wx:for="{{records}}" wx:key="id" class="record-card">
+        <view class="record-header">
+          <view class="record-title">
+            <text class="product-name">{{item.product_name || '产品'}}</text>
+            <text class="model-name">- {{item.model_name || ''}}</text>
+          </view>
+          <view class="record-status {{item.status === 1 ? 'status-approved' : 'status-pending'}}">
+            <text class="status-text">{{item.status === 1 ? '已审核' : '待审核'}}</text>
+          </view>
+        </view>
+        <view class="record-info">
+          <view class="info-row">
+            <text class="info-label">订单</text>
+            <text class="info-value">{{item.order_no || '-'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">工序</text>
+            <text class="info-value">{{item.process_name || '-'}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">数量</text>
+            <text class="info-value">{{item.quantity}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">工资</text>
+            <text class="info-value text-primary">¥{{item.wage || 0}}</text>
+          </view>
+        </view>
+        <view class="record-footer">
+          <text class="time-text">🕒 {{item.createtime_text || item.createtime || ''}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!loading && hasMore && records.length > 0}}" class="load-more" bindtap="loadMore">
+      <text>加载更多</text>
+    </view>
+  </view>
 </view>
