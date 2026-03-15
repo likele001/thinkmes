@@ -27,6 +27,10 @@
     <view class="image-list" wx:if="{{detail.audit_images && detail.audit_images.length}}">
       <image wx:for="{{detail.audit_images}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{detail.audit_images}}"/>
     </view>
+    <view class="card-title" wx:if="{{detail.audit_videos && detail.audit_videos.length}}">审核视频</view>
+    <view class="video-list" wx:if="{{detail.audit_videos && detail.audit_videos.length}}">
+      <video wx:for="{{detail.audit_videos}}" wx:key="*this" class="video-item" src="{{item}}" controls show-center-play-btn/>
+    </view>
 
     <view class="btn-row" wx:if="{{detail.status === 0}}">
       <button class="btn-primary" bindtap="audit" data-status="1">通过</button>

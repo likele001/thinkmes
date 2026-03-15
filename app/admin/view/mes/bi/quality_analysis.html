@@ -39,6 +39,14 @@ $(function() {
             pk: 'stat_date',
             sortName: 'stat_date',
             sortOrder: 'desc',
+            sidePagination: 'client',
+            pagination: true,
+            responseHandler: function(res) {
+                if (res && res.code === 1 && res.data) {
+                    return res.data.list || [];
+                }
+                return [];
+            },
             columns: [
                 {field: 'stat_date', title: '日期', sortable: true},
                 {field: 'total_count', title: '总报工数', width: 120, align: 'right'},

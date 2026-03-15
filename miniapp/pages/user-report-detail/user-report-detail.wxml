@@ -1,0 +1,35 @@
+<view class="container admin-page">
+  <view class="page-header-bar">
+    <view class="page-back" bindtap="goBack">← 返回</view>
+    <text class="page-title">报工详情</text>
+  </view>
+
+  <view class="loading-tip" wx:if="{{loading}}">加载中...</view>
+
+  <view class="card" wx:elif="{{detail && (detail.id || detail.report_id)}}">
+    <view class="card-title">报工信息</view>
+    <view class="info-row"><text class="label">订单：</text><text class="value">{{detail.order_no || '-'}}</text></view>
+    <view class="info-row"><text class="label">产品/型号：</text><text class="value">{{detail.product_name || '-'}} {{detail.model_name || '-'}}</text></view>
+    <view class="info-row"><text class="label">工序：</text><text class="value">{{detail.process_name || '-'}}</text></view>
+    <view class="info-row"><text class="label">报工数量：</text><text class="value">{{detail.quantity || 0}}</text></view>
+    <view class="info-row"><text class="label">工资：</text><text class="value">¥{{detail.wage != null ? detail.wage : 0}}</text></view>
+    <view class="info-row"><text class="label">状态：</text><text class="value status-{{detail.status}}">{{detail.status === 0 ? '待审核' : detail.status === 1 ? '已通过' : '已拒绝'}}</text></view>
+    <view class="info-row"><text class="label">报工时间：</text><text class="value">{{detail.createtime_text || (detail.create_time ? '已记录' : '-')}}</text></view>
+    <view class="info-row" wx:if="{{detail.audit_reason && detail.status === 2}}"><text class="label">拒绝原因：</text><text class="value">{{detail.audit_reason}}</text></view>
+
+    <view class="card-title" wx:if="{{detail.images && detail.images.length}}">报工图片</view>
+    <view class="image-list" wx:if="{{detail.images && detail.images.length}}">
+      <image wx:for="{{detail.images}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{detail.images}}"/>
+    </view>
+    <view class="card-title" wx:if="{{detail.audit_images && detail.audit_images.length}}">审核图片</view>
+    <view class="image-list" wx:if="{{detail.audit_images && detail.audit_images.length}}">
+      <image wx:for="{{detail.audit_images}}" wx:key="*this" class="thumb" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-url="{{item}}" data-urls="{{detail.audit_images}}"/>
+    </view>
+    <view class="card-title" wx:if="{{detail.audit_videos && detail.audit_videos.length}}">审核视频</view>
+    <view class="video-list" wx:if="{{detail.audit_videos && detail.audit_videos.length}}">
+      <video wx:for="{{detail.audit_videos}}" wx:key="*this" class="video-item" src="{{item}}" controls show-center-play-btn/>
+    </view>
+  </view>
+
+  <view class="empty" wx:else>暂无数据，或加载失败</view>
+</view>

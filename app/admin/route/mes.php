@@ -9,6 +9,7 @@ Route::get('mes/stock/index', 'mes.Stock/index');
 Route::get('mes/stock/alert', 'mes.Stock/alert');
 Route::get('mes/stock/check', 'mes.Stock/check');
 Route::get('mes/stock/log', 'mes.Stock/log');
+Route::get('mes/stock/product_log', 'mes.Stock/productLog');
 Route::get('mes/stock/outbound/index', 'mes.Stock/outbound');
 Route::get('mes/stock/outbound', 'mes.Stock/outbound');
 Route::get('mes/stock', 'mes.Stock/index');
@@ -88,6 +89,8 @@ Route::group('mes', function () {
     Route::get('allocation_qrcode/index', 'mes.AllocationQrcode/index');
     Route::get('allocation_qrcode', 'mes.AllocationQrcode/index');
 
+    Route::get('order/orderProgress', 'mes.Order/orderProgress');
+    Route::get('order/processDetail', 'mes.Order/orderProcessDetail');
     Route::get('order/add', 'mes.Order/add');
     Route::get('order/edit', 'mes.Order/edit');
     Route::get('order/import', 'mes.Order/import');
@@ -123,8 +126,10 @@ Route::group('mes', function () {
     Route::post('bom/edit', 'mes.Bom/edit');
     Route::post('bom/del', 'mes.Bom/del');
     Route::post('bom/addItem', 'mes.Bom/addItem');
+    Route::post('bom/addItemBatch', 'mes.Bom/addItemBatch');
     Route::post('bom/updateItem', 'mes.Bom/updateItem');
     Route::post('bom/deleteItem', 'mes.Bom/deleteItem');
+    Route::post('bom/importTemplateItems', 'mes.Bom/importTemplateItems');
     Route::post('bom/approve', 'mes.Bom/approve');
 
     Route::get('report/add', 'mes.Report/add');
@@ -224,9 +229,17 @@ Route::group('mes', function () {
 
     Route::get('purchase/index', 'mes.Purchase/index');
     Route::get('purchase/inbound', 'mes.Purchase/inbound');
+    Route::get('purchase/generateFromRequest', 'mes.Purchase/generateFromRequest');
+    Route::post('purchase/generateFromRequest', 'mes.Purchase/generateFromRequest');
+    Route::get('purchase/viewInboundItems', 'mes.Purchase/viewInboundItems');
+    Route::get('purchase/viewInboundItems/id/:id', 'mes.Purchase/viewInboundItems');
+    Route::post('purchase/confirmInbound', 'mes.Purchase/confirmInbound');
+    Route::get('purchase/addInbound', 'mes.Purchase/addInbound');
+    Route::post('purchase/addInbound', 'mes.Purchase/addInbound');
     Route::get('purchase/request/index', 'mes.Purchase/requestList');
     Route::get('purchase/request', 'mes.Purchase/requestList');
     Route::post('purchase/auditRequest', 'mes.Purchase/auditRequest');
+    Route::post('purchase/createRequestFromStockAlert', 'mes.Purchase/createRequestFromStockAlert');
     Route::get('purchase', 'mes.Purchase/index');
     Route::post('purchase/add', 'mes.Purchase/add');
     Route::post('purchase/edit', 'mes.Purchase/edit');
@@ -262,6 +275,7 @@ Route::group('mes', function () {
     Route::get('trace_code/query', 'mes.TraceCode/query');
     Route::post('trace_code/del', 'mes.TraceCode/del');
 
+    // bi 报表：子路径必须写在 bi 前面，否则 mes/bi/dashboard 会被 mes/bi 匹配成 index
     Route::get('bi/dashboard', 'mes.Bi/dashboard');
     Route::get('bi/getDashboardData', 'mes.Bi/getDashboardData');
     Route::get('bi/productionEfficiency', 'mes.Bi/productionEfficiency');
@@ -269,6 +283,8 @@ Route::group('mes', function () {
     Route::get('bi/costAnalysis', 'mes.Bi/costAnalysis');
     Route::post('bi/syncProgress', 'mes.Bi/syncProgress');
     Route::get('bi/syncProgress', 'mes.Bi/syncProgress');
+    Route::get('bi/index', 'mes.Bi/index');
+    Route::get('bi', 'mes.Bi/index');
 
     Route::get('shipment/add', 'mes.Shipment/add');
     Route::get('shipment/edit', 'mes.Shipment/edit');

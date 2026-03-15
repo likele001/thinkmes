@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\admin\controller;
 
+use app\admin\model\TenantModel;
 use think\facade\Db;
 use think\facade\Request;
 use think\facade\View;
@@ -18,10 +19,23 @@ class AiPackage extends Backend
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
             View::assign('title', 'AI 套餐管理');
+            View::assign('is_platform_admin', $this->isPlatformAdmin());
             return $this->fetchWithLayout('ai/package/index');
         }
         // AJAX 请求返回套餐列表
         return $this->packages();
+    }
+
+    /**
+     * 获取租户列表（仅平台超管，用于「为租户开通」下拉）
+     */
+    public function tenantList(): Response
+    {
+        if (!$this->isPlatformAdmin()) {
+            return $this->error('仅平台超管可操作');
+        }
+        $list = TenantModel::where('status', 1)->order('id')->field('id,name')->select()->toArray();
+        return $this->success('', $list);
     }
 
     /** 全局开关与四个子功能开关配置页（平台/租户均可打开） */
@@ -165,14 +179,17 @@ class AiPackage extends Backend
         return $this->success('创建成功', ['id' => $id]);
     }
 
-    // 管理端为租户下单（标记购买记录）
+    // 管理端为租户下单（标记购买记录，仅平台超管）
     public function purchaseForTenant(): Response
     {
+        if (!$this->isPlatformAdmin()) {
+            return $this->error('仅平台超管可为租户开通 AI 套餐');
+        }
         $data = Request::only(['tenant_id','package_id','period','order_no','amount','payment_method']);
         $tenantId = intval($data['tenant_id'] ?? 0);
         $packageId = intval($data['package_id'] ?? 0);
         if (!$tenantId || !$packageId) {
-            return $this->error('参数错误');
+            return $this->error('请选择租户和套餐');
         }
         $period = $data['period'] ?? 'month';
         $now = time();

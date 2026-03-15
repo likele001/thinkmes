@@ -14,6 +14,8 @@ App({
     autoUserLoginDone: false,
     autoUserLoginOk: false,
     needBindEmployee: false,
+    /** 管理端权限节点（与 PC 一致），用于首页菜单显隐 */
+    scanworkNodes: null,
   },
 
   onLaunch() {
@@ -26,6 +28,10 @@ App({
       this.globalData.adminInfo = adminInfo;
       this.globalData.isAdminMode = true;
       this.globalData.token = adminToken;
+      const nodes = wx.getStorageSync('scanworkNodes');
+      if (nodes && Array.isArray(nodes)) {
+        this.globalData.scanworkNodes = nodes;
+      }
     } else if (userToken) {
       this.globalData.userToken = userToken;
       this.globalData.userInfo = userInfo;
@@ -150,8 +156,14 @@ App({
             }
           } else if (res.statusCode === 401) {
             getApp().adminLogout();
-            wx.showToast({ title: '登录已过期', icon: 'none' });
-            reject(res.data);
+            wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
+            reject(Object.assign({ statusCode: 401 }, res.data || {}));
+            setTimeout(() => {
+              wx.reLaunch({ url: '/pages/login/login' });
+            }, 500);
+          } else if (res.statusCode === 403) {
+            wx.showToast({ title: (res.data && res.data.msg) || '无权限访问', icon: 'none' });
+            reject(Object.assign({ statusCode: 403 }, res.data || {}));
           } else {
             wx.showToast({ title: '网络错误', icon: 'none' });
             reject(res.data);
@@ -213,6 +225,17 @@ App({
         this.globalData.isAdminMode = true;
         wx.setStorageSync('adminToken', res.data.token);
         wx.setStorageSync('adminInfo', this.globalData.adminInfo);
+        // 拉取权限节点，与 PC 角色一致，供首页菜单显隐
+        this.request({ url: '/scanwork/getScanworkMenu', method: 'GET' })
+          .then((menuRes) => {
+            const nodes = (menuRes.data && menuRes.data.nodes) || [];
+            this.globalData.scanworkNodes = nodes;
+            wx.setStorageSync('scanworkNodes', nodes);
+          })
+          .catch(() => {
+            this.globalData.scanworkNodes = [];
+            wx.setStorageSync('scanworkNodes', []);
+          });
       }
       return res;
     });
@@ -221,12 +244,14 @@ App({
   adminLogout() {
     this.globalData.adminToken = null;
     this.globalData.adminInfo = null;
+    this.globalData.scanworkNodes = null;
     this.globalData.isAdminMode = false;
     if (this.globalData.token === this.globalData.adminToken) {
       this.globalData.token = this.globalData.userToken;
     }
     wx.removeStorageSync('adminToken');
     wx.removeStorageSync('adminInfo');
+    wx.removeStorageSync('scanworkNodes');
   },
 
   // 员工端登录（微信 code + 租户；租户来自 getConfig 或 config 兜底）
@@ -278,6 +303,9 @@ App({
       this.globalData.adminInfo = adminInfo;
       this.globalData.token = token;
       this.globalData.isAdminMode = true;
+      if (!this.globalData.scanworkNodes && wx.getStorageSync('scanworkNodes')) {
+        this.globalData.scanworkNodes = wx.getStorageSync('scanworkNodes');
+      }
       return true;
     }
     return false;

@@ -1081,4 +1081,190 @@ class Order extends Backend
             return $this->error('模板生成失败：' . $e->getMessage());
         }
     }
+
+    /**
+     * 订单生产进度总表：所有订单一眼看到 订单号→产品→总数→已完成→不良→完工率→状态
+     */
+    public function orderProgress(): string
+    {
+        $tenantId = $this->getTenantId();
+        $orderT = Db::name('mes_order')->getTable();
+        $planT = Db::name('mes_production_plan')->getTable();
+        $allocT = Db::name('mes_allocation')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+
+        $query = Db::table($orderT . ' o')
+            ->leftJoin($planT . ' t', 'o.id = t.order_id')
+            ->leftJoin($allocT . ' a', '((a.plan_id = t.id) OR (a.plan_id IS NULL AND a.order_id = o.id))')
+            ->leftJoin($reportT . ' r', 'r.allocation_id = a.id AND r.status = 1')
+            ->field([
+                'o.id',
+                'o.order_no',
+                'o.order_name as product_name',
+                'o.total_quantity as order_num',
+                'o.create_time',
+                'o.delivery_time',
+                'SUM(r.quantity) as finish_num',
+                'SUM(CASE WHEN r.quality_status = 2 THEN r.quantity ELSE 0 END) as bad_num',
+                'ROUND(IFNULL(SUM(r.quantity) / NULLIF(o.total_quantity, 0) * 100, 0), 1) as progress',
+            ])
+            ->group('o.id')
+            ->order('o.id', 'desc');
+
+        if ($tenantId > 0) {
+            $query->where('o.tenant_id', $tenantId);
+        } else {
+            $tp = (int) $this->request->get('tenant_id', 0);
+            if ($tp > 0) {
+                $query->where('o.tenant_id', $tp);
+            }
+        }
+
+        $list = $query->select()->toArray();
+
+        foreach ($list as &$item) {
+            $item['finish_num'] = (int) ($item['finish_num'] ?? 0);
+            $item['bad_num'] = (int) ($item['bad_num'] ?? 0);
+            $item['progress'] = round((float) ($item['progress'] ?? 0), 1);
+            if ($item['finish_num'] <= 0) {
+                $item['status_txt'] = '未开始';
+            } elseif ($item['progress'] >= 100) {
+                $item['status_txt'] = '已完成';
+            } else {
+                $item['status_txt'] = '生产中';
+            }
+        }
+
+        View::assign('list', $list);
+        View::assign('title', '订单生产进度');
+        return $this->fetchWithLayout('mes/order/order_progress');
+    }
+
+    /**
+     * 单个订单 → 按产品、按工序的进度明细，最后总进度
+     */
+    public function orderProcessDetail(): string|Response
+    {
+        $orderId = (int) $this->request->param('order_id');
+        if ($orderId <= 0) {
+            return $this->error('请选择订单');
+        }
+
+        $tenantId = $this->getTenantId();
+        $order = OrderModel::where('id', $orderId)
+            ->when($tenantId > 0, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->find();
+        if (!$order) {
+            return $this->error('订单不存在');
+        }
+
+        $planT = Db::name('mes_production_plan')->getTable();
+        $allocT = Db::name('mes_allocation')->getTable();
+        $processT = Db::name('mes_process')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $modelT = Db::name('mes_product_model')->getTable();
+        $productT = Db::name('mes_product')->getTable();
+
+        $planIds = Db::table($planT)->where('order_id', $orderId)->column('id');
+
+        $query = Db::table($allocT . ' a')
+            ->join($processT . ' p', 'p.id = a.process_id')
+            ->join($modelT . ' pm', 'pm.id = a.model_id')
+            ->leftJoin($productT . ' prod', 'prod.id = pm.product_id')
+            ->leftJoin($reportT . ' r', 'r.allocation_id = a.id AND r.status = 1')
+            ->field([
+                'a.model_id',
+                'MAX(prod.name) as product_name',
+                'MAX(pm.name) as model_name_only',
+                'p.id as process_id',
+                'p.name as process_name',
+                'p.sort as process_sort',
+                'SUM(a.quantity) as plan_num',
+                'COALESCE(SUM(r.quantity), 0) as real_num',
+                'COALESCE(SUM(CASE WHEN r.quality_status = 2 THEN r.quantity ELSE 0 END), 0) as bad_num',
+                'ROUND(IFNULL(SUM(r.quantity) / NULLIF(SUM(a.quantity), 0) * 100, 0), 1) as progress',
+            ])
+            ->where(function ($q) use ($orderId, $planIds) {
+                if (!empty($planIds)) {
+                    $q->whereIn('a.plan_id', $planIds)->whereOr(function ($q2) use ($orderId) {
+                        $q2->whereNull('a.plan_id')->where('a.order_id', $orderId);
+                    });
+                } else {
+                    $q->whereNull('a.plan_id')->where('a.order_id', $orderId);
+                }
+            })
+            ->group('a.model_id, pm.id, p.id, p.name, p.sort')
+            ->order('a.model_id', 'asc')
+            ->order('p.sort', 'asc');
+
+        if ($tenantId > 0) {
+            $query->where('a.tenant_id', $tenantId);
+        }
+
+        $rows = $query->select()->toArray();
+
+        // 按产品聚合为：产品 → 工序列表，并算产品级、订单级合计
+        $products = [];
+        $orderPlan = 0;
+        $orderReal = 0;
+        $orderBad = 0;
+
+        foreach ($rows as $row) {
+            $planNum = (int) ($row['plan_num'] ?? 0);
+            $realNum = (int) ($row['real_num'] ?? 0);
+            $badNum = (int) ($row['bad_num'] ?? 0);
+            $progress = round((float) ($row['progress'] ?? 0), 1);
+
+            $mid = (int) $row['model_id'];
+            $pn = trim((string) ($row['product_name'] ?? ''));
+            $mn = trim((string) ($row['model_name_only'] ?? ''));
+            $modelName = $pn !== '' && $mn !== '' ? $pn . ' - ' . $mn : ($mn !== '' ? $mn : '型号#' . $mid);
+
+            if (!isset($products[$mid])) {
+                $products[$mid] = [
+                    'model_id'   => $mid,
+                    'model_name' => $modelName,
+                    'plan_num'   => 0,
+                    'real_num'   => 0,
+                    'bad_num'    => 0,
+                    'processes'  => [],
+                ];
+            }
+
+            $products[$mid]['processes'][] = [
+                'process_name' => $row['process_name'] ?? '',
+                'process_sort' => (int) ($row['process_sort'] ?? 0),
+                'plan_num'     => $planNum,
+                'real_num'     => $realNum,
+                'bad_num'      => $badNum,
+                'progress'     => $progress,
+            ];
+            $products[$mid]['plan_num'] += $planNum;
+            $products[$mid]['real_num'] += $realNum;
+            $products[$mid]['bad_num'] += $badNum;
+            $orderPlan += $planNum;
+            $orderReal += $realNum;
+            $orderBad += $badNum;
+        }
+
+        foreach ($products as &$prod) {
+            $prod['progress'] = $prod['plan_num'] > 0
+                ? round($prod['real_num'] / $prod['plan_num'] * 100, 1)
+                : 0;
+        }
+        unset($prod);
+
+        $orderTotal = [
+            'plan_num' => $orderPlan,
+            'real_num' => $orderReal,
+            'bad_num'  => $orderBad,
+            'progress' => $orderPlan > 0 ? round($orderReal / $orderPlan * 100, 1) : 0,
+        ];
+
+        View::assign('order', $order);
+        View::assign('products', array_values($products));
+        View::assign('order_total', $orderTotal);
+        View::assign('title', '订单进度（按产品·工序） - ' . $order->order_no);
+        return $this->fetchWithLayout('mes/order/process_detail');
+    }
 }

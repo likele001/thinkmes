@@ -1,5 +1,33 @@
 const { adminApi } = require('../../utils/api.js');
 
+// 首页菜单与 PC 权限节点对应（node 为空表示不校验，始终显示）
+const MENU_ITEMS = [
+  { node: 'mes/order', icon: '📋', text: '订单管理', handler: 'goOrders' },
+  { node: 'mes/customer', icon: '👥', text: '客户管理', handler: 'goCustomers' },
+  { node: 'mes/allocation', icon: '🔧', text: '分工管理', handler: 'goAllocations' },
+  { node: 'mes/report', icon: '✅', text: '报工审核', handler: 'goReports' },
+  { node: 'mes/report', icon: '⚡', text: '待审核报工', handler: 'goActiveReports' },
+  { node: 'mes/report', icon: '📊', text: '报工统计', handler: 'goReportStatistics' },
+  { node: 'mes/product', icon: '📦', text: '产品/型号', handler: 'goProducts' },
+  { node: 'mes/process', icon: '⚙️', text: '工序管理', handler: 'goProcesses' },
+  { node: 'mes/process_price', icon: '💰', text: '工序工价', handler: 'goProcessPrices' },
+  { node: 'mes/material', icon: '🧱', text: '物料', handler: 'goMaterials' },
+  { node: 'mes/supplier', icon: '🏢', text: '供应商', handler: 'goSuppliers' },
+  { node: 'mes/warehouse', icon: '🏭', text: '仓库', handler: 'goWarehouses' },
+  { node: 'mes/stock', icon: '📊', text: '库存', handler: 'goStock' },
+  { node: 'mes/bom', icon: '📑', text: 'BOM', handler: 'goBom' },
+  { node: 'mes/production_plan', icon: '📅', text: '生产计划', handler: 'goPlans' },
+  { node: 'mes/purchase', icon: '🛒', text: '采购', handler: 'goPurchases' },
+  { node: 'mes/shipment', icon: '🚚', text: '发货', handler: 'goShipments' },
+  { node: 'mes/quality', icon: '🔍', text: '质检', handler: 'goQuality' },
+  { node: 'mes/wage', icon: '💵', text: '工资', handler: 'goAdminWages' },
+  { node: 'mes/trace_code', icon: '🔗', text: '追溯码', handler: 'goTrace' },
+  { node: 'mes/after_sales', icon: '🛠️', text: '售后', handler: 'goAftersales' },
+  { node: 'mes/bi', icon: '📈', text: 'BI看板', handler: 'goBi' },
+  { node: null, icon: '👷', text: '切换员工端', handler: 'switchToUser' },
+  { node: null, icon: '🔒', text: '退出登录', handler: 'logout' },
+];
+
 Page({
   data: {
     adminInfo: null,
@@ -7,6 +35,7 @@ Page({
     stats: null,
     loading: true,
     todayDate: '',
+    menuList: [],
   },
 
   onShow() {
@@ -21,7 +50,47 @@ Page({
       adminInfo: getApp().globalData.adminInfo || wx.getStorageSync('adminInfo'),
       todayDate: todayStr,
     });
+    const app = getApp();
+    let nodes = app.globalData.scanworkNodes;
+    if (!nodes || !Array.isArray(nodes)) {
+      nodes = wx.getStorageSync('scanworkNodes') || [];
+      if (nodes && nodes.length) app.globalData.scanworkNodes = nodes;
+    }
+    if (nodes.length === 0) {
+      this.buildMenuList(['*']);
+      adminApi.getScanworkMenu()
+        .then((res) => {
+          nodes = (res.data && res.data.nodes) || [];
+          app.globalData.scanworkNodes = nodes;
+          wx.setStorageSync('scanworkNodes', nodes);
+          this.buildMenuList(nodes);
+        })
+        .catch(() => { this.buildMenuList([]); });
+    } else {
+      this.buildMenuList(nodes);
+    }
     this.loadDashboard();
+  },
+
+  hasNode(nodes, node) {
+    if (!node) return true;
+    if (!nodes || !nodes.length) return false;
+    if (nodes.indexOf('*') !== -1) return true;
+    if (nodes.indexOf(node) !== -1) return true;
+    const prefix = node + '/';
+    return nodes.some(function (n) { return n && n.indexOf(prefix) === 0; });
+  },
+
+  buildMenuList(nodes) {
+    const list = MENU_ITEMS.filter(function (item) {
+      return this.hasNode(nodes, item.node);
+    }, this);
+    this.setData({ menuList: list });
+  },
+
+  onMenuTap(e) {
+    const handler = e.currentTarget.dataset.handler;
+    if (handler && this[handler]) this[handler]();
   },
 
   loadDashboard() {
@@ -47,7 +116,12 @@ Page({
           },
         });
       })
-      .catch(() => { this.setData({ loading: false }); });
+      .catch((err) => {
+        this.setData({ loading: false });
+        if (err && err.statusCode === 403) {
+          this.setData({ stats: null });
+        }
+      });
   },
 
   goOrders() {

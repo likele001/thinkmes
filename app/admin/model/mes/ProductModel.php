@@ -13,10 +13,11 @@ class ProductModel extends Model
     protected $name = 'mes_product';
 
     protected $type = [
-        'tenant_id'   => 'integer',
-        'status'      => 'integer',
-        'create_time' => 'integer',
-        'update_time' => 'integer',
+        'tenant_id'      => 'integer',
+        'status'         => 'integer',
+        'default_bom_id' => 'integer',
+        'create_time'    => 'integer',
+        'update_time'    => 'integer',
     ];
 
     /**
@@ -36,5 +37,13 @@ class ProductModel extends Model
     public function models()
     {
         return $this->hasMany(ProductModelModel::class, 'product_id', 'id');
+    }
+
+    /**
+     * 关联默认 BOM
+     */
+    public function defaultBom()
+    {
+        return $this->belongsTo(\app\admin\model\mes\BomModel::class, 'default_bom_id', 'id');
     }
 }

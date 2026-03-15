@@ -6,6 +6,9 @@
         <div id="toolbar" class="toolbar mb-2">
             <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
             <a href="javascript:;" id="btn-add-package" class="btn btn-success" title="添加套餐"><i class="fas fa-plus"></i> 添加套餐</a>
+            {if isset($is_platform_admin) && $is_platform_admin}
+            <a href="javascript:;" id="btn-purchase-for-tenant" class="btn btn-warning" title="为指定租户开通 AI 套餐"><i class="fas fa-user-plus"></i> 为租户开通</a>
+            {/if}
             <a href="javascript:;" id="btn-global-switch" class="btn btn-info" title="全局开关"><i class="fas fa-toggle-on"></i> 全局开关</a>
         </div>
         <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
@@ -52,6 +55,54 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" id="btn-submit-package">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 为租户开通 AI 套餐弹窗（仅平台超管可见入口） -->
+<div class="modal fade" id="modal-purchase-for-tenant" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">为租户开通 AI 套餐</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-purchase-for-tenant">
+                    <div class="form-group">
+                        <label>选择租户 <span class="text-danger">*</span></label>
+                        <select name="tenant_id" id="purchase-tenant-id" class="form-control" required>
+                            <option value="">请选择租户</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>选择套餐 <span class="text-danger">*</span></label>
+                        <select name="package_id" id="purchase-package-id" class="form-control" required>
+                            <option value="">请选择套餐</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>开通周期 <span class="text-danger">*</span></label>
+                        <select name="period" id="purchase-period" class="form-control">
+                            <option value="month">1 个月</option>
+                            <option value="quarter">3 个月（季）</option>
+                            <option value="year">1 年</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>订单号（选填）</label>
+                        <input type="text" name="order_no" id="purchase-order-no" class="form-control" placeholder="可选">
+                    </div>
+                    <div class="form-group">
+                        <label>金额（元，选填）</label>
+                        <input type="number" name="amount" id="purchase-amount" class="form-control" step="0.01" min="0" placeholder="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn-submit-purchase">开通</button>
             </div>
         </div>
     </div>

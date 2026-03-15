@@ -9,6 +9,7 @@ use app\admin\model\mes\ReportModel;
 use app\admin\model\mes\ProcessPriceModel;
 use app\admin\model\mes\WageModel;
 use app\admin\model\mes\TraceCodeModel;
+use app\admin\model\mes\ReportMediaModel;
 use think\facade\Db;
 use think\Response;
 
@@ -362,6 +363,20 @@ class Worker extends BaseController
                         'status'        => 0,
                     ]);
 
+                    foreach ($imagesForItem as $imgUrl) {
+                        $url = trim((string) $imgUrl, " \t\n\r\0\x0B\"'");
+                        if ($url !== '') {
+                            ReportMediaModel::create([
+                                'tenant_id'   => $tenantId,
+                                'report_id'   => $report->id,
+                                'type'        => 'image',
+                                'scene'       => 'report',
+                                'url'         => $url,
+                                'create_time' => time(),
+                            ]);
+                        }
+                    }
+
                     $totalQty += 1;
                 }
             } else {
@@ -495,6 +510,17 @@ class Worker extends BaseController
                 }
             }
         }
+        if (empty($out['images']) && !empty($report->remark)) {
+            $decoded = json_decode((string) $report->remark, true);
+            if (is_array($decoded) && !empty($decoded['images']) && is_array($decoded['images'])) {
+                foreach ($decoded['images'] as $url) {
+                    $url = trim((string) $url, " \t\n\r\0\x0B\"'");
+                    if ($url !== '') {
+                        $out['images'][] = $url;
+                    }
+                }
+            }
+        }
         return $this->success('', $out);
     }
 
@@ -509,37 +535,107 @@ class Worker extends BaseController
         $page = max(1, (int) $this->request->get('page', 1));
         $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
         $month = $this->request->get('month', '');
+        $workDate = $this->request->get('work_date', '');
+        $startDate = $this->request->get('start_date', '');
+        $endDate = $this->request->get('end_date', '');
+        $orderNo = trim((string) $this->request->get('order_no', ''));
+        $productName = trim((string) $this->request->get('product_name', ''));
 
-        $query = WageModel::where('tenant_id', $tenantId)
+        $query = WageModel::with(['report', 'allocation.order', 'allocation.model.product', 'allocation.process'])
+            ->where('tenant_id', $tenantId)
             ->where('user_id', $userId)
             ->order('work_date', 'desc')
             ->order('id', 'desc');
 
-        $workDate = $this->request->get('work_date');
-        if ($workDate) {
+        if ($workDate !== '') {
             $query->where('work_date', $workDate);
-        }
-        if ($month !== '' && $month !== null) {
+        } elseif ($startDate !== '' && $endDate !== '') {
+            $query->where('work_date', 'between', [$startDate, $endDate]);
+        } elseif ($month !== '' && $month !== null) {
             $start = $month . '-01';
             $end = date('Y-m-t', strtotime($start));
             $query->where('work_date', 'between', [$start, $end]);
         }
 
-        $total = $query->count();
-        $list = $query->page($page, $limit)->select()->toArray();
-
-        $totalWage = 0.0;
-        if ($month !== '' && $month !== null) {
-            $totalWage = (float) WageModel::where('tenant_id', $tenantId)
-                ->where('user_id', $userId)
-                ->where('work_date', '>=', $month . '-01')
-                ->where('work_date', '<=', date('Y-m-t', strtotime($month . '-01')))
-                ->sum('total_wage');
-        } else {
-            foreach ($list as $row) {
-                $totalWage += (float) ($row['total_wage'] ?? 0);
-            }
+        if ($orderNo !== '') {
+            $query->whereHas('allocation', function ($q) use ($orderNo) {
+                $q->whereHas('order', function ($q2) use ($orderNo) {
+                    $q2->where('order_no', 'like', '%' . $orderNo . '%');
+                });
+            });
         }
+        if ($productName !== '') {
+            $query->whereHas('allocation', function ($q) use ($productName) {
+                $q->whereHas('model', function ($q2) use ($productName) {
+                    $q2->whereHas('product', function ($q3) use ($productName) {
+                        $q3->where('name', 'like', '%' . $productName . '%');
+                    });
+                });
+            });
+        }
+
+        $total = $query->count();
+        $rows = $query->page($page, $limit)->select();
+
+        $list = [];
+        foreach ($rows as $w) {
+            $arr = $w->toArray();
+            $arr['wage'] = round((float) ($arr['total_wage'] ?? 0), 2);
+            $arr['product_name'] = '';
+            $arr['model_name'] = '';
+            $arr['order_no'] = '';
+            $arr['process_name'] = '';
+            $arr['createtime_text'] = '';
+            $report = $w->report;
+            if ($report) {
+                $ts = (int) ($report['create_time'] ?? 0);
+                $arr['createtime_text'] = $ts > 0 ? date('Y-m-d H:i', $ts) : '';
+            }
+            $allocation = $w->allocation;
+            if ($allocation) {
+                if ($allocation->order) {
+                    $arr['order_no'] = (string) ($allocation->order['order_no'] ?? '');
+                }
+                if ($allocation->process) {
+                    $arr['process_name'] = (string) ($allocation->process['name'] ?? '');
+                }
+                if ($allocation->model) {
+                    $arr['model_name'] = (string) ($allocation->model['name'] ?? '');
+                    if ($allocation->model->product) {
+                        $arr['product_name'] = (string) ($allocation->model->product['name'] ?? '');
+                    }
+                }
+            }
+            $list[] = $arr;
+        }
+
+        $sumQuery = WageModel::where('tenant_id', $tenantId)->where('user_id', $userId);
+        if ($workDate !== '') {
+            $sumQuery->where('work_date', $workDate);
+        } elseif ($startDate !== '' && $endDate !== '') {
+            $sumQuery->where('work_date', 'between', [$startDate, $endDate]);
+        } elseif ($month !== '' && $month !== null) {
+            $start = $month . '-01';
+            $end = date('Y-m-t', strtotime($start));
+            $sumQuery->where('work_date', 'between', [$start, $end]);
+        }
+        if ($orderNo !== '') {
+            $sumQuery->whereHas('allocation', function ($q) use ($orderNo) {
+                $q->whereHas('order', function ($q2) use ($orderNo) {
+                    $q2->where('order_no', 'like', '%' . $orderNo . '%');
+                });
+            });
+        }
+        if ($productName !== '') {
+            $sumQuery->whereHas('allocation', function ($q) use ($productName) {
+                $q->whereHas('model', function ($q2) use ($productName) {
+                    $q2->whereHas('product', function ($q3) use ($productName) {
+                        $q3->where('name', 'like', '%' . $productName . '%');
+                    });
+                });
+            });
+        }
+        $totalWage = (float) $sumQuery->sum('total_wage');
 
         return $this->success('', [
             'total' => $total,

@@ -170,6 +170,13 @@ abstract class Backend extends BaseController
         return (int) ($this->request->tenantId ?? 0);
     }
 
+    /** 当前登录管理员是否为平台超管（admin.tenant_id=0），不依赖请求解析的租户（如域名） */
+    protected function isPlatformAdmin(): bool
+    {
+        $admin = Session::get('admin_info');
+        return !empty($admin) && isset($admin['tenant_id']) && (int) $admin['tenant_id'] === 0;
+    }
+
     /**
      * 数据权限：当前管理员可管理的主管员 ID 列表。null=不限制，array=仅允许这些 id
      */

@@ -99,12 +99,16 @@ class Stock extends Backend
             }
         }
         $query->whereColumn('stock', '<', 'min_stock')->where('min_stock', '>', 0);
-        $list = $query->select()->toArray();
+        $total = $query->count();
+        $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
+        $offset = $this->request->get('offset');
+        $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
+        $list = $query->page($page, $limit)->select()->toArray();
         foreach ($list as &$item) {
             $item['shortage'] = max(0, (float) $item['min_stock'] - (float) $item['stock']);
         }
         unset($item);
-        return $this->success('', ['total' => count($list), 'list' => $list]);
+        return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
     /**
@@ -269,16 +273,13 @@ class Stock extends Backend
     }
 
     /**
-     * 库存流水
+     * 物料流水（仅 material_id > 0）
      */
     public function log(): string|Response
     {
-        // 调试：确认方法被调用
-        
-
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            View::assign('title', '库存流水');
+            View::assign('title', '物料流水');
             return $this->fetchWithLayout('mes/stock/log');
         }
 
@@ -289,12 +290,49 @@ class Stock extends Backend
         $tenantId = $this->getTenantId();
         $query = StockLogModel::with(['material'])
             ->where('tenant_id', $tenantId)
+            ->where('material_id', '>', 0)
             ->order('id', 'desc');
 
-        // 搜索条件
         $materialId = $this->request->get('material_id');
         if ($materialId) {
             $query->where('material_id', (int) $materialId);
+        }
+
+        $businessType = $this->request->get('business_type');
+        if ($businessType) {
+            $query->where('business_type', $businessType);
+        }
+
+        $total = $query->count();
+        $list = $query->page($page, $limit)->select()->toArray();
+
+        return $this->success('', ['total' => $total, 'list' => $list]);
+    }
+
+    /**
+     * 产品流水（仅 product_model_id > 0）
+     */
+    public function productLog(): string|Response
+    {
+        $limitParam = $this->request->get('limit');
+        if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
+            View::assign('title', '产品流水');
+            return $this->fetchWithLayout('mes/stock/product_log');
+        }
+
+        $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
+        $offset = $this->request->get('offset');
+        $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
+
+        $tenantId = $this->getTenantId();
+        $query = StockLogModel::with(['productModel' => ['product']])
+            ->where('tenant_id', $tenantId)
+            ->where('product_model_id', '>', 0)
+            ->order('id', 'desc');
+
+        $productModelId = $this->request->get('product_model_id');
+        if ($productModelId) {
+            $query->where('product_model_id', (int) $productModelId);
         }
 
         $businessType = $this->request->get('business_type');

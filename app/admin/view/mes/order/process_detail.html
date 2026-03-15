@@ -1,0 +1,75 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>订单进度（按产品·工序）</em> {$order.order_no} - {$order.order_name|default='未命名'}</div>
+        <div class="card-tools">
+            <a href="{$config.moduleurl}/mes/order/orderProgress" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> 返回进度总表</a>
+            <a href="{$config.moduleurl}/mes/order/edit?ids={$order.id}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> 订单详情</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- 订单总进度 -->
+        <div class="alert alert-primary mb-3 mb-4">
+            <h6 class="alert-heading mb-2"><i class="fas fa-clipboard-list"></i> 订单总进度</h6>
+            <div class="row align-items-center">
+                <div class="col-auto">计划 <strong>{$order_total.plan_num}</strong> / 已完成 <strong>{$order_total.real_num}</strong> / 不良 <strong>{$order_total.bad_num}</strong></div>
+                <div class="col">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {$order_total.progress}%;">{$order_total.progress}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 按产品 → 工序 -->
+        {foreach $products as $product}
+        <div class="card mb-3">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-cube"></i> <strong>{$product.model_name}</strong></span>
+                <span>计划 {$product.plan_num} / 已完成 {$product.real_num} / 不良 {$product.bad_num} · <strong>{$product.progress}%</strong></span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped table-hover mb-0">
+                    <thead><tr><th style="width:120px">工序</th><th>计划数量</th><th>已完成</th><th>不良</th><th>进度</th></tr></thead>
+                    <tbody>
+                    {foreach $product.processes as $p}
+                    <tr>
+                        <td>{$p.process_name}</td>
+                        <td>{$p.plan_num}</td>
+                        <td>{$p.real_num}</td>
+                        <td>{$p.bad_num}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1" style="width: 100px; height: 8px; margin: 0 8px 0 0;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {$p.progress}%;"></div>
+                                </div>
+                                <span>{$p.progress}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {/foreach}
+
+        {if empty($products)}
+        <p class="text-center text-muted mb-0">该订单暂无产品/工序分配或报工数据</p>
+        {/if}
+
+        <!-- 底部再次显示总进度 -->
+        {if !empty($products)}
+        <div class="mt-3 pt-3 border-top">
+            <div class="row align-items-center">
+                <div class="col-auto"><strong>订单总进度</strong></div>
+                <div class="col">
+                    <div class="progress" style="height: 14px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {$order_total.progress}%;">{$order_total.progress}%</div>
+                    </div>
+                </div>
+                <div class="col-auto">{$order_total.real_num} / {$order_total.plan_num}</div>
+            </div>
+        </div>
+        {/if}
+    </div>
+</div>

@@ -17,6 +17,17 @@
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-sm-2 col-form-label">BOM类型</label>
+                <div class="col-sm-6">
+                    <select name="row[bom_type]" class="form-control" id="bom_type">
+                        {volist name="bomTypeList" id="t"}
+                        <option value="{$key}" {if isset($row.bom_type) && $row.bom_type==$key}selected{/if}>{$t}</option>
+                        {/volist}
+                    </select>
+                    <small class="form-text text-muted">「通用模板」用于跨产品复用物料清单，建议不绑定产品/型号。</small>
+                </div>
+            </div>
+            <div class="form-group row">
                 <label class="col-sm-2 col-form-label">产品</label>
                 <div class="col-sm-6">
                     <select name="row[product_id]" class="form-control">
@@ -36,6 +47,7 @@
                         <option value="{$key}" {if isset($row.model_id) && $row.model_id==$key}selected{/if}>{$vo}</option>
                         {/volist}
                     </select>
+                    <small class="form-text text-muted">「通用（默认）」表示该 BOM 适用于该产品下所有型号。</small>
                 </div>
             </div>
             <div class="form-group row">
@@ -88,10 +100,18 @@
         form.attr('action', base + '/mes/bom/edit?ids=' + id);
         form.on('submit', function (e) {
             e.preventDefault();
+            var bomType = form.find('select[name="row[bom_type]"]').val();
             var modelId = form.find('select[name="row[model_id]"]').val();
-            if (!modelId) {
-                alert('请选择产品型号');
-                return;
+            var productId = form.find('select[name="row[product_id]"]').val();
+            if (bomType !== '1') {
+                if (modelId === '' || modelId === undefined) {
+                    alert('请选择产品型号或通用（默认）');
+                    return;
+                }
+                if (modelId === '0' && !productId) {
+                    alert('选择通用（默认）型号时请先选择产品');
+                    return;
+                }
             }
             var fd = new FormData(this);
             $.ajax({

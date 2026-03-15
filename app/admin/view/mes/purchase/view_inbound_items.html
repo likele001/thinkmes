@@ -1,0 +1,33 @@
+{include file='common/meta' /}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>入库单明细</h4>
+    </div>
+    <div class="panel-body">
+        <p>入库单号：{$row.inbound_no|default='-'} &nbsp; 供应商：{$row.supplier.name|default='-'} &nbsp; 状态：{if $row.status == 1}待入库{elseif $row.status == 2 /}已入库{else /}已取消{/if}</p>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>物料</th>
+                    <th>申请数量</th>
+                    <th>实际数量</th>
+                    <th>单价</th>
+                    <th>金额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="row.items" id="item"}
+                <tr>
+                    <td>{$item.material_name|default='-'}</td>
+                    <td>{$item.request_quantity|default='0'}</td>
+                    <td>{$item.actual_quantity|default='0'}</td>
+                    <td>{$item.unit_price|default='0'}</td>
+                    <td>{$item.total_amount|default='0'}</td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+        <a href="javascript:;" class="btn btn-default" onclick="history.back();">返回</a>
+    </div>
+</div>
+{include file='common/script-iframe' /}

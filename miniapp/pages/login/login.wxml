@@ -54,13 +54,13 @@
       <view class="form-item">
         <view class="input-wrapper">
           <view class="input-icon">👤</view>
-          <input class="input" type="text" placeholder="请输入用户名" value="{{username}}" bindinput="inputUsername"/>
+          <input class="input" type="text" placeholder="请输入用户名" placeholder-class="input-placeholder" value="{{username}}" bindinput="inputUsername"/>
         </view>
       </view>
       <view class="form-item">
         <view class="input-wrapper">
           <view class="input-icon">🔒</view>
-          <input class="input" type="password" placeholder="请输入密码" value="{{password}}" bindinput="inputPassword"/>
+          <input class="input" type="password" placeholder="请输入密码" placeholder-class="input-placeholder" value="{{password}}" bindinput="inputPassword"/>
         </view>
       </view>
       <view class="form-item">

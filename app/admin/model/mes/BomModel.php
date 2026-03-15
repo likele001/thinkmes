@@ -16,6 +16,7 @@ class BomModel extends Model
         'tenant_id'     => 'integer',
         'product_id'    => 'integer',
         'model_id'      => 'integer',
+        'bom_type'      => 'integer',
         'base_quantity' => 'integer',
         'status'        => 'integer',
         'creator_id'    => 'integer',
@@ -36,6 +37,14 @@ class BomModel extends Model
             1 => '审核中',
             2 => '已发布',
             3 => '已废弃'
+        ];
+    }
+
+    public function getBomTypeList(): array
+    {
+        return [
+            0 => '产品BOM',
+            1 => '通用模板',
         ];
     }
 
@@ -72,5 +81,38 @@ class BomModel extends Model
     public function model()
     {
         return $this->belongsTo(ProductModelModel::class, 'model_id', 'id');
+    }
+
+    /**
+     * 根据产品+型号获取默认 BOM ID（供订单/排产等使用）
+     * 优先级：1) 型号的 default_bom_id  2) 产品的 default_bom_id  3) 该型号已发布 BOM  4) 该产品通用 BOM(model_id=0)
+     */
+    public static function getDefaultBomId(int $tenantId, int $productId, int $modelId = 0): int
+    {
+        if ($modelId > 0) {
+            $modelRow = ProductModelModel::where('tenant_id', $tenantId)->find($modelId);
+            if ($modelRow && $modelRow->default_bom_id > 0) {
+                $bom = self::where('tenant_id', $tenantId)->where('id', $modelRow->default_bom_id)->where('status', 2)->find();
+                if ($bom) {
+                    return (int) $bom->id;
+                }
+            }
+        }
+        $productRow = \app\admin\model\mes\ProductModel::where('tenant_id', $tenantId)->find($productId);
+        if ($productRow && $productRow->default_bom_id > 0) {
+            $bom = self::where('tenant_id', $tenantId)->where('id', $productRow->default_bom_id)->where('status', 2)->find();
+            if ($bom) {
+                return (int) $bom->id;
+            }
+        }
+        if ($modelId > 0) {
+            $bom = self::where('tenant_id', $tenantId)->where('product_id', $productId)->where('model_id', $modelId)->where('status', 2)->order('id', 'desc')->find();
+            if ($bom) {
+                return (int) $bom->id;
+            }
+        }
+        // 若产品没有专用 BOM，再退化到产品通用 BOM(model_id=0)
+        $bom = self::where('tenant_id', $tenantId)->where('product_id', $productId)->where('model_id', 0)->where('status', 2)->order('id', 'desc')->find();
+        return $bom ? (int) $bom->id : 0;
     }
 }

@@ -65,22 +65,33 @@ if (!function_exists('tenant_ai_available')) {
      */
     function tenant_ai_available(?int $tenantId = null): bool
     {
+        return tenant_ai_unavailable_reason($tenantId) === null;
+    }
+}
+
+if (!function_exists('tenant_ai_unavailable_reason')) {
+    /**
+     * 返回不可用原因，可用时返回 null
+     * 用于前端提示：平台未开 / 未购买 / 未关联租户
+     */
+    function tenant_ai_unavailable_reason(?int $tenantId = null): ?string
+    {
         $cfg = ai_global_switch();
-        $enabled = isset($cfg['enabled']) && intval($cfg['enabled']) === 1;
-        $require = isset($cfg['require_purchase']) && intval($cfg['require_purchase']) === 1;
+        $enabled = isset($cfg['enabled']) && (int) $cfg['enabled'] === 1;
+        $require = isset($cfg['require_purchase']) && (int) $cfg['require_purchase'] === 1;
         if (!$enabled) {
-            return false;
-        }
-        if (!$require) {
-            return true;
+            return '平台未开启 AI 功能。请使用【平台超管】登录后台，进入「AI 套餐管理」->「全局开关」，将【启用 AI 功能】打开。';
         }
         if ($tenantId === null) {
-            $tenantId = Session::get('admin.tenant_id') ?: 0;
+            $tenantId = (int) (Session::get('admin.tenant_id') ?? 0);
         }
         if (!$tenantId) {
-            return false;
+            return '当前登录未关联租户，无法使用 AI 功能。请使用租户管理员账号登录。';
         }
-        return tenant_has_ai_package((int)$tenantId);
+        if ($require && !tenant_has_ai_package($tenantId)) {
+            return '当前租户未购买或未开通 AI 套餐。请使用平台超管在「AI 套餐管理」中为该租户开通/购买 AI 套餐。';
+        }
+        return null;
     }
 }
 

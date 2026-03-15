@@ -50,15 +50,25 @@
 
         <div id="toolbar" class="toolbar mb-2">
             <button type="button" class="btn btn-primary btn-add-item"><i class="fas fa-plus"></i> 添加物料</button>
+            <button type="button" class="btn btn-outline-primary ml-2 btn-batch-add"><i class="fas fa-list"></i> 批量添加</button>
+            <div class="btn-group ml-2" role="group">
+                <select class="form-control form-control-sm d-inline-block" style="width:240px;" id="template_bom_id">
+                    <option value="">从通用模板导入...</option>
+                    {volist name="templateBomList" id="tname"}
+                    <option value="{$key}">{$tname}</option>
+                    {/volist}
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-import-template">导入</button>
+            </div>
         </div>
         <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
 
-        <div class="modal fade" id="item-modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal fade" id="item-modal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="true" data-keyboard="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">BOM明细</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="close btn-close-modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -67,12 +77,23 @@
                             <input type="hidden" name="id" value="">
                             <input type="hidden" name="bom_id" value="{$bom.id}">
                             <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">按分类筛选</label>
+                                <div class="col-sm-7">
+                                    <select class="form-control" id="item-modal-category">
+                                        <option value="">全部分类</option>
+                                        {volist name="categoryList" id="cname"}
+                                        <option value="{$key}">{$cname}</option>
+                                        {/volist}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
                                 <label class="col-sm-3 col-form-label">物料<span class="text-danger">*</span></label>
                                 <div class="col-sm-7">
-                                    <select name="material_id" class="form-control" required>
+                                    <select name="material_id" class="form-control" id="item-form-material" required>
                                         <option value="">请选择物料</option>
-                                        {volist name="materialList" id="name"}
-                                        <option value="{$key}">{$name}</option>
+                                        {volist name="materialListWithCategory" id="m"}
+                                        <option value="{$m.id}" data-category-id="{$m.category_id|default='0'}">{$m.name}</option>
                                         {/volist}
                                     </select>
                                 </div>
@@ -115,8 +136,56 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-secondary btn-close-modal">取消</button>
                         <button type="button" class="btn btn-primary btn-save-item">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量添加物料弹窗 -->
+        <div class="modal fade" id="batch-modal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">批量添加物料</h5>
+                        <button type="button" class="close btn-close-batch-modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">每行选物料并填用量，留空行不提交。可先选分类缩小范围，再选物料。</p>
+                        <div class="form-group row mb-2">
+                            <label class="col-sm-1 col-form-label">按分类筛选</label>
+                            <div class="col-sm-3">
+                                <select class="form-control form-control-sm" id="batch-category-filter">
+                                    <option value="">全部分类</option>
+                                    <!-- 由 JS 从 categoryListJson 填充 -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered" id="batch-table">
+                                <thead>
+                                    <tr>
+                                        <th width="40">#</th>
+                                        <th>物料<span class="text-danger">*</span></th>
+                                        <th width="120">用量<span class="text-danger">*</span></th>
+                                        <th width="100">损耗率(%)</th>
+                                        <th width="140">供应商</th>
+                                        <th width="80">层级</th>
+                                        <th width="80">排序</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="batch-tbody">
+                                    <!-- 10 行，由 JS 填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-close-batch-modal">取消</button>
+                        <button type="button" class="btn btn-primary btn-save-batch">保存全部</button>
                     </div>
                 </div>
             </div>
@@ -124,6 +193,10 @@
     </div>
 </div>
 
+<script type="application/json" id="material-list-json">{$materialListJson|raw}</script>
+<script type="application/json" id="material-list-with-category-json">{$materialListWithCategoryJson|raw}</script>
+<script type="application/json" id="category-list-json">{$categoryListJson|raw}</script>
+<script type="application/json" id="supplier-list-json">{$supplierListJson|raw}</script>
 <script>
 (function () {
     if (typeof jQuery === 'undefined') {
@@ -135,6 +208,74 @@
         var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
         var bomId = parseInt('{$bom.id|default="0"}', 10) || 0;
         var table = $('#table');
+
+        var materialList = {};
+        var materialListWithCategory = [];
+        var categoryList = {};
+        var supplierList = {};
+        try {
+            var ml = document.getElementById('material-list-json');
+            if (ml && ml.textContent) { materialList = JSON.parse(ml.textContent); }
+        } catch (e) {}
+        try {
+            var mlc = document.getElementById('material-list-with-category-json');
+            if (mlc && mlc.textContent) { materialListWithCategory = JSON.parse(mlc.textContent) || []; }
+        } catch (e) {}
+        try {
+            var cl = document.getElementById('category-list-json');
+            if (cl && cl.textContent) { categoryList = JSON.parse(cl.textContent) || {}; }
+        } catch (e) {}
+        try {
+            var sl = document.getElementById('supplier-list-json');
+            if (sl && sl.textContent) { supplierList = JSON.parse(sl.textContent); }
+        } catch (e) {}
+
+        function filterItemModalMaterials() {
+            var cat = $('#item-modal-category').val();
+            $('#item-form-material option').each(function () {
+                var $opt = $(this);
+                if ($opt.val() === '') { $opt.show(); return; }
+                var cid = $opt.attr('data-category-id') || '0';
+                if (cat === '' || cid === cat) { $opt.show(); } else { $opt.hide(); }
+            });
+            $('#item-form-material').val('');
+        }
+        function filterBatchMaterials() {
+            var cat = $('#batch-category-filter').val();
+            $('#batch-tbody select.batch-material').each(function () {
+                $(this).find('option').each(function () {
+                    var $opt = $(this);
+                    if ($opt.val() === '') { $opt.show(); return; }
+                    var cid = $opt.attr('data-category-id') || '0';
+                    if (cat === '' || cid === cat) { $opt.show(); } else { $opt.hide(); }
+                });
+                if ($(this).find('option:selected').length && $(this).find('option:selected').is(':hidden')) {
+                    $(this).val('');
+                }
+            });
+        }
+
+        function closeItemModal() {
+            $('#item-modal').modal('hide');
+            setTimeout(function () {
+                $('body').removeClass('modal-open');
+                $('.modal-backdrop').remove();
+            }, 300);
+        }
+        function closeBatchModal() {
+            $('#batch-modal').modal('hide');
+            setTimeout(function () {
+                $('body').removeClass('modal-open');
+                $('.modal-backdrop').remove();
+            }, 300);
+        }
+
+        $(document).on('click', '#item-modal .btn-close-modal', function () { closeItemModal(); });
+        $(document).on('click', '#item-modal .modal-footer .btn-secondary', function () { closeItemModal(); });
+        $(document).on('change', '#item-modal-category', filterItemModalMaterials);
+        $(document).on('click', '#batch-modal .btn-close-batch-modal', function () { closeBatchModal(); });
+        $(document).on('click', '#batch-modal .modal-footer .btn-secondary', function () { closeBatchModal(); });
+        $(document).on('change', '#batch-category-filter', filterBatchMaterials);
 
         if (typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) {
             return;
@@ -186,6 +327,7 @@
         function openModal(row) {
             var form = $('#item-form')[0];
             form.reset();
+            $('#item-modal-category').val('');
             $('#item-form input[name="id"]').val(row && row.id ? row.id : '');
             $('#item-form select[name="material_id"]').val(row && row.material_id ? row.material_id : '');
             $('#item-form input[name="quantity"]').val(row && row.quantity ? row.quantity : '');
@@ -193,6 +335,7 @@
             $('#item-form select[name="supplier_id"]').val(row && row.supplier_id ? row.supplier_id : '');
             $('#item-form input[name="level"]').val(row && row.level ? row.level : 1);
             $('#item-form input[name="sequence"]').val(row && row.sequence ? row.sequence : 1);
+            filterItemModalMaterials();
             $('#item-modal').modal('show');
         }
 
@@ -240,7 +383,87 @@
             $.post(url, payload, function (r) {
                 alert((r && r.msg) || (r && r.code === 1 ? '保存成功' : '保存失败'));
                 if (r && r.code === 1) {
-                    $('#item-modal').modal('hide');
+                    closeItemModal();
+                    table.bootstrapTable('refresh');
+                }
+            }, 'json');
+        });
+
+        function buildBatchRows() {
+            var catOpts = '<option value="">全部分类</option>';
+            for (var cid in categoryList) { catOpts += '<option value="' + cid + '">' + (categoryList[cid] || '') + '</option>'; }
+            $('#batch-category-filter').empty().append(catOpts);
+
+            var materialOpts = '<option value="">请选择</option>';
+            materialListWithCategory.forEach(function (m) {
+                var cid = (m.category_id != null && m.category_id !== '') ? m.category_id : '0';
+                materialOpts += '<option value="' + m.id + '" data-category-id="' + cid + '">' + (m.name || '') + '</option>';
+            });
+            var supplierOpts = '<option value="">可不选</option>';
+            for (var s in supplierList) { supplierOpts += '<option value="' + s + '">' + (supplierList[s] || '') + '</option>'; }
+            var tbody = $('#batch-tbody');
+            tbody.empty();
+            for (var i = 1; i <= 10; i++) {
+                tbody.append(
+                    '<tr data-row="' + i + '">' +
+                    '<td>' + i + '</td>' +
+                    '<td><select class="form-control form-control-sm batch-material" name="material_id">' + materialOpts + '</select></td>' +
+                    '<td><input type="number" step="0.0001" min="0" class="form-control form-control-sm batch-qty" name="quantity" placeholder="用量"></td>' +
+                    '<td><input type="number" step="0.01" min="0" class="form-control form-control-sm" name="loss_rate" placeholder="0"></td>' +
+                    '<td><select class="form-control form-control-sm" name="supplier_id">' + supplierOpts + '</select></td>' +
+                    '<td><input type="number" min="1" class="form-control form-control-sm" name="level" value="1"></td>' +
+                    '<td><input type="number" min="0" class="form-control form-control-sm" name="sequence" value="' + i + '"></td>' +
+                    '</tr>'
+                );
+            }
+            filterBatchMaterials();
+        }
+        $(document).off('click', '.btn-batch-add').on('click', '.btn-batch-add', function () {
+            buildBatchRows();
+            $('#batch-modal').modal('show');
+        });
+        $(document).off('click', '.btn-save-batch').on('click', '.btn-save-batch', function () {
+            var items = [];
+            $('#batch-tbody tr').each(function () {
+                var $tr = $(this);
+                var mid = $tr.find('select.batch-material').val();
+                var qty = $tr.find('input.batch-qty').val();
+                if (mid && qty && parseFloat(qty) > 0) {
+                    items.push({
+                        material_id: mid,
+                        quantity: qty,
+                        loss_rate: $tr.find('input[name="loss_rate"]').val() || 0,
+                        supplier_id: $tr.find('select[name="supplier_id"]').val() || 0,
+                        level: $tr.find('input[name="level"]').val() || 1,
+                        sequence: $tr.find('input[name="sequence"]').val() || 0
+                    });
+                }
+            });
+            if (items.length === 0) {
+                alert('请至少填写一行物料与用量');
+                return;
+            }
+            $.post(base + '/mes/bom/addItemBatch', { bom_id: bomId, items: items }, function (r) {
+                alert((r && r.msg) || (r && r.code === 1 ? '批量添加成功' : '批量添加失败'));
+                if (r && r.code === 1) {
+                    closeBatchModal();
+                    table.bootstrapTable('refresh');
+                }
+            }, 'json');
+        });
+
+        $(document).off('click', '.btn-import-template').on('click', '.btn-import-template', function () {
+            var tplId = $('#template_bom_id').val();
+            if (!tplId) {
+                alert('请选择通用模板');
+                return;
+            }
+            if (!confirm('导入后将覆盖当前 BOM 的明细，确定继续吗？')) {
+                return;
+            }
+            $.post(base + '/mes/bom/importTemplateItems', { bom_id: bomId, template_bom_id: tplId }, function (r) {
+                alert((r && r.msg) || (r && r.code === 1 ? '导入成功' : '导入失败'));
+                if (r && r.code === 1) {
                     table.bootstrapTable('refresh');
                 }
             }, 'json');

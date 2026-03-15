@@ -80,6 +80,59 @@
                 });
             });
 
+            // 为租户开通：打开弹窗并加载租户列表、套餐列表
+            $(document).off('click', '#btn-purchase-for-tenant').on('click', '#btn-purchase-for-tenant', function () {
+                var $tenantSelect = $('#purchase-tenant-id');
+                var $packageSelect = $('#purchase-package-id');
+                $tenantSelect.html('<option value="">请选择租户</option>');
+                $packageSelect.html('<option value="">请选择套餐</option>');
+                $.get(base + '/ai/package/tenantList', function (r) {
+                    if (r && r.code == 1 && Array.isArray(r.data)) {
+                        r.data.forEach(function (t) {
+                            $tenantSelect.append('<option value="' + t.id + '">' + (t.name || 'ID:' + t.id) + '</option>');
+                        });
+                    }
+                }, 'json');
+                $.get(base + '/ai/packages', function (r) {
+                    if (r && r.code == 1 && Array.isArray(r.data)) {
+                        r.data.forEach(function (p) {
+                            if (p.enabled == 1) {
+                                $packageSelect.append('<option value="' + p.id + '">' + (p.name || 'ID:' + p.id) + '</option>');
+                            }
+                        });
+                    }
+                }, 'json');
+                $('#form-purchase-for-tenant')[0].reset();
+                $('#modal-purchase-for-tenant').modal('show');
+            });
+
+            $(document).off('click', '#btn-submit-purchase').on('click', '#btn-submit-purchase', function () {
+                var tenantId = $('#purchase-tenant-id').val();
+                var packageId = $('#purchase-package-id').val();
+                if (!tenantId || !packageId) {
+                    alert('请选择租户和套餐');
+                    return;
+                }
+                var data = {
+                    tenant_id: parseInt(tenantId, 10),
+                    package_id: parseInt(packageId, 10),
+                    period: $('#purchase-period').val() || 'month',
+                    order_no: $('#purchase-order-no').val() || '',
+                    amount: parseFloat($('#purchase-amount').val()) || 0,
+                    payment_method: '后台开通'
+                };
+                $.post(base + '/ai/purchaseForTenant', data, function (r) {
+                    if (r.code == 1) {
+                        $('#modal-purchase-for-tenant').modal('hide');
+                        alert(r.msg || '开通成功');
+                    } else {
+                        alert(r.msg || '开通失败');
+                    }
+                }, 'json').fail(function () {
+                    alert('请求失败');
+                });
+            });
+
             $(document).off('click', '#btn-global-switch').on('click', '#btn-global-switch', function () {
                 $.get(base + '/ai/globalSwitch', function (r) {
                     if (r && r.code == 1) {

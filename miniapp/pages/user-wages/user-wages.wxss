@@ -21,10 +21,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 40rpx;
+  padding: 0 32rpx;
+  gap: 24rpx;
+  min-height: 88rpx;
 }
 
 .nav-title {
+  flex: 1;
+  min-width: 0;
   font-size: 36rpx;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea, #764ba2);
@@ -33,21 +37,86 @@
   color: transparent;
 }
 
-.nav-actions { display: flex; align-items: center; }
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-shrink: 0;
+}
+
 .nav-btn {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+  border: none;
 }
-.nav-btn:active { transform: scale(0.95); }
-.nav-icon { font-size: 32rpx; }
+.nav-btn:active { transform: scale(0.96); }
+
+.nav-btn-text {
+  height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 28rpx;
+}
+.nav-btn-label {
+  font-size: 26rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.nav-btn-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+}
+.nav-icon {
+  font-size: 36rpx;
+  color: #fff;
+  line-height: 1;
+}
 
 .main-content { padding-top: 120rpx; padding-left: 40rpx; padding-right: 40rpx; position: relative; z-index: 1; }
+
+.filter-bar {
+  background: rgba(255,255,255,0.95);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.08);
+}
+.filter-row { display: flex; align-items: center; margin-bottom: 20rpx; }
+.filter-row:last-of-type { margin-bottom: 0; }
+.filter-label { width: 140rpx; flex-shrink: 0; font-size: 26rpx; color: #666; }
+.filter-value {
+  flex: 1;
+  padding: 16rpx 20rpx;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+.filter-value.small { flex: none; min-width: 160rpx; }
+.filter-range { display: flex; align-items: center; gap: 16rpx; flex-wrap: wrap; }
+.range-sep { font-size: 24rpx; color: #999; }
+.filter-input {
+  flex: 1;
+  padding: 16rpx 20rpx;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+}
+.filter-actions { display: flex; gap: 24rpx; margin-top: 24rpx; }
+.btn-filter, .btn-clear {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 36rpx;
+  font-size: 28rpx;
+  border: none;
+}
+.btn-filter { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.btn-clear { background: #f0f0f0; color: #666; }
 
 .wage-overview {
   background: rgba(255, 255, 255, 0.95);
@@ -102,7 +171,7 @@
 .wage-title { flex: 1; margin-right: 16rpx; }
 .product-name { font-size: 30rpx; font-weight: 700; color: #333; }
 .model-name { font-size: 26rpx; color: #666; }
-.wage-amount { }
+.wage-amount { flex-shrink: 0; }
 .amount-text { font-size: 32rpx; font-weight: 800; color: #667eea; }
 
 .wage-info { display: flex; flex-wrap: wrap; gap: 16rpx 24rpx; margin-bottom: 12rpx; }

@@ -41,8 +41,9 @@ abstract class Base extends Backend
         try {
             // 检查租户与全局是否允许使用 AI
             $tenantId = $this->getTenantId();
-            if (!\tenant_ai_available($tenantId)) {
-                return $this->error('AI 功能未启用或租户未购买，请联系管理员开通');
+            $reason = \tenant_ai_unavailable_reason($tenantId);
+            if ($reason !== null) {
+                return $this->error($reason);
             }
             if (!$this->getAiService()->checkRateLimit()) {
                 return $this->error('今日 AI 调用次数已达上限');

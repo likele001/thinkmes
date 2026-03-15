@@ -32,12 +32,55 @@
         </view>
       </view>
 
-      <view class="form-card" wx:if="{{task.pending_qty > 0}}">
+      <!-- 有可选编号时：选择产品编号 + 每个编号单独上传图片（与 PC 一致） -->
+      <view class="form-card" wx:if="{{task.pending_qty > 0 && task.item_nos && task.item_nos.length > 0}}">
+        <view class="form-title">选择产品编号</view>
+        <view class="form-hint">勾选要报工的编号，可为每个编号单独上传图片</view>
+        <view class="item-no-list">
+          <view wx:for="{{itemNoList}}" wx:key="no" class="item-no-row {{item.selected ? 'selected' : ''}}">
+            <view class="row-main" bindtap="toggleItemNo" data-no="{{item.no}}">
+              <view class="checkbox {{item.selected ? 'checked' : ''}}">{{item.selected ? '✓' : ''}}</view>
+              <text class="item-no-text">{{item.no}}</text>
+            </view>
+            <view class="row-upload">
+              <view class="upload-label">为该编号上传图片（可多选）</view>
+              <view class="img-list">
+                <view class="thumb-wrap" wx:for="{{item.images}}" wx:for-item="img" wx:key="*this">
+                  <image class="thumb" src="{{img}}" mode="aspectFill"/>
+                  <view class="thumb-del" catchtap="delImageForNo" data-no="{{item.no}}" data-index="{{index}}">×</view>
+                </view>
+                <view class="upload-btn small" bindtap="chooseImageForNo" data-no="{{item.no}}" wx:if="{{item.images.length < 9}}">
+                  <text class="upload-icon">+</text>
+                  <text class="upload-text">选择文件</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="selected-summary" wx:if="{{selectedCount > 0}}">已选择 {{selectedCount}} 个产品编号，每个编号可单独上传图片</view>
+        <button class="btn-submit" loading="{{submitting}}" bindtap="submitBySelect">提交报工</button>
+      </view>
+
+      <!-- 无可选编号时：按数量报工 + 通用图片 -->
+      <view class="form-card" wx:elif="{{task.pending_qty > 0}}">
         <view class="form-title">报工数量</view>
         <view class="form-item">
           <view class="input-wrapper">
             <text class="input-icon">📋</text>
             <input type="number" placeholder="请输入数量（1~{{task.pending_qty}}）" value="{{quantity}}" bindinput="inputQuantity" class="input"/>
+          </view>
+        </view>
+        <view class="form-title">上传图片（选填）</view>
+        <view class="form-item upload-area">
+          <view class="img-list">
+            <view class="thumb-wrap" wx:for="{{images}}" wx:key="*this">
+              <image class="thumb" src="{{item}}" mode="aspectFill"/>
+              <view class="thumb-del" bindtap="delImage" data-index="{{index}}">×</view>
+            </view>
+            <view class="upload-btn" bindtap="chooseImage" wx:if="{{images.length < 9}}">
+              <text class="upload-icon">+</text>
+              <text class="upload-text">添加图片</text>
+            </view>
           </view>
         </view>
         <button class="btn-submit" loading="{{submitting}}" bindtap="submit">提交报工</button>

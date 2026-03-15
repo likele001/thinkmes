@@ -64,6 +64,17 @@
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-sm-2 col-form-label">默认 BOM</label>
+                <div class="col-sm-6">
+                    <select name="row[default_bom_id]" class="form-control">
+                        {volist name="bomList" id="vo"}
+                        <option value="{$key}" {eq name="data.default_bom_id" value="$key"}selected{/eq}>{$vo}</option>
+                        {/volist}
+                    </select>
+                    <small class="form-text text-muted">该型号下单/排产时优先使用的 BOM，仅已发布且适用于本型号或通用的 BOM 可选。</small>
+                </div>
+            </div>
+            <div class="form-group row">
                 <div class="col-sm-8 offset-sm-2">
                     <button type="submit" class="btn btn-primary">保存</button>
                     <a href="{$config.moduleurl}/mes/product_model/index" class="btn btn-default">返回</a>

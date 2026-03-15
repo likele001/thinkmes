@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\admin\controller\mes;
 
 use app\admin\controller\Backend;
+use app\admin\model\mes\BomModel;
 use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\ProductModel as Product;
 use think\facade\Db;
@@ -117,6 +118,7 @@ class ProductModel extends Backend
             }
             
             $params['update_time'] = time();
+            $params['default_bom_id'] = isset($params['default_bom_id']) ? (int) $params['default_bom_id'] : 0;
             try {
                 $model->save($params);
                 return $this->success('保存成功', ['id' => $model->id]);
@@ -126,7 +128,7 @@ class ProductModel extends Backend
         }
         
         $tenantId = $this->getTenantId();
-        $data = ProductModelModel::where('tenant_id', $tenantId)->find($id);
+        $data = ProductModelModel::with('product')->where('tenant_id', $tenantId)->find($id);
         if (!$data) {
             return $this->error('记录不存在');
         }
@@ -136,6 +138,18 @@ class ProductModel extends Backend
             ->where('status', 1)
             ->column('name', 'id');
         View::assign('productList', $productList ?: []);
+
+        // 该型号可选默认 BOM：同产品下且 (model_id=当前型号 或 model_id=0 通用)
+        $bomList = [0 => '不设置默认'];
+        $productId = (int) $data->product_id;
+        $boms = BomModel::with('model')->where('tenant_id', $tenantId)->where('product_id', $productId)
+            ->whereIn('model_id', [0, $data->id])->where('status', 2)->order('model_id', 'desc')->order('id', 'desc')->select();
+        foreach ($boms as $b) {
+            $label = $b->bom_no . '（' . ($b->model_id ? ($b->model->name ?? '') : '通用') . '）';
+            $bomList[$b->id] = $label;
+        }
+        View::assign('bomList', $bomList);
+
         View::assign('data', $data->toArray());
         View::assign('title', '编辑产品型号');
         return $this->fetchWithLayout('mes/product_model/edit');

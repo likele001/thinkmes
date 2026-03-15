@@ -6,22 +6,22 @@ namespace app\admin\model\mes;
 use app\common\model\BaseModel as Model;
 
 /**
- * 采购入库单主表（与 report scanwork_purchase_inbound 对应）
+ * 采购入库单主表（report 流程：生成入库单 → 确认入库）
  */
 class PurchaseInboundModel extends Model
 {
     protected $name = 'mes_purchase_inbound';
 
     protected $type = [
-        'tenant_id'          => 'integer',
-        'supplier_id'        => 'integer',
-        'inbound_date'       => 'integer',
-        'total_amount'       => 'float',
-        'status'             => 'integer',
-        'inbound_user_id'    => 'integer',
-        'warehouse_id'       => 'integer',
-        'create_time'        => 'integer',
-        'update_time'        => 'integer',
+        'tenant_id'        => 'integer',
+        'supplier_id'     => 'integer',
+        'inbound_date'    => 'integer',
+        'total_amount'    => 'float',
+        'status'          => 'integer',
+        'inbound_user_id' => 'integer',
+        'warehouse_id'    => 'integer',
+        'create_time'     => 'integer',
+        'update_time'     => 'integer',
     ];
 
     public function getStatusList(): array
@@ -41,9 +41,6 @@ class PurchaseInboundModel extends Model
 
     public static function generateInboundNo(): string
     {
-        $prefix = 'IN';
-        $date = date('Ymd');
-        $rand = strtoupper(substr(md5(uniqid((string) mt_rand(), true)), 0, 6));
-        return $prefix . $date . $rand;
+        return 'IN' . date('YmdHis') . rand(1000, 9999);
     }
 }

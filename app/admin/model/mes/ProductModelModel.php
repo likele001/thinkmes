@@ -10,12 +10,13 @@ class ProductModelModel extends Model
     protected $name = 'mes_product_model';
     
     protected $type = [
-        'tenant_id'     => 'integer',
-        'product_id'    => 'integer',
-        'status'        => 'integer',
-        'stock'         => 'decimal',
-        'create_time'   => 'integer',
-        'update_time'   => 'integer',
+        'tenant_id'      => 'integer',
+        'product_id'     => 'integer',
+        'status'         => 'integer',
+        'default_bom_id' => 'integer',
+        'stock'          => 'decimal',
+        'create_time'    => 'integer',
+        'update_time'    => 'integer',
     ];
 
     // 关联产品
@@ -28,6 +29,12 @@ class ProductModelModel extends Model
     public function processPrices()
     {
         return $this->hasMany(ProcessPriceModel::class, 'model_id', 'id');
+    }
+
+    // 关联默认 BOM
+    public function defaultBom()
+    {
+        return $this->belongsTo(\app\admin\model\mes\BomModel::class, 'default_bom_id', 'id');
     }
 
     // 获取完整显示名称

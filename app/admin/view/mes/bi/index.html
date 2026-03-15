@@ -1,0 +1,46 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>数据报表</em> 生产与经营分析报表入口</div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card border-primary h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-tachometer-alt text-primary"></i> 生产数据大屏</h5>
+                        <p class="card-text small text-muted">车间生产进度、订单/工序/员工统计、实时看板</p>
+                        <a href="{$config.moduleurl}/mes/bi/dashboard?ref=addtabs" addtabs="bi-dashboard" url="{$config.moduleurl}/mes/bi/dashboard?ref=addtabs" class="btn btn-primary btn-sm">进入大屏</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card border-success h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-chart-line text-success"></i> 生产效率报表</h5>
+                        <p class="card-text small text-muted">按日期统计产量、工时、工资、人数</p>
+                        <a href="{$config.moduleurl}/mes/bi/productionEfficiency?ref=addtabs" addtabs="bi-production-efficiency" url="{$config.moduleurl}/mes/bi/productionEfficiency?ref=addtabs" class="btn btn-success btn-sm">查看报表</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card border-info h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-check-double text-info"></i> 质量分析报表</h5>
+                        <p class="card-text small text-muted">按日期统计合格/不合格数量与合格率</p>
+                        <a href="{$config.moduleurl}/mes/bi/qualityAnalysis?ref=addtabs" addtabs="bi-quality-analysis" url="{$config.moduleurl}/mes/bi/qualityAnalysis?ref=addtabs" class="btn btn-info btn-sm">查看报表</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card border-warning h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-coins text-warning"></i> 成本分析报表</h5>
+                        <p class="card-text small text-muted">按订单统计物料成本、人工成本</p>
+                        <a href="{$config.moduleurl}/mes/bi/costAnalysis?ref=addtabs" addtabs="bi-cost-analysis" url="{$config.moduleurl}/mes/bi/costAnalysis?ref=addtabs" class="btn btn-warning btn-sm">查看报表</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="text-muted small mb-0">订单进度总表与工序明细请从 <a href="{$config.moduleurl}/mes/order/orderProgress?ref=addtabs" addtabs="order-progress" url="{$config.moduleurl}/mes/order/orderProgress?ref=addtabs">订单生产进度</a> 进入。</p>
+    </div>
+</div>

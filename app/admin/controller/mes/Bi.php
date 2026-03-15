@@ -9,6 +9,7 @@ use app\admin\model\mes\ProductionPlanModel;
 use app\admin\model\mes\ReportModel;
 use app\admin\model\mes\AllocationModel;
 use app\admin\model\mes\WageModel;
+use app\common\model\UserModel;
 use think\facade\Db;
 use think\facade\View;
 use think\Response;
@@ -18,6 +19,15 @@ use think\Response;
  */
 class Bi extends Backend
 {
+    /**
+     * 数据报表入口（报表中心，非 MES 首页导航）
+     */
+    public function index(): string
+    {
+        View::assign('title', '数据报表');
+        return $this->fetchWithLayout('mes/bi/index');
+    }
+
     /**
      * 数据大屏 - 生产看板
      */
@@ -46,7 +56,65 @@ class Bi extends Backend
             ->where('create_time', 'between', [$todayStart, $todayEnd])
             ->field('SUM(quantity) as total_quantity, SUM(wage) as total_wage, COUNT(*) as report_count')
             ->find();
-        
+
+        // 今日不良数（已审核报工中不合格数量）
+        $todayBad = ReportModel::where(function($q) use ($tenantId) {
+                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); }
+                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
+            })
+            ->where('status', 1)
+            ->where('quality_status', 2)
+            ->where('create_time', 'between', [$todayStart, $todayEnd])
+            ->sum('quantity');
+        $todayBad = (int) $todayBad;
+
+        // 进行中订单进度列表（用于大屏左侧）
+        $orderT = Db::name('mes_order')->getTable();
+        $planT = Db::name('mes_production_plan')->getTable();
+        $allocT = Db::name('mes_allocation')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $orderListQuery = Db::table($orderT . ' o')
+            ->leftJoin($planT . ' t', 'o.id = t.order_id')
+            ->leftJoin($allocT . ' a', '((a.plan_id = t.id) OR (a.plan_id IS NULL AND a.order_id = o.id))')
+            ->leftJoin($reportT . ' r', 'r.allocation_id = a.id AND r.status = 1')
+            ->field('o.id, o.order_no, o.order_name as product_name, o.total_quantity as num, SUM(r.quantity) as finish_num, ROUND(IFNULL(SUM(r.quantity)/NULLIF(o.total_quantity,0)*100,0),1) as progress')
+            ->group('o.id')
+            ->order('o.id', 'desc')
+            ->limit(50);
+        if ($tenantId > 0) {
+            $orderListQuery->where('o.tenant_id', $tenantId);
+        } else {
+            $tp = (int) request()->get('tenant_id', 0);
+            if ($tp > 0) {
+                $orderListQuery->where('o.tenant_id', $tp);
+            }
+        }
+        $orderList = $orderListQuery->select()->toArray();
+        foreach ($orderList as &$row) {
+            $row['finish_num'] = (int) ($row['finish_num'] ?? 0);
+            $row['progress'] = round((float) ($row['progress'] ?? 0), 1);
+            $row['status_txt'] = $row['finish_num'] <= 0 ? '未开始' : ($row['progress'] >= 100 ? '已完成' : '生产中');
+        }
+
+        // 今日各工序产量（大屏右侧）
+        $processToday = ReportModel::alias('r')
+            ->join('mes_allocation a', 'r.allocation_id = a.id')
+            ->join('mes_process p', 'a.process_id = p.id')
+            ->where('r.status', 1)
+            ->where('r.create_time', 'between', [$todayStart, $todayEnd])
+            ->field('p.name as process_name, p.sort, SUM(r.quantity) as quantity')
+            ->group('p.id,p.name,p.sort')
+            ->order('p.sort', 'asc');
+        if ($tenantId > 0) {
+            $processToday->where('r.tenant_id', $tenantId);
+        } else {
+            $tp = (int) request()->get('tenant_id', 0);
+            if ($tp > 0) {
+                $processToday->where('r.tenant_id', $tp);
+            }
+        }
+        $processTodayList = $processToday->select()->toArray();
+
         // 订单统计
         $orderStats = OrderModel::where(function($q) use ($tenantId) {
                 if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
@@ -92,6 +160,13 @@ class Bi extends Backend
             ->where('status', 0)
             ->count();
         
+        // 大屏总览 6 数 + 按订单/产品/工序/员工 4 表（与 scanwork 大屏一致）
+        $overallStats = $this->getDashboardOverallStats($tenantId);
+        $orderStats = $this->getDashboardOrderStats($tenantId);
+        $productStats = $this->getDashboardProductStats($tenantId);
+        $processStats = $this->getDashboardProcessStats($tenantId);
+        $employeeStats = $this->getDashboardEmployeeStats($tenantId);
+
         // 最近7天的报工趋势
         $trendData = [];
         for ($i = 6; $i >= 0; $i--) {
@@ -120,16 +195,230 @@ class Bi extends Backend
             'today' => [
                 'quantity' => (float) ($todayReports->total_quantity ?? 0),
                 'wage' => (float) ($todayReports->total_wage ?? 0),
-                'report_count' => (int) ($todayReports->report_count ?? 0)
+                'report_count' => (int) ($todayReports->report_count ?? 0),
+                'bad' => $todayBad,
             ],
             'orders' => $orderData,
             'plans' => $planData,
             'active_allocations' => $activeAllocations,
             'pending_reports' => $pendingReports,
+            'order_list' => $orderList,
+            'process_today_list' => $processTodayList,
+            'exception_list' => $this->buildDashboardExceptions((int) $pendingReports, $todayBad),
+            'overall_stats' => $overallStats,
+            'order_stats' => $orderStats,
+            'product_stats' => $productStats,
+            'process_stats' => $processStats,
+            'employee_stats' => $employeeStats,
             'trend' => $trendData
         ];
-        
+
         return $this->success('', $data);
+    }
+
+    /**
+     * 大屏总览 6 数：总订单数、总计划数、小工单数、总数量、已完成、完成率
+     */
+    private function getDashboardOverallStats(int $tenantId): array
+    {
+        $planT = Db::name('mes_production_plan')->getTable();
+        $allocT = Db::name('mes_allocation')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $q = function () use ($tenantId) {
+            return $tenantId > 0 ? ['tenant_id' => $tenantId] : [];
+        };
+
+        $totalPlans = (int) Db::table($planT)->when($q(), fn ($qry) => $qry->where('tenant_id', $tenantId))->count();
+        $totalAllocations = (int) Db::table($allocT)->when($q(), fn ($qry) => $qry->where('tenant_id', $tenantId))->count();
+        $totalQuantity = (int) Db::table($allocT)->when($q(), fn ($qry) => $qry->where('tenant_id', $tenantId))->sum('quantity');
+        $completedQuantity = (int) ReportModel::when($q(), fn ($qry) => $qry->where('tenant_id', $tenantId))->where('status', 1)->sum('quantity');
+        $orderIds = Db::table($planT)->when($q(), fn ($qry) => $qry->where('tenant_id', $tenantId))->group('order_id')->column('order_id');
+        $totalOrders = count(array_unique(array_filter($orderIds)));
+        // 若没有任何排产计划，则「总订单数」显示当前待生产/生产中的订单数，避免全屏为 0
+        if ($totalPlans <= 0) {
+            $orderT = Db::name('mes_order')->getTable();
+            $totalOrders = (int) Db::table($orderT)->whereIn('status', [0, 1])->when($q(), fn ($qry) => $qry->where('tenant_id', $tenantId))->count();
+        }
+        $completionRate = $totalQuantity > 0 ? round($completedQuantity / $totalQuantity * 100, 1) : 0;
+
+        return [
+            'total_orders' => $totalOrders,
+            'total_plans' => $totalPlans,
+            'total_allocations' => $totalAllocations,
+            'total_quantity' => $totalQuantity,
+            'completed_quantity' => $completedQuantity,
+            'completion_rate' => $completionRate,
+        ];
+    }
+
+    /**
+     * 大屏按订单统计表
+     */
+    private function getDashboardOrderStats(int $tenantId): array
+    {
+        $orderT = Db::name('mes_order')->getTable();
+        $planT = Db::name('mes_production_plan')->getTable();
+        $allocT = Db::name('mes_allocation')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $planQ = Db::table($planT . ' t')->join($orderT . ' o', 't.order_id = o.id')
+            ->field('o.id as order_id, o.order_name, o.order_no, COUNT(t.id) as total_plans, SUM(t.total_quantity) as total_quantity')
+            ->group('t.order_id');
+        if ($tenantId > 0) {
+            $planQ->where('t.tenant_id', $tenantId);
+        }
+        $byOrder = $planQ->select()->toArray();
+        $completedQ = Db::table($reportT . ' r')
+            ->join($allocT . ' a', 'r.allocation_id = a.id')
+            ->leftJoin($planT . ' p', 'a.plan_id = p.id')
+            ->where('r.status', 1)
+            ->field('COALESCE(p.order_id, a.order_id) as order_id, SUM(r.quantity) as completed_quantity')
+            ->group('COALESCE(p.order_id, a.order_id)');
+        if ($tenantId > 0) {
+            $completedQ->where('r.tenant_id', $tenantId);
+        }
+        $completedByOrder = [];
+        foreach ($completedQ->select()->toArray() as $row) {
+            $oid = (int) ($row['order_id'] ?? 0);
+            if ($oid > 0) {
+                $completedByOrder[$oid] = (int) ($row['completed_quantity'] ?? 0);
+            }
+        }
+        $out = [];
+        foreach ($byOrder as $r) {
+            $oid = (int) $r['order_id'];
+            $totalQty = (int) ($r['total_quantity'] ?? 0);
+            $completed = $completedByOrder[$oid] ?? 0;
+            $out[] = [
+                'order_name' => $r['order_name'] ?? $r['order_no'] ?? '',
+                'order_no' => $r['order_no'] ?? '',
+                'total_plans' => (int) ($r['total_plans'] ?? 0),
+                'total_quantity' => $totalQty,
+                'completed_quantity' => $completed,
+                'completion_rate' => $totalQty > 0 ? round($completed / $totalQty * 100, 1) : 0,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * 大屏按产品统计表（按型号/产品汇总）
+     */
+    private function getDashboardProductStats(int $tenantId): array
+    {
+        $planT = Db::name('mes_production_plan')->getTable();
+        $allocT = Db::name('mes_allocation')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $modelT = Db::name('mes_product_model')->getTable();
+        $productT = Db::name('mes_product')->getTable();
+        $byModel = Db::table($planT . ' t')
+            ->join($modelT . ' pm', 't.model_id = pm.id')
+            ->leftJoin($productT . ' p', 'pm.product_id = p.id')
+            ->field('t.model_id, COALESCE(p.name, pm.name) as product_name, COUNT(t.id) as total_plans, SUM(t.total_quantity) as total_quantity')
+            ->group('t.model_id')
+            ->when($tenantId > 0, fn ($q) => $q->where('t.tenant_id', $tenantId))
+            ->select()->toArray();
+        $completedQ = Db::table($reportT . ' r')->join($allocT . ' a', 'r.allocation_id = a.id')
+            ->where('r.status', 1)->field('a.model_id, SUM(r.quantity) as completed_quantity')->group('a.model_id');
+        if ($tenantId > 0) {
+            $completedQ->where('r.tenant_id', $tenantId);
+        }
+        $completedByModel = [];
+        foreach ($completedQ->select()->toArray() as $row) {
+            $mid = (int) ($row['model_id'] ?? 0);
+            if ($mid > 0) {
+                $completedByModel[$mid] = (int) ($row['completed_quantity'] ?? 0);
+            }
+        }
+        $out = [];
+        foreach ($byModel as $r) {
+            $mid = (int) ($r['model_id'] ?? 0);
+            $total = (int) ($r['total_quantity'] ?? 0);
+            $completed = $completedByModel[$mid] ?? 0;
+            $out[] = [
+                'product_name' => $r['product_name'] ?? '',
+                'total_plans' => (int) ($r['total_plans'] ?? 0),
+                'total_quantity' => $total,
+                'completed_quantity' => $completed,
+                'completion_rate' => $total > 0 ? round($completed / $total * 100, 1) : 0,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * 大屏按工序统计表
+     */
+    private function getDashboardProcessStats(int $tenantId): array
+    {
+        $allocT = Db::name('mes_allocation')->getTable();
+        $processT = Db::name('mes_process')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $rows = Db::table($allocT . ' a')
+            ->join($processT . ' p', 'a.process_id = p.id')
+            ->leftJoin($reportT . ' r', 'r.allocation_id = a.id AND r.status = 1')
+            ->field('p.name as process_name, COUNT(a.id) as total_allocations, SUM(a.quantity) as total_quantity, COALESCE(SUM(r.quantity), 0) as completed_quantity')
+            ->group('a.process_id')
+            ->order('p.sort', 'asc')
+            ->when($tenantId > 0, fn ($q) => $q->where('a.tenant_id', $tenantId))
+            ->select()->toArray();
+        $out = [];
+        foreach ($rows as $r) {
+            $total = (int) ($r['total_quantity'] ?? 0);
+            $completed = (int) ($r['completed_quantity'] ?? 0);
+            $out[] = [
+                'process_name' => $r['process_name'] ?? '',
+                'total_allocations' => (int) ($r['total_allocations'] ?? 0),
+                'total_quantity' => $total,
+                'completed_quantity' => $completed,
+                'completion_rate' => $total > 0 ? round($completed / $total * 100, 1) : 0,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * 大屏按员工统计表
+     */
+    private function getDashboardEmployeeStats(int $tenantId): array
+    {
+        $userT = (new UserModel())->getTable();
+        $allocT = Db::name('mes_allocation')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $rows = Db::table($allocT . ' a')
+            ->leftJoin($userT . ' u', 'a.user_id = u.id')
+            ->leftJoin($reportT . ' r', 'r.allocation_id = a.id AND r.status = 1')
+            ->field('a.user_id, COALESCE(u.nickname, CONCAT("用户#", a.user_id)) as user_name, COUNT(a.id) as total_allocations, SUM(a.quantity) as total_quantity, COALESCE(SUM(r.quantity), 0) as completed_quantity')
+            ->group('a.user_id')
+            ->when($tenantId > 0, fn ($q) => $q->where('a.tenant_id', $tenantId))
+            ->select()->toArray();
+        $out = [];
+        foreach ($rows as $r) {
+            $total = (int) ($r['total_quantity'] ?? 0);
+            $completed = (int) ($r['completed_quantity'] ?? 0);
+            $out[] = [
+                'user_name' => $r['user_name'] ?? '用户#' . ($r['user_id'] ?? 0),
+                'total_allocations' => (int) ($r['total_allocations'] ?? 0),
+                'total_quantity' => $total,
+                'completed_quantity' => $completed,
+                'completion_rate' => $total > 0 ? round($completed / $total * 100, 1) : 0,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * 大屏异常列表：待审核、今日不良等
+     */
+    private function buildDashboardExceptions(int $pendingReports, int $todayBad): array
+    {
+        $list = [];
+        if ($pendingReports > 0) {
+            $list[] = ['type' => '待审核报工', 'count' => $pendingReports, 'level' => 'warning'];
+        }
+        if ($todayBad > 0) {
+            $list[] = ['type' => '今日不良', 'count' => $todayBad, 'level' => 'danger'];
+        }
+        return $list;
     }
 
     /**

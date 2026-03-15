@@ -34,6 +34,7 @@ Route::group('ai', function () {
     Route::post('qa/ask', 'ai.Qa/ask');
 
     Route::get('daily_report/index', 'ai.DailyReport/index');
+    Route::get('daily_report/getReport', 'ai.DailyReport/getReport');
     Route::get('daily_report', 'ai.DailyReport/index');
     Route::post('daily_report/generate', 'ai.DailyReport/generate');
 
@@ -45,10 +46,11 @@ Route::group('ai', function () {
     Route::get('cockpit', 'ai.Cockpit/index');
     Route::get('cockpit/getCockpitData', 'ai.Cockpit/getCockpitData');
 
-    // AI 套餐管理
+    // AI 套餐管理（带子路径的路由放前面，避免被 package 匹配成 index 的 Ajax 返回 packages）
+    Route::get('package/tenantList', 'AiPackage/tenantList');
+    Route::get('package/globalSwitchPage', 'AiPackage/globalSwitchPage');
     Route::get('package/index', 'AiPackage/index');
     Route::get('package', 'AiPackage/index');
-    Route::get('package/globalSwitchPage', 'AiPackage/globalSwitchPage');
     Route::get('packages', 'AiPackage/packages');
     Route::post('createPackage', 'AiPackage/createPackage');
     Route::post('purchaseForTenant', 'AiPackage/purchaseForTenant');

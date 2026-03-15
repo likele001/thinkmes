@@ -33,7 +33,7 @@ $(function() {
     }
     // 初始化表格
     table.bootstrapTable({
-        url: '{:url("mes/stock/index")}',
+        url: '{$config.moduleurl}/mes/stock/index',
         method: 'get',
         pagination: true,
         sidePagination: 'server',
@@ -129,7 +129,7 @@ $(function() {
         var remark = prompt('请输入盘点备注（可选）:');
         
         $.ajax({
-            url: '{:url("mes/stock/check")}',
+            url: '{$config.moduleurl}/mes/stock/check',
             type: 'post',
             data: {
                 material_id: id,

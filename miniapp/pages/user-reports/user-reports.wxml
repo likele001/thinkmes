@@ -53,14 +53,14 @@
     </view>
 
     <view wx:else class="records-list">
-      <view wx:for="{{records}}" wx:key="id" class="record-card">
+      <view wx:for="{{records}}" wx:key="id" class="record-card" bindtap="goDetail" data-id="{{item.id || item.report_id}}">
         <view class="record-header">
           <view class="record-title">
             <text class="product-name">{{item.product_name || '产品'}}</text>
             <text class="model-name">- {{item.model_name || ''}}</text>
           </view>
-          <view class="record-status {{item.status === 1 ? 'status-approved' : 'status-pending'}}">
-            <text class="status-text">{{item.status === 1 ? '已审核' : '待审核'}}</text>
+          <view class="record-status status-{{item.status}}">
+            <text class="status-text">{{item.statusText || (item.status === 1 ? '已审核' : item.status === 2 ? '审核被拒绝' : '待审核')}}</text>
           </view>
         </view>
         <view class="record-info">
@@ -82,7 +82,7 @@
           </view>
         </view>
         <view class="record-footer">
-          <text class="time-text">🕒 {{item.createtime_text || item.createtime || ''}}</text>
+          <text class="time-text">🕒 {{item.createtime_text || '暂无时间'}}</text>
         </view>
       </view>
     </view>

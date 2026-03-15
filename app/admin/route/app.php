@@ -180,6 +180,15 @@ Route::get('workflow/index', 'Workflow/index');
 Route::get('notification/index', 'Notification/index');
 Route::get('backup/index', 'Backup/index');
 
+// BI 报表与大屏：显式写死路径，避免被 mes 分组内 bi 兜底成 index
+Route::get('mes/bi/dashboard', 'mes.Bi/dashboard');
+Route::get('mes/bi/getDashboardData', 'mes.Bi/getDashboardData');
+Route::get('mes/bi/productionEfficiency', 'mes.Bi/productionEfficiency');
+Route::get('mes/bi/qualityAnalysis', 'mes.Bi/qualityAnalysis');
+Route::get('mes/bi/costAnalysis', 'mes.Bi/costAnalysis');
+Route::get('mes/bi/syncProgress', 'mes.Bi/syncProgress');
+Route::post('mes/bi/syncProgress', 'mes.Bi/syncProgress');
+
 // 按需加载应用路由（应用包安装时合并对应 crm.php / mes.php）
 
 if (is_file(__DIR__ . '/crm.php')) {

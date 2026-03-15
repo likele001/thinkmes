@@ -5,6 +5,7 @@
     "pages/user-index/user-index",
     "pages/user-task/user-task",
     "pages/user-reports/user-reports",
+    "pages/user-report-detail/user-report-detail",
     "pages/user-wages/user-wages",
     "pages/user-profile/user-profile",
     "pages/user-scan/user-scan",

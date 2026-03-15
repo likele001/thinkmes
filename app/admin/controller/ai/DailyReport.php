@@ -28,6 +28,24 @@ class DailyReport extends Base
         return $this->fetchWithLayout('ai/daily_report/index');
     }
 
+    /** 获取单条报告全文（用于弹窗） */
+    public function getReport(): Response
+    {
+        $id = (int) $this->request->param('id', 0);
+        if ($id <= 0) {
+            return $this->error('参数错误');
+        }
+        $tenantId = $this->getTenantId();
+        $row = Db::name('ai_daily_report')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $id)
+            ->find();
+        if (!$row) {
+            return $this->error('报告不存在');
+        }
+        return $this->success('', ['content' => $row['content'] ?? '', 'report_type' => $row['report_type'] ?? '', 'report_date' => $row['report_date'] ?? '']);
+    }
+
     public function generate(): Response
     {
         return $this->safeAiCall(function () {
@@ -66,14 +84,19 @@ class DailyReport extends Base
                 return $this->error('请先安装 MES 模块');
             }
             $summary = $this->buildDailySummary($reports, $orders, $type, $reportDate);
-            $svc = $this->getAiService()->setModule('daily_report', 'generate');
-            $messages = [
-                ['role' => 'system', 'content' => '你是生产日报撰写助手。根据以下数据生成简洁的生产' . ($type === 'daily' ? '日报' : '周报') . '，包含：1)总体完成情况 2)各订单/工序进度 3)存在的问题或建议。200-500字，条理清晰。'],
-                ['role' => 'user', 'content' => $summary],
-            ];
-            $content = $svc->chat($messages, ['temperature' => 0.5, 'max_tokens' => 1500]);
-            if (!$content) {
-                return $this->error('AI 生成失败');
+            $content = null;
+            try {
+                $svc = $this->getAiService()->setModule('daily_report', 'generate');
+                $messages = [
+                    ['role' => 'system', 'content' => '你是生产日报撰写助手。根据以下数据生成简洁的生产' . ($type === 'daily' ? '日报' : '周报') . '，包含：1)总体完成情况 2)各订单/工序进度 3)存在的问题或建议。200-500字，条理清晰。'],
+                    ['role' => 'user', 'content' => $summary],
+                ];
+                $content = $svc->chat($messages, ['temperature' => 0.5, 'max_tokens' => 1500]);
+            } catch (\Throwable $e) {
+                \think\facade\Log::info('AI daily_report chat skip: ' . $e->getMessage());
+            }
+            if (!$content || trim((string) $content) === '') {
+                $content = "【数据汇总】\n\n" . $summary . "\n\n（未配置 AI 或调用失败时显示以上数据汇总，配置 AI 后可自动生成文字总结。）";
             }
             $summaryShort = mb_substr(preg_replace('/\s+/', ' ', $content), 0, 200);
             $exist = Db::name('ai_daily_report')

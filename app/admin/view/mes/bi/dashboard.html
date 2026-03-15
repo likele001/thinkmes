@@ -1,93 +1,126 @@
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-chart-line"></i> 生产数据大屏</h3>
+<!-- 生产进度大屏监控（与 scanwork 布局一致：6 卡片 + 4 图表 + 4 Tab 表） -->
+<div class="dashboard-screen">
+    <div class="dashboard-header d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <h1 class="h4 mb-0"><i class="fas fa-tachometer-alt"></i> 生产进度大屏监控系统</h1>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">更新: <span id="dashboard-update-sec">0</span>s</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="dashboard-btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="dashboard-btn-pause" title="暂停/继续"><i class="fas fa-pause"></i> 暂停</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="dashboard-btn-fullscreen" title="全屏"><i class="fas fa-expand"></i> 全屏</button>
+        </div>
     </div>
-    <div class="card-body">
-        <!-- 实时数据卡片 -->
-        <div class="row mb-4">
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
-                    <div class="inner">
-                        <h3 id="today-quantity">0</h3>
-                        <p>今日产量</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-cubes"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-success">
-                    <div class="inner">
-                        <h3 id="today-wage">¥0</h3>
-                        <p>今日工资</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-yen-sign"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-warning">
-                    <div class="inner">
-                        <h3 id="active-allocations">0</h3>
-                        <p>进行中任务</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-danger">
-                    <div class="inner">
-                        <h3 id="pending-reports">0</h3>
-                        <p>待审核报工</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                </div>
+
+    <!-- 无数据时提示 -->
+    <div class="alert alert-info py-2 mb-2 d-none" id="dashboard-empty-hint" role="alert">
+        <i class="fas fa-info-circle"></i> 暂无生产计划与报工数据。请先：<strong>订单管理</strong> 创建订单 → <strong>生产计划</strong> 排产 → <strong>分工/分配</strong> 生成小工单 → 员工<strong>报工</strong>后，此处会显示进度。
+    </div>
+
+    <!-- 1) 顶部 6 张卡片（与 scanwork 一致） -->
+    <div class="row mb-3">
+        <div class="col-lg-2 col-4 mb-2">
+            <div class="small-box bg-secondary text-white rounded p-2 text-center">
+                <h5 class="mb-0" id="stat-total-orders">0</h5>
+                <p class="mb-0 small">总订单数</p>
+                <small class="opacity-75">活跃订单数量</small>
             </div>
         </div>
-        
-        <!-- 图表区域 -->
-        <div class="row">
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">订单状态分布</h3>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="orderChart" style="height: 300px;"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">生产计划状态</h3>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="planChart" style="height: 300px;"></canvas>
-                    </div>
-                </div>
+        <div class="col-lg-2 col-4 mb-2">
+            <div class="small-box bg-info text-white rounded p-2 text-center">
+                <h5 class="mb-0" id="stat-total-plans">0</h5>
+                <p class="mb-0 small">总计划数</p>
+                <small class="opacity-75">生产计划总数</small>
             </div>
         </div>
-        
-        <!-- 趋势图 -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">最近7天生产趋势</h3>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="trendChart" style="height: 400px;"></canvas>
-                    </div>
+        <div class="col-lg-2 col-4 mb-2">
+            <div class="small-box bg-primary text-white rounded p-2 text-center">
+                <h5 class="mb-0" id="stat-total-allocations">0</h5>
+                <p class="mb-0 small">小工单数</p>
+                <small class="opacity-75">分配任务总数</small>
+            </div>
+        </div>
+        <div class="col-lg-2 col-4 mb-2">
+            <div class="small-box bg-secondary text-white rounded p-2 text-center">
+                <h5 class="mb-0" id="stat-total-quantity">0</h5>
+                <p class="mb-0 small">总数量</p>
+                <small class="opacity-75">计划生产总量</small>
+            </div>
+        </div>
+        <div class="col-lg-2 col-4 mb-2">
+            <div class="small-box bg-success text-white rounded p-2 text-center">
+                <h5 class="mb-0" id="stat-completed-quantity">0</h5>
+                <p class="mb-0 small">已完成</p>
+                <small class="opacity-75">实际完成数量</small>
+            </div>
+        </div>
+        <div class="col-lg-2 col-4 mb-2">
+            <div class="small-box bg-warning text-white rounded p-2 text-center">
+                <h5 class="mb-0" id="stat-completion-rate">0%</h5>
+                <p class="mb-0 small">完成率</p>
+                <small class="opacity-75">整体完成进度</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2) 中间 4 个图表 2x2 -->
+    <div class="row mb-3">
+        <div class="col-lg-6 mb-2">
+            <div class="card h-100">
+                <div class="card-header py-2"><h6 class="mb-0">整体生产进度</h6></div>
+                <div class="card-body p-2"><div id="chart-overall" style="height: 220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-2">
+            <div class="card h-100">
+                <div class="card-header py-2"><h6 class="mb-0">工序完成率分布</h6></div>
+                <div class="card-body p-2"><div id="chart-process" style="height: 220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-2">
+            <div class="card h-100">
+                <div class="card-header py-2"><h6 class="mb-0">员工完成率排行</h6></div>
+                <div class="card-body p-2"><div id="chart-employee" style="height: 220px;"></div></div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-2">
+            <div class="card h-100">
+                <div class="card-header py-2"><h6 class="mb-0">订单进度对比</h6></div>
+                <div class="card-body p-2"><div id="chart-order" style="height: 220px;"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3) 底部 4 Tab 表格：按订单 / 产品 / 工序 / 员工 -->
+    <div class="card">
+        <div class="card-header py-2">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-order">按订单统计</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-product">按产品统计</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-process">按工序统计</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-employee">按员工统计</a></li>
+            </ul>
+        </div>
+        <div class="card-body p-2">
+            <div class="tab-content">
+                <div class="tab-pane active" id="tab-order">
+                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>订单名称</th><th>订单编号</th><th>计划数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-order"></tbody></table></div>
+                </div>
+                <div class="tab-pane" id="tab-product">
+                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>产品名称</th><th>计划数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-product"></tbody></table></div>
+                </div>
+                <div class="tab-pane" id="tab-process">
+                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>工序名称</th><th>小工单数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-process"></tbody></table></div>
+                </div>
+                <div class="tab-pane" id="tab-employee">
+                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>员工姓名</th><th>小工单数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-employee"></tbody></table></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<script src="/assets/lib/chart.js/chart.umd.js"></script>
+
+<style>
+.dashboard-screen { padding: 0.5rem; }
+.small-box .small { font-size: 0.85rem; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="/assets/js/backend/mes/bi-dashboard.js"></script>

@@ -34,6 +34,17 @@
                     </label>
                 </div>
             </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">默认 BOM</label>
+                <div class="col-sm-6">
+                    <select name="row[default_bom_id]" class="form-control">
+                        {volist name="bomList" id="vo"}
+                        <option value="{$key}" {eq name="row.default_bom_id" value="$key"}selected{/eq}>{$vo}</option>
+                        {/volist}
+                    </select>
+                    <small class="form-text text-muted">该产品在未指定型号或型号未设默认时使用的 BOM，仅已发布的 BOM 可选。</small>
+                </div>
+            </div>
             
             <!-- 型号和工价录入区域 -->
             <div class="form-group row">

@@ -9,6 +9,7 @@ use app\admin\model\mes\BomItemModel;
 use app\admin\model\mes\ProductModel;
 use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\MaterialModel;
+use app\admin\model\mes\MaterialCategoryModel;
 use app\admin\model\mes\SupplierModel;
 use think\facade\Db;
 use think\facade\View;
@@ -39,6 +40,7 @@ class Bom extends Backend
         
         $bomNo = trim((string) $this->request->get('bom_no'));
         $status = $this->request->get('status');
+        $bomType = $this->request->get('bom_type');
 
         $tenantId = $this->getTenantId();
         $query = BomModel::with(['product', 'model'])
@@ -58,9 +60,26 @@ class Bom extends Backend
         if ($status !== '' && $status !== null) {
             $query->where('status', (int) $status);
         }
+        if ($bomType !== '' && $bomType !== null) {
+            $query->where('bom_type', (int) $bomType);
+        }
 
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
+        foreach ($list as &$item) {
+            $item['bom_type'] = isset($item['bom_type']) ? (int) $item['bom_type'] : 0;
+            if (empty($item['model_id']) || (isset($item['model']) && empty($item['model']['name']))) {
+                $item['model'] = $item['model'] ?? [];
+                $item['model']['name'] = '通用（默认）';
+            }
+            if ($item['bom_type'] === 1) {
+                $item['product'] = $item['product'] ?? [];
+                $item['product']['name'] = '通用模板';
+                $item['model'] = $item['model'] ?? [];
+                $item['model']['name'] = '-';
+            }
+        }
+        unset($item);
 
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
@@ -78,6 +97,7 @@ class Bom extends Backend
 
             $tenantId = $this->getTenantId();
             $params['tenant_id'] = $tenantId;
+            $params['bom_type'] = isset($params['bom_type']) ? (int) $params['bom_type'] : 0;
             
             if (empty($params['bom_no'])) {
                 $params['bom_no'] = BomModel::generateBomNo();
@@ -90,10 +110,25 @@ class Bom extends Backend
             $params['bom_name'] = $params['bom_name'] ?? '未命名BOM';
             $params['approver_name'] = $params['approver_name'] ?? '';
 
-            if (empty($params['product_id']) && !empty($params['model_id'])) {
-                $model = ProductModelModel::where('tenant_id', $tenantId)->find((int) $params['model_id']);
-                if ($model) {
-                    $params['product_id'] = $model->product_id;
+            if ($params['bom_type'] === 1) {
+                // 通用模板：不绑定产品/型号
+                $params['product_id'] = 0;
+                $params['model_id'] = 0;
+            } else {
+                $params['product_id'] = (int) ($params['product_id'] ?? 0);
+                $params['model_id'] = (int) ($params['model_id'] ?? 0);
+                // 产品BOM：model_id=0 表示同产品通用，必须选择产品
+                if ($params['model_id'] === 0) {
+                    if (empty($params['product_id'])) {
+                        return $this->error('选择通用（默认）型号时请先选择产品');
+                    }
+                } else {
+                    if (empty($params['product_id'])) {
+                        $model = ProductModelModel::where('tenant_id', $tenantId)->find($params['model_id']);
+                        if ($model) {
+                            $params['product_id'] = $model->product_id;
+                        }
+                    }
                 }
             }
 
@@ -132,7 +167,9 @@ class Bom extends Backend
             }
             $modelList[$model->id] = $displayName;
         }
+        $modelList = [0 => '通用（默认）'] + $modelList;
         View::assign('modelList', $modelList);
+        View::assign('bomTypeList', (new BomModel())->getBomTypeList());
 
         View::assign('title', '添加BOM');
         return $this->fetchWithLayout('mes/bom/add');
@@ -164,6 +201,9 @@ class Bom extends Backend
             }
 
             try {
+                if (isset($params['bom_type'])) {
+                    $params['bom_type'] = (int) $params['bom_type'];
+                }
                 $row->save($params);
                 return $this->success('编辑成功', ['id' => $row->id]);
             } catch (\Exception $e) {
@@ -197,11 +237,74 @@ class Bom extends Backend
             }
             $modelList[$model->id] = $displayName;
         }
+        $modelList = [0 => '通用（默认）'] + $modelList;
         View::assign('modelList', $modelList);
+        View::assign('bomTypeList', (new BomModel())->getBomTypeList());
 
         View::assign('row', $row);
         View::assign('title', '编辑BOM');
         return $this->fetchWithLayout('mes/bom/edit');
+    }
+
+    /**
+     * 从通用模板导入 BOM 明细（会覆盖当前 BOM 原有明细）
+     */
+    public function importTemplateItems(): Response
+    {
+        if (!$this->request->isPost()) {
+            return $this->error('非法请求');
+        }
+        $bomId = (int) $this->request->post('bom_id', 0);
+        $templateBomId = (int) $this->request->post('template_bom_id', 0);
+        if ($bomId <= 0 || $templateBomId <= 0) {
+            return $this->error('参数错误');
+        }
+        $tenantId = $this->getTenantId();
+        $target = BomModel::where('tenant_id', $tenantId)->find($bomId);
+        if (!$target) {
+            return $this->error('目标BOM不存在');
+        }
+        $template = BomModel::where('tenant_id', $tenantId)->where('id', $templateBomId)->where('bom_type', 1)->find();
+        if (!$template) {
+            return $this->error('模板BOM不存在');
+        }
+
+        $items = BomItemModel::where('tenant_id', $tenantId)->where('bom_id', $templateBomId)
+            ->order('level', 'asc')->order('sequence', 'asc')->select()->toArray();
+        if (empty($items)) {
+            return $this->error('模板没有明细');
+        }
+
+        Db::startTrans();
+        try {
+            BomItemModel::where('tenant_id', $tenantId)->where('bom_id', $bomId)->delete();
+
+            $idMap = [];
+            foreach ($items as $it) {
+                $oldId = (int) ($it['id'] ?? 0);
+                unset($it['id']);
+                $it['bom_id'] = $bomId;
+                $it['create_time'] = time();
+                $it['parent_id'] = 0;
+                $new = BomItemModel::create($it);
+                if ($oldId > 0) {
+                    $idMap[$oldId] = (int) $new->id;
+                }
+            }
+            foreach ($items as $it) {
+                $oldId = (int) ($it['id'] ?? 0);
+                $oldParent = (int) ($it['parent_id'] ?? 0);
+                if ($oldId > 0 && $oldParent > 0 && isset($idMap[$oldId]) && isset($idMap[$oldParent])) {
+                    BomItemModel::where('tenant_id', $tenantId)->where('id', $idMap[$oldId])->update(['parent_id' => $idMap[$oldParent]]);
+                }
+            }
+
+            Db::commit();
+            return $this->success('导入成功');
+        } catch (\Exception $e) {
+            Db::rollback();
+            return $this->error('导入失败');
+        }
     }
 
     /**
@@ -275,17 +378,43 @@ class Bom extends Backend
             return $this->success('', ['total' => count($items), 'list' => $items]);
         }
 
-        // 获取物料列表
+        // 物料分类（用于按分类筛选）
+        $categoryList = MaterialCategoryModel::where(function ($q) use ($tenantId) {
+            $q->where('tenant_id', $tenantId)->whereOr('tenant_id', 0);
+        })->where('status', 1)->order('sort', 'asc')->column('name', 'id');
+        View::assign('categoryList', $categoryList ?: []);
+        View::assign('categoryListJson', json_encode($categoryList ?: [], JSON_UNESCAPED_UNICODE));
+
+        // 获取物料列表（含 category_id 便于前端按分类筛选）
         $materialList = MaterialModel::where('tenant_id', $tenantId)
             ->where('status', 'active')
             ->column('name', 'id');
         View::assign('materialList', $materialList);
-        
+        View::assign('materialListJson', json_encode($materialList ?: [], JSON_UNESCAPED_UNICODE));
+        $materialListWithCategory = MaterialModel::where('tenant_id', $tenantId)
+            ->where('status', 'active')
+            ->field('id,name,category_id')
+            ->order('category_id', 'asc')
+            ->order('id', 'asc')
+            ->select()
+            ->toArray();
+        View::assign('materialListWithCategory', $materialListWithCategory);
+        View::assign('materialListWithCategoryJson', json_encode($materialListWithCategory ?: [], JSON_UNESCAPED_UNICODE));
         // 获取供应商列表
         $supplierList = SupplierModel::where('tenant_id', $tenantId)
             ->where('status', 'active')
             ->column('name', 'id');
         View::assign('supplierList', $supplierList);
+        View::assign('supplierListJson', json_encode($supplierList ?: [], JSON_UNESCAPED_UNICODE));
+
+        // 通用模板列表（仅已发布）
+        $templateBomList = [];
+        $tpls = BomModel::where('tenant_id', $tenantId)->where('bom_type', 1)->where('status', 2)->order('id', 'desc')->select();
+        foreach ($tpls as $tpl) {
+            $name = $tpl->bom_name ?: $tpl->bom_no;
+            $templateBomList[$tpl->id] = $name . '（' . $tpl->bom_no . '）';
+        }
+        View::assign('templateBomList', $templateBomList);
 
         View::assign('bom', $bom);
         View::assign('title', 'BOM明细管理');
@@ -314,6 +443,61 @@ class Bom extends Backend
             return $this->success('添加成功', ['id' => $bomItem->id]);
         } catch (\Exception $e) {
             return $this->error('添加失败');
+        }
+    }
+
+    /**
+     * 批量添加BOM明细
+     */
+    public function addItemBatch(): Response
+    {
+        if (!$this->request->isPost()) {
+            return $this->error('非法请求');
+        }
+        $items = $this->request->post('items/a');
+        if (empty($items) || !is_array($items)) {
+            return $this->error('请至少添加一行物料');
+        }
+        $tenantId = $this->getTenantId();
+        $bomId = (int) $this->request->post('bom_id', 0);
+        if ($bomId <= 0) {
+            return $this->error('参数错误');
+        }
+        $bom = BomModel::where('tenant_id', $tenantId)->find($bomId);
+        if (!$bom) {
+            return $this->error('BOM不存在');
+        }
+        $valid = [];
+        foreach ($items as $row) {
+            $materialId = (int) ($row['material_id'] ?? 0);
+            $qty = isset($row['quantity']) ? (float) $row['quantity'] : 0;
+            if ($materialId <= 0 || $qty <= 0) {
+                continue;
+            }
+            $valid[] = [
+                'tenant_id'   => $tenantId,
+                'bom_id'      => $bomId,
+                'parent_id'   => 0,
+                'material_id' => $materialId,
+                'quantity'    => $qty,
+                'loss_rate'   => isset($row['loss_rate']) ? (float) $row['loss_rate'] : 0,
+                'unit_price'  => 0,
+                'supplier_id' => (int) ($row['supplier_id'] ?? 0),
+                'level'       => (int) ($row['level'] ?? 1),
+                'sequence'    => (int) ($row['sequence'] ?? 0),
+                'create_time' => time(),
+            ];
+        }
+        if (empty($valid)) {
+            return $this->error('请至少填写一行有效的物料与用量');
+        }
+        try {
+            foreach ($valid as $v) {
+                BomItemModel::create($v);
+            }
+            return $this->success('批量添加成功', ['count' => count($valid)]);
+        } catch (\Exception $e) {
+            return $this->error('批量添加失败');
         }
     }
 

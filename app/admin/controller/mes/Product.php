@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\admin\controller\mes;
 
 use app\admin\controller\Backend;
+use app\admin\model\mes\BomModel;
 use app\admin\model\mes\ProductModel;
 use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\ProcessModel;
@@ -180,6 +181,7 @@ class Product extends Backend
 
             Db::startTrans();
             try {
+                $params['default_bom_id'] = isset($params['default_bom_id']) ? (int) $params['default_bom_id'] : 0;
                 $row->save($params);
 
                 // 如果产品更新成功且有型号数据，则更新型号和工价
@@ -283,6 +285,16 @@ class Product extends Backend
         }
         View::assign('models', $modelsWithPrices);
         View::assign('modelsJson', json_encode($modelsWithPrices, JSON_UNESCAPED_UNICODE));
+
+        // 该产品下的 BOM 列表（含通用），用于默认 BOM 选择
+        $bomList = [0 => '不设置默认'];
+        $boms = BomModel::with('model')->where('tenant_id', $tenantId)->where('product_id', (int) $ids)->where('status', 2)
+            ->order('model_id', 'asc')->order('id', 'desc')->select();
+        foreach ($boms as $b) {
+            $label = $b->bom_no . '（' . ($b->model_id ? ($b->model->name ?? '') : '通用') . '）';
+            $bomList[$b->id] = $label;
+        }
+        View::assign('bomList', $bomList);
 
         View::assign('row', $row);
         View::assign('title', '编辑产品');

@@ -111,8 +111,9 @@
 .product-name { font-size: 30rpx; font-weight: 700; color: #333; }
 .model-name { font-size: 26rpx; color: #666; }
 .record-status { padding: 8rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 600; }
-.status-approved { background: #52c41a; color: #fff; }
-.status-pending { background: #faad14; color: #fff; }
+.status-0 { background: #faad14; color: #fff; }
+.status-1 { background: #52c41a; color: #fff; }
+.status-2 { background: #ff4d4f; color: #fff; }
 
 .record-info { display: flex; flex-wrap: wrap; gap: 16rpx 24rpx; margin-bottom: 12rpx; }
 .info-row { display: flex; align-items: center; gap: 8rpx; }

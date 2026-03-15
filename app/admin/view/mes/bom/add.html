@@ -3,6 +3,9 @@
         <h3 class="card-title">添加BOM</h3>
     </div>
     <div class="card-body">
+        <div class="alert alert-info mb-3">
+            <strong>通用模板在这里添加：</strong>下方将 <strong>BOM类型</strong> 选为「<strong>通用模板</strong>」，BOM名称填如「通用模板1」「通用模板2」，提交后到列表点该条的「<strong>明细</strong>」维护物料即可。之后在任意产品BOM的明细页可用「从通用模板导入」一键套用。
+        </div>
         <form id="form-add" method="post" class="form-horizontal">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">BOM编号</label>
@@ -13,13 +16,25 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">BOM名称</label>
                 <div class="col-sm-6">
-                    <input type="text" name="row[bom_name]" class="form-control" placeholder="例如：电机A1型标准用料BOM">
+                    <input type="text" name="row[bom_name]" class="form-control" placeholder="产品BOM示例：电机A1型标准用料BOM；通用模板示例：通用模板1">
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-sm-2 col-form-label">BOM类型</label>
+                <div class="col-sm-6">
+                    <select name="row[bom_type]" class="form-control" id="bom_type">
+                        {volist name="bomTypeList" id="t"}
+                        <option value="{$key}">{$t}</option>
+                        {/volist}
+                    </select>
+                    <small class="form-text text-muted">选择「通用模板」后，该 BOM 作为物料模板（模板1/模板2），可跨产品复用。</small>
+                </div>
+            </div>
+            <div id="product-model-row-wrap">
+            <div class="form-group row">
                 <label class="col-sm-2 col-form-label">产品</label>
                 <div class="col-sm-6">
-                    <select name="row[product_id]" class="form-control">
+                    <select name="row[product_id]" class="form-control" id="product_id">
                         <option value="">请选择产品</option>
                         {volist name="productList" id="vo"}
                         <option value="{$key}">{$vo}</option>
@@ -28,14 +43,21 @@
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">产品型号<span class="text-danger">*</span></label>
+                <label class="col-sm-2 col-form-label">产品型号<span class="text-danger" id="model-required-star">*</span></label>
                 <div class="col-sm-6">
-                    <select name="row[model_id]" class="form-control" required>
+                    <select name="row[model_id]" class="form-control" id="model_id" required>
                         <option value="">请选择产品型号</option>
                         {volist name="modelList" id="vo"}
                         <option value="{$key}">{$vo}</option>
                         {/volist}
                     </select>
+                    <small class="form-text text-muted">选择「通用（默认）」表示该 BOM 适用于该产品下所有型号，需先选择产品。</small>
+                </div>
+            </div>
+            </div>
+            <div id="template-tip" class="form-group row d-none">
+                <div class="col-sm-6 offset-sm-2">
+                    <span class="text-muted">当前为通用模板，无需选择产品与型号。</span>
                 </div>
             </div>
             <div class="form-group row">
@@ -85,12 +107,36 @@
             return;
         }
         form.attr('action', base + '/mes/bom/add');
+
+        function toggleProductModel() {
+            var isTemplate = $('#bom_type').val() === '1';
+            if (isTemplate) {
+                $('#product-model-row-wrap').addClass('d-none');
+                $('#template-tip').removeClass('d-none');
+                $('#model_id').removeAttr('required');
+            } else {
+                $('#product-model-row-wrap').removeClass('d-none');
+                $('#template-tip').addClass('d-none');
+                $('#model_id').attr('required', 'required');
+            }
+        }
+        $('#bom_type').on('change', toggleProductModel);
+        toggleProductModel();
+
         form.on('submit', function (e) {
             e.preventDefault();
+            var bomType = form.find('select[name="row[bom_type]"]').val();
             var modelId = form.find('select[name="row[model_id]"]').val();
-            if (!modelId) {
-                alert('请选择产品型号');
-                return;
+            var productId = form.find('select[name="row[product_id]"]').val();
+            if (bomType !== '1') {
+                if (modelId === '' || modelId === undefined) {
+                    alert('请选择产品型号或通用（默认）');
+                    return;
+                }
+                if (modelId === '0' && !productId) {
+                    alert('选择通用（默认）型号时请先选择产品');
+                    return;
+                }
             }
             var fd = new FormData(this);
             $.ajax({

@@ -5,6 +5,7 @@ namespace app\api\controller;
 
 use app\common\controller\BaseController;
 use app\api\middleware\AdminAuth;
+use app\common\lib\Auth;
 use app\admin\model\AdminModel;
 use app\admin\model\mes\OrderModel;
 use app\admin\model\mes\OrderModelModel;
@@ -101,6 +102,20 @@ class Scanwork extends BaseController
         return $this->success('token有效', [
             'admin_id'  => $this->getAdminId(),
             'tenant_id' => $this->getTenantId(),
+        ]);
+    }
+
+    /**
+     * 获取当前管理员在小程序端可用的权限节点（与 PC 角色/菜单一致，用于前端显隐菜单）
+     * 返回 rule names 列表，前端可根据节点显隐对应 Tab/页面
+     */
+    public function getScanworkMenu(): Response
+    {
+        $adminId = $this->getAdminId();
+        $auth = new Auth();
+        $rules = $auth->getRuleIds($adminId);
+        return $this->success('获取成功', [
+            'nodes' => is_array($rules) ? $rules : [],
         ]);
     }
 

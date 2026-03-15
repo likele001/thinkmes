@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">库存流水</h3>
+                <h3 class="card-title">物料流水</h3>
                 <div class="card-tools">
                     <form id="form-search" class="form-inline" action="{:url('mes/stock/log')}" method="get">
                         <div class="input-group input-group-sm" style="width: 250px;">
@@ -49,7 +49,7 @@ $(function() {
     }
     // 初始化表格
     table.bootstrapTable({
-        url: '{:url("admin/mes.stock/log")}',
+        url: '{$config.moduleurl}/mes/stock/log',
         method: 'get',
         pagination: true,
         sidePagination: 'server',
@@ -73,11 +73,15 @@ $(function() {
                 }
             },
             {
-                field: 'quantity',
+                field: 'change_quantity',
                 title: '变动数量',
                 align: 'center',
                 formatter: function(value, row, index) {
-                    return value > 0 ? '<span class="text-success">+' + value + '</span>' : '<span class="text-danger">' + value + '</span>';
+                    var v = row.change_quantity != null ? row.change_quantity : value;
+                    if (v == null || v === '') return '-';
+                    var n = parseFloat(v);
+                    if (isNaN(n)) return v;
+                    return n > 0 ? '<span class="text-success">+' + n + '</span>' : '<span class="text-danger">' + n + '</span>';
                 }
             },
             {
@@ -88,12 +92,17 @@ $(function() {
                     var typeMap = {
                         'purchase_in': '采购入库',
                         'production_out': '生产领料',
+                        'production_in': '完工入库',
                         'check_in': '盘点入库',
                         'check_out': '盘点出库',
+                        'return_in': '退货入库',
+                        'adjust_in': '调整入库',
+                        'adjust_out': '调整出库',
+                        'shipment_out': '发货出库',
                         'other_in': '其他入库',
                         'other_out': '其他出库'
                     };
-                    return typeMap[value] || value;
+                    return typeMap[value] || value || '-';
                 }
             },
             {
@@ -109,7 +118,16 @@ $(function() {
                 title: '操作时间',
                 align: 'center',
                 formatter: function(value, row, index) {
-                    return value ? new Date(value * 1000).toLocaleString() : '-';
+                    if (value == null || value === '') return '-';
+                    var date;
+                    if (typeof value === 'number' && value > 0) {
+                        date = new Date(value * 1000);
+                    } else if (typeof value === 'string' && /^\d+$/.test(value)) {
+                        date = new Date(parseInt(value, 10) * 1000);
+                    } else {
+                        date = new Date(value);
+                    }
+                    return !isNaN(date.getTime()) ? date.toLocaleString('zh-CN') : (value || '-');
                 }
             },
             {

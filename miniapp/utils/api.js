@@ -16,9 +16,17 @@ const userApi = {
     if (status !== undefined && status !== '') data.status = status;
     return getAppRef().userRequest({ url: '/worker/reports', method: 'GET', data });
   },
-  getWages(page, limit, workDate) {
+  getReportDetail(reportId) {
+    return getAppRef().userRequest({ url: '/worker/reportDetail', method: 'GET', data: { report_id: reportId } });
+  },
+  getWages(page, limit, opts) {
     const data = { page: page || 1, limit: limit || 20 };
-    if (workDate) data.work_date = workDate;
+    if (opts && opts.work_date) data.work_date = opts.work_date;
+    if (opts && opts.month) data.month = opts.month;
+    if (opts && opts.start_date) data.start_date = opts.start_date;
+    if (opts && opts.end_date) data.end_date = opts.end_date;
+    if (opts && opts.order_no) data.order_no = opts.order_no;
+    if (opts && opts.product_name) data.product_name = opts.product_name;
     return getAppRef().userRequest({ url: '/worker/wages', method: 'GET', data });
   },
   uploadImage(filePath) {
@@ -47,6 +55,9 @@ const userApi = {
 const adminApi = {
   checkToken() {
     return getAppRef().request({ url: '/scanwork/checkToken', method: 'GET' });
+  },
+  getScanworkMenu() {
+    return getAppRef().request({ url: '/scanwork/getScanworkMenu', method: 'GET' });
   },
   getDashboardData() {
     return getAppRef().request({ url: '/scanwork/getDashboardData', method: 'GET' });
