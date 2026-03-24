@@ -41,11 +41,28 @@ class CustomFieldValue extends Model
             ->column('v.value', 'f.name');
     }
 
-    public function saveFieldValues($tableName, $recordId, $fieldValues)
+    public function saveFieldValues(string $tableName, int $recordId, array $fieldValues, int $tenantId = 0): void
     {
-        $fields = CustomField::where('group_id', function ($query) use ($tableName) {
-            $query->name('custom_field_group')->where('table_name', $tableName)->field('id');
-        })->where('status', 1)->column('id', 'name');
+        $groupId = CustomFieldGroup::where('table_name', $tableName)
+            ->where('tenant_id', $tenantId)
+            ->where('status', 1)
+            ->value('id');
+        $groupTenantId = $tenantId;
+        if (!$groupId && $tenantId > 0) {
+            $groupId = CustomFieldGroup::where('table_name', $tableName)
+                ->where('tenant_id', 0)
+                ->where('status', 1)
+                ->value('id');
+            $groupTenantId = 0;
+        }
+        if (!$groupId) {
+            return;
+        }
+
+        $fields = CustomField::where('group_id', $groupId)
+            ->where('tenant_id', $groupTenantId)
+            ->where('status', 1)
+            ->column('id', 'name');
 
         foreach ($fieldValues as $name => $value) {
             if (isset($fields[$name])) {
@@ -53,6 +70,7 @@ class CustomFieldValue extends Model
                 $existing = $this->where('field_id', $fieldId)
                     ->where('record_id', $recordId)
                     ->where('table_name', $tableName)
+                    ->where('tenant_id', $tenantId)
                     ->find();
 
                 if ($existing) {
@@ -64,6 +82,7 @@ class CustomFieldValue extends Model
                         'record_id' => $recordId,
                         'table_name' => $tableName,
                         'value'     => $value,
+                        'tenant_id' => $tenantId,
                     ]);
                 }
             }

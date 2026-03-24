@@ -169,7 +169,7 @@ class CustomFieldService
     public static function saveCustomFieldValues(string $tableName, int $recordId, array $fieldValues, int $tenantId = 0): bool
     {
         $valueModel = new CustomFieldValue();
-        $valueModel->saveFieldValues($tableName, $recordId, $fieldValues);
+        $valueModel->saveFieldValues($tableName, $recordId, $fieldValues, $tenantId);
         return true;
     }
 
