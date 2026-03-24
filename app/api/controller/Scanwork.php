@@ -2077,6 +2077,139 @@ class Scanwork extends BaseController
         return $this->success('获取成功', ['list' => $list]);
     }
 
+    // ---------- 用户管理（管理端） ----------
+
+    /** 用户列表（分页+搜索+状态筛选） */
+    public function getMemberList(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $page = max(1, (int) $this->request->get('page', 1));
+        $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
+        $keyword = trim((string) $this->request->get('keyword', ''));
+        $status = $this->request->get('status', '');
+
+        $query = UserModel::where('tenant_id', $tenantId)->order('id', 'desc');
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('username', 'like', '%' . $keyword . '%')
+                  ->whereOr('nickname', 'like', '%' . $keyword . '%')
+                  ->whereOr('mobile', 'like', '%' . $keyword . '%');
+            });
+        }
+        if ($status !== '' && $status !== null) {
+            $query->where('status', (int) $status);
+        }
+        $total = $query->count();
+        $list = $query->field('id,username,nickname,mobile,email,status,create_time,login_time')
+            ->page($page, $limit)->select()->toArray();
+        foreach ($list as &$row) {
+            $row['create_time_str'] = $row['create_time'] ? date('Y-m-d H:i', (int)$row['create_time']) : '';
+            $row['login_time_str'] = ($row['login_time'] && $row['login_time'] > 0) ? date('Y-m-d H:i', (int)$row['login_time']) : '从未登录';
+        }
+        return $this->success('', ['total' => $total, 'list' => $list]);
+    }
+
+    /** 新增用户 */
+    public function createMember(): Response
+    {
+        $resourceCheck = $this->checkResourceLimit('user');
+        if (!$resourceCheck['allowed']) {
+            return $this->error($resourceCheck['msg']);
+        }
+        $tenantId = $this->getTenantId();
+        $username = trim((string) $this->request->post('username', ''));
+        $password = (string) $this->request->post('password', '');
+        $nickname = trim((string) $this->request->post('nickname', ''));
+        $mobile = trim((string) $this->request->post('mobile', ''));
+        $email = trim((string) $this->request->post('email', ''));
+        $status = (int) $this->request->post('status', 1);
+
+        if (strlen($username) < 2 || strlen($username) > 50) {
+            return $this->error('用户名长度 2-50');
+        }
+        if (strlen($password) < 6 || strlen($password) > 32) {
+            return $this->error('密码长度 6-32');
+        }
+        if (UserModel::where('tenant_id', $tenantId)->where('username', $username)->find()) {
+            return $this->error('该用户名已存在');
+        }
+        $now = time();
+        $row = UserModel::create([
+            'tenant_id' => $tenantId,
+            'username' => $username,
+            'password' => password_hash($password, PASSWORD_BCRYPT),
+            'nickname' => $nickname ?: $username,
+            'mobile' => $mobile,
+            'email' => $email,
+            'status' => $status,
+            'create_time' => $now,
+            'update_time' => $now,
+        ]);
+        return $this->success('添加成功', ['id' => $row->id]);
+    }
+
+    /** 编辑用户 */
+    public function updateMember(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $id = (int) $this->request->post('id');
+        $row = UserModel::where('tenant_id', $tenantId)->find($id);
+        if (!$row) {
+            return $this->error('记录不存在');
+        }
+        $nickname = trim((string) $this->request->post('nickname', ''));
+        $mobile = trim((string) $this->request->post('mobile', ''));
+        $email = trim((string) $this->request->post('email', ''));
+        $status = (int) $this->request->post('status', 1);
+        $password = (string) $this->request->post('password', '');
+
+        $row->nickname = $nickname ?: $row->username;
+        $row->mobile = $mobile;
+        $row->email = $email;
+        $row->status = $status;
+        $row->update_time = time();
+        if ($password !== '') {
+            if (strlen($password) < 6 || strlen($password) > 32) {
+                return $this->error('密码长度 6-32');
+            }
+            $row->password = password_hash($password, PASSWORD_BCRYPT);
+        }
+        $row->save();
+        return $this->success('保存成功', ['id' => $id]);
+    }
+
+    /** 删除用户 */
+    public function deleteMember(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $id = (int) $this->request->post('id');
+        $row = UserModel::where('tenant_id', $tenantId)->find($id);
+        if (!$row) {
+            return $this->error('记录不存在');
+        }
+        $row->delete();
+        return $this->success('删除成功');
+    }
+
+    /** 重置用户密码 */
+    public function resetMemberPwd(): Response
+    {
+        $tenantId = $this->getTenantId();
+        $id = (int) $this->request->post('id');
+        $password = (string) $this->request->post('password', '123456');
+        $row = UserModel::where('tenant_id', $tenantId)->find($id);
+        if (!$row) {
+            return $this->error('记录不存在');
+        }
+        if (strlen($password) < 6 || strlen($password) > 32) {
+            return $this->error('密码长度 6-32');
+        }
+        $row->password = password_hash($password, PASSWORD_BCRYPT);
+        $row->update_time = time();
+        $row->save();
+        return $this->success('重置成功');
+    }
+
     // ---------- 采购 ----------
     public function getPurchaseRequestList(): Response
     {

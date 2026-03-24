@@ -1,7 +1,7 @@
 <div class="card card-outline card-primary">
     <div class="card-header"><h3 class="card-title">添加设备</h3></div>
     <div class="card-body">
-        <form id="form-add" method="post" class="form-horizontal">
+        <form id="form-add" method="post" class="form-horizontal" data-url="equipment/equipment/add" data-back="equipment/equipment">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">设备编号</label>
                 <div class="col-sm-6"><input type="text" name="row[code]" class="form-control" required placeholder="请输入设备编号"></div>
@@ -47,21 +47,3 @@
         </div>
     </div>
 </div>
-<script>
-(function() {
-    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
-    var $ = jQuery;
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    $('#form-add').on('submit', function(e) {
-        e.preventDefault();
-        $.post(base + '/equipment/equipment/add', $(this).serialize(), function(r) {
-            if (r.code == 1) {
-                alert(r.msg || '添加成功');
-                location.href = base + '/equipment/equipment/index';
-            } else {
-                alert(r.msg || '添加失败');
-            }
-        }, 'json');
-    });
-})();
-</script>

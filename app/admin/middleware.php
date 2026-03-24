@@ -6,5 +6,5 @@ return [
     \app\common\middleware\Security::class,
     \app\admin\middleware\CheckAuth::class,
     \app\admin\middleware\AdminEntryUrlRewrite::class,
-    \app\admin\middleware\PermissionsPolicyHeader::class,
+    // \app\admin\middleware\PermissionsPolicyHeader::class,
 ];

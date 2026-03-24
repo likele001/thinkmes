@@ -9,7 +9,31 @@
 .model-row .input-qty { width: 140rpx; border: 2rpx solid #eee; border-radius: 8rpx; padding: 20rpx; text-align: center; }
 .model-row .btn-del { color: #ef4444; font-size: 26rpx; padding: 16rpx; }
 .btn-add-model { margin-top: 16rpx; padding: 20rpx; border: 2rpx dashed #cbd5e1; border-radius: 12rpx; color: #64748b; text-align: center; }
-.btn-row { margin-top: 32rpx; display: flex; flex-direction: column; gap: 24rpx; padding: 0 20rpx 20rpx; }
-.btn-primary { width: 100%; background: #1989fa; color: #fff; border-radius: 12rpx; border: none; }
-.btn-primary::after { border: none; }
+.btn-row {
+  margin-top: 32rpx;
+  display: flex;
+  gap: 24rpx;
+  padding: 0 20rpx 20rpx;
+}
+.btn-row .btn {
+  flex: 1;
+  margin: 0;
+  padding: 20rpx 30rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  text-align: center;
+  font-weight: 600;
+  border: none; /* 重置原生边框 */
+}
+.btn-row .btn::after {
+  border: none; /* 移除微信按钮的默认边框伪元素 */
+}
+.btn-row .btn-primary {
+  background: linear-gradient(135deg, #5B7BFF 0%, #6B8CFF 40%, #3DC9A7 100%);
+  color: #fff;
+}
+.btn-row .btn-danger {
+  background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+  color: #fff;
+}
 .card { padding: 24rpx; margin: 20rpx; background: #fff; border-radius: 8rpx; }

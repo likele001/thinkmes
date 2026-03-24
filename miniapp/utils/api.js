@@ -434,6 +434,25 @@ const adminApi = {
   deleteSupplier(id) {
     return getAppRef().request({ url: '/scanwork/deleteSupplier', method: 'POST', data: { ids: String(id) } });
   },
+  // ---------- 用户管理 ----------
+  getMemberList(page, limit, keyword, status) {
+    const data = { page: page || 1, limit: limit || 20 };
+    if (keyword) data.keyword = keyword;
+    if (status !== undefined && status !== '') data.status = status;
+    return getAppRef().request({ url: '/scanwork/getMemberList', method: 'GET', data });
+  },
+  createMember(data) {
+    return getAppRef().request({ url: '/scanwork/createMember', method: 'POST', data });
+  },
+  updateMember(data) {
+    return getAppRef().request({ url: '/scanwork/updateMember', method: 'POST', data });
+  },
+  deleteMember(id) {
+    return getAppRef().request({ url: '/scanwork/deleteMember', method: 'POST', data: { id } });
+  },
+  resetMemberPwd(id, password) {
+    return getAppRef().request({ url: '/scanwork/resetMemberPwd', method: 'POST', data: { id, password } });
+  },
   getBiProductionEfficiency(params) {
     return getAppRef().request({ url: '/scanwork/getBiProductionEfficiency', method: 'GET', data: params || {} });
   },

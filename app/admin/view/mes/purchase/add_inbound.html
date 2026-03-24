@@ -2,7 +2,8 @@
 <div class="panel panel-default">
     <div class="panel-heading"><h4>添加入库单</h4></div>
     <div class="panel-body">
-        <form id="form-add" class="form-horizontal" role="form" action="" method="post">
+        <form id="form-add" class="form-horizontal" role="form" method="post"
+              data-url="mes/purchase/addInbound" data-back="mes/purchase/inbound">
             <div class="form-group">
                 <label class="control-label col-xs-12 col-sm-2">关联采购申请</label>
                 <div class="col-xs-12 col-sm-8">
@@ -53,27 +54,5 @@
         </form>
     </div>
 </div>
-<script>
-$(function() {
-    $('#c-purchase_request_id').on('change', function() {
-        var opt = $(this).find('option:selected');
-        var mid = opt.data('material-id');
-        if (mid) $('#c-material_id').val(mid);
-    });
-    // 从采购申请列表带 request_id 进来时，已选中申请，这里同步物料
-    var preselectMid = {:isset($preselect_material_id) ? (int)$preselect_material_id : 0};
-    if (preselectMid) $('#c-material_id').val(preselectMid);
-    $('#form-add').on('submit', function(e) {
-        e.preventDefault();
-        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-        $.post(base + '/mes/purchase/addInbound', $(this).serialize(), function(r) {
-            if (r.code == 1) {
-                if (typeof Fast !== 'undefined' && Fast.api) Fast.api.close(); else alert(r.msg);
-            } else {
-                alert(r.msg || '提交失败');
-            }
-        }, 'json');
-    });
-});
-</script>
+<script type="application/json" id="add-inbound-meta">{"preselectMaterialId":{:isset($preselect_material_id) ? (int)$preselect_material_id : 0}}</script>
 {include file='common/script-iframe' /}

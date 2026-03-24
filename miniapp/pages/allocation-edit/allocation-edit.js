@@ -4,18 +4,22 @@ Page({
   data: {
     id: 0,
     orderId: 0,
+    productId: 0,
     modelId: 0,
     processId: 0,
     userId: 0,
     orderLabel: '请选择订单',
+    productLabel: '请选择产品',
     modelLabel: '请选择型号',
     processLabel: '请选择工序',
     userLabel: '请选择员工',
     orderIndex: 0,
+    productIndex: 0,
     modelIndex: 0,
     processIndex: 0,
     userIndex: 0,
     orderOptions: [],
+    productOptions: [],
     modelOptions: [],
     processOptions: [],
     userOptions: [],
@@ -70,20 +74,30 @@ Page({
             statusText: this.data.statusList[d.status >= 0 && d.status <= 2 ? d.status : 0].text,
             statusIndex: d.status >= 0 && d.status <= 2 ? d.status : 0,
           });
+          // 订单 → 提取该订单下的产品列表 → 选中对应产品 → 该产品下的型号
           if (oid) {
             adminApi.getOrderModels(oid).then((r) => {
               const models = (r.data && r.data.list) || [];
-              const modelOptions = models.map((m) => ({
-                id: m.model_id,
-                label: (m.model && m.model.name ? m.model.name : '') + (m.product_name ? ' - ' + m.product_name : '') || '型号' + m.model_id,
-              }));
-              const mi = modelOptions.findIndex((o) => o.id === mid);
-              this.setData({
-                modelOptions,
-                modelId: mid,
-                modelLabel: mi >= 0 ? modelOptions[mi].label : (modelOptions[0] ? modelOptions[0].label : '请选择型号'),
-                modelIndex: mi >= 0 ? mi : 0,
-              });
+              const productOptions = this.getProductOptionsFromModels(models);
+              const matched = models.find((m) => (m.model_id === mid) || (m.model && (m.model.id === mid)));
+              const pid = matched && matched.model && matched.model.product ? (matched.model.product.id || 0) : (matched && matched.product_id ? matched.product_id : 0);
+              if (pid) {
+                const pIdx = productOptions.findIndex((p) => p.id === pid);
+                this.setData({
+                  productId: pid,
+                  productIndex: pIdx >= 0 ? pIdx : 0,
+                  productLabel: pIdx >= 0 ? productOptions[pIdx].label : '请选择产品',
+                  productOptions,
+                });
+                const modelOptions = this.getModelOptionsFromModels(models, pid);
+                  const mi = modelOptions.findIndex((o) => o.id === mid);
+                  this.setData({
+                    modelOptions,
+                    modelId: mid,
+                    modelLabel: mi >= 0 ? modelOptions[mi].label : (modelOptions[0] ? modelOptions[0].label : '请选择型号'),
+                    modelIndex: mi >= 0 ? mi : 0,
+                  });
+              }
             }).catch(() => {});
           }
         }).catch(() => {});
@@ -99,19 +113,44 @@ Page({
       orderIndex: i,
       orderId,
       orderLabel: opts[i].label,
+      // 重置产品与型号选择
+      productOptions: [],
+      productIndex: 0,
+      productId: 0,
+      productLabel: '请选择产品',
       modelOptions: [],
       modelIndex: 0,
       modelId: 0,
       modelLabel: '请选择型号',
     });
+    // 订单选中后：从订单型号明细提取产品列表供选择
     adminApi.getOrderModels(orderId).then((r) => {
       const models = (r.data && r.data.list) || [];
-      const modelOptions = models.map((m) => ({
-        id: m.model_id,
-        label: (m.model && m.model.name ? m.model.name : '') + (m.product_name ? ' - ' + m.product_name : '') || '型号' + m.model_id,
-      }));
-      this.setData({ modelOptions });
+      this.setData({
+        productOptions: this.getProductOptionsFromModels(models),
+        _orderModelsCache: models,
+      });
     }).catch(() => {});
+  },
+  pickProduct(e) {
+    const i = parseInt(e.detail.value, 10);
+    const opts = this.data.productOptions;
+    if (!opts[i]) return;
+    const productId = opts[i].id;
+    this.setData({
+      productIndex: i,
+      productId,
+      productLabel: opts[i].label,
+      // 重置型号
+      modelOptions: [],
+      modelIndex: 0,
+      modelId: 0,
+      modelLabel: '请选择型号',
+    });
+    // 基于订单型号明细缓存，过滤出该产品对应的型号
+    const models = this.data._orderModelsCache || [];
+    const modelOptions = this.getModelOptionsFromModels(models, productId);
+    this.setData({ modelOptions });
   },
   openModelSelect() {
     const modelOptions = this.data.modelOptions;
@@ -131,6 +170,30 @@ Page({
     const i = parseInt(e.detail.value, 10);
     const opts = this.data.modelOptions;
     if (opts[i]) this.setData({ modelIndex: i, modelId: opts[i].id, modelLabel: opts[i].label });
+  },
+  // 工具：从订单型号明细提取产品列表
+  getProductOptionsFromModels(models) {
+    const map = {};
+    models.forEach((m) => {
+      const pid = m.model && m.model.product ? (m.model.product.id || 0) : (m.product_id || 0);
+      const pname = (m.product_name) || (m.model && m.model.product && (m.model.product.product_name || m.model.product.name)) || '';
+      if (pid && !map[pid]) {
+        map[pid] = { id: pid, label: pname ? pname : ('产品#' + pid) };
+      }
+    });
+    return Object.values(map);
+  },
+  // 工具：根据产品ID从订单型号明细生成型号选项
+  getModelOptionsFromModels(models, productId) {
+    return models.filter((m) => {
+      const pid = m.model && m.model.product ? (m.model.product.id || 0) : (m.product_id || 0);
+      return pid === productId;
+    }).map((m) => {
+      const mid = m.model_id || (m.model && m.model.id) || m.id;
+      const mname = (m.model && m.model.name) || m.name || ('型号#' + mid);
+      const pname = (m.product_name) || (m.model && m.model.product && (m.model.product.product_name || m.model.product.name)) || '';
+      return { id: mid, label: pname ? (mname + ' - ' + pname) : mname };
+    });
   },
   pickProcess(e) {
     const i = parseInt(e.detail.value, 10);

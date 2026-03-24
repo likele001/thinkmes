@@ -1,5 +1,5 @@
 {include file='common/meta' /}
-<form id="form-add" class="form-horizontal" role="form" action="" method="post">
+<form id="form-add" class="form-horizontal" role="form" data-url="mes/material/add" data-back="mes/material">
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">物料名称<span class="text-danger">*</span></label>
         <div class="col-xs-12 col-sm-8">
@@ -64,19 +64,4 @@
         </div>
     </div>
 </form>
-<script>
-$(function() {
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    $('#form-add').on('submit', function(e) {
-        e.preventDefault();
-        $.post(base + '/mes/material/add', $(this).serialize(), function(r) {
-            if (r.code == 1) {
-                if (typeof Fast !== 'undefined' && Fast.api) Fast.api.close(); else alert(r.msg);
-            } else {
-                alert(r.msg || '添加失败');
-            }
-        }, 'json');
-    });
-});
-</script>
 {include file='common/script-iframe' /}

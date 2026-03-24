@@ -1,7 +1,7 @@
 <div class="card card-outline card-primary">
     <div class="card-header"><h3 class="card-title">添加维修记录</h3></div>
     <div class="card-body">
-        <form id="form-add" method="post" class="form-horizontal">
+        <form id="form-add" method="post" class="form-horizontal" data-url="equipment/repair/add" data-back="equipment/repair">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">设备</label>
                 <div class="col-sm-6">
@@ -36,16 +36,3 @@
         <a href="{$config.moduleurl}/equipment/repair/index" class="btn btn-default ml-2">返回</a>
     </div>
 </div>
-<script>
-(function() {
-    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    $('#form-add').on('submit', function(e) {
-        e.preventDefault();
-        $.post(base + '/equipment/repair/add', $(this).serialize(), function(r) {
-            if (r.code == 1) { alert(r.msg || '添加成功'); location.href = base + '/equipment/repair/index'; }
-            else alert(r.msg || '添加失败');
-        }, 'json');
-    });
-})();
-</script>

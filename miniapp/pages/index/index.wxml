@@ -1,47 +1,73 @@
-<view class="container admin-index">
-  <view class="header">
-    <view class="welcome">欢迎使用后台管理系统</view>
-    <view class="admin-info" wx:if="{{adminInfo}}">
-      <text>管理员：{{adminInfo.nickname || adminInfo.username || '管理员'}}</text>
+<view class="admin-index">
+  <view class="hero card shadow">
+    <view class="hero-header">
+      <view class="hero-left">
+        <view class="hero-title">管理驾驶舱</view>
+        <view class="hero-sub">{{todayDate}}</view>
+      </view>
+      <view class="hero-admin" wx:if="{{adminInfo}}">
+        <view class="hero-avatar">{{avatarChar}}</view>
+        <view class="hero-admin-text">
+          <view class="hero-name">{{adminInfo.nickname || adminInfo.username || '管理员'}}</view>
+          <view class="hero-subtle">欢迎回来，祝工作顺利</view>
+        </view>
+      </view>
+    </view>
+    <view class="hero-actions">
+      <view class="pill" bindtap="switchToUser">切换员工端</view>
+      <view class="pill ghost" bindtap="logout">退出登录</view>
     </view>
   </view>
 
-  <view class="menu-grid">
-    <view class="menu-item" wx:for="{{menuList}}" wx:key="handler" data-handler="{{item.handler}}" bindtap="onMenuTap">
-      <view class="menu-icon">{{item.icon}}</view>
-      <text class="menu-text">{{item.text}}</text>
+  <view class="section card shadow">
+    <view class="section-head">
+      <view>
+        <view class="section-title">今日概览</view>
+        <view class="section-desc">核心指标一目了然</view>
+      </view>
+      <view class="link" bindtap="loadDashboard">刷新</view>
+    </view>
+
+    <view wx:if="{{loading && statItems.length === 0}}" class="stat-grid">
+      <block wx:for="{{[0,1,2,3,4,5]}}" wx:key="skeleton">
+        <view class="stat-card skeleton-card"></view>
+      </block>
+    </view>
+
+    <view wx:elif="{{statItems.length}}" class="stat-grid">
+      <view class="stat-card tone-{{item.tone}}" wx:for="{{statItems}}" wx:key="key" data-handler="{{item.tap}}" bindtap="onStatTap">
+        <view class="stat-label">{{item.label}}</view>
+        <view class="stat-value">{{item.value}}</view>
+      </view>
+    </view>
+
+    <view wx:else class="empty">
+      <view class="empty-title">暂无统计数据</view>
+      <view class="empty-desc">{{error || '下拉刷新或点击重新加载'}}</view>
+      <button class="plain-btn" type="default" bindtap="loadDashboard">重新加载</button>
+    </view>
+
+    <view wx:if="{{error}}" class="inline-error">{{error}}</view>
+  </view>
+
+  <view class="section card shadow">
+    <view class="section-head">
+      <view>
+        <view class="section-title">快捷入口</view>
+        <view class="section-desc">常用模块快速直达</view>
+      </view>
+      <view class="pill ghost small" bindtap="refreshMenu">更新权限</view>
+    </view>
+
+    <view class="menu-grid">
+      <view class="menu-item" wx:for="{{menuList}}" wx:key="handler" data-handler="{{item.handler}}" bindtap="onMenuTap">
+        <view class="menu-icon tone-{{item.tone}}">
+          <text class="menu-icon-text">{{item.abbr}}</text>
+        </view>
+        <text class="menu-text">{{item.text}}</text>
+      </view>
     </view>
   </view>
 
-  <view class="stats" wx:if="{{stats}}">
-    <view class="stats-title">系统统计</view>
-    <view class="stats-grid">
-      <view class="stats-item" bindtap="goOrders">
-        <view class="stats-number">{{stats.totalOrders}}</view>
-        <view class="stats-label">总订单数</view>
-      </view>
-      <view class="stats-item" bindtap="goAllocations">
-        <view class="stats-number">{{stats.activeAllocations}}</view>
-        <view class="stats-label">进行中分工</view>
-      </view>
-      <view class="stats-item" bindtap="goReports">
-        <view class="stats-number">{{stats.pendingReports}}</view>
-        <view class="stats-label">待审核报工</view>
-      </view>
-      <view class="stats-item" bindtap="goReportStatistics">
-        <view class="stats-number">{{stats.todayQuantity}}</view>
-        <view class="stats-label">今日报工量</view>
-      </view>
-      <view class="stats-item" bindtap="goAdminWages">
-        <view class="stats-number">¥{{stats.todayWage}}</view>
-        <view class="stats-label">今日工资</view>
-      </view>
-      <view class="stats-item" bindtap="goBi">
-        <view class="stats-number">{{stats.totalPlans}}</view>
-        <view class="stats-label">生产计划数</view>
-      </view>
-    </view>
-  </view>
-
-  <view class="card loading-card" wx:if="{{loading && !stats}}">加载中...</view>
+  <view class="footer-note">提示：权限变更后可点击“更新权限”刷新入口。</view>
 </view>

@@ -51,7 +51,7 @@
   </view>
 
   <view class="btn-row">
-    <button class="btn-primary" loading="{{submitting}}" bindtap="submit">保存</button>
-    <button wx:if="{{id}}" type="warn" bindtap="confirmDelete">删除订单</button>
+    <button class="btn btn-primary" loading="{{submitting}}" bindtap="submit">保存</button>
+    <button class="btn btn-danger" wx:if="{{id}}" bindtap="confirmDelete">删除订单</button>
   </view>
 </view>

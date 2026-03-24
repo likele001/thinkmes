@@ -43,8 +43,8 @@
   </view>
 
   <view class="btn-row">
-    <button bindtap="goEdit">编辑</button>
-    <button type="warn" bindtap="confirmDelete">删除</button>
+    <button class="btn btn-primary" bindtap="goEdit">编辑</button>
+    <button class="btn btn-danger" bindtap="confirmDelete">删除</button>
   </view>
 </view>
 <view class="container admin-page" wx:elif="{{!loading}}">暂无数据</view>

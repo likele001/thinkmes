@@ -10,8 +10,15 @@ use app\admin\model\hr\HrPositionModel;
 use think\facade\View;
 use think\Response;
 
+/**
+ * HR 员工管理
+ * 提供员工档案的增删改查，含部门/岗位关联
+ */
 class Employee extends Backend
 {
+    /**
+     * 员工列表（AJAX 返回 JSON，非 AJAX 返回视图）
+     */
     public function index(): string|Response
     {
         $limitParam = $this->request->get('limit');
@@ -57,6 +64,9 @@ class Employee extends Backend
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
+    /**
+     * 添加员工（GET 返回表单视图，POST 处理保存）
+     */
     public function add(): string|Response
     {
         if ($this->request->isPost()) {
@@ -82,6 +92,9 @@ class Employee extends Backend
         return $this->fetchWithLayout('hr/employee/add');
     }
 
+    /**
+     * 编辑员工（GET 返回表单视图，POST 处理保存）
+     */
     public function edit(): string|Response
     {
         $ids = $this->request->param('ids') ?: $this->request->param('id');
@@ -114,6 +127,9 @@ class Employee extends Backend
         return $this->fetchWithLayout('hr/employee/edit');
     }
 
+    /**
+     * 删除员工（支持批量，ids 用逗号分隔）
+     */
     public function del(): Response
     {
         if (!$this->request->isPost()) {

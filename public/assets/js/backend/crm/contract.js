@@ -59,7 +59,28 @@
             table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
                 $('.btn-edit, .btn-del').toggleClass('disabled btn-disabled', table.bootstrapTable('getSelections').length === 0);
             });
+        },
+        add: function () {
+            if (window.BackendUtil) window.BackendUtil.initGenericAddForm();
+        },
+        edit: function () {
+            var $ = jQuery, form = $('#form-edit');
+            if (!form.length) return;
+            form.off('submit').on('submit', function (e) {
+                e.preventDefault();
+                var id = form.data('id');
+                $.post(base + '/crm/contract/edit?ids=' + id, form.serialize(), function (r) {
+                    if (r.code == 1) {
+                        alert(r.msg || '保存成功');
+                        location.href = base + '/crm/contract/index';
+                    } else {
+                        alert(r.msg || '保存失败');
+                    }
+                }, 'json');
+            });
         }
     };
+    var action = (typeof Config !== 'undefined' && Config.actionname) ? Config.actionname : 'index';
+    if (Controller[action]) Controller[action]();
     window.__backendController = Controller;
 })();

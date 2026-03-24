@@ -1,6 +1,7 @@
 (function () {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var indexUrl = base + '/mes/customer/index';
+    var addUrl = base + '/mes/customer/add';
     var editUrl = base + '/mes/customer/edit';
     var delUrl = base + '/mes/customer/del';
 

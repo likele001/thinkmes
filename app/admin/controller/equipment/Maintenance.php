@@ -25,20 +25,9 @@ class Maintenance extends Backend
             return $this->fetchWithLayout('equipment/maintenance/index');
         }
 
-        $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
-        $offset = $this->request->get('offset');
-        $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
-
-        $tenantId = $this->getTenantId();
+        [$limit, $page] = $this->getPaginationParams();
         $query = EquipmentMaintenancePlanModel::with(['equipment'])->order('id', 'desc');
-        if ($tenantId > 0) {
-            $query->where('tenant_id', $tenantId);
-        } else {
-            $tp = (int) $this->request->get('tenant_id', 0);
-            if ($tp > 0) {
-                $query->where('tenant_id', $tp);
-            }
-        }
+        $this->applyTenantFilter($query);
 
         $equipmentId = $this->request->get('equipment_id');
         if ($equipmentId !== '' && $equipmentId !== null) {

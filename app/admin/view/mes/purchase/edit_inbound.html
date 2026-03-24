@@ -2,7 +2,8 @@
 <div class="panel panel-default">
     <div class="panel-heading"><h4>编辑入库单</h4></div>
     <div class="panel-body">
-        <form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+        <form id="form-edit" class="form-horizontal" role="form" method="post"
+              data-id="{$ids|default=''}" data-module="mes/purchase/editInbound">
             <div class="form-group">
                 <label class="control-label col-xs-12 col-sm-2">入库单号</label>
                 <div class="col-xs-12 col-sm-8">
@@ -31,21 +32,4 @@
         </form>
     </div>
 </div>
-<script>
-$(function() {
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    var ids = '{$ids|default=""}';
-    $('#form-edit').on('submit', function(e) {
-        e.preventDefault();
-        var data = $(this).serialize() + '&ids=' + encodeURIComponent(ids);
-        $.post(base + '/mes/purchase/editInbound', data, function(r) {
-            if (r.code == 1) {
-                if (typeof Fast !== 'undefined' && Fast.api) Fast.api.close(); else alert(r.msg);
-            } else {
-                alert(r.msg || '保存失败');
-            }
-        }, 'json');
-    });
-});
-</script>
 {include file='common/script-iframe' /}

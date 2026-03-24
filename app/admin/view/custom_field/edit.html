@@ -1,0 +1,132 @@
+{include file='common/meta' /}
+<form id="form-edit" class="form-horizontal" role="form" data-url="custom_field/edit" data-back="custom_field">
+    <input type="hidden" name="row[id]" value="{$row.id}">
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">字段名称<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <input class="form-control" name="row[name]" value="{$row.name}" data-rule="required;alphaNum" placeholder="字段英文名（如：customer_name）">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">字段标题<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <input class="form-control" name="row[title]" value="{$row.title}" data-rule="required" placeholder="字段显示名称">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">所属分组<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <select class="form-control" name="row[group_id]" data-rule="required">
+                <option value="">请选择分组</option>
+                {volist name="groupList" id="group"}
+                <option value="{$group.id}" {$group.id == $row.group_id ? 'selected' : ''}>{$group.name}</option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">字段类型<span class="text-danger">*</span></label>
+        <div class="col-xs-12 col-sm-8">
+            <select class="form-control" name="row[type]" data-rule="required" id="fieldType">
+                <option value="text" {$row.type == 'text' ? 'selected' : ''}>单行文本</option>
+                <option value="number" {$row.type == 'number' ? 'selected' : ''}>数字</option>
+                <option value="textarea" {$row.type == 'textarea' ? 'selected' : ''}>多行文本</option>
+                <option value="select" {$row.type == 'select' ? 'selected' : ''}>下拉选择</option>
+                <option value="radio" {$row.type == 'radio' ? 'selected' : ''}>单选框</option>
+                <option value="checkbox" {$row.type == 'checkbox' ? 'selected' : ''}>多选框</option>
+                <option value="date" {$row.type == 'date' ? 'selected' : ''}>日期</option>
+                <option value="datetime" {$row.type == 'datetime' ? 'selected' : ''}>日期时间</option>
+                <option value="switch" {$row.type == 'switch' ? 'selected' : ''}>开关</option>
+                <option value="image" {$row.type == 'image' ? 'selected' : ''}>图片</option>
+                <option value="file" {$row.type == 'file' ? 'selected' : ''}>文件</option>
+                <option value="editor" {$row.type == 'editor' ? 'selected' : ''}>富文本</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group" id="optionsGroup" {in name="$row.type" value="select,radio,checkbox"}style="display:block;"{else /}style="display:none;"{/in}>
+        <label class="control-label col-xs-12 col-sm-2">选项配置</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea class="form-control" name="row[options]" rows="4" placeholder="每行一个选项，格式：选项值|选项文本（如：1|男）">{$row.options}</textarea>
+            <span class="help-block">仅对select、radio、checkbox类型有效</span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">默认值</label>
+        <div class="col-xs-12 col-sm-8">
+            <input class="form-control" name="row[default_value]" value="{$row.default_value}" placeholder="默认值">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">验证规则</label>
+        <div class="col-xs-12 col-sm-8">
+            <input class="form-control" name="row[validation_rules]" value="{$row.validation_rules}" placeholder="如：required|email|max:100">
+            <span class="help-block">多个规则用|分隔，如：required|min:5|max:100</span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">列表显示</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="checkbox">
+                <label><input type="checkbox" name="row[is_list]" value="1" {$row.is_list ? 'checked' : ''}> 在列表中显示</label>
+                <label><input type="checkbox" name="row[is_search]" value="1" {$row.is_search ? 'checked' : ''}> 支持搜索</label>
+                <label><input type="checkbox" name="row[is_sort]" value="1" {$row.is_sort ? 'checked' : ''}> 支持排序</label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">列宽度</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" name="row[width]" value="{$row.width}" placeholder="如：150（留空自动）">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">排序</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" name="row[sort]" value="{$row.sort}" placeholder="数值越小越靠前">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">必填</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="radio">
+                <label><input type="radio" name="row[required]" value="1" {$row.required ? 'checked' : ''}> 是</label>
+                <label><input type="radio" name="row[required]" value="0" {$row.required ? '' : 'checked'}> 否</label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">状态</label>
+        <div class="col-xs-12 col-sm-8">
+            <select class="form-control" name="row[status]">
+                <option value="1" {$row.status ? 'selected' : ''}>启用</option>
+                <option value="0" {$row.status ? '' : 'selected'}>禁用</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">备注</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea class="form-control" name="row[remark]" rows="2" placeholder="字段说明">{$row.remark}</textarea>
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed">确定</button>
+            <button type="reset" class="btn btn-default btn-embossed">重置</button>
+        </div>
+    </div>
+</form>
+<script>
+$(function() {
+    $('#fieldType').on('change', function() {
+        var type = $(this).val();
+        if (['select', 'radio', 'checkbox'].includes(type)) {
+            $('#optionsGroup').show();
+        } else {
+            $('#optionsGroup').hide();
+        }
+    });
+});
+</script>
+{include file='common/script-iframe' /}

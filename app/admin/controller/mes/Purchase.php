@@ -24,9 +24,17 @@ use think\Response;
 class Purchase extends Backend
 {
     /**
-     * 采购申请列表
+     * 采购申请列表（兼容旧别名）
      */
     public function requestList(): string|Response
+    {
+        return $this->request();
+    }
+
+    /**
+     * 采购申请列表
+     */
+    public function request(): string|Response
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {

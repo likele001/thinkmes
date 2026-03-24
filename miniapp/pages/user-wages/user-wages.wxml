@@ -1,14 +1,12 @@
-<view class="page-container">
+<view class="page-container safe-area-top safe-area-bottom">
   <view class="top-nav">
-    <view class="nav-content">
-      <text class="nav-title">我的工资</text>
-      <view class="nav-actions">
-        <view class="nav-btn nav-btn-text" bindtap="toggleFilter">
-          <text class="nav-btn-label">筛选</text>
-        </view>
-        <view class="nav-btn nav-btn-icon" bindtap="refresh">
-          <text class="nav-icon">↻</text>
-        </view>
+    <view class="nav-title">我的工资</view>
+    <view class="nav-actions">
+      <view class="nav-btn btn-ghost" bindtap="toggleFilter">
+        <text class="nav-btn-label">筛选</text>
+      </view>
+      <view class="nav-btn btn-primary" bindtap="refresh">
+        <text class="nav-btn-label">刷新</text>
       </view>
     </view>
   </view>
@@ -49,8 +47,8 @@
         <input class="filter-input" placeholder="输入产品名称筛选" value="{{productName}}" bindinput="onProductNameInput"/>
       </view>
       <view class="filter-actions">
-        <button class="btn-filter" bindtap="applyFilter">查询</button>
-        <button class="btn-clear" bindtap="clearFilter">清空</button>
+        <button class="btn btn-primary btn-block" bindtap="applyFilter">查询</button>
+        <button class="btn btn-ghost btn-block" bindtap="clearFilter">清空</button>
       </view>
     </view>
 
@@ -71,8 +69,12 @@
       </view>
     </view>
 
-    <view wx:if="{{loading}}" class="loading-wrap">
-      <text class="loading-text">加载中...</text>
+    <view wx:if="{{loading}}" class="skeleton-list">
+      <view wx:for="{{[1,2,3]}}" wx:key="{{index}}" class="wage-card skeleton-card">
+        <view class="skeleton skeleton-title"></view>
+        <view class="skeleton skeleton-row"></view>
+        <view class="skeleton skeleton-row short"></view>
+      </view>
     </view>
 
     <view wx:elif="{{wageList.length === 0}}" class="empty-wrap">
@@ -86,8 +88,8 @@
       <view wx:for="{{wageList}}" wx:key="id" class="wage-card">
         <view class="wage-header">
           <view class="wage-title">
-            <text class="product-name">{{item.product_name || '产品'}}</text>
-            <text class="model-name">- {{item.model_name || ''}}</text>
+            <text class="product-name">{{item.product_name || '产品'}} </text>
+            <text class="model-name">{{item.model_name || ''}}</text>
           </view>
           <view class="wage-amount">
             <text class="amount-text">¥{{item.wage || 0}}</text>
@@ -108,7 +110,7 @@
           </view>
         </view>
         <view class="wage-footer">
-          <text class="time-text">🕒 {{item.createtime_text || item.createtime || ''}}</text>
+          <text class="time-text">{{item.createtime_text || item.createtime || ''}}</text>
         </view>
       </view>
     </view>

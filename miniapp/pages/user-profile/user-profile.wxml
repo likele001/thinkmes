@@ -1,8 +1,6 @@
-<view class="page-container">
+<view class="page-container safe-area-top safe-area-bottom">
   <view class="top-nav">
-    <view class="nav-content">
-      <view class="nav-title">我的</view>
-    </view>
+    <view class="nav-title">我的</view>
   </view>
 
   <view class="main-content">
@@ -23,24 +21,27 @@
     <view class="menu-sections">
       <view class="menu-section">
         <view class="section-header">
-          <text class="section-title">报工管理</text>
-          <text class="section-desc">查看报工记录和工资统计</text>
+          <view class="section-icon blue"></view>
+          <view class="section-meta">
+            <text class="section-title">报工管理</text>
+            <text class="section-desc">查看报工记录和工资统计</text>
+          </view>
         </view>
         <view class="menu-grid">
           <view class="menu-item" bindtap="goReports">
-            <view class="menu-icon">📝</view>
+            <view class="menu-icon">记</view>
             <text class="menu-text">报工记录</text>
           </view>
           <view class="menu-item" bindtap="goWages">
-            <view class="menu-icon">💰</view>
+            <view class="menu-icon green">薪</view>
             <text class="menu-text">工资统计</text>
           </view>
           <view class="menu-item" bindtap="goScan">
-            <view class="menu-icon">📱</view>
+            <view class="menu-icon purple">扫</view>
             <text class="menu-text">扫码报工</text>
           </view>
           <view class="menu-item" bindtap="goIndex">
-            <view class="menu-icon">🏠</view>
+            <view class="menu-icon orange">首</view>
             <text class="menu-text">首页</text>
           </view>
         </view>
@@ -48,12 +49,15 @@
 
       <view class="menu-section">
         <view class="section-header">
-          <text class="section-title">系统</text>
-          <text class="section-desc">账户与安全</text>
+          <view class="section-icon gray"></view>
+          <view class="section-meta">
+            <text class="section-title">系统</text>
+            <text class="section-desc">账户与安全</text>
+          </view>
         </view>
         <view class="menu-grid">
           <view class="menu-item" bindtap="logout">
-            <view class="menu-icon">🚪</view>
+            <view class="menu-icon red">退</view>
             <text class="menu-text">退出登录</text>
           </view>
         </view>

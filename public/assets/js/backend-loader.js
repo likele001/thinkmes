@@ -461,4 +461,85 @@
         loadMenu();
         loadPageJs();
     }
+
+    /**
+     * 通用 edit 表单提交处理
+     * 视图中 <form id="form-edit" data-id="{$row.id}" data-url="控制器/edit" data-back="控制器/index">
+     * 无需在视图内写任何内联 JS，由此函数统一处理。
+     * 依赖：表单上的 data-id / data-url / data-back 属性。
+     */
+    function initGenericEditForm() {
+        if (!$) return;
+        var form = $('#form-edit');
+        if (!form.length || form.data('backend-edit-init')) return;
+        form.data('backend-edit-init', true);
+        var modBase = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        var dataUrl  = form.data('url');    // 可选，若视图设置了 data-url
+        var dataBack = form.data('back');   // 可选，若视图设置了 data-back
+        var editId   = form.data('id');
+
+        // 若视图没提供 data-url，由 Config.jsname 推断（如 backend/hr/employee -> hr/employee/edit）
+        if (!dataUrl && typeof Config !== 'undefined' && Config.jsname) {
+            dataUrl = Config.jsname.replace(/^backend\//, '') + '/edit';
+        }
+
+        form.off('submit.generic').on('submit.generic', function (e) {
+            e.preventDefault();
+            if (!dataUrl) return;
+            var postUrl = modBase + '/' + dataUrl + (editId ? ('?ids=' + editId) : '');
+            $.post(postUrl, form.serialize(), function (r) {
+                var msg = r.msg || (r.code == 1 ? '保存成功' : '保存失败');
+                if (window.layer) {
+                    layer.msg(msg, { icon: r.code == 1 ? 1 : 2 });
+                } else {
+                    alert(msg);
+                }
+                if (r.code == 1) {
+                    var backUrl = dataBack ? (modBase + '/' + dataBack + '/index') : (modBase + '/' + (dataUrl || '').replace(/\/edit$/, '') + '/index');
+                    setTimeout(function () { location.href = backUrl; }, 800);
+                }
+            }, 'json');
+        });
+    }
+
+    /**
+     * 通用 add 表单提交处理
+     * <form id="form-add" data-url="控制器/add" data-back="控制器/index">
+     */
+    function initGenericAddForm() {
+        if (!$) return;
+        var form = $('#form-add');
+        if (!form.length || form.data('backend-add-init')) return;
+        form.data('backend-add-init', true);
+        var modBase = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+        var dataUrl  = form.data('url');
+        var dataBack = form.data('back');
+
+        if (!dataUrl && typeof Config !== 'undefined' && Config.jsname) {
+            dataUrl = Config.jsname.replace(/^backend\//, '') + '/add';
+        }
+
+        form.off('submit.generic').on('submit.generic', function (e) {
+            e.preventDefault();
+            if (!dataUrl) return;
+            $.post(modBase + '/' + dataUrl, form.serialize(), function (r) {
+                var msg = r.msg || (r.code == 1 ? '添加成功' : '添加失败');
+                if (window.layer) {
+                    layer.msg(msg, { icon: r.code == 1 ? 1 : 2 });
+                } else {
+                    alert(msg);
+                }
+                if (r.code == 1) {
+                    var backUrl = dataBack ? (modBase + '/' + dataBack + '/index') : (modBase + '/' + (dataUrl || '').replace(/\/add$/, '') + '/index');
+                    setTimeout(function () { location.href = backUrl; }, 800);
+                }
+            }, 'json');
+        });
+    }
+
+    // 暴露通用工具到全局，供模块 JS 或视图复用
+    window.BackendUtil = {
+        initGenericEditForm: initGenericEditForm,
+        initGenericAddForm:  initGenericAddForm
+    };
 })();

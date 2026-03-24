@@ -29,9 +29,11 @@ class Mrp extends Backend
             $orderIdArr = array_map('intval', explode(',', $orderIds));
             $orderIdArr = array_filter($orderIdArr);
         } else {
-            $orderIdArr = OrderModel::where('tenant_id', $tenantId > 0 ? $tenantId : '>', 0)
-                ->whereIn('status', [0, 1])
-                ->column('id');
+            $query = OrderModel::whereIn('status', [0, 1]);
+            if ($tenantId > 0) {
+                $query->where('tenant_id', $tenantId);
+            }
+            $orderIdArr = $query->column('id');
         }
 
         $demandByMaterial = [];

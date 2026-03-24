@@ -1,7 +1,7 @@
 <div class="card card-outline card-primary">
     <div class="card-header"><h3 class="card-title">编辑订单</h3></div>
     <div class="card-body">
-        <form id="form-edit" method="post" class="form-horizontal">
+        <form id="form-edit" method="post" class="form-horizontal" data-id="{$row.id}" data-module="mes/order">
             <input type="hidden" name="row[id]" value="{$row.id}">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">订单名称</label>
@@ -90,109 +90,3 @@
         </div>
     </div>
 </div>
-<script>
-(function() {
-    if (typeof jQuery === 'undefined') {
-        setTimeout(arguments.callee, 50);
-        return;
-    }
-    var $ = jQuery;
-    
-    $(function () {
-        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-        var modelIndex = $('.model-item').length;
-        
-        var modelOptions = '';
-        $('#model-list select:first option').each(function() {
-            if ($(this).val() !== '') {
-                modelOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
-            }
-        });
-        
-        $('#btn-add-model').on('click', function() {
-            var html = '<div class="model-item mb-2">' +
-                '<select name="models[' + modelIndex + '][model_id]" class="form-control d-inline-block" style="width: 300px;">' +
-                '<option value="">请选择型号</option>' +
-                modelOptions +
-                '</select>' +
-                '<input type="number" name="models[' + modelIndex + '][quantity]" class="form-control d-inline-block" style="width: 150px; margin-left: 10px;" placeholder="数量" min="1" value="1">' +
-                '<button type="button" class="btn btn-danger btn-sm ml-2 btn-remove-model">删除</button>' +
-                '</div>';
-            $('#model-list').append(html);
-            modelIndex++;
-            updateRemoveButtons();
-        });
-        
-        $(document).on('click', '.btn-remove-model', function() {
-            $(this).closest('.model-item').remove();
-            updateRemoveButtons();
-        });
-        
-        function updateRemoveButtons() {
-            var count = $('.model-item').length;
-            $('.btn-remove-model').toggle(count > 1);
-        }
-        updateRemoveButtons();
-        
-        $('#form-edit').attr('action', base + '/mes/order/edit?ids={$row.id}');
-        $('#form-edit').on('submit', function (e) {
-            e.preventDefault();
-
-            var data = {};
-            $('#form-edit [name^="row["]').each(function () {
-                var name = $(this).attr('name');
-                var key = name.match(/row\[(.*?)\]/)[1];
-                data[key] = $(this).val();
-            });
-
-            var models = [];
-            $('#model-list .model-item').each(function () {
-                var mid = $(this).find('select[name*="[model_id]"]').val();
-                var qty = parseInt($(this).find('input[name*="[quantity]"]').val(), 10) || 0;
-                if (mid) {
-                    if (qty <= 0) {
-                        qty = 1;
-                        $(this).find('input[name*="[quantity]"]').val(qty);
-                    }
-                    models.push({ model_id: mid, quantity: qty });
-                }
-            });
-
-            if (models.length === 0) {
-                alert('请至少添加一个订单型号');
-                return;
-            }
-
-            var fd = new FormData();
-            Object.keys(data).forEach(function (k) {
-                fd.append('row[' + k + ']', data[k]);
-            });
-            models.forEach(function (m, i) {
-                fd.append('models[' + i + '][model_id]', m.model_id);
-                fd.append('models[' + i + '][quantity]', m.quantity);
-            });
-
-            $.ajax({
-                url: $('#form-edit').attr('action'),
-                type: 'POST',
-                dataType: 'json',
-                data: fd,
-                processData: false,
-                contentType: false
-            }).done(function (r) {
-                alert(r.msg || (r.code === 1 ? '保存成功' : '失败'));
-                if (r.code === 1) {
-                    location.href = base + '/mes/order/index';
-                }
-            }).fail(function (xhr, status, err) {
-                var msg = '请求失败：' + (xhr.responseText || status || err || '');
-                try {
-                    var json = JSON.parse(xhr.responseText);
-                    msg = json.msg || msg;
-                } catch (e) {}
-                alert(msg);
-            });
-        });
-    });
-})();
-</script>

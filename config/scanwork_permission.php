@@ -60,7 +60,7 @@ return [
     'batchProcessPrice' => 'mes/process_price',
 
     // 员工（PC 端为 成员/用户 管理，对应 admin/member）
-    'getUsers' => 'admin/member',
+    'getUsers' => 'mes/allocation',
 
     // 客户
     'getCustomerList' => 'mes/customer',

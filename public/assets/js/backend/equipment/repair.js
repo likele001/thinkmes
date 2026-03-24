@@ -32,8 +32,21 @@
                 $.post(base + '/equipment/repair/del', { ids: id }, function (r) { if (r.code == 1) { table.bootstrapTable('refresh'); alert(r.msg || '删除成功'); } else alert(r.msg || '删除失败'); }, 'json');
             });
         },
-        add: function () {},
-        edit: function () {}
+        add: function () {
+            if (window.BackendUtil) window.BackendUtil.initGenericAddForm();
+        },
+        edit: function () {
+            var $ = jQuery, form = $('#form-edit');
+            if (!form.length) return;
+            form.off('submit').on('submit', function (e) {
+                e.preventDefault();
+                var id = form.data('id');
+                $.post(base + '/equipment/repair/edit?ids=' + id, form.serialize(), function (r) {
+                    if (r.code == 1) { alert(r.msg || '保存成功'); location.href = base + '/equipment/repair/index'; }
+                    else alert(r.msg || '保存失败');
+                }, 'json');
+            });
+        }
     };
     var action = (typeof Config !== 'undefined' && Config.actionname) ? Config.actionname : 'index';
     if (Controller[action]) Controller[action]();

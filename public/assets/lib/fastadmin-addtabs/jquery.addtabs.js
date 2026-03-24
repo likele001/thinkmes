@@ -163,6 +163,7 @@
                             .attr('scrolling-x', 'no')
                             .attr('scrolling-y', 'auto')
                             .attr('allowtransparency', 'yes')
+                            .attr('allow', 'unload')
                             .attr('data-addtabs-iframe', 'true')  // 标记为 addtabs 管理的 iframe
                             .attr('data-adminlte-auto-iframe', 'false')  // 明确禁用 AdminLTE 自动初始化
                             .css({

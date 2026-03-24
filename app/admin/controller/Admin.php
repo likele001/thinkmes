@@ -267,6 +267,7 @@ class Admin extends Backend
                 }
             }
         } catch (\Throwable $e) {
+            \think\facade\Log::warning('套餐默认角色同步失败: ' . $e->getMessage());
         }
     }
 

@@ -9,6 +9,7 @@ Route::get('mes/stock/index', 'mes.Stock/index');
 Route::get('mes/stock/alert', 'mes.Stock/alert');
 Route::get('mes/stock/check', 'mes.Stock/check');
 Route::get('mes/stock/log', 'mes.Stock/log');
+Route::get('mes/stock/product_log/index', 'mes.Stock/productLog');
 Route::get('mes/stock/product_log', 'mes.Stock/productLog');
 Route::get('mes/stock/outbound/index', 'mes.Stock/outbound');
 Route::get('mes/stock/outbound', 'mes.Stock/outbound');
@@ -210,6 +211,8 @@ Route::group('mes', function () {
     Route::get('stock/alert', 'mes.Stock/alert');
     Route::get('stock/check', 'mes.Stock/check');
     Route::get('stock/log', 'mes.Stock/log');
+    Route::get('stock/product_log/index', 'mes.Stock/productLog');
+    Route::get('stock/product_log', 'mes.Stock/productLog');
     Route::get('stock/outbound/index', 'mes.Stock/outbound');
     Route::get('stock/outbound', 'mes.Stock/outbound');
     Route::get('stock', 'mes.Stock/index');
@@ -246,6 +249,7 @@ Route::group('mes', function () {
     Route::post('purchase/del', 'mes.Purchase/del');
 
     Route::get('quality/index', 'mes.Quality/index');
+    Route::get('quality/statistics/index', 'mes.Quality/statistics');
     Route::get('quality/statistics', 'mes.Quality/statistics');
     Route::get('quality/check', 'mes.Quality/check');
     Route::get('quality/standard', 'mes.Quality/standard');
@@ -288,6 +292,7 @@ Route::group('mes', function () {
 
     Route::get('shipment/add', 'mes.Shipment/add');
     Route::get('shipment/edit', 'mes.Shipment/edit');
+    Route::get('shipment/track/index', 'mes.Shipment/track');
     Route::get('shipment/track', 'mes.Shipment/track');
     Route::get('shipment/index', 'mes.Shipment/index');
     Route::get('shipment', 'mes.Shipment/index');

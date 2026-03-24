@@ -1,4 +1,4 @@
-<form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+<form id="form-edit" class="form-horizontal" role="form" action="" method="post" data-id="{$row.id}" data-module="crm/sales_order">
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">订单编号</label>
         <div class="col-xs-12 col-sm-8">
@@ -76,71 +76,5 @@
         </div>
     </div>
 </form>
-<script>
-(function(){
-    var products = {:json_encode($products)};
-    var items = {:json_encode($items)};
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    var itemIndex = 0;
-    function addRow(item) {
-        item = item || {};
-        var idx = itemIndex++;
-        var html = '<tr class="item-row" data-item-index="' + idx + '">' +
-            '<td><select class="form-control form-control-sm product-select" name="items[' + idx + '][product_id]">' +
-            '<option value="">请选择产品</option>';
-        products.forEach(function(p) {
-            var sel = (item.product_id == p.id) ? ' selected' : '';
-            html += '<option value="' + p.id + '" data-name="' + (p.name||'') + '" data-code="' + (p.code||'') + '" data-unit="' + (p.unit||'个') + '" data-price="' + (p.price||0) + '"' + sel + '>' + (p.name||'') + ' (' + (p.code||'') + ')</option>';
-        });
-        html += '</select><input type="hidden" name="items[' + idx + '][product_name]" value="' + (item.product_name||'') + '"><input type="hidden" name="items[' + idx + '][product_code]" value="' + (item.product_code||'') + '"><input type="hidden" name="items[' + idx + '][unit]" value="' + (item.unit||'个') + '"></td>' +
-            '<td><input type="number" min="1" class="form-control form-control-sm qty-input" name="items[' + idx + '][quantity]" value="' + (item.quantity||1) + '"></td>' +
-            '<td><input type="number" step="0.01" class="form-control form-control-sm price-input" name="items[' + idx + '][price]" value="' + (item.price||0) + '"></td>' +
-            '<td class="amount-cell">' + (item.amount||0) + '</td>' +
-            '<td><a href="javascript:;" class="btn btn-xs btn-danger btn-remove-item">删除</a></td></tr>';
-        $('#items-tbody').append(html);
-    }
-    $(document).ready(function() {
-        if (items && items.length) {
-            items.forEach(addRow);
-        } else {
-            addRow();
-        }
-        $('#btn-add-item').on('click', function() { addRow(); });
-        $(document).on('change', '.product-select', function() {
-            var opt = $(this).find('option:selected');
-            var tr = $(this).closest('tr');
-            tr.find('[name*="[product_name]"]').val(opt.data('name'));
-            tr.find('[name*="[product_code]"]').val(opt.data('code'));
-            tr.find('[name*="[unit]"]').val(opt.data('unit'));
-            tr.find('.price-input').val(opt.data('price'));
-            calcAmount(tr);
-        });
-        $(document).on('input', '.qty-input, .price-input', function() { calcAmount($(this).closest('tr')); });
-        $(document).on('click', '.btn-remove-item', function() { $(this).closest('tr').remove(); });
-        function calcAmount(tr) {
-            var q = parseFloat(tr.find('.qty-input').val()) || 0;
-            var p = parseFloat(tr.find('.price-input').val()) || 0;
-            tr.find('.amount-cell').text((q * p).toFixed(2));
-        }
-        $('#form-edit').on('submit', function(e) {
-            e.preventDefault();
-            var customerId = $('#customer_id').val();
-            if (!customerId) { alert('请选择客户'); return; }
-            var rows = $('#items-tbody .item-row');
-            var hasValid = false;
-            rows.each(function() {
-                var q = parseFloat($(this).find('.qty-input').val()) || 0;
-                if (q > 0) hasValid = true;
-            });
-            if (!hasValid) { alert('请至少添加一条有效明细'); return; }
-            var btn = $(this).find('button[type="submit"]');
-            btn.prop('disabled', true);
-            $.post(base + '/crm/sales_order/edit?id=' + {:json_encode($row.id)}, $(this).serialize(), function(r) {
-                btn.prop('disabled', false);
-                if (r.msg) alert(r.msg);
-                if (r.code == 1) window.location.href = base + '/crm/sales_order/index';
-            }, 'json');
-        });
-    });
-})();
-</script>
+<script type="application/json" id="sales-order-products">{:json_encode($products)}</script>
+<script type="application/json" id="sales-order-items">{:json_encode($items)}</script>

@@ -47,33 +47,155 @@
             }
             $table.bootstrapTable({
                 url: indexUrl,
+                pk: 'id',
+                sortName: 'id',
+                sortOrder: 'desc',
                 pagination: true,
                 sidePagination: 'server',
                 pageSize: 20,
                 pageList: [10, 20, 50],
-                columns: [
-                    { field: 'id', title: 'ID', width: 60 },
-                    { field: 'work_type', title: '工作类型', width: 100 },
-                    { field: 'quantity', title: '数量', width: 100 },
-                    { field: 'work_hours', title: '工时', width: 100 },
-                    { field: 'image_cover', title: '图片', width: 140, formatter: imageFmt },
-                    { field: 'wage', title: '工资', width: 100 },
-                    { field: 'status', title: '状态', width: 100, formatter: statusFmt },
-                    { field: 'create_time', title: '创建时间', width: 150 },
-                    { field: 'id', title: '操作', width: 200, formatter: operFmt }
-                ],
                 responseHandler: function (res) {
-                    return { total: (res.data && res.data.total) ? res.data.total : 0, rows: (res.data && res.data.list) ? res.data.list : [] };
-                }
+                    var data = res.data || {};
+                    return { total: data.total || 0, rows: data.list || [] };
+                },
+                columns: [
+                    {field: 'state', checkbox: true, width: 40},
+                    {field: 'id', title: 'ID', width: 80, sortable: true},
+                    {field: 'order_no', title: '订单号', align: 'left'},
+                    {field: 'product_name', title: '产品', align: 'left'},
+                    {field: 'model_name', title: '型号', align: 'left'},
+                    {field: 'item_nos_text', title: '编号', align: 'left'},
+                    {field: 'allocation.process.name', title: '工序', align: 'left'},
+                    {field: 'work_type', title: '工作类型', width: 100, formatter: function(value) {
+                        return value == 'piece' ? '<span class="badge badge-primary">计件</span>' : '<span class="badge badge-info">计时</span>';
+                    }},
+                    {field: 'quantity', title: '数量', width: 100, align: 'right', formatter: function(value, row) {
+                        return row.work_type == 'piece' ? value : '-';
+                    }},
+                    {field: 'work_hours', title: '工时', width: 100, align: 'right', formatter: function(value, row) {
+                        return row.work_type == 'time' ? parseFloat(value).toFixed(2) : '-';
+                    }},
+                    {field: 'wage', title: '工资', width: 120, align: 'right', formatter: function(value) {
+                        return '<span class="text-danger font-weight-bold">¥' + parseFloat(value || 0).toFixed(2) + '</span>';
+                    }},
+                    {field: 'status', title: '状态', width: 100, formatter: function(value) {
+                        var statusMap = {0: '待审核', 1: '已通过', 2: '已拒绝'};
+                        var classMap = {0: 'warning', 1: 'success', 2: 'danger'};
+                        return '<span class="badge badge-' + (classMap[value] || 'secondary') + '">' + (statusMap[value] || '未知') + '</span>';
+                    }},
+                    {field: 'quality_status', title: '质量', width: 100, formatter: function(v, row) {
+                        if (row.status === 0 || v === null || v === undefined) return '<span class="badge badge-secondary">未质检</span>';
+                        if (v === 1) return '<span class="badge badge-success">合格</span>';
+                        if (v === 2) return '<span class="badge badge-danger">不合格</span>';
+                        return '<span class="badge badge-secondary">未质检</span>';
+                    }},
+                    {field: 'create_time', title: '报工时间', width: 180, formatter: function(v) {
+                        if (!v) return '';
+                        var n = Number(v);
+                        return !isNaN(n) ? new Date((n > 1e12 ? n : n * 1000)).toLocaleString('zh-CN') : v;
+                    }},
+                    {field: 'operate', title: '操作', width: 240, events: {
+                        'click .btn-audit-row': function(e, value, row) {
+                            location.href = base + '/mes/report/audit_page?ids=' + row.id;
+                        },
+                        'click .btn-view': function(e, value, row) {
+                            location.href = base + '/mes/report/detail?ids=' + row.id;
+                        },
+                        'click .btn-edit': function(e, value, row) {
+                            location.href = base + '/mes/report/edit?ids=' + row.id;
+                        },
+                        'click .btn-del': function(e, value, row) {
+                            if (confirm('确定要删除吗？')) {
+                                $.post(delUrl, {ids: row.id}, function(r) {
+                                    if (r.code == 1) { $table.bootstrapTable('refresh'); alert(r.msg || '删除成功'); }
+                                    else { alert(r.msg || '删除失败'); }
+                                }, 'json');
+                            }
+                        }
+                    }, formatter: function(value, row) {
+                        var html = '';
+                        if (row.status === 0 || row.status === '0') {
+                            html += '<a href="javascript:;" class="btn btn-xs btn-warning btn-audit-row">审核</a> ';
+                        }
+                        html += '<a href="javascript:;" class="btn btn-xs btn-info btn-view">详情</a> ';
+                        html += '<a href="' + base + '/mes/report/edit?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit">编辑</a> ';
+                        html += '<a href="javascript:;" class="btn btn-xs btn-danger btn-del">删除</a>';
+                        return html;
+                    }}
+                ]
             });
             $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function () { $table.bootstrapTable('refresh'); });
-            $(document).off('click', '#table button.btn-danger').on('click', '#table button.btn-danger', function () {
-                var id = $(this).data('id');
-                if (!id || !confirm('确定删除该报工记录？')) return;
-                $.post(delUrl, { ids: id }, function (r) {
-                    alert(r.msg || (r.code === 1 ? '删除成功' : '失败'));
-                    if (r.code === 1) $table.bootstrapTable('refresh');
+            $(document).off('click', '#toolbar .btn-audit').on('click', '#toolbar .btn-audit', function() {
+                var rows = $table.bootstrapTable('getSelections');
+                if (!rows.length) { alert('请选择要审核的记录'); return; }
+                var ids = rows.map(function(r) { return r.id; }).filter(function(v) { return v !== null && v !== undefined && v !== ''; });
+                if (!ids.length) { alert('请选择要审核的记录'); return; }
+                location.href = base + '/mes/report/audit_page?ids=' + ids.join(',');
+            });
+            $(document).off('click', '#toolbar .btn-edit').on('click', '#toolbar .btn-edit', function() {
+                var rows = $table.bootstrapTable('getSelections');
+                if (rows.length != 1) { alert('请选择一条记录'); return; }
+                location.href = base + '/mes/report/edit?ids=' + rows[0].id;
+            });
+            $(document).off('click', '#toolbar .btn-del').on('click', '#toolbar .btn-del', function() {
+                var rows = $table.bootstrapTable('getSelections');
+                if (!rows.length) { alert('请选择要删除的记录'); return; }
+                if (!confirm('确定要删除选中的 ' + rows.length + ' 条记录吗？')) return;
+                var ids = rows.map(function(r) { return r.id; });
+                $.post(delUrl, {ids: ids.join(',')}, function(r) {
+                    if (r.code == 1) { $table.bootstrapTable('refresh'); alert(r.msg || '删除成功'); }
+                    else { alert(r.msg || '删除失败'); }
                 }, 'json');
+            });
+            // AI: 语音转报工
+            $(document).off('click', '#btn-voice-report').on('click', '#btn-voice-report', function() {
+                var url = prompt('请输入音频文件 URL（http(s)://）或网站相对路径（/uploads/...）:');
+                if (!url) return;
+                fetch(base + '/mes/report/ai/transcribe', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({audio_url: url})})
+                    .then(function(r){ return r.json(); }).then(function(j){
+                        if (!j || j.code != 0) { alert(j.msg || '识别失败'); return; }
+                        var text = j.data && j.data.text ? j.data.text : '';
+                        if (!text) { alert('未识别到文字'); return; }
+                        if (!confirm('识别结果：\n' + text + '\n\n是否继续解析为报工？')) return;
+                        fetch(base + '/mes/report/ai/parse', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text: text})})
+                            .then(function(r){ return r.json(); }).then(function(p){
+                                if (!p || p.code != 0) { alert(p.msg || '解析失败'); return; }
+                                var data = p.data && p.data.data ? p.data.data : p.data;
+                                alert('解析结果：\n' + JSON.stringify(data, null, 2));
+                            });
+                    });
+            });
+            // AI: 异常检测
+            $(document).off('click', '#btn-ai-anomaly').on('click', '#btn-ai-anomaly', function() {
+                var days = prompt('请输入要扫描的天数（默认7天）：', '7');
+                days = parseInt(days) || 7;
+                if (!confirm('开始 AI 异常检测，可能需要较长时间，确定继续？')) return;
+                fetch(base + '/mes/report/ai/anomaly', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({days: days})})
+                    .then(function(r){ return r.json(); }).then(function(j){
+                        if (!j) { alert('请求失败'); return; }
+                        if (j.code != 0) { alert(j.msg || '分析失败'); return; }
+                        alert('扫描完成，发现 ' + (j.data && j.data.count ? j.data.count : 0) + ' 条异常记录');
+                        $table.bootstrapTable('refresh');
+                    });
+            });
+            // AI: 老板问答
+            $(document).off('click', '#btn-boss-qa').on('click', '#btn-boss-qa', function() {
+                var q = prompt('请输入问题（例如：今日完成数量是多少？）');
+                if (!q) return;
+                fetch(base + '/mes/qa/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question: q})})
+                    .then(function(r){ return r.json(); }).then(function(j){
+                        if (!j) { alert('请求失败'); return; }
+                        if (j.code != 0) { alert(j.msg || 'AI 无法回答'); return; }
+                        alert('回答：\n' + (j.data && j.data.answer ? j.data.answer : JSON.stringify(j.data)));
+                    });
+            });
+            $table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function() {
+                var rows = $table.bootstrapTable('getSelections');
+                if (rows.length > 0) {
+                    $('.btn-edit, .btn-del, .btn-audit').removeClass('disabled btn-disabled');
+                } else {
+                    $('.btn-edit, .btn-del, .btn-audit').addClass('disabled btn-disabled');
+                }
             });
         },
         audit_page: function () {

@@ -1,4 +1,4 @@
-<form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+<form id="form-edit" class="form-horizontal" role="form" data-id="{$row.id|default=''}" data-module="mes/supplier">
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">供应商名称<span class="text-danger">*</span></label>
         <div class="col-xs-12 col-sm-8">
@@ -46,46 +46,3 @@
         </div>
     </div>
 </form>
-<script>
-(function() {
-    var form = $('#form-edit')[0];
-    var submitBtn = $(form).find('button[type="submit"]');
-
-    // 表单验证和提交
-    $(form).on('submit', function(e) {
-        e.preventDefault();
-
-        // 验证必填项
-        var name = $(form).find('[name="row[name]"]').val();
-        if (!name || !name.trim()) {
-            alert('请输入供应商名称');
-            return false;
-        }
-
-        // 禁用按钮
-        submitBtn.prop('disabled', true);
-
-        // 提交数据
-        $.ajax({
-            url: $(form).attr('action') || window.location.href,
-            type: 'POST',
-            data: $(form).serialize(),
-            dataType: 'json',
-            success: function(r) {
-                if (r.msg) {
-                    alert(r.msg);
-                }
-                if (r.code === 1) {
-                    window.location.href = '/admin/mes/supplier';
-                }
-            },
-            error: function() {
-                alert('网络错误，请重试');
-            },
-            complete: function() {
-                submitBtn.prop('disabled', false);
-            }
-        });
-    });
-})();
-</script>

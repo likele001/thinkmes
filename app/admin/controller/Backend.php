@@ -63,7 +63,7 @@ abstract class Backend extends BaseController
         }
 
         $this->auth = new Auth();
-        
+
         // 定义是否Dialog请求
         if (!defined('IS_DIALOG')) {
             define('IS_DIALOG', (bool)$this->request->get('dialog'));
@@ -162,6 +162,41 @@ abstract class Backend extends BaseController
         View::assign('config', $config);
         View::assign('admin', Session::get('admin_info'));
         View::assign('site', $config['site']);
+    }
+
+    /**
+     * 获取分页参数：返回 [limit, page]
+     * 兼容 bootstrapTable 的 offset 参数与 page 参数两种传参方式
+     */
+    protected function getPaginationParams(int $defaultLimit = 20, int $maxLimit = 100): array
+    {
+        $limit  = max(1, min($maxLimit, (int) $this->request->get('limit', $defaultLimit)));
+        $offset = $this->request->get('offset');
+        $page   = ($offset !== null && $offset !== '')
+            ? (int) floor((int) $offset / $limit) + 1
+            : max(1, (int) $this->request->get('page', 1));
+        return [$limit, $page];
+    }
+
+    /**
+     * 对查询对象应用租户隔离过滤
+     * - 当前租户（>0）：只能看自己的数据
+     * - 平台超管（=0）：可传 ?tenant_id=xxx 按租户过滤
+     *
+     * @param \think\db\BaseQuery $query   ThinkPHP 查询对象
+     * @param string              $field   租户 ID 字段名，默认 tenant_id
+     */
+    protected function applyTenantFilter(\think\db\BaseQuery $query, string $field = 'tenant_id'): void
+    {
+        $tenantId = $this->getTenantId();
+        if ($tenantId > 0) {
+            $query->where($field, $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where($field, $tenantParam);
+            }
+        }
     }
 
     /** 当前请求的租户 ID（0=平台），由 TenantResolve 中间件设置 */

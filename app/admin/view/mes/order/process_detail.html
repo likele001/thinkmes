@@ -11,10 +11,10 @@
         <div class="alert alert-primary mb-3 mb-4">
             <h6 class="alert-heading mb-2"><i class="fas fa-clipboard-list"></i> 订单总进度</h6>
             <div class="row align-items-center">
-                <div class="col-auto">计划 <strong>{$order_total.plan_num}</strong> / 已完成 <strong>{$order_total.real_num}</strong> / 不良 <strong>{$order_total.bad_num}</strong></div>
+                <div class="col-auto">计划 <strong>{$orderTotal.plan_num}</strong> / 已完成 <strong>{$orderTotal.real_num}</strong> / 不良 <strong>{$orderTotal.bad_num}</strong></div>
                 <div class="col">
                     <div class="progress" style="height: 20px;">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: {$order_total.progress}%;">{$order_total.progress}%</div>
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {$orderTotal.progress}%;">{$orderTotal.progress}%</div>
                     </div>
                 </div>
             </div>
@@ -64,10 +64,10 @@
                 <div class="col-auto"><strong>订单总进度</strong></div>
                 <div class="col">
                     <div class="progress" style="height: 14px;">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: {$order_total.progress}%;">{$order_total.progress}%</div>
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {$orderTotal.progress}%;">{$orderTotal.progress}%</div>
                     </div>
                 </div>
-                <div class="col-auto">{$order_total.real_num} / {$order_total.plan_num}</div>
+                <div class="col-auto">{$orderTotal.real_num} / {$orderTotal.plan_num}</div>
             </div>
         </div>
         {/if}

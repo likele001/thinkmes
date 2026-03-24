@@ -26,3 +26,24 @@
 .empty-tip { text-align: center; color: #94a3b8; padding: 32rpx; font-size: 26rpx; }
 
 .btn-row { margin-top: 32rpx; display: flex; gap: 24rpx; }
+.btn-row .btn {
+  flex: 1;
+  margin: 0;
+  padding: 20rpx 30rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  text-align: center;
+  font-weight: 600;
+  border: none; /* 重置原生边框 */
+}
+.btn-row .btn::after {
+  border: none; /* 移除微信按钮的默认边框伪元素 */
+}
+.btn-row .btn-primary {
+  background: linear-gradient(135deg, #5B7BFF 0%, #6B8CFF 40%, #3DC9A7 100%);
+  color: #fff;
+}
+.btn-row .btn-danger {
+  background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+  color: #fff;
+}

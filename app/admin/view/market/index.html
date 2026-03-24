@@ -1,0 +1,65 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>插件市场</em> 浏览和下载系统插件</div>
+    </div>
+    <div class="card-body">
+        <div class="search-form mb-2">
+            <div class="form-inline">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="search-keyword" placeholder="搜索插件名称、描述">
+                </div>
+                <div class="form-group">
+                    <select class="form-control" id="search-category">
+                        <option value="">全部分类</option>
+                        <option value="payment">支付</option>
+                        <option value="storage">存储</option>
+                        <option value="auth">认证</option>
+                        <option value="notification">通知</option>
+                        <option value="tool">工具</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary btn-search"><i class="fas fa-search"></i> 搜索</button>
+                <button type="button" class="btn btn-default btn-reset"><i class="fas fa-undo"></i> 重置</button>
+            </div>
+        </div>
+        
+        <div id="toolbar" class="toolbar mb-2">
+            <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
+            <a href="javascript:;" class="btn btn-info btn-my-plugins" title="我的插件"><i class="fas fa-box"></i> 我的插件</a>
+        </div>
+        
+        <div id="plugin-list" class="row">
+        </div>
+        
+        <div id="pagination" class="text-center mt-3">
+        </div>
+    </div>
+</div>
+
+<script id="plugin-template" type="text/template">
+<div class="col-md-4 col-sm-6 mb-3">
+    <div class="panel panel-default plugin-card">
+        <div class="panel-body">
+            <div class="plugin-header">
+                <h4 class="plugin-name"><%= name %></h4>
+                <span class="badge <%= status === 'active' ? 'badge-success' : 'badge-default' %>"><%= status === 'active' ? '已发布' : '未发布' %></span>
+            </div>
+            <p class="plugin-description"><%= description %></p>
+            <div class="plugin-meta">
+                <span><i class="fas fa-tag"></i> <%= category %></span>
+                <span><i class="fas fa-user"></i> <%= author %></span>
+                <span><i class="fas fa-download"></i> <%= downloads %></span>
+                <span><i class="fas fa-star"></i> <%= rating %></span>
+            </div>
+            <div class="plugin-actions mt-2">
+                <button type="button" class="btn btn-sm btn-info btn-view" data-id="<%= id %>">详情</button>
+                <% if (installed) { %>
+                    <button type="button" class="btn btn-sm btn-success btn-uninstall" data-id="<%= id %>">卸载</button>
+                <% } else { %>
+                    <button type="button" class="btn btn-sm btn-primary btn-install" data-id="<%= id %>">安装</button>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+</script>

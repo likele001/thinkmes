@@ -13,9 +13,13 @@ use think\Response;
 
 /**
  * CRM 客户管理
+ * 提供客户档案增删改查、标签关联、搜索过滤，支持多租户隔离
  */
 class Customer extends Backend
 {
+    /**
+     * 客户列表（AJAX 返回 JSON，非 AJAX 返回视图）
+     */
     public function index(): string|Response
     {
         $limitParam = $this->request->get('limit');
@@ -83,12 +87,10 @@ class Customer extends Backend
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
+    /**
+     * 添加客户（GET 返回表单，POST 保存）
+     */
     public function add(): string|Response
-    {
-        if ($this->request->isPost()) {
-            $params = $this->request->post('row/a');
-            if (empty($params)) {
-                return $this->error('参数不能为空');
             }
 
             $tenantId = $this->getTenantId();
@@ -129,6 +131,9 @@ class Customer extends Backend
         return $this->fetchWithLayout('crm/customer/add');
     }
 
+    /**
+     * 编辑客户（GET 返回表单，POST 保存）
+     */
     public function edit(): string|Response
     {
         $ids = $this->request->param('ids');
@@ -184,6 +189,9 @@ class Customer extends Backend
         return $this->fetchWithLayout('crm/customer/edit');
     }
 
+    /**
+     * 删除客户（支持批量，ids 逗号分隔）
+     */
     public function del(): Response
     {
         if (!$this->request->isPost()) {

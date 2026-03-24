@@ -17,7 +17,7 @@ class PermissionsPolicyHeader
     {
         $response = $next($request);
         $response->header([
-            'Permissions-Policy' => 'unload=(self)',
+            'Permissions-Policy' => 'unload=*',
         ]);
         return $response;
     }

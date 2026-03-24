@@ -5,7 +5,7 @@
     </div>
     <div class="panel-body">
         <p class="text-muted">勾选已审核的采购申请，按供应商生成入库单（待入库）。生成后请到「采购入库」列表对单据进行「确认入库」。</p>
-        <form id="form-generate" method="post">
+        <form id="form-generate" method="post" data-url="mes/purchase/generateFromRequest" data-back="mes/purchase/inbound">
             <table class="table table-bordered table-hover">
                 <thead>
                     <tr>
@@ -39,27 +39,4 @@
         </form>
     </div>
 </div>
-<script>
-$(function() {
-    $('#checkall').on('click', function() {
-        $('input[name="request_ids[]"]').prop('checked', $(this).prop('checked'));
-    });
-    $('#form-generate').on('submit', function(e) {
-        e.preventDefault();
-        if (!$('input[name="request_ids[]"]:checked').length) {
-            alert('请至少勾选一条申请');
-            return;
-        }
-        var base = (typeof Config !== 'undefined' && Config.moduleurl ? Config.moduleurl : '');
-        $.post(base + '/mes/purchase/generateFromRequest', $(this).serialize(), function(r) {
-            if (r.code == 1) {
-                alert(r.msg || '生成成功');
-                window.location.href = base + '/mes/purchase/inbound';
-            } else {
-                alert(r.msg || '生成失败');
-            }
-        }, 'json');
-    });
-});
-</script>
 {include file='common/script-iframe' /}

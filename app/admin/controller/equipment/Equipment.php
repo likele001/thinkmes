@@ -22,24 +22,14 @@ class Equipment extends Backend
             return $this->fetchWithLayout('equipment/equipment/index');
         }
 
-        $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
-        $offset = $this->request->get('offset');
-        $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
+        [$limit, $page] = $this->getPaginationParams();
 
         $code = trim((string) $this->request->get('code'));
         $name = trim((string) $this->request->get('name'));
         $status = $this->request->get('status');
 
-        $tenantId = $this->getTenantId();
         $query = EquipmentModel::order('id', 'desc');
-        if ($tenantId > 0) {
-            $query->where('tenant_id', $tenantId);
-        } else {
-            $tenantParam = (int) $this->request->get('tenant_id', 0);
-            if ($tenantParam > 0) {
-                $query->where('tenant_id', $tenantParam);
-            }
-        }
+        $this->applyTenantFilter($query);
 
         if ($code !== '') {
             $query->where('code', 'like', '%' . $code . '%');

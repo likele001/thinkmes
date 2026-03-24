@@ -1,7 +1,7 @@
 <div class="card card-outline card-primary">
     <div class="card-header"><h3 class="card-title">编辑点检记录</h3></div>
     <div class="card-body">
-        <form id="form-edit" method="post" class="form-horizontal">
+        <form id="form-edit" method="post" class="form-horizontal" data-id="{$row.id}" data-module="equipment/check">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">设备</label>
                 <div class="col-sm-6">
@@ -41,16 +41,3 @@
         <a href="{$config.moduleurl}/equipment/check/index" class="btn btn-default ml-2">返回</a>
     </div>
 </div>
-<script>
-(function() {
-    if (typeof jQuery === 'undefined') { setTimeout(arguments.callee, 50); return; }
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    $('#form-edit').on('submit', function(e) {
-        e.preventDefault();
-        $.post(base + '/equipment/check/edit?ids=' + '{$row.id}', $(this).serialize(), function(r) {
-            if (r.code == 1) { alert(r.msg || '保存成功'); location.href = base + '/equipment/check/index'; }
-            else alert(r.msg || '保存失败');
-        }, 'json');
-    });
-})();
-</script>

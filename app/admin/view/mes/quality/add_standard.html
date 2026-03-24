@@ -4,7 +4,6 @@
             <div class="card-header">
                 <h3 class="card-title">{:isset($id) ? '编辑质检标准' : '添加质检标准'}</h3>
             </div>
-            <!-- /.card-header -->
             <div class="card-body">
                 <form id="form-standard" action="{:url('mes/quality/addStandard')}" method="post">
                     <input type="hidden" name="row[id]" value="{:isset($row) ? $row['id'] : ''}">
@@ -84,59 +83,6 @@
                     </div>
                 </form>
             </div>
-            <!-- /.card-body -->
         </div>
-        <!-- /.card -->
     </div>
 </div>
-
-<script>
-$(function() {
-    // 添加检查项
-    $('#add-check-item').on('click', function() {
-        var html = '<div class="check-item row mb-2">'
-            + '<div class="col-md-5">'
-            + '<input type="text" class="form-control" name="row[check_items][][name]" placeholder="检查项名称">'
-            + '</div>'
-            + '<div class="col-md-5">'
-            + '<input type="text" class="form-control" name="row[check_items][][standard]" placeholder="检查标准">'
-            + '</div>'
-            + '<div class="col-md-2">'
-            + '<button type="button" class="btn btn-danger btn-sm remove-check-item"><i class="fas fa-minus"></i></button>'
-            + '</div>'
-            + '</div>';
-        $('#check-items-container').append(html);
-    });
-
-    // 移除检查项
-    $(document).on('click', '.remove-check-item', function() {
-        $(this).closest('.check-item').remove();
-    });
-
-    // 表单验证
-    $('#form-standard').on('submit', function(e) {
-        // 检查是否至少有一个检查项
-        var checkItems = $('input[name="row[check_items][][name]"]');
-        if (checkItems.length === 0) {
-            alert('请至少添加一个检查项');
-            return false;
-        }
-
-        // 检查所有检查项是否填写完整
-        var isValid = true;
-        checkItems.each(function() {
-            if ($(this).val().trim() === '') {
-                isValid = false;
-                return false;
-            }
-        });
-
-        if (!isValid) {
-            alert('请填写所有检查项名称');
-            return false;
-        }
-
-        return true;
-    });
-});
-</script>

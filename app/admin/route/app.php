@@ -175,8 +175,6 @@ Route::post('wemedia_compliance/del', 'WemediaCompliance/del');
 Route::get('report/index', 'Report/index');
 Route::get('export/index', 'Export/index');
 Route::get('api/index', 'Api/index');
-Route::get('custom_field/index', 'CustomField/index');
-Route::get('workflow/index', 'Workflow/index');
 Route::get('notification/index', 'Notification/index');
 Route::get('backup/index', 'Backup/index');
 
@@ -211,4 +209,7 @@ if (is_file(__DIR__ . '/hr.php')) {
 }
 if (is_file(__DIR__ . '/finance.php')) {
     require __DIR__ . '/finance.php';
+}
+if (is_file(__DIR__ . '/extension.php')) {
+    require __DIR__ . '/extension.php';
 }

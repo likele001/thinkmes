@@ -22,7 +22,9 @@
             });
             $(document).off('click', '.btn-refresh').on('click', '.btn-refresh', function () { table.bootstrapTable('refresh'); });
         },
-        add: function () {}
+        add: function () {
+            if (window.BackendUtil) window.BackendUtil.initGenericAddForm();
+        }
     };
     var action = (typeof Config !== 'undefined' && Config.actionname) ? Config.actionname : 'index';
     if (Controller[action]) Controller[action]();

@@ -15,7 +15,6 @@
                     </form>
                 </div>
             </div>
-            <!-- /.card-header -->
             <div class="card-body table-responsive p-0">
                 <table id="table" class="table table-bordered table-hover">
                     <thead>
@@ -31,18 +30,14 @@
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
-            <!-- /.card-body -->
             <div class="card-footer">
                 <div id="pagination" class="float-right"></div>
             </div>
         </div>
-        <!-- /.card -->
 
-        <!-- 行业质检标准模板（可供选择、复制后编辑） -->
         <div class="card mt-3">
             <div class="card-header">
                 <h3 class="card-title">行业质检标准模板</h3>
@@ -64,138 +59,3 @@
         </div>
     </div>
 </div>
-
-<script>
-$(function() {
-    var table = $('#table');
-    if (typeof table.bootstrapTable !== 'function' || table.data('bootstrap.table')) {
-        return;
-    }
-    // 初始化表格
-    table.bootstrapTable({
-        url: '{:url("mes/quality/standard")}',
-        method: 'get',
-        pagination: true,
-        sidePagination: 'server',
-        pageSize: 20,
-        pageList: [10, 20, 50, 100],
-        search: false,
-        showRefresh: true,
-        showColumns: true,
-        columns: [
-            { checkbox: true },
-            {
-                field: 'code',
-                title: '标准编号',
-                align: 'center'
-            },
-            {
-                field: 'name',
-                title: '标准名称',
-                align: 'center'
-            },
-            {
-                field: 'process_id',
-                title: '适用工序',
-                align: 'center',
-                formatter: function(value, row, index) {
-                    return row.process ? row.process.name : '-';
-                }
-            },
-            {
-                field: 'model_id',
-                title: '适用型号',
-                align: 'center',
-                formatter: function(value, row, index) {
-                    return row.model ? row.model.name : '-';
-                }
-            },
-            {
-                field: 'check_items',
-                title: '检查项数量',
-                align: 'center',
-                formatter: function(value, row, index) {
-                    try {
-                        var items = JSON.parse(value);
-                        return Array.isArray(items) ? items.length : 0;
-                    } catch (e) {
-                        return 0;
-                    }
-                }
-            },
-            {
-                field: 'status',
-                title: '状态',
-                align: 'center',
-                formatter: function(value, row, index) {
-                    return value === 1 ? '<span class="badge badge-success">启用</span>' : '<span class="badge badge-danger">禁用</span>';
-                }
-            },
-            {
-                field: 'create_time',
-                title: '创建时间',
-                align: 'center',
-                formatter: function(value, row, index) {
-                    return value ? new Date(value * 1000).toLocaleString() : '-';
-                }
-            },
-            {
-                field: 'id',
-                title: '操作',
-                align: 'center',
-                formatter: function(value, row, index) {
-                    return '<a href="{:url("mes/quality/addStandard")}?id=' + value + '" class="btn btn-xs btn-primary" title="编辑"><i class="fas fa-edit"></i></a> ';
-                }
-            }
-        ],
-        responseHandler: function(res) {
-            return {
-                "total": res.data.total,
-                "rows": res.data.list
-            };
-        },
-        onLoadError: function() {
-            alert('加载失败，请重试');
-        }
-    });
-
-    // 全选/取消全选
-    $(document).off('click', '#checkall').on('click', '#checkall', function() {
-        $('#table').bootstrapTable('togglePagination');
-    });
-
-    // 搜索表单提交
-    $(document).off('submit', '#form-search').on('submit', '#form-search', function(e) {
-        return true;
-    });
-
-    // 加载行业模板列表
-    $.get('{:url("mes/quality/getTemplates")}', function(res) {
-        if (res.code === 1 && res.data && res.data.list && res.data.list.length) {
-            var rows = res.data.list.map(function(row) {
-                var cnt = 0;
-                try { cnt = JSON.parse(row.check_items || '[]').length; } catch (e) {}
-                return '<tr><td>' + (row.name || '-') + '</td><td>' + cnt + '</td><td>' + (row.qualified_rate || 100) + '%</td><td><button type="button" class="btn btn-xs btn-success btn-copy-template" data-id="' + row.id + '"><i class="fas fa-copy"></i> 复制</button></td></tr>';
-            });
-            $('#table-templates tbody').html(rows.join(''));
-        }
-    }, 'json');
-
-    // 从模板复制
-    $(document).off('click', '.btn-copy-template').on('click', '.btn-copy-template', function() {
-        var id = $(this).data('id');
-        var $btn = $(this).prop('disabled', true);
-        $.post('{:url("mes/quality/copyTemplate")}', { template_id: id }, function(res) {
-            if (res.code === 1 && res.data && res.data.id) {
-                window.location.href = '{:url("mes/quality/addStandard")}?id=' + res.data.id;
-            } else {
-                $btn.prop('disabled', false);
-                alert(res.msg || '复制失败');
-            }
-        }, 'json').fail(function() {
-            $btn.prop('disabled', false);
-            alert('请求失败');
-        });
-    });
-});
-</script>

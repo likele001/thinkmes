@@ -2,40 +2,45 @@ const { adminApi } = require('../../utils/api.js');
 
 // 首页菜单与 PC 权限节点对应（node 为空表示不校验，始终显示）
 const MENU_ITEMS = [
-  { node: 'mes/order', icon: '📋', text: '订单管理', handler: 'goOrders' },
-  { node: 'mes/customer', icon: '👥', text: '客户管理', handler: 'goCustomers' },
-  { node: 'mes/allocation', icon: '🔧', text: '分工管理', handler: 'goAllocations' },
-  { node: 'mes/report', icon: '✅', text: '报工审核', handler: 'goReports' },
-  { node: 'mes/report', icon: '⚡', text: '待审核报工', handler: 'goActiveReports' },
-  { node: 'mes/report', icon: '📊', text: '报工统计', handler: 'goReportStatistics' },
-  { node: 'mes/product', icon: '📦', text: '产品/型号', handler: 'goProducts' },
-  { node: 'mes/process', icon: '⚙️', text: '工序管理', handler: 'goProcesses' },
-  { node: 'mes/process_price', icon: '💰', text: '工序工价', handler: 'goProcessPrices' },
-  { node: 'mes/material', icon: '🧱', text: '物料', handler: 'goMaterials' },
-  { node: 'mes/supplier', icon: '🏢', text: '供应商', handler: 'goSuppliers' },
-  { node: 'mes/warehouse', icon: '🏭', text: '仓库', handler: 'goWarehouses' },
-  { node: 'mes/stock', icon: '📊', text: '库存', handler: 'goStock' },
-  { node: 'mes/bom', icon: '📑', text: 'BOM', handler: 'goBom' },
-  { node: 'mes/production_plan', icon: '📅', text: '生产计划', handler: 'goPlans' },
-  { node: 'mes/purchase', icon: '🛒', text: '采购', handler: 'goPurchases' },
-  { node: 'mes/shipment', icon: '🚚', text: '发货', handler: 'goShipments' },
-  { node: 'mes/quality', icon: '🔍', text: '质检', handler: 'goQuality' },
-  { node: 'mes/wage', icon: '💵', text: '工资', handler: 'goAdminWages' },
-  { node: 'mes/trace_code', icon: '🔗', text: '追溯码', handler: 'goTrace' },
-  { node: 'mes/after_sales', icon: '🛠️', text: '售后', handler: 'goAftersales' },
-  { node: 'mes/bi', icon: '📈', text: 'BI看板', handler: 'goBi' },
-  { node: null, icon: '👷', text: '切换员工端', handler: 'switchToUser' },
-  { node: null, icon: '🔒', text: '退出登录', handler: 'logout' },
+  { node: 'mes/order', text: '订单管理', handler: 'goOrders' },
+  { node: 'mes/customer', text: '客户管理', handler: 'goCustomers' },
+  { node: 'mes/allocation', text: '分工管理', handler: 'goAllocations' },
+  { node: 'mes/report', text: '报工审核', handler: 'goReports' },
+  { node: 'mes/report', text: '待审核报工', handler: 'goActiveReports' },
+  { node: 'mes/report', text: '报工统计', handler: 'goReportStatistics' },
+  { node: 'mes/product', text: '产品/型号', handler: 'goProducts' },
+  { node: 'mes/process', text: '工序管理', handler: 'goProcesses' },
+  { node: 'mes/process_price', text: '工序工价', handler: 'goProcessPrices' },
+  { node: 'mes/material', text: '物料', handler: 'goMaterials' },
+  { node: 'mes/supplier', text: '供应商', handler: 'goSuppliers' },
+  { node: 'mes/warehouse', text: '仓库', handler: 'goWarehouses' },
+  { node: 'mes/stock', text: '库存', handler: 'goStock' },
+  { node: 'mes/bom', text: 'BOM', handler: 'goBom' },
+  { node: 'mes/production_plan', text: '生产计划', handler: 'goPlans' },
+  { node: 'mes/purchase', text: '采购', handler: 'goPurchases' },
+  { node: 'mes/shipment', text: '发货', handler: 'goShipments' },
+  { node: 'mes/quality', text: '质检', handler: 'goQuality' },
+  { node: 'mes/wage', text: '工资', handler: 'goAdminWages' },
+  { node: 'mes/trace_code', text: '追溯码', handler: 'goTrace' },
+  { node: 'mes/after_sales', text: '售后', handler: 'goAftersales' },
+  { node: 'mes/bi', text: 'BI看板', handler: 'goBi' },
+  { node: null, text: '切换员工端', handler: 'switchToUser' },
+  { node: null, text: '退出登录', handler: 'logout' },
 ];
+
+const PALETTES = ['blue', 'indigo', 'mint', 'amber', 'purple', 'teal'];
 
 Page({
   data: {
     adminInfo: null,
     dashboard: null,
     stats: null,
-    loading: true,
+    statItems: [],
+    loading: false,
+    error: '',
     todayDate: '',
     menuList: [],
+    loaded: false,
   },
 
   onShow() {
@@ -43,33 +48,54 @@ Page({
       wx.redirectTo({ url: '/pages/login/login' });
       return;
     }
+    this.setToday();
+    this.syncNodesAndMenu();
+    this.loadDashboard();
+  },
+
+  onPullDownRefresh() {
+    this.loadDashboard(() => {
+      if (wx.stopPullDownRefresh) wx.stopPullDownRefresh();
+    });
+  },
+
+  setToday() {
     const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     const d = new Date();
-    const todayStr = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + weekDays[d.getDay()];
+    const todayStr = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekDays[d.getDay()]}`;
+    const adminInfo = getApp().globalData.adminInfo || wx.getStorageSync('adminInfo') || {};
+    const avatarChar = (adminInfo.nickname || adminInfo.username || '管').slice(0, 1);
     this.setData({
-      adminInfo: getApp().globalData.adminInfo || wx.getStorageSync('adminInfo'),
+      adminInfo,
+      avatarChar,
       todayDate: todayStr,
     });
+  },
+
+  syncNodesAndMenu() {
     const app = getApp();
     let nodes = app.globalData.scanworkNodes;
-    if (!nodes || !Array.isArray(nodes)) {
+    if (!Array.isArray(nodes)) {
       nodes = wx.getStorageSync('scanworkNodes') || [];
-      if (nodes && nodes.length) app.globalData.scanworkNodes = nodes;
+      if (Array.isArray(nodes)) app.globalData.scanworkNodes = nodes;
     }
-    if (nodes.length === 0) {
+    if (!nodes || !nodes.length) {
       this.buildMenuList(['*']);
       adminApi.getScanworkMenu()
         .then((res) => {
-          nodes = (res.data && res.data.nodes) || [];
-          app.globalData.scanworkNodes = nodes;
-          wx.setStorageSync('scanworkNodes', nodes);
-          this.buildMenuList(nodes);
+          const newNodes = (res.data && res.data.nodes) || [];
+          app.globalData.scanworkNodes = newNodes;
+          wx.setStorageSync('scanworkNodes', newNodes);
+          this.buildMenuList(newNodes);
         })
         .catch(() => { this.buildMenuList([]); });
     } else {
       this.buildMenuList(nodes);
     }
-    this.loadDashboard();
+  },
+
+  refreshMenu() {
+    this.syncNodesAndMenu();
   },
 
   hasNode(nodes, node) {
@@ -77,35 +103,57 @@ Page({
     if (!nodes || !nodes.length) return false;
     if (nodes.indexOf('*') !== -1) return true;
     if (nodes.indexOf(node) !== -1) return true;
-    const prefix = node + '/';
-    return nodes.some(function (n) { return n && n.indexOf(prefix) === 0; });
+    const prefix = `${node}/`;
+    return nodes.some((n) => n && n.indexOf(prefix) === 0);
   },
 
-  buildMenuList(nodes) {
-    const list = MENU_ITEMS.filter(function (item) {
-      return this.hasNode(nodes, item.node);
-    }, this);
+  buildMenuList(nodes = []) {
+    const list = MENU_ITEMS.filter((item) => this.hasNode(nodes, item.node))
+      .map((item, idx) => ({
+        ...item,
+        abbr: item.text.slice(0, 2),
+        tone: PALETTES[idx % PALETTES.length],
+      }));
     this.setData({ menuList: list });
   },
 
   onMenuTap(e) {
     const handler = e.currentTarget.dataset.handler;
-    if (handler && this[handler]) this[handler]();
+    if (handler && typeof this[handler] === 'function') this[handler]();
   },
 
-  loadDashboard() {
-    this.setData({ loading: true });
+  onStatTap(e) {
+    const handler = e.currentTarget.dataset.handler;
+    if (handler && typeof this[handler] === 'function') this[handler]();
+  },
+
+  loadDashboard(done) {
+    const finish = () => {
+      if (typeof done === 'function') done();
+      if (wx.stopPullDownRefresh) wx.stopPullDownRefresh();
+    };
+    this.setData({ loading: true, error: '' });
     adminApi.getDashboardData()
       .then((res) => {
         const d = res.data || {};
-        const orderData = d.order_data || { 0: 0, 1: 0, 2: 0, 3: 0 };
-        const planData = d.plan_data || { 0: 0, 1: 0, 2: 0, 3: 0 };
+        const orderData = d.order_data || {};
+        const planData = d.plan_data || {};
         const totalOrders = (orderData[0] || 0) + (orderData[1] || 0) + (orderData[2] || 0) + (orderData[3] || 0);
         const totalPlans = (planData[0] || 0) + (planData[1] || 0) + (planData[2] || 0) + (planData[3] || 0);
         const today = d.today || {};
+        const statItems = [
+          { key: 'totalOrders', label: '总订单数', value: totalOrders, tap: 'goOrders' },
+          { key: 'activeAllocations', label: '进行中分工', value: d.active_allocations || 0, tap: 'goAllocations' },
+          { key: 'pendingReports', label: '待审核报工', value: d.pending_reports || 0, tap: 'goReports' },
+          { key: 'todayQuantity', label: '今日报工量', value: today.quantity ?? 0, tap: 'goReportStatistics' },
+          { key: 'todayWage', label: '今日工资', value: `¥${(today.wage ?? 0).toFixed(2)}`, tap: 'goAdminWages' },
+          { key: 'totalPlans', label: '生产计划数', value: totalPlans, tap: 'goPlans' },
+        ].map((item, idx) => ({ ...item, tone: PALETTES[idx % PALETTES.length] }));
+
         this.setData({
           dashboard: d,
           loading: false,
+          loaded: true,
           stats: {
             totalOrders,
             activeAllocations: d.active_allocations || 0,
@@ -114,13 +162,18 @@ Page({
             todayWage: (today.wage ?? 0).toFixed(2),
             totalPlans,
           },
+          statItems,
         });
+        finish();
       })
       .catch((err) => {
-        this.setData({ loading: false });
+        const msg = (err && err.msg) || (err && err.message) || '加载失败，请稍后再试';
+        this.setData({ loading: false, loaded: true, error: msg });
+        wx.showToast({ icon: 'none', title: msg });
         if (err && err.statusCode === 403) {
-          this.setData({ stats: null });
+          this.setData({ stats: null, statItems: [] });
         }
+        finish();
       });
   },
 

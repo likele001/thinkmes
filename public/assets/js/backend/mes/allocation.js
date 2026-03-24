@@ -166,7 +166,93 @@
             Controller.api.bindevent();
         },
         batch: function () {
-            Controller.api.bindevent();
+            var allocationIndex = 0;
+            var modelList = {};
+            var processList = {};
+            var userList = {};
+
+            // 从 JSON 数据岛读取工序和员工列表
+            try {
+                var plEl = document.getElementById('batch-process-list');
+                var ulEl = document.getElementById('batch-user-list');
+                if (plEl) processList = JSON.parse(plEl.textContent || plEl.innerHTML || '{}');
+                if (ulEl) userList = JSON.parse(ulEl.textContent || ulEl.innerHTML || '{}');
+            } catch (e) {}
+
+            // 订单选择变化时加载型号
+            $('#order_id').on('change', function() {
+                var orderId = $(this).val();
+                if (!orderId) {
+                    $('#allocation-container').hide();
+                    return;
+                }
+                $.get(base + '/mes/allocation/getOrderModels', {order_id: orderId}, function(r) {
+                    if (r.code == 1 && r.data) {
+                        modelList = {};
+                        $.each(r.data, function(i, item) {
+                            modelList[item.id] = item.name;
+                        });
+                        $('#allocation-container').show();
+                    } else {
+                        alert('该订单暂无型号');
+                        $('#allocation-container').hide();
+                    }
+                }, 'json');
+            });
+
+            var initialOrderId = $('#order_id').val();
+            if (initialOrderId) { $('#order_id').trigger('change'); }
+
+            function addAllocationRow() {
+                var modelOptions = '<option value="">请选择型号</option>';
+                $.each(modelList, function(id, name) {
+                    modelOptions += '<option value="' + id + '">' + name + '</option>';
+                });
+                var processOptions = '<option value="">请选择工序</option>';
+                $.each(processList, function(id, name) {
+                    processOptions += '<option value="' + id + '">' + name + '</option>';
+                });
+                var userOptions = '<option value="">请选择员工</option>';
+                $.each(userList, function(id, name) {
+                    userOptions += '<option value="' + id + '">' + name + '</option>';
+                });
+                var html = '<tr data-index="' + allocationIndex + '">' +
+                    '<td><select name="allocations[' + allocationIndex + '][model_id]" class="form-control form-control-sm" required>' + modelOptions + '</select></td>' +
+                    '<td><select name="allocations[' + allocationIndex + '][process_id]" class="form-control form-control-sm" required>' + processOptions + '</select></td>' +
+                    '<td><select name="allocations[' + allocationIndex + '][user_id]" class="form-control form-control-sm" required>' + userOptions + '</select></td>' +
+                    '<td><input type="number" name="allocations[' + allocationIndex + '][quantity]" class="form-control form-control-sm" min="1" required></td>' +
+                    '<td><button type="button" class="btn btn-sm btn-danger btn-remove-row">删除</button></td>' +
+                    '</tr>';
+                $('#allocation-tbody').append(html);
+                allocationIndex++;
+            }
+
+            $('#btn-add-allocation').on('click', function() { addAllocationRow(); });
+            $(document).on('click', '.btn-remove-row', function() { $(this).closest('tr').remove(); });
+
+            $('#btn-submit-batch').off('click').on('click', function () {
+                var allocations = [];
+                $('#allocation-tbody tr').each(function() {
+                    var modelId = $(this).find('select[name*="[model_id]"]').val();
+                    var processId = $(this).find('select[name*="[process_id]"]').val();
+                    var userId = $(this).find('select[name*="[user_id]"]').val();
+                    var quantity = $(this).find('input[name*="[quantity]"]').val();
+                    if (modelId && processId && userId && quantity) {
+                        allocations.push({model_id: modelId, process_id: processId, user_id: userId, quantity: quantity});
+                    }
+                });
+                if (!allocations.length) { alert('请至少添加一条分配记录'); return; }
+                $.post(base + '/mes/allocation/batch', {
+                    order_id: $('#order_id').val(),
+                    plan_id: $('#plan_id').val(),
+                    allocations: allocations
+                }, function (r) {
+                    if (r && r.msg) alert(r.msg);
+                    if (r && r.code === 1) location.href = indexUrl;
+                }, 'json').fail(function(xhr) {
+                    try { var r = JSON.parse(xhr.responseText); alert(r.msg || '操作失败'); } catch(e) { alert('操作失败'); }
+                });
+            });
         },
         api: {
             showQrcodeModal: function (allocationId) {
@@ -232,6 +318,11 @@
             }
         }
     };
+
+    // 小写别名：驼峰方法经 strtolower 后的形式
+    Controller.getordermodels  = function () { /* AJAX 接口，无视图 */ };
+    Controller.generateqrcode  = function () { /* AJAX 接口 */ };
+    Controller.qrcodeinfo      = function () { /* 服务端渲染 */ };
 
     window.__backendController = Controller;
 })();

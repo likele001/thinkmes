@@ -2,7 +2,8 @@
 <div class="panel panel-default">
     <div class="panel-heading"><h4>创建质检单 - 报工：{$report.report_no|default=''}</h4></div>
     <div class="panel-body">
-        <form id="form-add" class="form-horizontal" role="form" action="" method="post">
+        <form id="form-add" class="form-horizontal" role="form" method="post"
+              data-url="mes/quality/addCheck" data-back="mes/quality/check">
             <input type="hidden" name="row[report_id]" value="{$report.id|default=''}">
             <div class="form-group">
                 <label class="control-label col-xs-12 col-sm-2">质检标准</label>
@@ -49,20 +50,5 @@
         </form>
     </div>
 </div>
-<script>
-$(function() {
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    var reportId = '{$report.id|default=""}';
-    $('#form-add').on('submit', function(e) {
-        e.preventDefault();
-        $.post(base + '/mes/quality/addCheck?report_id=' + reportId, $(this).serialize(), function(r) {
-            if (r.code == 1) {
-                if (typeof Fast !== 'undefined' && Fast.api) Fast.api.close(); else alert(r.msg);
-            } else {
-                alert(r.msg || '提交失败');
-            }
-        }, 'json');
-    });
-});
-</script>
+<script type="application/json" id="add-check-meta">{"reportId":"{$report.id|default=''}"}</script>
 {include file='common/script-iframe' /}

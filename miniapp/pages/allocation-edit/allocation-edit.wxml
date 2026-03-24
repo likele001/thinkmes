@@ -11,7 +11,13 @@
       </picker>
     </view>
     <view class="form-item">
-      <text class="form-label">产品型号 *</text>
+      <text class="form-label">产品 *</text>
+      <picker mode="selector" range="{{productOptions}}" range-key="label" value="{{productIndex}}" bindchange="pickProduct">
+        <view class="picker">{{productLabel}}</view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="form-label">型号 *</text>
       <view class="picker" bindtap="openModelSelect">{{modelLabel}}</view>
     </view>
     <view class="form-item">

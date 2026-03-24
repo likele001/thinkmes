@@ -214,8 +214,8 @@ Page({
       wx.showToast({ title: '数量不能超过待报数量 ' + pending, icon: 'none' });
       return;
     }
-    const itemNos = [];
-    for (let i = 0; i < qty; i++) itemNos.push(String(i + 1));
+    const stamp = Date.now();
+    const itemNos = Array.from({ length: qty }, (_, i) => `AUTO-${stamp}-${i + 1}`);
     this.setData({ submitting: true });
     const payload = {
       allocation_id: allocationId,
@@ -223,14 +223,21 @@ Page({
       quantity: itemNos.length,
       item_nos: itemNos,
     };
-    if (images && images.length) payload.images = { images: images };
+    if (images && images.length) {
+      const imgMap = {};
+      itemNos.forEach((no) => { imgMap[no] = images; });
+      payload.images = imgMap;
+    }
     userApi.submitReport(payload)
       .then(() => {
         this.setData({ submitting: false, quantity: '', images: [] });
         wx.showToast({ title: '报工成功', icon: 'success' });
         this.load();
       })
-      .catch(() => this.setData({ submitting: false }));
+      .catch((err) => {
+        this.setData({ submitting: false });
+        wx.showToast({ title: (err && err.msg) || '提交失败，请重试', icon: 'none' });
+      });
   },
 
   goBack() {

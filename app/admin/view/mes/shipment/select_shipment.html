@@ -44,7 +44,7 @@
                         {/if}
                     </td>
                     <td>
-                        <a href="javascript:selectShipment({$shipment.id})" class="btn btn-xs btn-info">跟踪</a>
+                        <a href="javascript:;" class="btn btn-xs btn-info btn-track" data-id="{$shipment.id}">跟踪</a>
                     </td>
                 </tr>
                 {/volist}
@@ -57,30 +57,3 @@
         {/if}
     </div>
 </div>
-
-<script>
-function selectShipment(shipmentId) {
-    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-    window.location.href = base + '/mes/shipment/track?id=' + shipmentId;
-}
-
-$(function() {
-    $('#btn-search').click(function() {
-        var keyword = $('#search-shipment').val().trim();
-        if (keyword) {
-            // 这里可以添加客户端搜索或服务器端搜索
-            var items = [];
-            $('#table tbody tr').each(function() {
-                var text = $(this).text();
-                if (text.indexOf(keyword) !== -1) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
-            });
-        } else {
-            $('#table tbody tr').show();
-        }
-    });
-});
-</script>

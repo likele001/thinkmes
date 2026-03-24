@@ -131,84 +131,86 @@ App({
     });
   },
 
-  // 管理员端请求（Scanwork API）
-  request(options) {
-    const token = this.globalData.adminToken || wx.getStorageSync('adminToken');
+  // 通用请求封装（支持超时、重试）
+  _requestCore(options, tokenKey, logoutFn) {
+    const token = this.globalData[tokenKey] || wx.getStorageSync(tokenKey === 'adminToken' ? 'adminToken' : 'user_token');
     const url = this.globalData.baseUrl + (options.url || '');
     const method = options.method || 'GET';
     const data = options.data || {};
-    return new Promise((resolve, reject) => {
-      wx.request({
+    const timeout = options.timeout || 15000;
+    const maxRetry = options.retry != null ? options.retry : 1;
+    let attempt = 0;
+
+    const doRequest = () => new Promise((resolve, reject) => {
+      const start = Date.now();
+      const requestTask = wx.request({
         url,
         method,
         data,
+        timeout,
         header: {
           'content-type': options.contentType || 'application/json',
           'Authorization': token ? 'Bearer ' + token : '',
         },
         success(res) {
+          const duration = Date.now() - start;
           if (res.statusCode === 200) {
             if (res.data && res.data.code === 1) {
-              resolve(res.data);
+              resolve({ ok: true, data: res.data, duration });
             } else {
-              wx.showToast({ title: (res.data && res.data.msg) || '请求失败', icon: 'none' });
-              reject(res.data);
+              reject({ type: 'business', msg: (res.data && res.data.msg) || '请求失败', data: res.data, duration });
             }
           } else if (res.statusCode === 401) {
-            getApp().adminLogout();
-            wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
-            reject(Object.assign({ statusCode: 401 }, res.data || {}));
-            setTimeout(() => {
-              wx.reLaunch({ url: '/pages/login/login' });
-            }, 500);
+            logoutFn && logoutFn();
+            reject({ type: 'auth', statusCode: 401, msg: '登录已过期，请重新登录', data: res.data });
+            setTimeout(() => { wx.reLaunch({ url: '/pages/login/login' }); }, 500);
           } else if (res.statusCode === 403) {
-            wx.showToast({ title: (res.data && res.data.msg) || '无权限访问', icon: 'none' });
-            reject(Object.assign({ statusCode: 403 }, res.data || {}));
+            reject({ type: 'forbidden', statusCode: 403, msg: (res.data && res.data.msg) || '无权限访问', data: res.data });
+          } else if (res.statusCode >= 500) {
+            reject({ type: 'server', statusCode: res.statusCode, msg: '服务器繁忙，请稍后重试', data: res.data });
           } else {
-            wx.showToast({ title: '网络错误', icon: 'none' });
-            reject(res.data);
+            reject({ type: 'http', statusCode: res.statusCode, msg: '网络异常', data: res.data });
           }
         },
-        fail: reject,
+        fail(err) {
+          const isTimeout = err && (err.errMsg || '').includes('timeout');
+          reject({ type: isTimeout ? 'timeout' : 'network', msg: isTimeout ? '请求超时，请检查网络' : '网络错误，请检查网络连接', err });
+        },
       });
+      // 不支持原生超时时使用手动超时兜底
+      if (timeout > 0) {
+        setTimeout(() => { try { requestTask.abort && requestTask.abort(); } catch(e) {} }, timeout + 5000);
+      }
     });
+
+    const tryRequest = () => {
+      attempt++;
+      return doRequest().catch((err) => {
+        const shouldRetry = attempt < maxRetry && (err.type === 'timeout' || err.type === 'network');
+        if (shouldRetry) {
+          return new Promise((r) => setTimeout(r, 1000 * attempt)).then(tryRequest);
+        }
+        throw err;
+      });
+    };
+
+    return tryRequest().then((res) => res.data).catch((err) => {
+      const silent = !!options.silent;
+      if (!silent && err.type !== 'auth') {
+        wx.showToast({ title: err.msg || '请求失败', icon: 'none' });
+      }
+      return Promise.reject(err);
+    });
+  },
+
+  // 管理员端请求（Scanwork API）
+  request(options) {
+    return this._requestCore(options, 'adminToken', () => { this.adminLogout(); });
   },
 
   // 员工端请求（Worker / Miniapp API）
   userRequest(options) {
-    const token = this.globalData.userToken || wx.getStorageSync('user_token');
-    const url = this.globalData.baseUrl + (options.url || '');
-    const method = options.method || 'GET';
-    const data = options.data || {};
-    return new Promise((resolve, reject) => {
-      wx.request({
-        url,
-        method,
-        data,
-        header: {
-          'content-type': options.contentType || 'application/json',
-          'Authorization': token ? 'Bearer ' + token : '',
-        },
-        success(res) {
-          if (res.statusCode === 200) {
-            if (res.data && res.data.code === 1) {
-              resolve(res.data);
-            } else {
-              wx.showToast({ title: (res.data && res.data.msg) || '请求失败', icon: 'none' });
-              reject(res.data);
-            }
-          } else if (res.statusCode === 401) {
-            getApp().userLogout();
-            wx.showToast({ title: '登录已过期', icon: 'none' });
-            reject(res.data);
-          } else {
-            wx.showToast({ title: '网络错误', icon: 'none' });
-            reject(res.data);
-          }
-        },
-        fail: reject,
-      });
-    });
+    return this._requestCore(options, 'userToken', () => { this.userLogout(); });
   },
 
   // 管理员登录

@@ -3,7 +3,7 @@
         <h3 class="card-title">编辑BOM</h3>
     </div>
     <div class="card-body">
-        <form id="form-edit" method="post" class="form-horizontal">
+        <form id="form-edit" method="post" class="form-horizontal" data-id="{$row.id|default=''}" data-module="mes/bom">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">BOM编号</label>
                 <div class="col-sm-6">
@@ -83,64 +83,3 @@
         </form>
     </div>
 </div>
-<script>
-(function () {
-    if (typeof jQuery === 'undefined') {
-        setTimeout(arguments.callee, 50);
-        return;
-    }
-    var $ = jQuery;
-    $(function () {
-        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-        var form = $('#form-edit');
-        if (!form.length) {
-            return;
-        }
-        var id = parseInt('{$row.id|default="0"}', 10) || 0;
-        form.attr('action', base + '/mes/bom/edit?ids=' + id);
-        form.on('submit', function (e) {
-            e.preventDefault();
-            var bomType = form.find('select[name="row[bom_type]"]').val();
-            var modelId = form.find('select[name="row[model_id]"]').val();
-            var productId = form.find('select[name="row[product_id]"]').val();
-            if (bomType !== '1') {
-                if (modelId === '' || modelId === undefined) {
-                    alert('请选择产品型号或通用（默认）');
-                    return;
-                }
-                if (modelId === '0' && !productId) {
-                    alert('选择通用（默认）型号时请先选择产品');
-                    return;
-                }
-            }
-            var fd = new FormData(this);
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: fd,
-                dataType: 'json',
-                processData: false,
-                contentType: false
-            }).done(function (r) {
-                if (r && r.msg) {
-                    alert(r.msg);
-                }
-                if (r && r.code === 1) {
-                    location.href = base + '/mes/bom/index';
-                }
-            }).fail(function (xhr) {
-                var msg = '操作失败';
-                if (xhr && xhr.responseText) {
-                    try {
-                        var json = JSON.parse(xhr.responseText);
-                        if (json.msg) {
-                            msg = json.msg;
-                        }
-                    } catch (e) {}
-                }
-                alert(msg);
-            });
-        });
-    });
-})();
-</script>

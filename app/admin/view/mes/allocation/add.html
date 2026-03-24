@@ -3,7 +3,7 @@
         <h3 class="card-title">添加分工分配</h3>
     </div>
     <div class="card-body">
-        <form id="form-add" method="post" class="form-horizontal">
+        <form id="form-add" method="post" class="form-horizontal" data-url="mes/allocation/add" data-back="mes/allocation">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">订单 <span class="text-danger">*</span></label>
                 <div class="col-sm-6">
@@ -73,61 +73,3 @@
         </form>
     </div>
 </div>
-
-<script>
-(function() {
-    function initForm() {
-        if (typeof jQuery === 'undefined') {
-            setTimeout(initForm, 50);
-            return;
-        }
-        var $ = jQuery;
-        var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
-        
-        // 订单选择变化时加载型号
-        $('#order_id').on('change', function() {
-            var orderId = $(this).val();
-            if (!orderId) {
-                $('#model_id').html('<option value="">请先选择订单</option>');
-                return;
-            }
-            $.get(base + '/mes/allocation/getOrderModels', {order_id: orderId}, function(r) {
-                if (r.code == 1 && r.data) {
-                    var html = '<option value="">请选择型号</option>';
-                    $.each(r.data, function(i, item) {
-                        html += '<option value="' + item.id + '">' + item.name + ' (数量: ' + item.quantity + ')</option>';
-                    });
-                    $('#model_id').html(html);
-                } else {
-                    $('#model_id').html('<option value="">该订单暂无型号</option>');
-                }
-            }, 'json');
-        });
-        
-        $('#form-add').attr('action', base + '/mes/allocation/add');
-        $('#form-add').on('submit', function (e) {
-            e.preventDefault();
-            $.post($(this).attr('action'), $(this).serialize(), function (r) {
-                if (r && r.msg) {
-                    alert(r.msg);
-                }
-                if (r && r.code === 1) {
-                    location.href = base + '/mes/allocation/index';
-                }
-            }, 'json').fail(function(xhr) {
-                try {
-                    var r = JSON.parse(xhr.responseText);
-                    alert(r.msg || '操作失败');
-                } catch(e) {
-                    alert('操作失败');
-                }
-            });
-        });
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initForm);
-    } else {
-        initForm();
-    }
-})();
-</script>

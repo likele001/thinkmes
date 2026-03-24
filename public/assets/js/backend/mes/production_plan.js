@@ -134,6 +134,182 @@
                 }
             });
         },
+        progress: function () {
+            // 确保 ECharts 已加载后再初始化图表
+            function initCharts() {
+                if (typeof echarts === 'undefined') {
+                    var s = document.createElement('script');
+                    s.src = '/assets/lib/echarts/echarts.min.js';
+                    s.onload = initCharts;
+                    document.head.appendChild(s);
+                    return;
+                }
+
+                var completionDom = document.getElementById('completionChart');
+                if (!completionDom) return;
+
+                var completionChart = echarts.init(completionDom);
+                var completionRate = parseInt($('#completion-rate').data('rate')) || 0;
+                var remainingRate = 100 - completionRate;
+                completionChart.setOption({
+                    series: [{
+                        type: 'pie',
+                        radius: ['60%', '80%'],
+                        label: { show: false },
+                        labelLine: { show: false },
+                        data: [
+                            {value: completionRate, name: '已完成', itemStyle: {color: '#4CAF50'}},
+                            {value: remainingRate, name: '未完成', itemStyle: {color: '#E0E0E0'}}
+                        ]
+                    }]
+                });
+
+                var overallChart = echarts.init(document.getElementById('overallProgressChart'));
+                var totalQuantity = parseInt($('#total-quantity').data('value')) || 0;
+                var completedQuantity = parseInt($('#completed-quantity').data('value')) || 0;
+                var remainingQuantity = totalQuantity - completedQuantity;
+                overallChart.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                    xAxis: [{ type: 'category', data: ['总数量', '已完成', '剩余'] }],
+                    yAxis: [{ type: 'value' }],
+                    series: [{
+                        name: '数量',
+                        type: 'bar',
+                        barWidth: '60%',
+                        data: [
+                            {value: totalQuantity, itemStyle: {color: '#2196F3'}},
+                            {value: completedQuantity, itemStyle: {color: '#4CAF50'}},
+                            {value: remainingQuantity, itemStyle: {color: '#FF9800'}}
+                        ]
+                    }]
+                });
+
+                var processChart = echarts.init(document.getElementById('processPieChart'));
+                var processData = [];
+                $('.process-data').each(function () {
+                    processData.push({value: parseInt($(this).data('rate')) || 0, name: $(this).data('name')});
+                });
+                processChart.setOption({
+                    tooltip: { trigger: 'item', formatter: '{b}: {c}% ({d}%)' },
+                    legend: { orient: 'vertical', left: 'left' },
+                    series: [{ name: '完成率', type: 'pie', radius: '50%', data: processData }]
+                });
+
+                var employeeChart = echarts.init(document.getElementById('employeeRankingChart'));
+                var employeeLabels = [], employeeData = [];
+                $('.employee-data').each(function () {
+                    employeeLabels.push($(this).data('name'));
+                    employeeData.push(parseInt($(this).data('rate')) || 0);
+                });
+                employeeChart.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                    xAxis: { type: 'value', boundaryGap: [0, 0.01] },
+                    yAxis: { type: 'category', data: employeeLabels },
+                    series: [{ name: '完成率', type: 'bar', data: employeeData, itemStyle: { color: '#4CAF50' } }]
+                });
+
+                var orderChart = echarts.init(document.getElementById('orderProgressChart'));
+                var orderLabels = [], orderData = [];
+                $('.order-data').each(function () {
+                    orderLabels.push($(this).data('name'));
+                    orderData.push(parseInt($(this).data('rate')) || 0);
+                });
+                orderChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                    xAxis: { type: 'category', boundaryGap: false, data: orderLabels },
+                    yAxis: { type: 'value' },
+                    series: [{ name: '完成率', type: 'line', smooth: true, data: orderData }]
+                });
+
+                // 详情弹窗事件
+                var baseUrl = base + '/mes/production_plan';
+                $(document).off('click.progress', '[data-action]').on('click.progress', '[data-action]', function (e) {
+                    e.preventDefault();
+                    var action = $(this).data('action');
+                    var titleMap = {
+                        showOrderDetails:   '订单详情',
+                        showProductDetails: '产品详情',
+                        showEmployeeDetails:'员工详情'
+                    };
+                    var title = titleMap[action] || '详情';
+                    if (action === 'showProcessDetails') {
+                        title = '工序详情 - ' + $(this).data('process-name');
+                    }
+                    $('#detailModalTitle').text(title);
+                    $('#detailModalBody').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>');
+                    $('#detailModal').modal('show');
+
+                    var apiMap = {
+                        showOrderDetails:   { url: baseUrl + '/getOrderDetails',   param: {order_id: $(this).data('order-id')},     buildHtml: buildOrderHtml },
+                        showProductDetails: { url: baseUrl + '/getProductDetails',  param: {product_id: $(this).data('product-id')}, buildHtml: buildProductHtml },
+                        showProcessDetails: { url: baseUrl + '/getProcessDetails',  param: {process_name: $(this).data('process-name')}, buildHtml: buildProcessHtml },
+                        showEmployeeDetails:{ url: baseUrl + '/getEmployeeDetails', param: {user_id: $(this).data('user-id')},        buildHtml: buildEmployeeHtml }
+                    };
+                    var cfg = apiMap[action];
+                    if (!cfg) return;
+                    $.get(cfg.url, cfg.param, function (r) {
+                        if (r.code === 1) {
+                            $('#detailModalBody').html(cfg.buildHtml(r.data));
+                        } else {
+                            $('#detailModalBody').html('<div class="alert alert-danger">' + (r.msg || '获取失败') + '</div>');
+                        }
+                    }, 'json');
+                });
+
+                $(window).off('resize.progress').on('resize.progress', function () {
+                    completionChart.resize();
+                    overallChart.resize();
+                    processChart.resize();
+                    employeeChart.resize();
+                    orderChart.resize();
+                });
+            }
+
+            function buildOrderHtml(data) {
+                var html = '<h5>订单信息</h5><p><strong>订单编号：</strong>' + (data.order.order_no || '') + '</p>';
+                html += '<h5>生产计划详情</h5><div class="table-responsive"><table class="table table-bordered table-striped">';
+                html += '<thead><tr><th>计划编号</th><th>计划名称</th><th>总数量</th></tr></thead><tbody>';
+                $.each(data.plans, function (_, plan) {
+                    html += '<tr><td>' + plan.plan_code + '</td><td>' + plan.plan_name + '</td><td>' + plan.total_quantity + '</td></tr>';
+                });
+                return html + '</tbody></table></div>';
+            }
+
+            function buildProductHtml(data) {
+                var html = '<h5>产品信息</h5><p><strong>产品名称：</strong>' + (data.product.name || '') + '</p>';
+                html += '<h5>型号进度</h5><div class="table-responsive"><table class="table table-bordered table-striped">';
+                html += '<thead><tr><th>型号名称</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody>';
+                $.each(data.models, function (_, m) {
+                    html += '<tr><td>' + m.model_name + '</td><td>' + m.total_quantity + '</td><td>' + m.completed_quantity + '</td><td>' + m.completion_rate + '%</td></tr>';
+                });
+                return html + '</tbody></table></div>';
+            }
+
+            function buildProcessHtml(data) {
+                var html = '<h5>工序信息</h5><p><strong>工序名称：</strong>' + (data.process.name || '') + '</p>';
+                html += '<h5>分配记录</h5><div class="table-responsive"><table class="table table-bordered table-striped">';
+                html += '<thead><tr><th>订单</th><th>产品</th><th>型号</th><th>员工</th><th>分配数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody>';
+                $.each(data.allocations, function (_, a) {
+                    html += '<tr><td>' + a.order_name + '</td><td>' + a.product_name + '</td><td>' + a.model_name + '</td><td>' + a.employee_name + '</td><td>' + a.allocated_quantity + '</td><td>' + a.completed_quantity + '</td><td>' + a.completion_rate + '%</td></tr>';
+                });
+                return html + '</tbody></table></div>';
+            }
+
+            function buildEmployeeHtml(data) {
+                var html = '<h5>员工信息</h5><p><strong>姓名：</strong>' + (data.user.nickname || '') + '</p>';
+                html += '<h5>工作分配记录</h5><div class="table-responsive"><table class="table table-bordered table-striped">';
+                html += '<thead><tr><th>订单</th><th>产品</th><th>型号</th><th>工序</th><th>分配数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody>';
+                $.each(data.allocations, function (_, a) {
+                    html += '<tr><td>' + a.order_name + '</td><td>' + a.product_name + '</td><td>' + a.model_name + '</td><td>' + a.process_name + '</td><td>' + a.allocated_quantity + '</td><td>' + a.completed_quantity + '</td><td>' + a.completion_rate + '%</td></tr>';
+                });
+                return html + '</tbody></table></div>';
+            }
+
+            initCharts();
+        },
         add: function () {
             Controller.api.initOrderModelSelect();
             Controller.api.bindevent();
@@ -212,6 +388,14 @@
             }
         }
     };
+
+    // 小写别名：驼峰方法经 strtolower 后的形式
+    Controller.progressstats  = function () { /* 服务端渲染 */ };
+    Controller.getordermodels = function () { /* AJAX 接口，无视图 */ };
+    Controller.getorderdetails    = function () { /* AJAX 接口 */ };
+    Controller.getproductdetails  = function () { /* AJAX 接口 */ };
+    Controller.getprocessdetails  = function () { /* AJAX 接口 */ };
+    Controller.getemployeedetails = function () { /* AJAX 接口 */ };
 
     window.__backendController = Controller;
 })();

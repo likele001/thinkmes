@@ -1,4 +1,4 @@
-<form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+<form id="form-edit" class="form-horizontal" role="form" action="" method="post" data-id="{$row.id}" data-module="crm/payment">
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">合同<span class="text-danger">*</span></label>
         <div class="col-xs-12 col-sm-8">
@@ -42,61 +42,3 @@
         </div>
     </div>
 </form>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var form = document.getElementById('form-edit');
-    if (!form) return;
-
-    var submitBtn = form.querySelector('button[type="submit"]');
-
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        var contractId = form.querySelector('[name="row[contract_id]"]').value || '';
-        var amount = form.querySelector('[name="row[amount]"]').value || '';
-
-        if (!contractId) {
-            alert('请选择合同');
-            return;
-        }
-        if (!amount || parseFloat(amount) <= 0) {
-            alert('请输入有效的回款金额');
-            return;
-        }
-
-        if (submitBtn) {
-            submitBtn.disabled = true;
-        }
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', form.getAttribute('action') || window.location.href, true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                }
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    var r;
-                    try {
-                        r = JSON.parse(xhr.responseText);
-                    } catch (e) {
-                        alert('返回数据格式错误');
-                        return;
-                    }
-                    if (r.msg) {
-                        alert(r.msg);
-                    }
-                    if (r.code === 1) {
-                        var base = (window.Config && Config.moduleurl) ? Config.moduleurl : '/admin';
-                        window.location.href = base + '/crm/payment/index';
-                    }
-                } else {
-                    alert('网络错误，请重试');
-                }
-            }
-        };
-        xhr.send(new URLSearchParams(new FormData(form)).toString());
-    });
-});
-</script>

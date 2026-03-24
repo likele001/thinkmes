@@ -35,6 +35,7 @@ Page({
     totalQuantity: 0,
     totalWage: 0,
     pendingCount: 0,
+    loadedOnce: false,
   },
 
   onLoad() {
@@ -42,11 +43,13 @@ Page({
       wx.reLaunch({ url: '/pages/login/login' });
       return;
     }
-    this.load();
+    this.load({ reset: true });
   },
 
   onShow() {
-    if (getApp().checkUserLogin()) this.load();
+    if (this.data.loadedOnce && getApp().checkUserLogin()) {
+      this.load({ reset: true });
+    }
   },
 
   onPullDownRefresh() {
@@ -54,31 +57,54 @@ Page({
     this.load().then(() => wx.stopPullDownRefresh());
   },
 
-  load() {
-    this.setData({ loading: true });
-    const { page, limit } = this.data;
-    return userApi.getReports(page, limit)
+  load(opts = {}) {
+    const reset = !!opts.reset;
+    const nextPage = reset ? 1 : this.data.page;
+    const prevRecords = reset ? [] : (this.data.records || []);
+    this.setData({ loading: true, ...(reset ? { page: 1, hasMore: true, records: [] } : {}) });
+    const { limit } = this.data;
+    return userApi.getReports(nextPage, limit)
       .then((res) => {
-        const raw = res.data;
-        const list = raw && (raw.rows || raw.list || raw.data || Array.isArray(raw) ? (raw.rows || raw.list || raw.data || raw) : []) || [];
-        const records = (Array.isArray(list) ? list : []).map((r) => ({
+        const raw = res.data || {};
+        const list = raw && (raw.rows || raw.list || raw.data || (Array.isArray(raw) ? raw : [])) || [];
+        const mapped = (Array.isArray(list) ? list : []).map((r) => ({
           ...r,
           createtime_text: formatReportTime(r),
           statusText: r.status === 1 ? '已审核' : r.status === 2 ? '审核被拒绝' : '待审核',
         }));
-        const totalQuantity = records.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
-        const totalWage = records.reduce((s, r) => s + (Number(r.wage) || 0), 0);
-        const pendingCount = records.filter((r) => r.status !== 1 && r.status !== 2).length;
+        const merged = nextPage === 1 ? mapped : [...prevRecords, ...mapped];
+        // 去重（按 id/report_id）
+        const dedupMap = {};
+        const unique = [];
+        merged.forEach((r) => {
+          const key = r.id || r.report_id || `${r.order_id || ''}-${r.create_time || ''}-${unique.length}`;
+          if (!dedupMap[key]) {
+            dedupMap[key] = true;
+            unique.push(r);
+          }
+        });
+        const totalFromApi = raw.total || raw.count || raw.total_count;
+        const totalQuantity = unique.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
+        const totalWage = unique.reduce((s, r) => s + (Number(r.wage) || 0), 0);
+        const pendingCount = unique.filter((r) => r.status !== 1 && r.status !== 2).length;
+        const hasMore = totalFromApi != null
+          ? unique.length < Number(totalFromApi)
+          : mapped.length >= limit;
         this.setData({
-          records: page === 1 ? records : [...(this.data.records || []), ...records],
+          records: unique,
           loading: false,
-          hasMore: records.length >= limit,
+          hasMore,
           totalQuantity,
           totalWage: totalWage.toFixed(2),
           pendingCount,
+          loadedOnce: true,
+          page: nextPage + 1,
         });
       })
-      .catch(() => this.setData({ loading: false }));
+      .catch((err) => {
+        this.setData({ loading: false });
+        wx.showToast({ title: (err && err.msg) || '加载失败，请重试', icon: 'none' });
+      });
   },
 
   goDetail(e) {
@@ -89,12 +115,10 @@ Page({
 
   loadMore() {
     if (this.data.loading || !this.data.hasMore) return;
-    this.setData({ page: this.data.page + 1 });
-    this.load();
+    this.load({ reset: false });
   },
 
   refresh() {
-    this.setData({ page: 1, hasMore: true });
-    this.load();
+    this.load({ reset: true });
   },
 });

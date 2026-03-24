@@ -1,4 +1,4 @@
-<form id="form-edit" class="form-horizontal" role="form" action="" method="post">
+<form id="form-edit" class="form-horizontal" role="form" data-id="{$row.id|default=''}" data-module="mes/customer">
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">客户名称<span class="text-danger">*</span></label>
         <div class="col-xs-12 col-sm-8">
@@ -61,54 +61,3 @@
         </div>
     </div>
 </form>
-<script>
-(function() {
-    var form = $('#form-edit')[0];
-    var submitBtn = $(form).find('button[type="submit"]');
-
-    $(form).on('submit', function(e) {
-        e.preventDefault();
-
-        var name = $(form).find('[name="row[customer_name]"]').val();
-        var account = $(form).find('[name="row[login_account]"]').val();
-        var password = $(form).find('[name="row[login_password]"]').val();
-
-        if (!name || !name.trim()) {
-            alert('请输入客户名称');
-            return false;
-        }
-        if (!account || !account.trim()) {
-            alert('请输入登录账号');
-            return false;
-        }
-        if (password && (password.length < 6 || password.length > 32)) {
-            alert('登录密码长度为 6-32 位');
-            return false;
-        }
-
-        submitBtn.prop('disabled', true);
-
-        $.ajax({
-            url: $(form).attr('action') || window.location.href,
-            type: 'POST',
-            data: $(form).serialize(),
-            dataType: 'json',
-            success: function(r) {
-                if (r.msg) {
-                    alert(r.msg);
-                }
-                if (r.code === 1) {
-                    window.location.href = '/admin/mes/customer';
-                }
-            },
-            error: function() {
-                alert('网络错误，请重试');
-            },
-            complete: function() {
-                submitBtn.prop('disabled', false);
-            }
-        });
-    });
-})();
-</script>
-

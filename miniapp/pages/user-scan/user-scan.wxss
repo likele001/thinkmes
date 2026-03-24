@@ -48,14 +48,14 @@
 
 .result-actions { display: flex; flex-direction: column; gap: 20rpx; }
 .result-actions .btn-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #4A3A8C;
   color: #fff;
   border: none;
   border-radius: 44rpx;
   height: 88rpx;
   line-height: 88rpx;
   font-size: 32rpx;
-  font-weight: 600;
+  font-weight: 700;
 }
 .result-actions .btn-secondary {
   background: rgba(255,255,255,0.9);

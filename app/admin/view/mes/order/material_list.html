@@ -98,13 +98,4 @@
         </table>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var m = /[?&]toast=([^&]+)/.exec(location.href);
-    if (m && m[1]) {
-        try { var msg = decodeURIComponent(m[1]); if (msg && typeof layui !== 'undefined' && layui.msg) layui.msg(msg); else if (msg) alert(msg); } catch (e) {}
-        history.replaceState(null, '', location.pathname + '?id=' + (location.search.match(/[?&]id=(\d+)/) && RegExp.$1 ? RegExp.$1 : ''));
-    }
-});
-</script>
+<script type="application/json" id="order-material-list-meta">{"orderId":{$order.id}}</script>

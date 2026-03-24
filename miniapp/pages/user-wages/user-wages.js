@@ -11,12 +11,13 @@ Page({
     selectedMonth: '',
     startDate: '',
     endDate: '',
-    dateMode: 'month', // 'month' | 'single' | 'range'
+    dateMode: 'month',
     orderNo: '',
     productName: '',
     totalWage: '0',
     totalQuantity: 0,
     filterExpanded: false,
+    loadedOnce: false,
   },
 
   onLoad() {
@@ -27,16 +28,17 @@ Page({
     const now = new Date();
     const ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     this.setData({ selectedMonth: ym });
-    this.load();
+    this.load({ reset: true });
   },
 
   onShow() {
-    if (getApp().checkUserLogin()) this.load();
+    if (this.data.loadedOnce && getApp().checkUserLogin()) {
+      this.load({ reset: true });
+    }
   },
 
   onPullDownRefresh() {
-    this.setData({ page: 1, hasMore: true });
-    this.load().then(() => wx.stopPullDownRefresh());
+    this.load({ reset: true }).then(() => wx.stopPullDownRefresh());
   },
 
   buildOpts() {
@@ -52,37 +54,53 @@ Page({
     return opts;
   },
 
-  load() {
-    this.setData({ loading: true });
-    const { page, limit } = this.data;
-    const opts = this.buildOpts();
-    return userApi.getWages(page, limit, opts)
+  load(opts = {}) {
+    const reset = !!opts.reset;
+    const nextPage = reset ? 1 : this.data.page;
+    const prevList = reset ? [] : (this.data.wageList || []);
+    this.setData({ loading: true, ...(reset ? { page: 1, hasMore: true, wageList: [] } : {}) });
+    const { limit } = this.data;
+    const optsReq = this.buildOpts();
+    return userApi.getWages(nextPage, limit, optsReq)
       .then((res) => {
         const raw = res.data || {};
         const list = raw.list || raw.rows || raw.data || (Array.isArray(raw) ? raw : []) || [];
-        const wageList = Array.isArray(list) ? list : [];
-        const totalQuantity = wageList.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
-        const totalWage = raw.totalWage != null ? String(raw.totalWage) : wageList.reduce((s, r) => s + (Number(r.wage) ?? Number(r.total_wage) ?? 0), 0).toFixed(2);
+        const mapped = Array.isArray(list) ? list : [];
+        const merged = nextPage === 1 ? mapped : [...prevList, ...mapped];
+        const dedupMap = {};
+        const unique = [];
+        merged.forEach((r) => {
+          const key = r.id || `${r.order_no || ''}-${r.create_time || ''}-${unique.length}`;
+          if (!dedupMap[key]) { dedupMap[key] = true; unique.push(r); }
+        });
+        const totalFromApi = raw.total || raw.count || raw.total_count;
+        const totalQuantity = unique.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
+        const totalWageRaw = raw.totalWage != null ? String(raw.totalWage) : unique.reduce((s, r) => s + (Number(r.wage) ?? Number(r.total_wage) ?? 0), 0).toFixed(2);
+        const totalWage = typeof totalWageRaw === 'number' ? totalWageRaw.toFixed(2) : totalWageRaw;
+        const hasMore = totalFromApi != null ? unique.length < Number(totalFromApi) : mapped.length >= limit;
         this.setData({
-          wageList: page === 1 ? wageList : [...(this.data.wageList || []), ...wageList],
+          wageList: unique,
           loading: false,
-          hasMore: wageList.length >= limit,
-          totalWage: typeof totalWage === 'number' ? totalWage.toFixed(2) : totalWage,
+          hasMore,
+          totalWage,
           totalQuantity,
+          loadedOnce: true,
+          page: nextPage + 1,
         });
       })
-      .catch(() => this.setData({ loading: false }));
+      .catch((err) => {
+        this.setData({ loading: false });
+        wx.showToast({ title: (err && err.msg) || '加载失败', icon: 'none' });
+      });
   },
 
   loadMore() {
     if (this.data.loading || !this.data.hasMore) return;
-    this.setData({ page: this.data.page + 1 });
-    this.load();
+    this.load({ reset: false });
   },
 
   refresh() {
-    this.setData({ page: 1, hasMore: true });
-    this.load();
+    this.load({ reset: true });
   },
 
   toggleFilter() {
@@ -94,14 +112,14 @@ Page({
     if (!v) return;
     const parts = v.split('-');
     const month = parts[0] + '-' + (parts[1] || '01');
-    this.setData({ selectedMonth: month, dateMode: 'month', page: 1, hasMore: true });
-    this.load();
+    this.setData({ selectedMonth: month, dateMode: 'month' });
+    this.load({ reset: true });
   },
 
   onWorkDateChange(e) {
     const v = e.detail.value;
-    this.setData({ workDate: v, dateMode: 'single', page: 1, hasMore: true });
-    this.load();
+    this.setData({ workDate: v, dateMode: 'single' });
+    this.load({ reset: true });
   },
 
   onStartDateChange(e) {
@@ -119,8 +137,8 @@ Page({
   },
 
   applyFilter() {
-    this.setData({ page: 1, hasMore: true, filterExpanded: false });
-    this.load();
+    this.setData({ filterExpanded: false });
+    this.load({ reset: true });
   },
 
   clearFilter() {
@@ -128,8 +146,8 @@ Page({
     const ym = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     this.setData({
       orderNo: '', productName: '', startDate: '', endDate: '', workDate: '',
-      selectedMonth: ym, dateMode: 'month', page: 1, hasMore: true, filterExpanded: false,
+      selectedMonth: ym, dateMode: 'month', filterExpanded: false,
     });
-    this.load();
+    this.load({ reset: true });
   },
 });

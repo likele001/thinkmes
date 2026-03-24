@@ -1071,12 +1071,15 @@ class Order extends Backend
             $sheet->getColumnDimension('E')->setWidth(10);
 
             $filename = '订单导入模板_' . date('YmdHis') . '.xlsx';
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment; filename*="UTF-8\'\'' . rawurlencode($filename) . '"');
-            header('Cache-Control: max-age=0');
+            ob_start();
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
             $writer->save('php://output');
-            exit;
+            $content = ob_get_clean();
+            return response($content, 200, [
+                'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename*="UTF-8\'\'' . rawurlencode($filename) . '"',
+                'Cache-Control'       => 'max-age=0',
+            ]);
         } catch (\Throwable $e) {
             return $this->error('模板生成失败：' . $e->getMessage());
         }
@@ -1263,7 +1266,7 @@ class Order extends Backend
 
         View::assign('order', $order);
         View::assign('products', array_values($products));
-        View::assign('order_total', $orderTotal);
+        View::assign('orderTotal', $orderTotal);
         View::assign('title', '订单进度（按产品·工序） - ' . $order->order_no);
         return $this->fetchWithLayout('mes/order/process_detail');
     }

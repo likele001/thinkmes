@@ -1,4 +1,5 @@
-<form id="form-add" class="form-horizontal" role="form" action="" method="post">
+<form id="form-add" class="form-horizontal" role="form" method="post"
+      data-url="mes/shipment/add" data-back="mes/shipment">
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('订单号')}<span class="text-danger">*</span></label>
         <div class="col-xs-12 col-sm-8">
@@ -83,36 +84,4 @@
         </div>
     </div>
 </form>
-<script>
-var modelList = {$modelList|raw};
-$(document).ready(function() {
-    var itemIndex = 0;
-
-    // 添加一行明细
-    function addItem() {
-        var html = '<tr>' +
-            '<td><select class="form-control" name="items[' + itemIndex + '][model_id]">';
-        $.each(modelList, function(i, v) {
-            html += '<option value="' + v.id + '">' + v.name + '</option>';
-        });
-        html += '</select></td>' +
-            '<td><input type="number" class="form-control" name="items[' + itemIndex + '][quantity]" value="1" min="1"></td>' +
-            '<td><input type="text" class="form-control" name="items[' + itemIndex + '][batch_no]" placeholder="批次号"></td>' +
-            '<td><input type="text" class="form-control" name="items[' + itemIndex + '][trace_code]" placeholder="追溯码"></td>' +
-            '<td><button type="button" class="btn btn-xs btn-danger remove-item">删除</button></td>' +
-            '</tr>';
-        $('#items-container').append(html);
-        itemIndex++;
-    }
-
-    // 添加按钮
-    $('#add-item').click(function() {
-        addItem();
-    });
-
-    // 删除按钮
-    $(document).on('click', '.remove-item', function() {
-        $(this).closest('tr').remove();
-    });
-});
-</script>
+<script type="application/json" id="shipment-model-list">{$modelList|raw}</script>

@@ -211,6 +211,64 @@
             initCheckTable();
         },
 
+        // 产品流水（成品出入库记录）
+        productlog: function () {
+            var $table = $('#table');
+            if ($table.length === 0 || typeof $table.bootstrapTable !== 'function' || $table.data('bootstrap.table')) return;
+
+            var typeMap = {
+                'shipment_out': '发货出库',
+                'report_in':    '报工入库',
+                'check_in':     '盘点入库',
+                'check_out':    '盘点出库',
+                'other_in':     '其他入库',
+                'other_out':    '其他出库'
+            };
+
+            $table.bootstrapTable({
+                url: base + '/mes/stock/product_log',
+                pk: 'id',
+                sortName: 'id',
+                sortOrder: 'desc',
+                pagination: true,
+                sidePagination: 'server',
+                pageSize: 20,
+                queryParams: function (p) {
+                    p.product_model_id = $('#filter-model').val() || '';
+                    p.business_type = $('#filter-type').val() || '';
+                    return p;
+                },
+                columns: [
+                    {field: 'id', title: '流水编号', width: 80},
+                    {field: 'product_model_id', title: '产品型号', formatter: function (v, row) {
+                        if (row.productModel) {
+                            var model = row.productModel;
+                            var pname = (model.product && model.product.name) ? model.product.name : '';
+                            return pname ? (pname + ' - ' + (model.name || '')) : (model.name || '-');
+                        }
+                        return v || '-';
+                    }},
+                    {field: 'quantity', title: '变动数量', width: 120, formatter: function (v) {
+                        var n = parseFloat(v);
+                        return n > 0 ? '<span class="text-success">+' + v + '</span>' : '<span class="text-danger">' + v + '</span>';
+                    }},
+                    {field: 'business_type', title: '业务类型', width: 130, formatter: function (v) {
+                        return typeMap[v] || v;
+                    }},
+                    {field: 'operator_id', title: '操作人', width: 100},
+                    {field: 'create_time', title: '操作时间', width: 180},
+                    {field: 'remark', title: '备注'}
+                ],
+                responseHandler: function (res) {
+                    return { total: (res.data && res.data.total) ? res.data.total : 0, rows: (res.data && res.data.list) ? res.data.list : [] };
+                }
+            });
+
+            $(document).off('click', '#btn-search').on('click', '#btn-search', function () {
+                $table.bootstrapTable('refresh');
+            });
+        },
+
         // 库存预警
         alert: function () {
             var $table = $('#table');
