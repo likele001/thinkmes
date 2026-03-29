@@ -40,7 +40,13 @@ class TenantResourceCheck
         // 获取套餐信息
         $package = TenantPackageModel::find($tenant->package_id);
         if (!$package) {
-            return json(['code' => 0, 'msg' => '套餐不存在']);
+            $adminCount = AdminModel::where('tenant_id', $tenantId)->where('status', 1)->count();
+            $userCount = UserModel::where('tenant_id', $tenantId)->where('status', 1)->count();
+            $request->package = null;
+            $request->tenant = $tenant;
+            $request->adminCount = $adminCount;
+            $request->userCount = $userCount;
+            return $next($request);
         }
         
         // 检查管理员数限制

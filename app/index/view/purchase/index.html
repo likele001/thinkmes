@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选择套餐 - KeleAdmin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        .package-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .package-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .package-card.featured {
+            border: 2px solid #667eea;
+            position: relative;
+        }
+        .package-card.featured::before {
+            content: '推荐';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #667eea;
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .package-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        .package-price {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .package-price small {
+            font-size: 18px;
+        }
+        .package-features {
+            padding: 30px;
+        }
+        .package-features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .package-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .package-features li:last-child {
+            border-bottom: none;
+        }
+        .package-features li::before {
+            content: '✓';
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .btn-purchase {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-purchase:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="text-white mb-3">选择您的套餐</h1>
+            <p class="text-white-50">灵活的套餐选择，满足不同规模企业的需求</p>
+        </div>
+
+        <div class="row g-4">
+            {volist name="packages" id="pkg"}
+            <div class="col-lg-4 col-md-6">
+                <div class="card package-card {if $pkg.sort == 1}featured{/if}">
+                    <div class="package-header">
+                        <h3>{$pkg.name}</h3>
+                        <div class="package-price">
+                            <small>¥</small>{$pkg.price_text}
+                        </div>
+                        <p class="mb-0">有效期：{$pkg.expire_days_text}</p>
+                    </div>
+                    <div class="package-features">
+                        <ul>
+                            <li>最多 {$pkg.max_admin} 个管理员</li>
+                            <li>最多 {$pkg.max_user} 个用户</li>
+                            {volist name="pkg.features" id="feature"}
+                            <li>{$feature}</li>
+                            {/volist}
+                        </ul>
+                        <div class="text-center mt-4">
+                            <a href="/index/purchase/form?package_id={$pkg.id}" class="btn btn-purchase btn-lg">
+                                立即购买
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/volist}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

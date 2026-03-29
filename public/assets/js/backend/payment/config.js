@@ -1,6 +1,12 @@
 /**
- * 支付网关列表（具体逻辑在视图中内联，此文件仅满足 backend-loader 按 jsname 加载，避免 404）
+ * 支付网关配置
  */
 (function () {
-    window.__backendController = { index: function () {} };
+    var Controller = {
+        index: function () {
+            // 表格初始化逻辑已移至视图文件中
+            console.log('Payment Config Index page loaded');
+        }
+    };
+    window.__backendController = Controller;
 })();

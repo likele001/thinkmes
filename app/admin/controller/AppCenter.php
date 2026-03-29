@@ -26,6 +26,7 @@ class AppCenter extends Backend
         'equipment' => ['title' => '设备管理', 'description' => '设备、点检、保养、维修'],
         'hr'        => ['title' => '人事考勤', 'description' => '组织、员工、考勤、排班、请假、薪资'],
         'finance'   => ['title' => '财务管理', 'description' => '科目、凭证、账簿、报表'],
+        'restaurant'=> ['title' => '餐饮SaaS', 'description' => '门店、区域、桌台、菜品、扫码点餐'],
     ];
 
     /** 卸载时可选删除的数据表：key => 表名前缀（不含 fa_），用于 SHOW TABLES LIKE prefix+pattern；上传安装的以 app.json tables 为准 */
@@ -236,6 +237,7 @@ class AppCenter extends Backend
         $deleteTables = (int) $this->request->post('delete_tables', 0);
         $dropped = [];
         if ($deleteTables === 1) {
+            $prefix = $this->getTablePrefix();
             $tables = $this->getAppTablesForUninstall($appKey, $prefix);
             foreach ($tables as $fullName) {
                 try {

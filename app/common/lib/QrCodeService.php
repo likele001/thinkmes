@@ -64,6 +64,48 @@ class QrCodeService
     }
 
     /**
+     * 生成二维码 PNG（自定义文件名），返回相对路径
+     * @param string $content
+     * @param int $tenantId
+     * @param string $filename 例如 restaurant_table_12.png
+     * @param int $size
+     * @return string
+     */
+    public static function generateWithCustomName(string $content, int $tenantId, string $filename, int $size = 280): string
+    {
+        if ($content === '' || $filename === '') {
+            return '';
+        }
+        $root = app()->getRootPath() . 'public/';
+        $subDir = self::UPLOAD_SUBDIR . '/' . max(0, $tenantId) . '/';
+        $dir = $root . $subDir;
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        $fullPath = $dir . $filename;
+        try {
+            if (class_exists(\Endroid\QrCode\Builder\Builder::class)) {
+                $builder = \Endroid\QrCode\Builder\Builder::create()->data($content)->size($size)->margin(10);
+                $result = $builder->build();
+                $result->saveToFile($fullPath);
+                return $subDir . $filename;
+            }
+            if (class_exists(\Endroid\QrCode\QrCode::class) && class_exists(\Endroid\QrCode\Writer\PngWriter::class)) {
+                $qrCode = \Endroid\QrCode\QrCode::create($content)->setSize($size)->setMargin(10);
+                $writer = new \Endroid\QrCode\Writer\PngWriter();
+                $result = $writer->write($qrCode);
+                if (method_exists($result, 'saveToFile')) {
+                    $result->saveToFile($fullPath);
+                } else {
+                    file_put_contents($fullPath, $result->getString());
+                }
+                return $subDir . $filename;
+            }
+        } catch (\Throwable $e) {
+        }
+        return '';
+    }
+    /**
      * 根据相对路径拼出完整访问 URL
      */
     public static function pathToUrl(string $relativePath): string

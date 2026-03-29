@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租户注册 - KeleAdmin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+        .package-option {
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .package-option:hover {
+            border-color: #667eea;
+        }
+        .package-option.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .package-option input[type="radio"] {
+            display: none;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+        .btn-register {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 40px;
+            font-weight: bold;
+            font-size: 16px;
+            width: 100%;
+            color: white;
+        }
+        .btn-register:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2 class="text-center mb-4">租户注册</h2>
+
+        <!-- 步骤1：选择套餐 -->
+        <div id="step1" class="step active">
+            <h4 class="mb-3">选择套餐</h4>
+            <div id="packageList">
+                <p class="text-muted">加载中...</p>
+            </div>
+            <button class="btn btn-register mt-3" onclick="nextStep(2)">下一步</button>
+        </div>
+
+        <!-- 步骤2：填写信息 -->
+        <div id="step2" class="step">
+            <h4 class="mb-3">填写信息</h4>
+            <div class="package-summary mb-3" style="background: #f8f9ff; padding: 15px; border-radius: 10px;">
+                <strong>已选套餐：</strong> <span id="selectedPackage">-</span>
+            </div>
+            <form id="registerForm">
+                <input type="hidden" name="package_id" id="package_id">
+                <div class="mb-3">
+                    <label class="form-label">企业名称 *</label>
+                    <input type="text" class="form-control" name="company_name" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">联系人 *</label>
+                        <input type="text" class="form-control" name="contact_name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">联系电话 *</label>
+                        <input type="text" class="form-control" name="contact_phone" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">联系邮箱 *</label>
+                    <input type="email" class="form-control" name="contact_email" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">绑定域名 *</label>
+                    <input type="text" class="form-control" name="domain" placeholder="example.com" required>
+                    <small class="text-muted">填写后用于访问您的系统</small>
+                </div>
+                <hr>
+                <h5 class="mb-3">管理员账号</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">登录账号 *</label>
+                        <input type="text" class="form-control" name="login_account" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">登录密码 *</label>
+                        <input type="password" class="form-control" name="login_password" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary mb-2" onclick="prevStep(1)">上一步</button>
+                <button type="submit" class="btn btn-register">提交注册</button>
+            </form>
+        </div>
+
+        <!-- 步骤3：支付 -->
+        <div id="step3" class="step">
+            <h4 class="mb-3">完成支付</h4>
+            <div class="package-summary mb-3" style="background: #f8f9ff; padding: 15px; border-radius: 10px;">
+                <p class="mb-1"><strong>企业：</strong> <span id="payCompany">-</span></p>
+                <p class="mb-1"><strong>套餐：</strong> <span id="payPackage">-</span></p>
+                <p class="mb-0"><strong>金额：</strong> <span id="payAmount">-</span></p>
+            </div>
+            <h5 class="mb-3">选择支付方式</h5>
+            <div id="paymentMethods">
+                <p class="text-muted">加载中...</p>
+            </div>
+            <input type="hidden" id="payGatewayId">
+            <button type="button" class="btn btn-secondary mb-2" onclick="prevStep(2)">返回修改</button>
+            <button class="btn btn-register" onclick="submitPayment()">立即支付</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedPackage = null;
+
+        // 加载套餐列表
+        fetch('/api/tenant_purchase/package_list')
+            .then(res => res.json())
+            .then(data => {
+                if (data.code === 1) {
+                    const container = document.getElementById('packageList');
+                    container.innerHTML = data.data.map(pkg => `
+                        <div class="package-option" data-package-id="${pkg.id}" data-package-name="${pkg.name}" data-package-price="${pkg.price}">
+                            <input type="radio" name="package" value="${pkg.id}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${pkg.name}</strong>
+                                    <small class="d-block text-muted">${pkg.expire_days_text}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-primary">¥${pkg.price_text}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // 绑定点击事件
+                    document.querySelectorAll('.package-option').forEach(el => {
+                        el.addEventListener('click', function() {
+                            document.querySelectorAll('.package-option').forEach(e => e.classList.remove('selected'));
+                            this.classList.add('selected');
+                            this.querySelector('input[type="radio"]').checked = true;
+                            selectedPackage = {
+                                id: this.dataset.packageId,
+                                name: this.dataset.packageName,
+                                price: this.dataset.packagePrice
+                            };
+                        });
+                    });
+                }
+            });
+
+        function nextStep(step) {
+            if (step === 2) {
+                if (!selectedPackage) {
+                    alert('请选择套餐');
+                    return;
+                }
+                document.getElementById('package_id').value = selectedPackage.id;
+                document.getElementById('selectedPackage').textContent = selectedPackage.name + ' - ¥' + selectedPackage.price;
+            }
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step3').classList.remove('active');
+            document.getElementById('step' + step).classList.add('active');
+        }
+
+        function prevStep(step) {
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step3').classList.remove('active');
+            document.getElementById('step' + step).classList.add('active');
+        }
+
+        // 表单提交
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('/api/tenant_purchase/create_order', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.code === 1) {
+                    window.orderNo = data.data.order_no;
+                    document.getElementById('payCompany').textContent = formData.get('company_name');
+                    document.getElementById('payPackage').textContent = selectedPackage.name;
+                    document.getElementById('payAmount').textContent = '¥' + selectedPackage.price;
+                    loadPaymentMethods();
+                    nextStep(3);
+                } else {
+                    alert(data.msg || '注册失败');
+                }
+            })
+            .catch(error => {
+                alert('提交失败：' + error.message);
+            });
+        });
+
+        function loadPaymentMethods() {
+            fetch('/api/tenant_purchase/payment_methods')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code === 1) {
+                        const container = document.getElementById('paymentMethods');
+                        if (data.data.length === 0) {
+                            container.innerHTML = '<p class="text-warning">暂无可用的支付方式，请联系管理员配置</p>';
+                            return;
+                        }
+                        container.innerHTML = data.data.map(gateway => `
+                            <div class="package-option" data-gateway-id="${gateway.id}">
+                                <div class="d-flex align-items-center">
+                                    <input type="radio" name="payment_method" value="${gateway.id}">
+                                    <div class="ms-2">
+                                        <strong>${gateway.name}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+
+                        document.querySelectorAll('#paymentMethods .package-option').forEach(el => {
+                            el.addEventListener('click', function() {
+                                document.querySelectorAll('#paymentMethods .package-option').forEach(e => e.classList.remove('selected'));
+                                this.classList.add('selected');
+                                document.getElementById('payGatewayId').value = this.dataset.gatewayId;
+                                this.querySelector('input[type="radio"]').checked = true;
+                            });
+                        });
+                    }
+                });
+        }
+
+        function submitPayment() {
+            const gatewayId = document.getElementById('payGatewayId').value;
+            if (!gatewayId) {
+                alert('请选择支付方式');
+                return;
+            }
+
+            const payData = new URLSearchParams();
+            payData.append('order_no', window.orderNo);
+            payData.append('gateway_id', gatewayId);
+
+            fetch('/api/tenant_purchase/pay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: payData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.code === 1) {
+                    if (data.data.pay_url) {
+                        window.location.href = data.data.pay_url;
+                    } else if (data.data.form_html) {
+                        document.body.innerHTML = data.data.form_html;
+                    } else {
+                        alert('支付发起成功');
+                    }
+                } else {
+                    alert(data.msg || '发起支付失败');
+                }
+            })
+            .catch(error => {
+                alert('支付失败：' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

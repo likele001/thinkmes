@@ -124,10 +124,15 @@ abstract class Backend extends BaseController
         // controllername: 驼峰转小写路径，如 Admin->admin, AuthRule->auth_rule
         $controllername = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $controller));
         
-        // 如果路径中包含 mes、crm 等子目录，需要添加到 controllername 前面
+        // 如果路径中包含业务子目录，需要添加到 controllername 前面
         // 例如：mes/process/index -> mes/process，crm/customer/index -> crm/customer
-        if (count($pathParts) >= 2 && in_array($pathParts[0], ['mes', 'crm', 'ai', 'payment', 'equipment', 'hr', 'finance'], true)) {
-            $controllername = $pathParts[0] . '/' . $controllername;
+        if (count($pathParts) >= 2) {
+            $module = $pathParts[0];
+            $ctrlDir = root_path() . 'app' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'controller' . DIRECTORY_SEPARATOR . $module;
+            $routeFile = root_path() . 'app' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'route' . DIRECTORY_SEPARATOR . $module . '.php';
+            if (is_dir($ctrlDir) || is_file($routeFile)) {
+                $controllername = $module . '/' . $controllername;
+            }
         }
         
         $actionname     = strtolower($action);

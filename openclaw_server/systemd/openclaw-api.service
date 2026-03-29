@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenClaw API (Minimal PHP Server)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/www/wwwroot/thinkmes
+Environment=OC_API_KEY=change_me
+Environment=OC_DATA_DIR=/tmp/openclaw_data
+ExecStart=/usr/bin/php -S 0.0.0.0:9501 openclaw_server/router.php
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+

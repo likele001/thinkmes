@@ -5,8 +5,10 @@ namespace app\admin\controller\mes;
 
 use app\admin\controller\Backend;
 use app\admin\model\mes\ProcessRouteModel;
+use app\admin\model\mes\ProcessModel;
 use app\admin\model\mes\ProductModel;
 use app\admin\model\mes\ProductModelModel;
+use think\facade\Db;
 use think\facade\View;
 use think\Response;
 
@@ -16,11 +18,24 @@ class ProcessRoute extends Backend
     {
         $limitParam = $this->request->get('limit');
         if (!$this->request->isAjax() && ($limitParam === null || $limitParam === '')) {
-            $tenantId = $this->getTenantId();
-            $models = ProductModelModel::with(['product'])
-                ->where('tenant_id', $tenantId)
-                ->where('status', 1)
-                ->select();
+            $tenantId = $this->resolveTenantId();
+            $isPlatform = $this->isPlatformAdmin() && $this->getTenantId() === 0;
+            View::assign('is_platform', $isPlatform ? 1 : 0);
+            View::assign('tenant_id', $tenantId);
+            if ($isPlatform) {
+                $tenants = Db::name('tenant')->where('status', 1)->order('id', 'asc')->field('id,name')->select()->toArray();
+                View::assign('tenants', $tenants);
+            } else {
+                View::assign('tenants', []);
+            }
+
+            $models = [];
+            if ($tenantId > 0) {
+                $models = ProductModelModel::with(['product'])
+                    ->where('tenant_id', $tenantId)
+                    ->where('status', 1)
+                    ->select();
+            }
             $modelList = [];
             foreach ($models as $model) {
                 $productName = '';
@@ -47,9 +62,15 @@ class ProcessRoute extends Backend
         $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
 
         $tenantId = $this->getTenantId();
-        $query = ProcessRouteModel::with(['product', 'model'])
-            ->where('tenant_id', $tenantId)
-            ->order('id', 'desc');
+        $query = ProcessRouteModel::with(['product', 'model'])->order('id', 'desc');
+        if ($tenantId > 0) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $tenantParam = (int) $this->request->get('tenant_id', 0);
+            if ($tenantParam > 0) {
+                $query->where('tenant_id', $tenantParam);
+            }
+        }
 
         $modelId = (int) $this->request->get('model_id', 0);
         if ($modelId > 0) {
@@ -75,11 +96,14 @@ class ProcessRoute extends Backend
                 return $this->error('参数不能为空');
             }
 
-            $tenantId = $this->getTenantId();
+            $tenantId = $this->resolveTenantId();
+            if ($tenantId <= 0) {
+                return $this->error('tenant_id required');
+            }
             $row['tenant_id'] = $tenantId;
             $row['route_name'] = trim((string) ($row['route_name'] ?? ''));
             $row['route_code'] = trim((string) ($row['route_code'] ?? ''));
-            $row['steps_json'] = trim((string) ($row['steps_json'] ?? ''));
+            $row['steps_json'] = $this->decodeStepsJson(trim((string) ($row['steps_json'] ?? '')));
             $row['create_time'] = time();
             $row['update_time'] = time();
 
@@ -118,11 +142,24 @@ class ProcessRoute extends Backend
             }
         }
 
-        $tenantId = $this->getTenantId();
-        $models = ProductModelModel::with(['product'])
-            ->where('tenant_id', $tenantId)
-            ->where('status', 1)
-            ->select();
+        $tenantId = $this->resolveTenantId();
+        $isPlatform = $this->isPlatformAdmin() && $this->getTenantId() === 0;
+        View::assign('is_platform', $isPlatform ? 1 : 0);
+        View::assign('tenant_id', $tenantId);
+        if ($isPlatform) {
+            $tenants = Db::name('tenant')->where('status', 1)->order('id', 'asc')->field('id,name')->select()->toArray();
+            View::assign('tenants', $tenants);
+        } else {
+            View::assign('tenants', []);
+        }
+
+        $models = [];
+        if ($tenantId > 0) {
+            $models = ProductModelModel::with(['product'])
+                ->where('tenant_id', $tenantId)
+                ->where('status', 1)
+                ->select();
+        }
         $modelList = [];
         foreach ($models as $model) {
             $productName = '';
@@ -138,6 +175,27 @@ class ProcessRoute extends Backend
             $modelList[$model->id] = $fullName;
         }
         View::assign('modelList', $modelList);
+        $processList = [];
+        if ($tenantId > 0) {
+            $processList = ProcessModel::whereIn('tenant_id', [0, $tenantId])->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->column('name', 'id');
+        }
+        View::assign('processList', $processList ?: []);
+        $routeTemplates = [];
+        if ($tenantId > 0) {
+            $tpl = ProcessRouteModel::with(['model', 'product'])
+                ->where('tenant_id', $tenantId)
+                ->order('id', 'desc')
+                ->limit(200)
+                ->select()
+                ->toArray();
+            foreach ($tpl as $t) {
+                $mn = $t['model']['name'] ?? '';
+                $pn = $t['model']['product']['name'] ?? ($t['product']['name'] ?? '');
+                $label = trim(($t['route_name'] ?? '') . ($pn || $mn ? ' - ' . trim($pn . ' ' . $mn) : ''));
+                $routeTemplates[] = ['id' => (int) $t['id'], 'label' => $label !== '' ? $label : ('路线#' . (int) $t['id'])];
+            }
+        }
+        View::assign('routeTemplates', $routeTemplates);
         View::assign('routeTypeList', ProcessRouteModel::getRouteTypeList());
         View::assign('statusList', ProcessRouteModel::getStatusList());
         View::assign('title', '添加工艺路线');
@@ -156,7 +214,7 @@ class ProcessRoute extends Backend
         $id = (int) $idParam;
 
         $tenantId = $this->getTenantId();
-        $route = ProcessRouteModel::where('tenant_id', $tenantId)->find($id);
+        $route = $tenantId > 0 ? ProcessRouteModel::where('tenant_id', $tenantId)->find($id) : ProcessRouteModel::find($id);
         if (!$route) {
             return $this->error('记录不存在');
         }
@@ -169,7 +227,7 @@ class ProcessRoute extends Backend
 
             $row['route_name'] = trim((string) ($row['route_name'] ?? ''));
             $row['route_code'] = trim((string) ($row['route_code'] ?? ''));
-            $row['steps_json'] = trim((string) ($row['steps_json'] ?? ''));
+            $row['steps_json'] = $this->decodeStepsJson(trim((string) ($row['steps_json'] ?? '')));
             $row['update_time'] = time();
 
             if ($row['route_name'] === '') {
@@ -209,10 +267,25 @@ class ProcessRoute extends Backend
             }
         }
 
-        $models = ProductModelModel::with(['product'])
-            ->where('tenant_id', $tenantId)
-            ->where('status', 1)
-            ->select();
+        $routeTenantId = (int) $route->tenant_id;
+        $route->steps_json = $this->decodeStepsJson((string) $route->steps_json);
+        $isPlatform = $this->isPlatformAdmin() && $this->getTenantId() === 0;
+        View::assign('is_platform', $isPlatform ? 1 : 0);
+        View::assign('tenant_id', $routeTenantId);
+        if ($isPlatform) {
+            $tenants = Db::name('tenant')->where('status', 1)->order('id', 'asc')->field('id,name')->select()->toArray();
+            View::assign('tenants', $tenants);
+        } else {
+            View::assign('tenants', []);
+        }
+
+        $models = [];
+        if ($routeTenantId > 0) {
+            $models = ProductModelModel::with(['product'])
+                ->where('tenant_id', $routeTenantId)
+                ->where('status', 1)
+                ->select();
+        }
         $modelList = [];
         foreach ($models as $model) {
             $productName = '';
@@ -228,11 +301,47 @@ class ProcessRoute extends Backend
             $modelList[$model->id] = $fullName;
         }
         View::assign('modelList', $modelList);
+        $processList = [];
+        if ($routeTenantId > 0) {
+            $processList = ProcessModel::whereIn('tenant_id', [0, $routeTenantId])->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->column('name', 'id');
+        }
+        View::assign('processList', $processList ?: []);
+        $routeTemplates = [];
+        if ($routeTenantId > 0) {
+            $tpl = ProcessRouteModel::with(['model', 'product'])
+                ->where('tenant_id', $routeTenantId)
+                ->order('id', 'desc')
+                ->limit(200)
+                ->select()
+                ->toArray();
+            foreach ($tpl as $t) {
+                $mn = $t['model']['name'] ?? '';
+                $pn = $t['model']['product']['name'] ?? ($t['product']['name'] ?? '');
+                $label = trim(($t['route_name'] ?? '') . ($pn || $mn ? ' - ' . trim($pn . ' ' . $mn) : ''));
+                $routeTemplates[] = ['id' => (int) $t['id'], 'label' => $label !== '' ? $label : ('路线#' . (int) $t['id'])];
+            }
+        }
+        View::assign('routeTemplates', $routeTemplates);
         View::assign('routeTypeList', ProcessRouteModel::getRouteTypeList());
         View::assign('statusList', ProcessRouteModel::getStatusList());
         View::assign('row', $route);
         View::assign('title', '编辑工艺路线');
         return $this->fetchWithLayout('mes/process_route/edit');
+    }
+
+    public function get(): Response
+    {
+        $id = (int) $this->request->get('id', 0);
+        if ($id <= 0) return $this->error('参数错误');
+        $tenantId = $this->getTenantId();
+        $route = $tenantId > 0 ? ProcessRouteModel::where('tenant_id', $tenantId)->find($id) : ProcessRouteModel::find($id);
+        if (!$route) return $this->error('记录不存在');
+        return $this->success('', [
+            'id' => (int) $route->id,
+            'tenant_id' => (int) $route->tenant_id,
+            'route_name' => (string) $route->route_name,
+            'steps_json' => $this->decodeStepsJson((string) $route->steps_json),
+        ]);
     }
 
     public function del(): Response
@@ -268,5 +377,28 @@ class ProcessRoute extends Backend
         }
         return $prefix . str_pad((string) $num, 4, '0', STR_PAD_LEFT);
     }
-}
 
+    private function resolveTenantId(): int
+    {
+        $tenantId = $this->getTenantId();
+        if ($tenantId > 0) return $tenantId;
+        $p = $this->request->param('tenant_id');
+        if ($p !== null && $p !== '') return (int) $p;
+        $g = $this->request->get('tenant_id');
+        if ($g !== null && $g !== '') return (int) $g;
+        $post = $this->request->post('tenant_id');
+        if ($post !== null && $post !== '') return (int) $post;
+        return 0;
+    }
+
+    private function decodeStepsJson(string $raw): string
+    {
+        $s = trim($raw);
+        for ($i = 0; $i < 3; $i++) {
+            $prev = $s;
+            $s = html_entity_decode($s, ENT_QUOTES);
+            if ($s === $prev) break;
+        }
+        return trim($s);
+    }
+}

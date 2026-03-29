@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><title>API测试</title></head>
+<body>
+<h1>租户购买API测试</h1>
+<script>
+function testAPI(url) {
+    fetch(url)
+        .then(res => res.text())
+        .then(text => {
+            document.getElementById('result').innerText = text.substring(0, 1000);
+        })
+        .catch(err => {
+            document.getElementById('result').innerText = 'Error: ' + err;
+        });
+}
+</script>
+<button onclick="testAPI('/api/tenant_purchase/package_list')">测试套餐列表</button>
+<button onclick="testAPI('/api/tenant_purchase/payment_methods')">测试支付方式</button>
+<pre id="result">点击按钮测试API</pre>
+</body>
+</html>

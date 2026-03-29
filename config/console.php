@@ -8,5 +8,6 @@ return [
         'addon' => \app\command\Addon::class,
         'cache:clear' => \app\command\Clear::class,
         'check:tables' => \app\command\CheckTables::class,
+        'restaurant:ai-daily-report' => \app\command\RestaurantAiDailyReport::class,
     ],
 ];

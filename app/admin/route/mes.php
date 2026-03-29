@@ -49,11 +49,25 @@ Route::group('mes', function () {
 
     Route::get('process_route/add', 'mes.ProcessRoute/add');
     Route::get('process_route/edit', 'mes.ProcessRoute/edit');
+    Route::get('process_route/get', 'mes.ProcessRoute/get');
     Route::get('process_route/index', 'mes.ProcessRoute/index');
     Route::get('process_route', 'mes.ProcessRoute/index');
     Route::post('process_route/add', 'mes.ProcessRoute/add');
     Route::post('process_route/edit', 'mes.ProcessRoute/edit');
     Route::post('process_route/del', 'mes.ProcessRoute/del');
+
+    Route::get('user_process_capacity/index', 'mes.UserProcessCapacity/index');
+    Route::get('user_process_capacity/add', 'mes.UserProcessCapacity/add');
+    Route::get('user_process_capacity/edit', 'mes.UserProcessCapacity/edit');
+    Route::post('user_process_capacity/add', 'mes.UserProcessCapacity/add');
+    Route::post('user_process_capacity/edit', 'mes.UserProcessCapacity/edit');
+    Route::post('user_process_capacity/del', 'mes.UserProcessCapacity/del');
+
+    Route::get('schedule/index', 'mes.Schedule/index');
+    Route::get('schedule', 'mes.Schedule/index');
+    Route::post('schedule/generate', 'mes.Schedule/generate');
+    Route::post('schedule/publish', 'mes.Schedule/publish');
+    Route::post('schedule/del', 'mes.Schedule/del');
 
     Route::get('production_plan/add', 'mes.ProductionPlan/add');
     Route::get('production_plan/edit', 'mes.ProductionPlan/edit');
@@ -70,6 +84,10 @@ Route::group('mes', function () {
     Route::post('production_plan/add', 'mes.ProductionPlan/add');
     Route::post('production_plan/edit', 'mes.ProductionPlan/edit');
     Route::post('production_plan/del', 'mes.ProductionPlan/del');
+    Route::post('production_plan/start', 'mes.ProductionPlan/start');
+    Route::post('production_plan/pause', 'mes.ProductionPlan/pause');
+    Route::post('production_plan/resume', 'mes.ProductionPlan/resume');
+    Route::post('production_plan/finish', 'mes.ProductionPlan/finish');
 
     Route::get('allocation/add', 'mes.Allocation/add');
     Route::get('allocation/edit', 'mes.Allocation/edit');

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>扫码点餐</title>
+    <link rel="stylesheet" href="/assets/lib/bootstrap/css/bootstrap.min.css">
+    <style>
+        body{background:#f7f7f7}
+        .category-bar{overflow:auto;white-space:nowrap}
+        .category-bar .btn{margin-right:.5rem}
+        .price{font-weight:600}
+        .fixed-cart{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;padding:.5rem .75rem;z-index:1000}
+        .content-pad{padding-bottom:4.5rem}
+        .item-card{background:#fff;border:1px solid #eee;border-radius:.5rem;padding:.75rem;margin-bottom:.75rem}
+        .muted{color:#888}
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-white border-bottom">
+        <span class="navbar-brand mb-0 h1">扫码点餐</span>
+        <button class="btn btn-outline-primary btn-sm" id="btn-open-cart">购物车</button>
+    </nav>
+
+    <div class="container-fluid py-2 content-pad">
+        <div class="alert alert-info py-2 mb-2">
+            <div><span class="font-weight-bold">桌台：</span><span id="table-name">-</span></div>
+            <div class="muted"><span id="store-name"></span> <span id="area-name"></span></div>
+        </div>
+
+        <ul class="nav nav-tabs bg-white" id="main-tabs">
+            <li class="nav-item"><a class="nav-link active" href="#tab-menu" data-toggle="tab">菜单</a></li>
+            <li class="nav-item"><a class="nav-link" href="#tab-orders" data-toggle="tab">我的订单</a></li>
+        </ul>
+
+        <div class="tab-content bg-white p-2 border-left border-right border-bottom">
+            <div class="tab-pane fade show active" id="tab-menu">
+                <div class="category-bar py-2" id="category-bar"></div>
+                <div id="menu-list"></div>
+            </div>
+            <div class="tab-pane fade" id="tab-orders">
+                <div class="py-2">
+                    <button class="btn btn-outline-secondary btn-sm" id="btn-refresh-orders">刷新</button>
+                </div>
+                <div id="order-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed-cart">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <div class="muted">合计</div>
+                <div class="h5 mb-0">¥<span id="cart-total">0.00</span></div>
+            </div>
+            <div>
+                <button class="btn btn-outline-primary mr-2" id="btn-open-cart-2">查看购物车</button>
+                <button class="btn btn-primary" id="btn-checkout">去下单</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-options" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="opt-title">选择规格/口味</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" id="opt-body"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button class="btn btn-primary" id="btn-opt-confirm">加入购物车</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-cart" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">购物车</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" id="cart-body"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-danger" id="btn-cart-clear">清空</button>
+                    <button class="btn btn-primary" id="btn-cart-checkout">去下单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-pay" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">选择支付方式</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" id="pay-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-order-detail" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">订单详情</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body" id="order-detail-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/lib/jquery/jquery.min.js"></script>
+    <script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/restaurant/app.js"></script>
+</body>
+</html>

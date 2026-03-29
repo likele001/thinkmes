@@ -1,0 +1,64 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑菜品</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal" data-id="{$row.id}" data-url="restaurant/item/edit" data-back="restaurant/item">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">门店</label>
+                <div class="col-sm-6">
+                    <select name="row[store_id]" class="form-control">
+                        <option value="0" {if $row.store_id==0}selected{/if}>通用（全部门店）</option>
+                        {volist name="storeList" id="s"}
+                        <option value="{$s.id}" {if $row.store_id==$s.id}selected{/if}>{$s.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">分类</label>
+                <div class="col-sm-6">
+                    <select name="row[category_id]" class="form-control">
+                        <option value="0" {if $row.category_id==0}selected{/if}>未分类</option>
+                        {volist name="categoryList" id="c"}
+                        <option value="{$c.id}" {if $row.category_id==$c.id}selected{/if}>{$c.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">菜品名称</label>
+                <div class="col-sm-6"><input type="text" name="row[name]" class="form-control" required value="{$row.name|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">价格</label>
+                <div class="col-sm-6"><input type="number" name="row[price]" class="form-control" step="0.01" required value="{$row.price|default='0'}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">排序</label>
+                <div class="col-sm-6"><input type="number" name="row[sort]" class="form-control" value="{$row.sort|default='0'}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">售罄</label>
+                <div class="col-sm-6">
+                    <select name="row[sold_out]" class="form-control">
+                        <option value="0" {if $row.sold_out==0}selected{/if}>否</option>
+                        <option value="1" {if $row.sold_out==1}selected{/if}>是</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="row[status]" class="form-control">
+                        <option value="1" {if $row.status==1}selected{/if}>上架</option>
+                        <option value="0" {if $row.status==0}selected{/if}>下架</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/restaurant/item/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+

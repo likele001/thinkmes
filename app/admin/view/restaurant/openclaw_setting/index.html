@@ -1,0 +1,97 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">OpenClaw 设置</h3></div>
+    <div class="card-body">
+        <form id="form-oc" method="post" class="form-horizontal" action="{$config.moduleurl}/restaurant/openclaw_setting/index">
+            <input type="hidden" name="action" value="save">
+            {if $is_platform==1}
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">租户</label>
+                <div class="col-sm-6">
+                    <select name="tenant_id" id="tenant-id" class="form-control">
+                        <option value="">请选择租户</option>
+                        {foreach $tenants as $t}
+                        <option value="{$t.id}" {if $tenant_id==$t.id}selected{/if}>{$t.name} (#{$t.id})</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+            {else /}
+            <input type="hidden" name="tenant_id" id="tenant-id" value="{$tenant_id|default=0}">
+            {/if}
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">启用</label>
+                <div class="col-sm-6">
+                    <select name="enabled" class="form-control">
+                        <option value="1" {if $enabled==1}selected{/if}>启用</option>
+                        <option value="0" {if $enabled==0}selected{/if}>禁用</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">API Base</label>
+                <div class="col-sm-6"><input type="text" name="api_base" class="form-control" value="{$api_base|default=''}" placeholder="例如 https://openclaw.example.com"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">API Key</label>
+                <div class="col-sm-6"><input type="text" name="api_key" class="form-control" value="{$api_key|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工作区</label>
+                <div class="col-sm-6"><input type="text" name="workspace" class="form-control" value="{$workspace|default=''}" placeholder="默认 tenant_{tenantId}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Webhook Secret</label>
+                <div class="col-sm-6"><input type="text" name="webhook_secret" class="form-control" value="{$webhook_secret|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">差评阈值</label>
+                <div class="col-sm-6"><input type="number" name="bad_threshold" class="form-control" value="{$bad_threshold|default=3}" min="1" max="5"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">差评告警</label>
+                <div class="col-sm-6">
+                    <select name="alert_enabled" class="form-control">
+                        <option value="1" {if $alert_enabled==1}selected{/if}>启用</option>
+                        <option value="0" {if $alert_enabled==0}selected{/if}>禁用</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">推送OpenClaw</label>
+                <div class="col-sm-6">
+                    <select name="alert_push_openclaw" class="form-control">
+                        <option value="1" {if $alert_push_openclaw==1}selected{/if}>是</option>
+                        <option value="0" {if $alert_push_openclaw==0}selected{/if}>否</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+        <div class="mt-3">
+            <button class="btn btn-primary" id="btn-save">保存</button>
+            <button class="btn btn-secondary" id="btn-ping">测试连接</button>
+            <button class="btn btn-info" id="btn-install">一键安装</button>
+            <input type="date" id="sync-date" value="<?=date('Y-m-d')?>"><button class="btn btn-success" id="btn-sync">同步摘要</button>
+        </div>
+    </div>
+</div>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '/admin';
+    var $ = window.jQuery;
+    function tenantId(){ return ($('#tenant-id').val() || ''); }
+    $('#btn-save').on('click', function(){
+        $('#form-oc [name=action]').val('save');
+        $('#form-oc').trigger('submit');
+    });
+    $('#btn-ping').on('click', function(){
+        $.post(base + '/restaurant/openclaw_setting/index', { action: 'ping', tenant_id: tenantId() }, function(r){ alert(r.msg || (r.code==1?'OK':'Fail')); }, 'json');
+    });
+    $('#btn-install').on('click', function(){
+        $.post(base + '/restaurant/openclaw_setting/index', { action: 'install', tenant_id: tenantId() }, function(r){ alert(r.msg || (r.code==1?'OK':'Fail')); }, 'json');
+    });
+    $('#btn-sync').on('click', function(){
+        var d = $('#sync-date').val() || '';
+        $.post(base + '/restaurant/openclaw_setting/index', { action: 'sync', date: d, tenant_id: tenantId() }, function(r){ alert(r.msg || (r.code==1?'OK':'Fail')); }, 'json');
+    });
+})();
+</script>

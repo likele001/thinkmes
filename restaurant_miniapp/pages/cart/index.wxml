@@ -1,0 +1,32 @@
+<view class="container">
+  <view class="card" wx:if="{{!items.length}}">
+    <view class="muted">购物车为空</view>
+  </view>
+
+  <view class="card" wx:for="{{items}}" wx:key="id">
+    <view style="font-weight:700">{{item.name}}</view>
+    <view class="row" style="margin-top:12rpx">
+      <view class="muted">¥{{item.price}}</view>
+      <view class="row" style="gap:14rpx">
+        <button class="btn btn-ghost" size="mini" data-id="{{item.id}}" data-delta="-1" bindtap="chgQty">-</button>
+        <view style="min-width:60rpx;text-align:center">{{item.quantity}}</view>
+        <button class="btn btn-ghost" size="mini" data-id="{{item.id}}" data-delta="1" bindtap="chgQty">+</button>
+        <button class="btn btn-outline" size="mini" data-id="{{item.id}}" bindtap="remove">删除</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{items.length}}">
+    <view class="row">
+      <view>
+        <view class="muted">合计</view>
+        <view style="font-weight:800;font-size:34rpx">¥{{total}}</view>
+      </view>
+      <view class="row" style="gap:14rpx">
+        <button class="btn btn-outline" size="mini" bindtap="clear">清空</button>
+        <button class="btn btn-primary" size="mini" bindtap="checkout">下单</button>
+      </view>
+    </view>
+  </view>
+</view>
+

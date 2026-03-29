@@ -1,0 +1,23 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">AI 经营日报</h3>
+        <div class="card-tools">
+            {if $is_platform==1}
+            <select id="tenant-id" class="form-control form-control-sm d-inline-block" style="width:220px">
+                <option value="">请选择租户</option>
+                {foreach $tenants as $t}
+                <option value="{$t.id}" {if $tenant_id==$t.id}selected{/if}>{$t.name} (#{$t.id})</option>
+                {/foreach}
+            </select>
+            {else /}
+            <input type="hidden" id="tenant-id" value="{$tenant_id|default=0}">
+            {/if}
+            <input type="date" id="report-date" class="form-control form-control-sm d-inline-block" style="width:160px" value="<?=date('Y-m-d')?>">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-generate">生成日报</button>
+            <button type="button" class="btn btn-default btn-sm btn-refresh">刷新</button>
+        </div>
+    </div>
+    <div class="card-body table-responsive p-0">
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>

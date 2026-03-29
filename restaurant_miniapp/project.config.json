@@ -1,0 +1,36 @@
+{
+  "description": "餐饮扫码点餐小程序",
+  "appid": "wx0000000000000000",
+  "projectname": "restaurant-miniapp",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "autoAudits": false,
+    "uglifyFileName": true,
+    "packNpm": true,
+    "ignoreUploadUnused": true,
+    "useStaticServer": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "enablePlugins": []
+    }
+  },
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "菜单",
+          "pathName": "pages/menu/index",
+          "query": "",
+          "scene": null
+        }
+      ]
+    }
+  }
+}

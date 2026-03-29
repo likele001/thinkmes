@@ -6,6 +6,8 @@
         <div id="toolbar" class="toolbar mb-2">
             <a href="javascript:;" class="btn btn-primary btn-refresh" title="{:__('refresh')}"><i class="fas fa-sync-alt"></i> {:__('refresh')}</a>
             <a href="{:url('tenant_package_feature/add', ['package_id' => $package.id])}" class="btn btn-success btn-add" title="{:__('add')}"><i class="fas fa-plus"></i> {:__('add_feature')}</a>
+            <a href="javascript:;" class="btn btn-success btn-enable" title="{:__('batch_enable')}"><i class="fas fa-check"></i> {:__('batch_enable')}</a>
+            <a href="javascript:;" class="btn btn-warning btn-disable" title="{:__('batch_disable')}"><i class="fas fa-ban"></i> {:__('batch_disable')}</a>
             <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled" title="{:__('delete')}"><i class="fas fa-trash-alt"></i> {:__('delete')}</a>
             <a href="{:url('tenant_package/index')}" class="btn btn-default ml-2"><i class="fas fa-arrow-left"></i> {:__('back_package_list')}</a>
         </div>

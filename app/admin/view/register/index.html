@@ -23,16 +23,32 @@
         .form-group select { background: white; }
         .form-group .help { font-size: 12px; color: #999; margin-top: 5px; }
         .package-list { margin-bottom: 15px; }
-        .package-item { padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; }
+        .package-item { padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; position: relative; }
         .package-item:hover { background: #f9f9f9; }
         .package-item.active { border-color: #4CAF50; background: #f0f7ff; }
         .package-item h4 { margin: 0 0 8px; color: #333; font-size: 16px; }
         .package-item p { margin: 0; color: #666; font-size: 13px; }
+        .package-item .price { position: absolute; top: 12px; right: 12px; color: #f44336; font-weight: bold; font-size: 18px; }
+        .payment-option { padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; }
+        .payment-option:hover { background: #f9f9f9; }
+        .payment-option.active { border-color: #4CAF50; background: #f0f7ff; }
+        .register-type { display: flex; gap: 15px; margin-bottom: 20px; }
+        .type-option { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .type-option:hover { border-color: #4CAF50; }
+        .type-option.active { border-color: #4CAF50; background: #f0f7ff; }
+        .type-option h3 { font-size: 18px; margin-bottom: 5px; color: #333; }
+        .type-option p { font-size: 12px; color: #666; }
+        .type-option .highlight { color: #f44336; font-weight: bold; }
         .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
         .btn:hover { background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%); }
-        .hint { margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 4px; font-size: 13px; color: #fff; }
-        .hint strong { color: #fff; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .hint { margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 4px; font-size: 13px; color: #333; }
+        .hint strong { color: #4CAF50; }
         .error-msg { color: #f44336; font-size: 14px; margin-top: 10px; }
+        .hidden { display: none; }
+        .summary-box { background: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .summary-box p { margin: 5px 0; color: #333; }
+        .summary-box strong { color: #f44336; }
     </style>
 </head>
 <body>
@@ -43,8 +59,45 @@
         </div>
 
         <div class="form-box">
-            <form id="registerForm" method="post" action="{:url('admin/register/save')}">
+            <form id="registerForm" method="post" action="">
                 <input type="hidden" name="__token__" value="{:token()}">
+                <input type="hidden" name="register_type" id="registerType" value="free">
+                <input type="hidden" name="package_id" id="packageId" value="1" required>
+                <input type="hidden" name="gateway_id" id="gatewayId" value="">
+
+                <div class="form-title">注册方式</div>
+                <div class="register-type">
+                    <div class="type-option active" onclick="selectRegisterType('free', this)">
+                        <h3>免费试用</h3>
+                        <p>7天免费体验</p>
+                        <p class="highlight">¥0</p>
+                    </div>
+                    <div class="type-option" onclick="selectRegisterType('paid', this)">
+                        <h3>立即购买</h3>
+                        <p>正式开通服务</p>
+                        <p class="highlight" id="paidPrice">¥299</p>
+                    </div>
+                </div>
+
+                <div class="form-title">选择套餐</div>
+                <div class="package-list" id="packageList">
+                    <p class="text-muted">加载中...</p>
+                </div>
+
+                <div id="paymentSection" class="hidden">
+                    <div class="form-title">选择支付方式</div>
+                    <div id="paymentMethods">
+                        <p class="text-muted">请先选择套餐</p>
+                    </div>
+                </div>
+
+                <div id="orderSummary" class="hidden">
+                    <div class="summary-box">
+                        <p><strong>订单摘要：</strong></p>
+                        <p>套餐：<span id="summaryPackage">-</span></p>
+                        <p>金额：<strong id="summaryAmount">-</strong></p>
+                    </div>
+                </div>
 
                 <div class="form-title">基本信息</div>
 
@@ -81,94 +134,217 @@
                     <input type="tel" name="mobile" placeholder="请输入联系电话（选填）">
                 </div>
 
-                <div class="form-title">选择套餐</div>
-                <div class="package-list">
-                    <div class="package-item active" onclick="selectPackage(1, this)">
-                        <h4>基础版</h4>
-                        <p>含：订单、产品、BOM、物料、工序、客户、供应商、分工、报工、工资、追溯、生产计划、工序工价</p>
-                    </div>
-                    <div class="package-item" onclick="selectPackage(2, this)">
-                        <h4>标准版</h4>
-                        <p>含：基础版所有功能 + 采购管理</p>
-                    </div>
-                    <div class="package-item" onclick="selectPackage(3, this)">
-                        <h4>专业版</h4>
-                        <p>含：标准版所有功能 + 库存管理 + 质检管理 + 发货管理 + 仓库管理</p>
-                    </div>
-                    <div class="package-item" onclick="selectPackage(4, this)">
-                        <h4>企业版</h4>
-                        <p>含：专业版所有功能 + BI数据报表 + 无限制用户</p>
-                    </div>
-                </div>
-                <input type="hidden" name="package_id" id="packageId" value="1" required>
+                <button type="submit" class="btn" id="submitBtn">立即注册</button>
 
-                <button type="submit" class="btn">立即注册</button>
-
-                <div class="hint">
-                    <strong>注册说明：</strong><br>
+                <div class="hint" id="registerHint">
+                    <strong>免费试用说明：</strong><br>
                     1. 注册成功后系统将自动创建租户和管理员账号<br>
-                    2. 租户编码将自动生成，用于标识您的企业<br>
-                    3. 请牢记您的登录账号和密码
+                    2. 免费试用期7天，到期后请联系客服续费<br>
+                    3. 租户编码将自动生成，用于标识您的企业<br>
+                    4. 请牢记您的登录账号和密码
                 </div>
             </form>
         </div>
+    </div>
 
-        <script>
-            function selectPackage(id, element) {
-                document.getElementById('packageId').value = id;
-                document.querySelectorAll('.package-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                if (element) {
-                    element.currentTarget.classList.add('active');
-                } else {
-                    event.currentTarget.classList.add('active');
-                }
-            }
+    <script>
+        let selectedPackage = null;
+        let packages = [];
 
-            // 检查租户名称是否可用
-            const tenantNameInput = document.querySelector('input[name="tenant_name"]');
-            if (tenantNameInput) {
-                let checkTimer;
-                tenantNameInput.addEventListener('input', function() {
-                    clearTimeout(checkTimer);
-                    checkTimer = setTimeout(() => {
-                        const name = this.value.trim();
-                        if (name.length > 0) {
-                            fetch('/admin/register/check?tenant_name=' + encodeURIComponent(name))
-                                .then(response => response.json())
-                                .then(data => {
-                                    // 可选：显示错误提示
-                                });
+        // 加载套餐列表
+        function loadPackages() {
+            fetch('/api/tenant_purchase/package_list')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 1) {
+                        packages = data.data;
+                        const container = document.getElementById('packageList');
+                        container.innerHTML = packages.map(pkg => `
+                            <div class="package-item ${pkg.id === 1 ? 'active' : ''}" data-package-id="${pkg.id}" onclick="selectPackage(${pkg.id}, this)">
+                                <h4>${pkg.name}</h4>
+                                <p>有效期：${pkg.expire_days_text}</p>
+                                <div class="price">¥${pkg.price_text}</div>
+                            </div>
+                        `).join('');
+
+                        // 默认选择第一个套餐
+                        if (packages.length > 0) {
+                            selectPackage(packages[0].id, container.querySelector('.package-item'));
                         }
-                    }, 500);
+                    }
                 });
+        }
 
-                // 检查登录账号是否可用
-                const usernameInput = document.querySelector('input[name="username"]');
-                if (usernameInput) {
-                    let checkTimer2;
-                    usernameInput.addEventListener('input', function() {
-                        clearTimeout(checkTimer2);
-                        checkTimer2 = setTimeout(() => {
-                            const name = this.value.trim();
-                            if (name.length >= 3) {
-                                fetch('/admin/register/checkUsername?username=' + encodeURIComponent(name))
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        // 可选：显示错误提示
-                                    });
-                            }
-                        }, 500);
-                    });
-                }
+        // 选择套餐
+        function selectPackage(id, element) {
+            document.getElementById('packageId').value = id;
+            document.querySelectorAll('.package-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (element) {
+                element.classList.add('active');
             }
 
-            // 表单提交
-            document.getElementById('registerForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(this);
+            selectedPackage = packages.find(p => p.id === id);
+            if (selectedPackage) {
+                document.getElementById('paidPrice').textContent = '¥' + selectedPackage.price_text;
+                document.getElementById('summaryPackage').textContent = selectedPackage.name;
+                document.getElementById('summaryAmount').textContent = '¥' + selectedPackage.price_text;
 
+                // 如果是付费模式，加载支付方式
+                if (document.getElementById('registerType').value === 'paid') {
+                    loadPaymentMethods();
+                }
+            }
+        }
+
+        // 选择注册类型
+        function selectRegisterType(type, element) {
+            document.getElementById('registerType').value = type;
+            document.querySelectorAll('.type-option').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+
+            const paymentSection = document.getElementById('paymentSection');
+            const orderSummary = document.getElementById('orderSummary');
+            const submitBtn = document.getElementById('submitBtn');
+            const hint = document.getElementById('registerHint');
+
+            if (type === 'paid') {
+                paymentSection.classList.remove('hidden');
+                orderSummary.classList.remove('hidden');
+                submitBtn.textContent = '提交并支付';
+                hint.innerHTML = '<strong>付费购买说明：</strong><br>1. 提交后创建订单，请完成支付<br>2. 支付成功后系统将自动开通服务<br>3. 请牢记您的登录账号和密码';
+                loadPaymentMethods();
+            } else {
+                paymentSection.classList.add('hidden');
+                orderSummary.classList.add('hidden');
+                submitBtn.textContent = '立即注册';
+                hint.innerHTML = '<strong>免费试用说明：</strong><br>1. 注册成功后系统将自动创建租户和管理员账号<br>2. 免费试用期7天，到期后请联系客服续费<br>3. 租户编码将自动生成，用于标识您的企业<br>4. 请牢记您的登录账号和密码';
+            }
+        }
+
+        // 加载支付方式
+        function loadPaymentMethods() {
+            fetch('/api/tenant_purchase/payment_methods')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('paymentMethods');
+                    if (data.code === 1) {
+                        if (data.data.length === 0) {
+                            container.innerHTML = '<p class="error-msg">暂无可用的支付方式，请联系管理员配置</p>';
+                            return;
+                        }
+                        container.innerHTML = data.data.map(gateway => `
+                            <div class="payment-option" data-gateway-id="${gateway.id}" onclick="selectPaymentMethod(${gateway.id}, this)">
+                                <strong>${gateway.name}</strong>
+                            </div>
+                        `).join('');
+
+                        // 默认选择第一个支付方式
+                        if (data.data.length > 0) {
+                            selectPaymentMethod(data.data[0].id, container.querySelector('.payment-option'));
+                        }
+                    }
+                });
+        }
+
+        // 选择支付方式
+        function selectPaymentMethod(id, element) {
+            document.getElementById('gatewayId').value = id;
+            document.querySelectorAll('.payment-option').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (element) {
+                element.classList.add('active');
+            }
+        }
+
+        // 表单提交
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const registerType = document.getElementById('registerType').value;
+            const formData = new FormData(this);
+
+            if (registerType === 'paid') {
+                // 付费模式：创建订单 -> 支付
+                const gatewayId = document.getElementById('gatewayId').value;
+                if (!gatewayId) {
+                    alert('请选择支付方式');
+                    return;
+                }
+
+                // 提交注册并创建订单
+                fetch('/admin/register/save', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 1) {
+                        // 创建租户成功，创建支付订单
+                        const payData = new URLSearchParams();
+                        payData.append('package_id', document.getElementById('packageId').value);
+                        payData.append('company_name', formData.get('tenant_name'));
+                        payData.append('contact_name', formData.get('nickname'));
+                        payData.append('contact_phone', formData.get('mobile') || '');
+                        payData.append('contact_email', formData.get('email'));
+                        payData.append('domain', '');
+                        payData.append('login_account', formData.get('username'));
+                        payData.append('login_password', formData.get('password'));
+
+                        return fetch('/api/tenant_purchase/create_order', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: payData
+                        });
+                    } else {
+                        alert(data.msg || '注册失败');
+                        throw new Error(data.msg);
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 1) {
+                        // 订单创建成功，发起支付
+                        const payData2 = new URLSearchParams();
+                        payData2.append('order_no', data.data.order_no);
+                        payData2.append('gateway_id', document.getElementById('gatewayId').value);
+
+                        return fetch('/api/tenant_purchase/pay', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: payData2
+                        });
+                    } else {
+                        alert(data.msg || '创建订单失败');
+                        throw new Error(data.msg);
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 1) {
+                        if (data.data.pay_url) {
+                            window.location.href = data.data.pay_url;
+                        } else if (data.data.form_html) {
+                            document.body.innerHTML = data.data.form_html;
+                        } else {
+                            alert('注册成功！请登录查看');
+                            setTimeout(() => {
+                                window.location.href = '/admin/index/login';
+                            }, 1500);
+                        }
+                    } else {
+                        alert(data.msg || '发起支付失败');
+                    }
+                })
+                .catch(error => {
+                    alert('提交失败：' + error.message);
+                });
+            } else {
+                // 免费模式：直接注册
                 fetch('/admin/register/save', {
                     method: 'POST',
                     body: formData
@@ -187,7 +363,11 @@
                 .catch(error => {
                     alert('提交失败：' + error);
                 });
-            });
-        </script>
+            }
+        });
+
+        // 页面加载时执行
+        loadPackages();
+    </script>
 </body>
 </html>

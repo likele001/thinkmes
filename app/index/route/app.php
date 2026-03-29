@@ -95,3 +95,8 @@ Route::get('lang/:lang', function ($lang) {
     }
     return redirect(request()->root(true) . '/index/user/login');
 })->pattern(['lang' => '[a-z\-]+']);
+
+// 租户自助购买路由（更具体的路由放前面）
+Route::get('purchase/form', 'Purchase/form');
+Route::get('purchase', 'Purchase/index');
+Route::get('register', 'Purchase/register');

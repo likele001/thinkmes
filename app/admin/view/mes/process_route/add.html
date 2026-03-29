@@ -4,6 +4,22 @@
     </div>
     <div class="card-body">
         <form id="add-form" class="form-horizontal" method="post" action="">
+            {if $is_platform==1}
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label text-right">租户</label>
+                <div class="col-sm-6">
+                    <select class="form-control" id="tenant-id">
+                        <option value="">请选择租户</option>
+                        {foreach $tenants as $t}
+                        <option value="{$t.id}" {if $tenant_id==$t.id}selected{/if}>{$t.name} (#{$t.id})</option>
+                        {/foreach}
+                    </select>
+                    <input type="hidden" name="tenant_id" value="{$tenant_id|default=0}">
+                </div>
+            </div>
+            {else /}
+            <input type="hidden" name="tenant_id" value="{$tenant_id|default=0}">
+            {/if}
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label text-right">产品型号</label>
                 <div class="col-sm-6">
@@ -58,8 +74,35 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label text-right">工艺步骤 JSON</label>
                 <div class="col-sm-8">
-                    <textarea class="form-control" rows="8" name="row[steps_json]" placeholder='例如：[{"step_no":1,"process_id":1,"group_no":1,"is_optional":0}]'></textarea>
-                    <small class="form-text text-muted">暂时使用 JSON 格式维护步骤，后续可升级为可视化编辑。</small>
+                    <div class="mb-2">
+                        <select id="route-template" class="form-control d-inline-block" style="width:340px">
+                            <option value="">套用已有路线（可选）</option>
+                            {foreach $routeTemplates as $t}
+                            <option value="{$t.id}">{$t.label}</option>
+                            {/foreach}
+                        </select>
+                        <select id="process-picker" class="form-control d-inline-block" style="width:280px">
+                            <option value="">请选择工序</option>
+                            {foreach $processList as $id => $name}
+                            <option value="{$id}">{$name} (#{$id})</option>
+                            {/foreach}
+                        </select>
+                        <button type="button" class="btn btn-sm btn-primary ml-1" id="btn-add-step">添加工序</button>
+                        <button type="button" class="btn btn-sm btn-default ml-1" id="btn-toggle-json">查看JSON</button>
+                    </div>
+                    <table class="table table-sm table-bordered" id="steps-table">
+                        <thead>
+                            <tr>
+                                <th style="width:70px">顺序</th>
+                                <th>工序</th>
+                                <th style="width:100px">分组</th>
+                                <th style="width:100px">可选</th>
+                                <th style="width:160px">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <textarea class="form-control" rows="8" name="row[steps_json]" id="steps-json" style="display:none" placeholder='例如：[{"step_no":1,"process_id":1,"group_no":1,"is_optional":0}]'></textarea>
                 </div>
             </div>
             <div class="form-group row">
@@ -77,4 +120,3 @@
         </form>
     </div>
 </div>
-

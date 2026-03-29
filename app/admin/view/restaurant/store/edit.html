@@ -1,0 +1,33 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑门店</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal" data-id="{$row.id}" data-url="restaurant/store/edit" data-back="restaurant/store">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">门店名称</label>
+                <div class="col-sm-6"><input type="text" name="row[name]" class="form-control" required value="{$row.name|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">联系电话</label>
+                <div class="col-sm-6"><input type="text" name="row[contact_phone]" class="form-control" value="{$row.contact_phone|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">地址</label>
+                <div class="col-sm-6"><input type="text" name="row[address]" class="form-control" value="{$row.address|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="row[status]" class="form-control">
+                        <option value="1" {if $row.status==1}selected{/if}>启用</option>
+                        <option value="0" {if $row.status==0}selected{/if}>禁用</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/restaurant/store/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+

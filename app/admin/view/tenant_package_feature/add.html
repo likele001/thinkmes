@@ -1,3 +1,75 @@
+<style>
+.feature-tree {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+.feature-group {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.feature-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.feature-parent {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.feature-parent.no-children {
+    margin-bottom: 0;
+}
+.feature-children {
+    margin-left: 30px;
+    padding: 5px 0;
+}
+.feature-child {
+    display: inline-block;
+    margin-right: 15px;
+    margin-bottom: 8px;
+    padding: 5px 10px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 3px;
+}
+.feature-child:hover {
+    background: #f8f9fa;
+}
+.form-check-input {
+    margin-right: 8px;
+}
+.btn-expand {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    margin-right: 8px;
+    font-size: 14px;
+    width: 20px;
+    display: inline-block;
+}
+.btn-expand:hover {
+    color: #0056b3;
+}
+.btn-expand.disabled {
+    color: transparent;
+    cursor: default;
+}
+.text-muted {
+    font-weight: normal;
+    margin-left: 8px;
+}
+</style>
+
 <div class="card card-outline card-primary">
     <div class="card-header"><h3 class="card-title">添加功能 - {$package.name}</h3></div>
     <div class="card-body">
@@ -5,19 +77,64 @@
             <input type="hidden" name="package_id" value="{$package.id}">
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">选择功能</label>
-                <div class="col-sm-8">
-                    {volist name="allFeaturesList" id="item"}
-                    <div class="form-check">
-                        <label class="form-check-label">
-                            <input class="form-check-input" type="checkbox" name="feature_codes[]" value="{$item.code}" {in name="item.code" value="$existingFeatures"}checked{/in}>
-                            {$item.name}
-                        </label>
+                <div class="col-sm-10">
+                    <div class="feature-tree">
+                        {volist name="featureTree" id="group"}
+                        <div class="feature-group">
+                            <div class="feature-parent {$group.child_count == 0 ? 'no-children' : ''}">
+                                {if $group.child_count > 0}
+                                <button type="button" class="btn-expand" onclick="toggleChildren('{$group.code}')">
+                                    <span id="icon-{$group.code}">▼</span>
+                                </button>
+                                {else /}
+                                <span class="btn-expand disabled"></span>
+                                {/if}
+                                <label class="form-check-label">
+                                    {if $group.child_count > 0}
+                                    <!-- 有子功能的父级：仅用于全选控制，不提交值 -->
+                                    <input class="form-check-input parent-checkbox"
+                                           type="checkbox"
+                                           data-parent="{$group.code}"
+                                           {$group.checked ? 'checked' : ''}>
+                                    {else /}
+                                    <!-- 独立功能：直接提交值 -->
+                                    <input class="form-check-input standalone-checkbox"
+                                           type="checkbox"
+                                           name="feature_codes[]"
+                                           value="{$group.code}"
+                                           {$group.checked ? 'checked' : ''}>
+                                    {/if}
+                                    {$group.name}
+                                    {if $group.child_count > 0}
+                                    <span class="text-muted">({$group.child_count} 个子功能)</span>
+                                    {else /}
+                                    <span class="text-muted">(独立功能)</span>
+                                    {/if}
+                                </label>
+                            </div>
+                            {if $group.child_count > 0}
+                            <div class="feature-children" id="children-{$group.code}">
+                                {volist name="group.children" id="child"}
+                                <label class="feature-child form-check-label">
+                                    <input class="form-check-input child-checkbox"
+                                           type="checkbox"
+                                           name="feature_codes[]"
+                                           value="{$child.code}"
+                                           data-parent="{$group.code}"
+                                           {$child.checked ? 'checked' : ''}>
+                                    {$child.name}
+                                </label>
+                                {/volist}
+                            </div>
+                            {/if}
+                        </div>
+                        {/volist}
                     </div>
-                    {/volist}
+                    <small class="form-text text-muted">勾选一级功能会自动选中所有子功能；独立功能直接勾选即可</small>
                 </div>
             </div>
             <div class="form-group row">
-                <div class="col-sm-8 offset-sm-2">
+                <div class="col-sm-10 offset-sm-2">
                     <button type="submit" class="btn btn-primary">提交</button>
                     <a href="{:url('tenant_package_feature/index', ['package_id' => $package.id])}" class="btn btn-default ml-2">返回</a>
                 </div>
@@ -29,6 +146,47 @@
 $(function () {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     $('#form-add').attr('action', base + '/tenant_package_feature/add');
+
+    // 初始化父级状态
+    $('.parent-checkbox').each(function () {
+        var parent = $(this).data('parent');
+        updateParentState(parent);
+    });
+
+    // 父级复选框点击事件（仅用于全选子功能，不提交自身）
+    $('.parent-checkbox').on('change', function () {
+        var parent = $(this).data('parent');
+        var checked = $(this).prop('checked');
+        // 选中/取消所有子功能
+        $('.child-checkbox[data-parent="' + parent + '"]').prop('checked', checked).trigger('change');
+    });
+
+    // 子级复选框点击事件
+    $('.child-checkbox').on('change', function () {
+        var parent = $(this).data('parent');
+        updateParentState(parent);
+    });
+
+    // 更新父级复选框状态
+    function updateParentState(parent) {
+        var $children = $('.child-checkbox[data-parent="' + parent + '"]');
+        var $parent = $('.parent-checkbox[data-parent="' + parent + '"]');
+        var total = $children.length;
+        var checked = $children.filter(':checked').length;
+
+        if (checked === 0) {
+            $parent.prop('checked', false);
+            $parent.prop('indeterminate', false);
+        } else if (checked === total) {
+            $parent.prop('checked', true);
+            $parent.prop('indeterminate', false);
+        } else {
+            $parent.prop('checked', false);
+            $parent.prop('indeterminate', true);
+        }
+    }
+
+    // 提交表单
     $('#form-add').on('submit', function (e) {
         e.preventDefault();
         $.post($(this).attr('action'), $(this).serialize(), function (r) {
@@ -41,4 +199,17 @@ $(function () {
         }, 'json');
     });
 });
+
+// 折叠/展开子功能
+function toggleChildren(code) {
+    var $children = $('#children-' + code);
+    var $icon = $('#icon-' + code);
+    if ($children.is(':visible')) {
+        $children.hide();
+        $icon.text('▶');
+    } else {
+        $children.show();
+        $icon.text('▼');
+    }
+}
 </script>

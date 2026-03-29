@@ -136,6 +136,15 @@ class PaymentService
         } catch (\Throwable $e) {
             // tenant_order 表可能未安装，忽略
         }
+        try {
+            if (Db::name('restaurant_order')->where('order_no', $orderNo)->find()) {
+                Db::name('restaurant_order')->where('order_no', $orderNo)->update([
+                    'status'      => 4,
+                    'update_time' => $now,
+                ]);
+            }
+        } catch (\Throwable $e) {
+        }
         self::logCallback($gatewayId, $orderNo, $input, 'success');
         return ['handled' => true, 'order_no' => $orderNo, 'message' => 'success'];
     }

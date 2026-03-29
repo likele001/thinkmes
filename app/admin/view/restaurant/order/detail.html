@@ -1,0 +1,39 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">订单详情</h3>
+        <div class="card-tools">
+            <a href="{$config.moduleurl}/restaurant/order/index" class="btn btn-default btn-sm">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr><th>订单号</th><td>{$row.order_no|default=''}</td></tr>
+                    <tr><th>桌台</th><td>{$table.name|default=''}（编码：{$table.code|default=''}）</td></tr>
+                    <tr><th>金额</th><td>{$row.total_amount|default='0.00'}</td></tr>
+                    <tr><th>状态</th><td>{$row.status|default=0}</td></tr>
+                    <tr><th>备注</th><td>{$row.remark|default=''}</td></tr>
+                    <tr><th>下单时间</th><td>{:date('Y-m-d H:i:s', $row.create_time)}</td></tr>
+                </table>
+            </div>
+        </div>
+        <h5 class="mt-3">菜品明细</h5>
+        <table class="table table-bordered">
+            <thead>
+                <tr><th>菜品</th><th>规格/口味</th><th>单价</th><th>数量</th><th>金额</th></tr>
+            </thead>
+            <tbody>
+                {volist name='items' id='it'}
+                <tr>
+                    <td>{$it.name}</td>
+                    <td>{$it.options_text|default=''}</td>
+                    <td>{$it.price}</td>
+                    <td>{$it.quantity}</td>
+                    <td>{$it.amount}</td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+    </div>
+</div>

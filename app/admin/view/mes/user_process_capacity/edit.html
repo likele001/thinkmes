@@ -1,0 +1,45 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑员工产能</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal" data-id="{$row.id}" data-url="mes/user_process_capacity/edit" data-back="mes/user_process_capacity">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">员工</label>
+                <div class="col-sm-6">
+                    <select class="form-control" disabled>
+                        {foreach $users as $id => $name}
+                        <option value="{$id}" {if $row.user_id==$id}selected{/if}>{$name} (#{$id})</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序</label>
+                <div class="col-sm-6">
+                    <select class="form-control" disabled>
+                        {foreach $processes as $id => $name}
+                        <option value="{$id}" {if $row.process_id==$id}selected{/if}>{$name} (#{$id})</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">日产能(件)</label>
+                <div class="col-sm-6"><input type="number" name="row[capacity_per_day]" class="form-control" value="{$row.capacity_per_day|default=100}" min="1" required></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="row[status]" class="form-control">
+                        <option value="1" {if $row.status==1}selected{/if}>启用</option>
+                        <option value="0" {if $row.status==0}selected{/if}>禁用</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/mes/user_process_capacity/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+

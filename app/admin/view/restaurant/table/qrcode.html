@@ -1,0 +1,17 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">桌台二维码</h3>
+        <div class="card-tools">
+            <a href="{$config.moduleurl}/restaurant/table/index" class="btn btn-default btn-sm">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body text-center">
+        <div class="mb-2">桌台：<span class="font-weight-bold">{$row.name|default=''}</span>（编码：{$row.code|default=''}</div>
+        <div class="mb-3"><a href="{$h5_url}" target="_blank">H5 点餐链接</a></div>
+        <div class="mb-3">
+            <img src="{$qrcode_url}" alt="二维码" style="max-width:320px;border:1px solid #eee;padding:6px;background:#fff">
+        </div>
+        <div class="text-muted">可右键另存为或直接打印张贴。</div>
+    </div>
+</div>
+

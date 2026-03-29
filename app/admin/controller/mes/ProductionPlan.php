@@ -324,6 +324,64 @@ class ProductionPlan extends Backend
         }
     }
 
+    public function start(): Response
+    {
+        return $this->setPlanStatus(1);
+    }
+
+    public function pause(): Response
+    {
+        return $this->setPlanStatus(3);
+    }
+
+    public function resume(): Response
+    {
+        return $this->setPlanStatus(1);
+    }
+
+    public function finish(): Response
+    {
+        return $this->setPlanStatus(2);
+    }
+
+    private function setPlanStatus(int $status): Response
+    {
+        if (!$this->request->isPost()) return $this->error('非法请求');
+        $id = (int) $this->request->post('id', 0);
+        if ($id <= 0) return $this->error('参数错误');
+        $tenantId = $this->getTenantId();
+        $plan = ProductionPlanModel::where('tenant_id', $tenantId)->find($id);
+        if (!$plan) return $this->error('生产计划不存在');
+
+        $now = time();
+        $cur = (int) $plan->status;
+        if ($status === 1) {
+            if ($cur === 2) return $this->error('已完成的计划不可开始/恢复');
+            $plan->status = 1;
+            if (!(int) $plan->actual_start_time) $plan->actual_start_time = $now;
+        } elseif ($status === 3) {
+            if ($cur === 2) return $this->error('已完成的计划不可暂停');
+            $plan->status = 3;
+        } elseif ($status === 2) {
+            $plan->status = 2;
+            if (!(int) $plan->actual_start_time) $plan->actual_start_time = $now;
+            $plan->actual_end_time = $now;
+            $plan->completed_quantity = (int) $plan->total_quantity;
+            $plan->progress = 100.00;
+        } else {
+            return $this->error('不支持的状态');
+        }
+
+        $plan->update_time = $now;
+        try {
+            $plan->save();
+        } catch (\Throwable $e) {
+            return $this->error('操作失败');
+        }
+        $msg = $status === 1 ? '已开始' : ($status === 3 ? '已暂停' : '已完成');
+        return $this->success($msg);
+    }
+
     /**
      * 获取订单的型号列表（用于生产计划）
      */

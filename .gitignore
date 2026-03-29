@@ -17,3 +17,7 @@ Thumbs.db
 /build/
 /dist/
 dist
+test_url.sh
+test_controllers.php
+test_route.php
+test_purchase.php

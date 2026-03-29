@@ -1,0 +1,45 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">添加餐饮AI配置</h3></div>
+    <div class="card-body">
+        <form id="form-add" method="post" class="form-horizontal" data-url="restaurant/ai_config/add" data-back="restaurant/ai_config">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">供应商</label>
+                <div class="col-sm-6">
+                    <select name="row[provider]" class="form-control" required>
+                        <option value="">请选择</option>
+                        <option value="openai">openai</option>
+                        <option value="zhipu">zhipu</option>
+                        <option value="aliyun">aliyun</option>
+                        <option value="tencent">tencent</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">API Key</label>
+                <div class="col-sm-6"><input type="text" name="row[api_key]" class="form-control" required></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">API Base</label>
+                <div class="col-sm-6"><input type="text" name="row[api_base]" class="form-control" placeholder="可留空，默认 https://api.openai.com/v1"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">模型</label>
+                <div class="col-sm-6"><input type="text" name="row[model]" class="form-control" value="gpt-3.5-turbo"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="row[status]" class="form-control">
+                        <option value="1">启用</option>
+                        <option value="0">禁用</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-add" class="btn btn-primary">确定添加</button>
+        <a href="{$config.moduleurl}/restaurant/ai_config/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+

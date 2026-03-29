@@ -1,0 +1,45 @@
+<div class="card card-outline card-primary">
+    <div class="card-header"><h3 class="card-title">编辑餐饮AI配置</h3></div>
+    <div class="card-body">
+        <form id="form-edit" method="post" class="form-horizontal" data-id="{$row.id}" data-url="restaurant/ai_config/edit" data-back="restaurant/ai_config">
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">供应商</label>
+                <div class="col-sm-6">
+                    <select name="row[provider]" class="form-control" required>
+                        <option value="">请选择</option>
+                        <option value="openai" {if $row.provider=='openai'}selected{/if}>openai</option>
+                        <option value="zhipu" {if $row.provider=='zhipu'}selected{/if}>zhipu</option>
+                        <option value="aliyun" {if $row.provider=='aliyun'}selected{/if}>aliyun</option>
+                        <option value="tencent" {if $row.provider=='tencent'}selected{/if}>tencent</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">API Key</label>
+                <div class="col-sm-6"><input type="text" name="row[api_key]" class="form-control" value="{$api_key_masked|default=''}" placeholder="不修改请保持 ***xxxx"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">API Base</label>
+                <div class="col-sm-6"><input type="text" name="row[api_base]" class="form-control" value="{$row.api_base|default=''}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">模型</label>
+                <div class="col-sm-6"><input type="text" name="row[model]" class="form-control" value="{$row.model|default='gpt-3.5-turbo'}"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">状态</label>
+                <div class="col-sm-6">
+                    <select name="row[status]" class="form-control">
+                        <option value="1" {if $row.status==1}selected{/if}>启用</option>
+                        <option value="0" {if $row.status==0}selected{/if}>禁用</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer">
+        <button type="submit" form="form-edit" class="btn btn-primary">保存</button>
+        <a href="{$config.moduleurl}/restaurant/ai_config/index" class="btn btn-default ml-2">返回</a>
+    </div>
+</div>
+

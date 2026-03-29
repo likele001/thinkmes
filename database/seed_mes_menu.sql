@@ -284,6 +284,10 @@ INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, 
 ('mes/production_plan/add', '添加计划', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/production_plan/edit', '编辑计划', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/production_plan/del', '删除计划', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/production_plan/start', '开始计划', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/production_plan/pause', '暂停计划', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/production_plan/resume', '恢复计划', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/production_plan/finish', '完成计划', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/production_plan/getOrderModels', '获取订单型号', 2, 0, 1, @production_plan_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
 ON DUPLICATE KEY UPDATE 
     `title` = VALUES(`title`),
@@ -362,6 +366,45 @@ ON DUPLICATE KEY UPDATE
     `icon` = VALUES(`icon`),
     `sort` = VALUES(`sort`),
     `pid` = @mes_pid;
+
+-- 智能排产菜单
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+VALUES ('mes/schedule', '智能排产', 1, 1, 1, @mes_pid, 'fa fa-calendar-check', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @schedule_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/schedule' LIMIT 1);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/schedule/index', '排产列表', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/schedule/generate', '生成排产', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/schedule/publish', '下发分工', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/schedule/del', '删除排产', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE
+    `title` = VALUES(`title`),
+    `pid` = @schedule_pid;
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`)
+VALUES ('mes/user_process_capacity', '员工产能', 1, 1, 1, @mes_pid, 'fa fa-user-cog', 61, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @capacity_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/user_process_capacity' LIMIT 1);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/user_process_capacity/index', '列表', 2, 0, 1, @capacity_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/user_process_capacity/add', '添加', 2, 0, 1, @capacity_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/user_process_capacity/edit', '编辑', 2, 0, 1, @capacity_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/user_process_capacity/del', '删除', 2, 0, 1, @capacity_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE
+    `title` = VALUES(`title`),
+    `pid` = @capacity_pid;
 
 SET @wage_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/wage' LIMIT 1);
 

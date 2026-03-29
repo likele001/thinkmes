@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "pages/menu/index",
+    "pages/cart/index",
+    "pages/order/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "扫码点餐",
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f7f7f7"
+  },
+  "sitemapLocation": "sitemap.json"
+}
+

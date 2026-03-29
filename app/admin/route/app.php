@@ -210,6 +210,9 @@ if (is_file(__DIR__ . '/hr.php')) {
 if (is_file(__DIR__ . '/finance.php')) {
     require __DIR__ . '/finance.php';
 }
+if (is_file(__DIR__ . '/restaurant.php')) {
+    require __DIR__ . '/restaurant.php';
+}
 if (is_file(__DIR__ . '/extension.php')) {
     require __DIR__ . '/extension.php';
 }

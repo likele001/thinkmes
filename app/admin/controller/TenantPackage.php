@@ -37,6 +37,7 @@ class TenantPackage extends Backend
         $list = $query->page($page, $limit)->select()->toArray();
         foreach ($list as &$row) {
             $row['expire_days_text'] = ($row['expire_days'] ?? null) && $row['expire_days'] > 0 ? $row['expire_days'] . '天' : '永久';
+            $row['price_text'] = '¥' . number_format($row['price'] ?? 0, 2);
         }
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
@@ -63,26 +64,28 @@ class TenantPackage extends Backend
         $maxAdmin = max(0, (int) $this->request->post('max_admin', 10));
         $maxUser = max(0, (int) $this->request->post('max_user', 1000));
         $expireDays = $this->request->post('expire_days');
+        $price = (float) $this->request->post('price', 0);
         $sort = (int) $this->request->post('sort', 0);
-        
+
         if (strlen($name) < 1) {
             return $this->error('套餐名称不能为空');
         }
         if (TenantPackageModel::where('name', $name)->find()) {
             return $this->error('套餐名称已存在');
         }
-        
+
         $expireDaysInt = null;
         if ($expireDays !== '' && $expireDays !== null) {
             $expireDaysInt = max(1, (int) $expireDays);
         }
-        
+
         $now = time();
         $pkg = TenantPackageModel::create([
             'name' => $name,
             'max_admin' => $maxAdmin,
             'max_user' => $maxUser,
             'expire_days' => $expireDaysInt,
+            'price' => $price,
             'sort' => $sort,
             'create_time' => $now,
             'update_time' => $now,
@@ -124,24 +127,26 @@ class TenantPackage extends Backend
         $maxAdmin = max(0, (int) $this->request->post('max_admin', 10));
         $maxUser = max(0, (int) $this->request->post('max_user', 1000));
         $expireDays = $this->request->post('expire_days');
+        $price = (float) $this->request->post('price', 0);
         $sort = (int) $this->request->post('sort', 0);
-        
+
         if (strlen($name) < 1) {
             return $this->error('套餐名称不能为空');
         }
         if (TenantPackageModel::where('name', $name)->where('id', '<>', $id)->find()) {
             return $this->error('套餐名称已存在');
         }
-        
+
         $expireDaysInt = null;
         if ($expireDays !== '' && $expireDays !== null) {
             $expireDaysInt = max(1, (int) $expireDays);
         }
-        
+
         $row->name = $name;
         $row->max_admin = $maxAdmin;
         $row->max_user = $maxUser;
         $row->expire_days = $expireDaysInt;
+        $row->price = $price;
         $row->sort = $sort;
         $row->update_time = time();
         $row->save();

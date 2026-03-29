@@ -7,6 +7,10 @@
     var addUrl = base + '/mes/production_plan/add';
     var editUrl = base + '/mes/production_plan/edit';
     var delUrl = base + '/mes/production_plan/del';
+    var startUrl = base + '/mes/production_plan/start';
+    var pauseUrl = base + '/mes/production_plan/pause';
+    var resumeUrl = base + '/mes/production_plan/resume';
+    var finishUrl = base + '/mes/production_plan/finish';
     var allocationsUrl = base + '/mes/production_plan/allocations';
     var progressStatsUrl = base + '/mes/production_plan/progressStats';
     var progressUrl = base + '/mes/production_plan/progress';
@@ -28,6 +32,15 @@
             html += '<a href="' + allocationsUrl + '?id=' + row.id + '" class="btn btn-xs btn-info btn-allocations"><i class="fas fa-list"></i> 查看分工</a> ';
             html += '<a href="' + progressStatsUrl + '?id=' + row.id + '" class="btn btn-xs btn-warning btn-progress-stats"><i class="fas fa-chart-bar"></i> 进度统计</a> ';
             html += '<a href="' + progressUrl + '?id=' + row.id + '" class="btn btn-xs btn-secondary btn-progress"><i class="fas fa-chart-line"></i> 生产进度</a> ';
+        }
+        if (row.status == 0) {
+            html += '<a href="javascript:;" class="btn btn-xs btn-primary btn-start" data-id="' + row.id + '"><i class="fas fa-play"></i> 开始</a> ';
+        } else if (row.status == 1) {
+            html += '<a href="javascript:;" class="btn btn-xs btn-warning btn-pause" data-id="' + row.id + '"><i class="fas fa-pause"></i> 暂停</a> ';
+            html += '<a href="javascript:;" class="btn btn-xs btn-success btn-finish" data-id="' + row.id + '"><i class="fas fa-flag-checkered"></i> 完成</a> ';
+        } else if (row.status == 3) {
+            html += '<a href="javascript:;" class="btn btn-xs btn-primary btn-resume" data-id="' + row.id + '"><i class="fas fa-play"></i> 继续</a> ';
+            html += '<a href="javascript:;" class="btn btn-xs btn-success btn-finish" data-id="' + row.id + '"><i class="fas fa-flag-checkered"></i> 完成</a> ';
         }
         html += '<a href="' + editUrl + '?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit"><i class="fas fa-edit"></i> 编辑</a> ' +
             '<a href="javascript:;" class="btn btn-xs btn-danger btn-del" data-id="' + row.id + '"><i class="fas fa-trash-alt"></i> 删除</a>';
@@ -68,6 +81,34 @@
                         return value ? new Date(value * 1000).toLocaleString('zh-CN') : '';
                     }},
                     {field: 'operate', title: '操作', width: 150, events: {
+                        'click .btn-start': function (e, value, row) {
+                            if (!confirm('确定开始该计划？')) return;
+                            $.post(startUrl, { id: row.id }, function (r) {
+                                alert(r.msg || (r.code == 1 ? '已开始' : '失败'));
+                                if (r.code == 1) $table.bootstrapTable('refresh');
+                            }, 'json');
+                        },
+                        'click .btn-pause': function (e, value, row) {
+                            if (!confirm('确定暂停该计划？')) return;
+                            $.post(pauseUrl, { id: row.id }, function (r) {
+                                alert(r.msg || (r.code == 1 ? '已暂停' : '失败'));
+                                if (r.code == 1) $table.bootstrapTable('refresh');
+                            }, 'json');
+                        },
+                        'click .btn-resume': function (e, value, row) {
+                            if (!confirm('确定恢复该计划？')) return;
+                            $.post(resumeUrl, { id: row.id }, function (r) {
+                                alert(r.msg || (r.code == 1 ? '已开始' : '失败'));
+                                if (r.code == 1) $table.bootstrapTable('refresh');
+                            }, 'json');
+                        },
+                        'click .btn-finish': function (e, value, row) {
+                            if (!confirm('确定标记该计划为已完成？这会把完成数量置为计划数量。')) return;
+                            $.post(finishUrl, { id: row.id }, function (r) {
+                                alert(r.msg || (r.code == 1 ? '已完成' : '失败'));
+                                if (r.code == 1) $table.bootstrapTable('refresh');
+                            }, 'json');
+                        },
                         'click .btn-edit': function(e, value, row) {
                             location.href = editUrl + '?ids=' + row.id;
                         },

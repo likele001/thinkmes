@@ -49,6 +49,9 @@ Route::get('customer/orders', 'Customer/orders')->middleware(\app\api\middleware
 // 小程序绑定（需登录）
 Route::post('miniapp/bind', 'Miniapp/bind')->middleware(\app\api\middleware\UserAuth::class);
 
+require __DIR__ . '/restaurant_wxa.php';
+require __DIR__ . '/restaurant_openclaw.php';
+
 // C端用户：文件上传（需登录）
 Route::post('common/upload', 'Common/upload')->middleware(\app\api\middleware\UserAuth::class);
 
@@ -206,3 +209,16 @@ Route::get('scanwork/getDashboardData', 'Scanwork/getDashboardData')->middleware
 Route::get('scanwork/getBiProductionEfficiency', 'Scanwork/getBiProductionEfficiency')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
 Route::get('scanwork/getBiQualityAnalysis', 'Scanwork/getBiQualityAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
 Route::get('scanwork/getBiCostAnalysis', 'Scanwork/getBiCostAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+
+if (is_file(__DIR__ . '/restaurant.php')) {
+    require __DIR__ . '/restaurant.php';
+}
+
+// 租户自助购买API
+Route::get('tenant_purchase/package_list', 'TenantPurchase/packageList');
+Route::post('tenant_purchase/create_order', 'TenantPurchase/createOrder');
+Route::get('tenant_purchase/payment_methods', 'TenantPurchase/paymentMethods');
+Route::post('tenant_purchase/pay', 'TenantPurchase/pay');
+Route::get('tenant_purchase/return', 'TenantPurchase/return');
+Route::post('tenant_purchase/notify', 'TenantPurchase/notify');
+Route::get('tenant_purchase/order_status', 'TenantPurchase/orderStatus');

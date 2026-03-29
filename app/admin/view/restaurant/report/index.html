@@ -1,0 +1,52 @@
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">餐饮报表（今日）</h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-default btn-sm btn-refresh">刷新</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info"><i class="fas fa-receipt"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">今日订单数</span>
+                        <span class="info-box-number" id="today-orders">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-yen-sign"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">今日营业额</span>
+                        <span class="info-box-number" id="today-revenue">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">未结账订单</span>
+                        <span class="info-box-number" id="unpaid-orders">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="mt-3">今日菜品销量 TOP10</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr><th>菜品</th><th>销量</th><th>金额</th></tr>
+                </thead>
+                <tbody id="top-items">
+                    <tr><td colspan="3">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

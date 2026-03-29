@@ -135,7 +135,22 @@ class Register extends Backend
             $tenant->contact_email = $params['email'];
             $tenant->domain = ''; // 暂时留空
             $tenant->package_id = $packageId;
-            $tenant->expire_time = time() + (365 * 86400); // 默认1年
+
+            // 根据注册类型设置过期时间
+            $registerType = $params['register_type'] ?? 'free';
+            if ($registerType === 'free') {
+                // 免费试用：7天
+                $tenant->expire_time = time() + (7 * 86400);
+            } else {
+                // 付费购买：根据套餐设置
+                $expireDays = $package['expire_days'] ?? null;
+                if ($expireDays && $expireDays > 0) {
+                    $tenant->expire_time = time() + ($expireDays * 86400);
+                } else {
+                    $tenant->expire_time = 0; // 永久
+                }
+            }
+
             $tenant->status = 1; // 激活
             $tenant->create_time = time();
             $tenant->update_time = time();

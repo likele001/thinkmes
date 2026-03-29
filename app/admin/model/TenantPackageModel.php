@@ -13,6 +13,7 @@ class TenantPackageModel extends Model
         'max_admin'   => 'integer',
         'max_user'    => 'integer',
         'expire_days' => 'integer',
+        'price'       => 'float',
         'sort'        => 'integer',
         'create_time' => 'integer',
         'update_time' => 'integer',

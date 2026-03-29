@@ -18,42 +18,64 @@
     var addUrl = base + '/payment/config/add' + (codeFilter ? '?code=' + encodeURIComponent(codeFilter) : '');
     var editUrl = base + '/payment/config/edit';
     var delUrl = base + '/payment/config/del';
-    var $table = $('#table');
-    if (!$table.length || typeof $table.bootstrapTable !== 'function') return;
-    $table.bootstrapTable({
-        url: indexUrl,
-        method: 'get',
-        pagination: true,
-        sidePagination: 'server',
-        pageSize: 20,
-        pageList: [10, 20, 50],
-        responseHandler: function(res) {
-            var d = res && res.data ? res.data : {};
-            return { total: d.total || 0, rows: d.list || [] };
-        },
-        columns: [
-            { field: 'id', title: 'ID', width: 70 },
-            { field: 'code_name', title: '网关类型', width: 140 },
-            { field: 'name', title: '显示名称' },
-            { field: 'enabled', title: '状态', width: 80, formatter: function(v) {
-                return v == 1 ? '<span class="badge badge-success">启用</span>' : '<span class="badge badge-secondary">关闭</span>';
-            }},
-            { field: 'sort', title: '排序', width: 70 },
-            { field: 'operate', title: '操作', width: 140, align: 'center', formatter: function(v, r) {
-                return '<a href="' + editUrl + '?id=' + r.id + '" class="btn btn-xs btn-success">编辑</a> ' +
-                    '<a href="javascript:;" class="btn btn-xs btn-danger btn-del-one" data-id="' + r.id + '">删除</a>';
-            }}
-        ]
-    });
-    $(document).off('click', '.btn-refresh').on('click', '.btn-refresh', function() { $table.bootstrapTable('refresh'); });
-    $('#btn-add').add('.btn-add').off('click').on('click', function() { window.location.href = addUrl; });
-    $(document).off('click', '.btn-del-one').on('click', '.btn-del-one', function() {
-        var id = $(this).data('id');
-        if (!confirm('确定删除该网关？')) return;
-        $.post(delUrl, { id: id }, function(r) {
-            alert(r.msg || '');
-            if (r.code == 1) $table.bootstrapTable('refresh');
-        }, 'json');
-    });
+
+    // 等待 jQuery 和 bootstrapTable 加载完成
+    function initTable() {
+        var $table = $('#table');
+        if (!$table.length) {
+            console.error('Table element not found');
+            return;
+        }
+        if (typeof $table.bootstrapTable !== 'function') {
+            console.error('bootstrapTable not loaded, retrying...');
+            setTimeout(initTable, 100);
+            return;
+        }
+
+        $table.bootstrapTable({
+            url: indexUrl,
+            method: 'get',
+            pagination: true,
+            sidePagination: 'server',
+            pageSize: 20,
+            pageList: [10, 20, 50],
+            responseHandler: function(res) {
+                console.log('API Response:', res);
+                var d = res && res.data ? res.data : {};
+                return { total: d.total || 0, rows: d.list || [] };
+            },
+            columns: [
+                { field: 'id', title: 'ID', width: 70 },
+                { field: 'code_name', title: '网关类型', width: 140 },
+                { field: 'name', title: '显示名称' },
+                { field: 'enabled', title: '状态', width: 80, formatter: function(v) {
+                    return v == 1 ? '<span class="badge badge-success">启用</span>' : '<span class="badge badge-secondary">关闭</span>';
+                }},
+                { field: 'sort', title: '排序', width: 70 },
+                { field: 'operate', title: '操作', width: 140, align: 'center', formatter: function(v, r) {
+                    return '<a href="' + editUrl + '?id=' + r.id + '" class="btn btn-xs btn-success">编辑</a> ' +
+                        '<a href="javascript:;" class="btn btn-xs btn-danger btn-del-one" data-id="' + r.id + '">删除</a>';
+                }}
+            ]
+        });
+
+        $(document).off('click', '.btn-refresh').on('click', '.btn-refresh', function() { $table.bootstrapTable('refresh'); });
+        $('#btn-add').add('.btn-add').off('click').on('click', function() { window.location.href = addUrl; });
+        $(document).off('click', '.btn-del-one').on('click', '.btn-del-one', function() {
+            var id = $(this).data('id');
+            if (!confirm('确定删除该网关？')) return;
+            $.post(delUrl, { id: id }, function(r) {
+                alert(r.msg || '');
+                if (r.code == 1) $table.bootstrapTable('refresh');
+            }, 'json');
+        });
+    }
+
+    // DOM 加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTable);
+    } else {
+        initTable();
+    }
 })();
 </script>

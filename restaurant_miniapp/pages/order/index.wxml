@@ -1,0 +1,39 @@
+<view class="container">
+  <view class="card">
+    <view class="row">
+      <view style="font-weight:700">我的订单</view>
+      <button class="btn btn-outline" size="mini" bindtap="refresh">刷新</button>
+    </view>
+  </view>
+
+  <view class="card muted" wx:if="{{!orders.length}}">暂无订单</view>
+
+  <block wx:for="{{orders}}" wx:key="id">
+    <view class="card">
+      <view class="row">
+        <view style="font-weight:800">{{item.order_no}}</view>
+        <view>¥{{item.total_amount}}</view>
+      </view>
+      <view class="muted" style="margin-top:8rpx">状态：{{item.status}} 时间：{{item.timeText}}</view>
+      <view style="margin-top:12rpx">
+        <button class="btn btn-ghost" size="mini" data-id="{{item.id}}" bindtap="toggleDetail">{{item.showDetail?'收起':'详情'}}</button>
+      </view>
+      <view wx:if="{{item.showDetail}}" style="margin-top:14rpx">
+        <view class="muted" wx:if="{{item.loading}}">加载中...</view>
+        <view wx:if="{{item.detailLoaded}}">
+          <block wx:for="{{item.items}}" wx:key="id">
+            <view style="padding:10rpx 0;border-top:1px solid #eee" wx:if="{{index>0}}"></view>
+            <view class="row">
+              <view style="max-width:520rpx">
+                <view style="font-weight:700">{{item.name}}</view>
+                <view class="muted" style="font-size:24rpx">{{item.options_text}}</view>
+              </view>
+              <view>x{{item.quantity}}</view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>
+

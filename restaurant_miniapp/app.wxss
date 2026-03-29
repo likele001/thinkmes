@@ -1,0 +1,16 @@
+page{
+  background:#f7f7f7;
+  color:#111;
+  font-size:28rpx;
+  line-height:1.5;
+}
+.container{padding:24rpx;padding-bottom:calc(24rpx + env(safe-area-inset-bottom));}
+.card{background:#fff;border-radius:16rpx;padding:24rpx;margin-bottom:20rpx;}
+.row{display:flex;align-items:center;justify-content:space-between;}
+.muted{color:#777;}
+.btn{border-radius:12rpx;padding:16rpx 24rpx;font-weight:600;}
+.btn-primary{background:#2D4BFF;color:#fff;}
+.btn-outline{border:2rpx solid #2D4BFF;color:#2D4BFF;background:#fff;}
+.btn-ghost{background:#EEF2FF;color:#2D4BFF;}
+.tag{display:inline-block;padding:6rpx 12rpx;border-radius:999rpx;background:#EEF2FF;color:#2D4BFF;font-size:22rpx;margin-left:10rpx;}
+
