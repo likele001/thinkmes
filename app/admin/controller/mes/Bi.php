@@ -4,10 +4,21 @@ declare(strict_types=1);
 namespace app\admin\controller\mes;
 
 use app\admin\controller\Backend;
+use app\admin\model\mes\AfterSalesModel;
+use app\admin\model\mes\CustomerModel;
+use app\admin\model\mes\MaterialModel;
 use app\admin\model\mes\OrderModel;
+use app\admin\model\mes\ProcessModel;
+use app\admin\model\mes\ProcessRouteModel;
+use app\admin\model\mes\ProductModelModel;
 use app\admin\model\mes\ProductionPlanModel;
+use app\admin\model\mes\PurchaseInboundItemModel;
+use app\admin\model\mes\PurchaseInboundModel;
+use app\admin\model\mes\PurchaseRequestModel;
+use app\admin\model\mes\QualityCheckModel;
 use app\admin\model\mes\ReportModel;
 use app\admin\model\mes\AllocationModel;
+use app\admin\model\mes\ShipmentModel;
 use app\admin\model\mes\WageModel;
 use app\common\model\UserModel;
 use think\facade\Db;
@@ -33,7 +44,7 @@ class Bi extends Backend
      */
     public function dashboard(): string
     {
-        View::assign('title', '生产数据大屏');
+        View::assign('title', 'MES全链路数据监管大屏');
         return $this->fetchWithLayout('mes/bi/dashboard');
     }
 
@@ -42,178 +53,934 @@ class Bi extends Backend
      */
     public function getDashboardData(): Response
     {
-        $tenantId = $this->getTenantId();
-        $today = date('Y-m-d');
+        $tenantId = $this->resolveDashboardTenantId();
+        $now = time();
+        $today = date('Y-m-d', $now);
         $todayStart = strtotime($today . ' 00:00:00');
         $todayEnd = strtotime($today . ' 23:59:59');
-        
-        // 今日报工统计
-        $todayReports = ReportModel::where(function($q) use ($tenantId) {
-                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
-                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
-            })
-            ->where('status', 1)
-            ->where('create_time', 'between', [$todayStart, $todayEnd])
-            ->field('SUM(quantity) as total_quantity, SUM(wage) as total_wage, COUNT(*) as report_count')
-            ->find();
+        $mode = (string) $this->request->get('mode', 'full');
+        $coreOnly = $mode === 'core';
 
-        // 今日不良数（已审核报工中不合格数量）
-        $todayBad = ReportModel::where(function($q) use ($tenantId) {
-                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); }
-                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
-            })
-            ->where('status', 1)
-            ->where('quality_status', 2)
-            ->where('create_time', 'between', [$todayStart, $todayEnd])
-            ->sum('quantity');
-        $todayBad = (int) $todayBad;
-
-        // 进行中订单进度列表（用于大屏左侧）
-        $orderT = Db::name('mes_order')->getTable();
-        $planT = Db::name('mes_production_plan')->getTable();
-        $allocT = Db::name('mes_allocation')->getTable();
-        $reportT = Db::name('mes_report')->getTable();
-        $orderListQuery = Db::table($orderT . ' o')
-            ->leftJoin($planT . ' t', 'o.id = t.order_id')
-            ->leftJoin($allocT . ' a', '((a.plan_id = t.id) OR (a.plan_id IS NULL AND a.order_id = o.id))')
-            ->leftJoin($reportT . ' r', 'r.allocation_id = a.id AND r.status = 1')
-            ->field('o.id, o.order_no, o.order_name as product_name, o.total_quantity as num, SUM(r.quantity) as finish_num, ROUND(IFNULL(SUM(r.quantity)/NULLIF(o.total_quantity,0)*100,0),1) as progress')
-            ->group('o.id')
-            ->order('o.id', 'desc')
-            ->limit(50);
-        if ($tenantId > 0) {
-            $orderListQuery->where('o.tenant_id', $tenantId);
-        } else {
-            $tp = (int) request()->get('tenant_id', 0);
-            if ($tp > 0) {
-                $orderListQuery->where('o.tenant_id', $tp);
-            }
-        }
-        $orderList = $orderListQuery->select()->toArray();
-        foreach ($orderList as &$row) {
-            $row['finish_num'] = (int) ($row['finish_num'] ?? 0);
-            $row['progress'] = round((float) ($row['progress'] ?? 0), 1);
-            $row['status_txt'] = $row['finish_num'] <= 0 ? '未开始' : ($row['progress'] >= 100 ? '已完成' : '生产中');
-        }
-
-        // 今日各工序产量（大屏右侧）
-        $processToday = ReportModel::alias('r')
-            ->join('mes_allocation a', 'r.allocation_id = a.id')
-            ->join('mes_process p', 'a.process_id = p.id')
-            ->where('r.status', 1)
-            ->where('r.create_time', 'between', [$todayStart, $todayEnd])
-            ->field('p.name as process_name, p.sort, SUM(r.quantity) as quantity')
-            ->group('p.id,p.name,p.sort')
-            ->order('p.sort', 'asc');
-        if ($tenantId > 0) {
-            $processToday->where('r.tenant_id', $tenantId);
-        } else {
-            $tp = (int) request()->get('tenant_id', 0);
-            if ($tp > 0) {
-                $processToday->where('r.tenant_id', $tp);
-            }
-        }
-        $processTodayList = $processToday->select()->toArray();
-
-        // 订单统计
-        $orderStats = OrderModel::where(function($q) use ($tenantId) {
-                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
-                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
-            })
-            ->field('status, COUNT(*) as count')
-            ->group('status')
-            ->select();
-        
-        $orderData = [0 => 0, 1 => 0, 2 => 0, 3 => 0];
-        foreach ($orderStats as $stat) {
-            $orderData[$stat->status] = $stat->count;
-        }
-        
-        // 生产计划统计
-        $planStats = ProductionPlanModel::where(function($q) use ($tenantId) {
-                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
-                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
-            })
-            ->field('status, COUNT(*) as count')
-            ->group('status')
-            ->select();
-        
-        $planData = [0 => 0, 1 => 0, 2 => 0, 3 => 0];
-        foreach ($planStats as $stat) {
-            $planData[$stat->status] = $stat->count;
-        }
-        
-        // 进行中的分配
-        $activeAllocations = AllocationModel::where(function($q) use ($tenantId) {
-                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
-                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
-            })
-            ->where('status', 1)
-            ->whereColumn('completed_quantity', '<', 'quantity')
-            ->count();
-        
-        // 待审核的报工
-        $pendingReports = ReportModel::where(function($q) use ($tenantId) {
-                if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
-                else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
-            })
-            ->where('status', 0)
-            ->count();
-        
-        // 大屏总览 6 数 + 按订单/产品/工序/员工 4 表（与 scanwork 大屏一致）
         $overallStats = $this->getDashboardOverallStats($tenantId);
-        $orderStats = $this->getDashboardOrderStats($tenantId);
-        $productStats = $this->getDashboardProductStats($tenantId);
-        $processStats = $this->getDashboardProcessStats($tenantId);
-        $employeeStats = $this->getDashboardEmployeeStats($tenantId);
+        $routeStats = $this->getProcessRouteCompliance($tenantId);
+        $stockStats = $this->getStockOverview($tenantId, $now);
+        $purchaseStats = $this->getPurchaseOverview($tenantId, $now);
+        $shipmentStats = $this->getShipmentOverview($tenantId, $now);
+        $qualityStats = $this->getQualityOverview($tenantId, $now, $todayStart, $todayEnd);
+        $planStats = $this->getPlanOverview($tenantId, $now);
+        $customerStats = $this->getCustomerOverview($tenantId, $now);
 
-        // 最近7天的报工趋势
-        $trendData = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = date('Y-m-d', strtotime("-{$i} days"));
-            $dateStart = strtotime($date . ' 00:00:00');
-            $dateEnd = strtotime($date . ' 23:59:59');
-            
-            $dayReport = ReportModel::where(function($q) use ($tenantId) {
-                    if ($tenantId > 0) { $q->where('tenant_id', $tenantId); } 
-                    else { $tp = (int) request()->get('tenant_id', 0); if ($tp > 0) { $q->where('tenant_id', $tp); } }
-                })
-                ->where('status', 1)
-                ->where('create_time', 'between', [$dateStart, $dateEnd])
-                ->field('SUM(quantity) as quantity, SUM(wage) as wage, COUNT(*) as count')
-                ->find();
-            
-            $trendData[] = [
-                'date' => $date,
-                'quantity' => (float) ($dayReport->quantity ?? 0),
-                'wage' => (float) ($dayReport->wage ?? 0),
-                'count' => (int) ($dayReport->count ?? 0)
-            ];
-        }
-        
-        $data = [
-            'today' => [
-                'quantity' => (float) ($todayReports->total_quantity ?? 0),
-                'wage' => (float) ($todayReports->total_wage ?? 0),
-                'report_count' => (int) ($todayReports->report_count ?? 0),
-                'bad' => $todayBad,
+        $kpis = [
+            [
+                'key' => 'production_completion_rate',
+                'title' => '今日工单完工率',
+                'value' => (float) ($overallStats['completion_rate'] ?? 0),
+                'unit' => '%',
+                'warn' => $this->warnByThreshold((float) ($overallStats['completion_rate'] ?? 0), 90, 95),
+                'link' => $this->adminUrl('/mes/allocation'),
             ],
-            'orders' => $orderData,
-            'plans' => $planData,
-            'active_allocations' => $activeAllocations,
-            'pending_reports' => $pendingReports,
-            'order_list' => $orderList,
-            'process_today_list' => $processTodayList,
-            'exception_list' => $this->buildDashboardExceptions((int) $pendingReports, $todayBad),
-            'overall_stats' => $overallStats,
-            'order_stats' => $orderStats,
-            'product_stats' => $productStats,
-            'process_stats' => $processStats,
-            'employee_stats' => $employeeStats,
-            'trend' => $trendData
+            [
+                'key' => 'process_compliance_rate',
+                'title' => '工艺合规率',
+                'value' => (float) ($routeStats['rate'] ?? 0),
+                'unit' => '%',
+                'warn' => $this->warnByThreshold((float) ($routeStats['rate'] ?? 0), 98, 99),
+                'link' => $this->adminUrl('/mes/process_route'),
+            ],
+            [
+                'key' => 'stock_turnover_days',
+                'title' => '库存周转天数',
+                'value' => (float) ($stockStats['turnover_days'] ?? 0),
+                'unit' => '天',
+                'warn' => $this->warnByUpper((float) ($stockStats['turnover_days'] ?? 0), 30, 45),
+                'link' => $this->adminUrl('/mes/stock'),
+            ],
+            [
+                'key' => 'purchase_timely_rate',
+                'title' => '采购及时率',
+                'value' => (float) ($purchaseStats['timely_rate'] ?? 0),
+                'unit' => '%',
+                'warn' => $this->warnByThreshold((float) ($purchaseStats['timely_rate'] ?? 0), 95, 98),
+                'link' => $this->adminUrl('/mes/purchase/request'),
+            ],
+            [
+                'key' => 'shipment_ontime_rate',
+                'title' => '发货准时率',
+                'value' => (float) ($shipmentStats['ontime_rate'] ?? 0),
+                'unit' => '%',
+                'warn' => $this->warnByThreshold((float) ($shipmentStats['ontime_rate'] ?? 0), 98, 99),
+                'link' => $this->adminUrl('/mes/shipment'),
+            ],
+            [
+                'key' => 'first_pass_rate',
+                'title' => '产品一次合格率',
+                'value' => (float) ($qualityStats['first_pass_rate'] ?? 0),
+                'unit' => '%',
+                'warn' => $this->warnByThreshold((float) ($qualityStats['first_pass_rate'] ?? 0), 97, 99),
+                'link' => $this->adminUrl('/mes/quality/check'),
+            ],
+            [
+                'key' => 'plan_achieve_rate',
+                'title' => '生产计划达成率',
+                'value' => (float) ($planStats['achieve_rate'] ?? 0),
+                'unit' => '%',
+                'warn' => $this->warnByThreshold((float) ($planStats['achieve_rate'] ?? 0), 90, 95),
+                'link' => $this->adminUrl('/mes/production_plan'),
+            ],
+            [
+                'key' => 'customer_satisfaction',
+                'title' => '客户满意度',
+                'value' => (float) ($customerStats['satisfaction'] ?? 0),
+                'unit' => '星',
+                'warn' => $this->warnByThreshold((float) ($customerStats['satisfaction'] ?? 0), 4.5, 4.8),
+                'link' => $this->adminUrl('/mes/customer'),
+            ],
         ];
 
+        $workOrders = $this->getWorkOrderRealtimeList($tenantId, $now, 18);
+        $flow = $this->getOrderFlowStats($tenantId, $now);
+        $alerts = $this->buildFullChainAlerts([
+            'pending_reports' => (int) ($qualityStats['pending_reports'] ?? 0),
+            'today_bad' => (int) ($qualityStats['today_bad'] ?? 0),
+            'stock_warning' => (int) ($stockStats['warning_count'] ?? 0),
+            'mrp_shortage' => (int) ($purchaseStats['mrp_shortage_count'] ?? 0),
+            'shipment_overdue' => (int) ($shipmentStats['overdue_count'] ?? 0),
+            'purchase_pending' => (int) ($purchaseStats['pending_count'] ?? 0),
+            'quality_pending' => (int) ($qualityStats['pending_check_count'] ?? 0),
+        ]);
+
+        $data = [
+            'server_time' => $now,
+            'tenant_id' => $tenantId,
+            'kpis' => $kpis,
+            'alerts' => $alerts,
+            'workorders' => $workOrders,
+            'flow' => $flow,
+            'overall_stats' => $overallStats,
+        ];
+
+        if (!$coreOnly) {
+            $data['order_stats'] = $this->getDashboardOrderStats($tenantId);
+            $data['product_stats'] = $this->getDashboardProductStats($tenantId);
+            $data['process_stats'] = $this->getDashboardProcessStats($tenantId);
+            $data['employee_stats'] = $this->getDashboardEmployeeStats($tenantId);
+            $data['production'] = [
+                'allocation_status' => $this->getAllocationStatusStats($tenantId),
+                'output_trend' => $this->getOutputTrend($tenantId, 14),
+                'capacity_top' => $this->getCapacityTop($tenantId, $todayStart, $todayEnd, 10),
+                'route' => $routeStats,
+            ];
+            $data['stock'] = $stockStats;
+            $data['purchase'] = $purchaseStats;
+            $data['shipment'] = $shipmentStats;
+            $data['quality'] = $qualityStats;
+            $data['plan'] = $planStats;
+            $data['customer'] = $customerStats;
+        }
+
         return $this->success('', $data);
+    }
+
+    public function getAllocationGanttData(): Response
+    {
+        $tenantId = $this->resolveDashboardTenantId();
+        if ($tenantId <= 0) {
+            return $this->error('tenant_id required');
+        }
+
+        $days = (int) $this->request->get('days', 3);
+        $days = max(1, min(14, $days));
+        $startDate = trim((string) $this->request->get('start_date', ''));
+        $startTs = $startDate !== '' ? strtotime($startDate . ' 00:00:00') : 0;
+        if ($startTs <= 0) {
+            $startTs = strtotime(date('Y-m-d', time()) . ' 00:00:00');
+        }
+        $endTs = $startTs + $days * 86400;
+
+        $allocT = Db::name('mes_allocation')->getTable();
+        $orderT = Db::name('mes_order')->getTable();
+        $modelT = Db::name('mes_product_model')->getTable();
+        $processT = Db::name('mes_process')->getTable();
+        $userT = Db::name('user')->getTable();
+
+        $rows = Db::table($allocT . ' a')
+            ->leftJoin($orderT . ' o', 'a.order_id = o.id')
+            ->leftJoin($modelT . ' m', 'a.model_id = m.id')
+            ->leftJoin($processT . ' p', 'a.process_id = p.id')
+            ->leftJoin($userT . ' u', 'a.user_id = u.id')
+            ->where('a.tenant_id', $tenantId)
+            ->where(function ($q) use ($startTs, $endTs) {
+                $q->whereBetween('a.planned_start_time', [$startTs, $endTs])
+                    ->whereOrBetween('a.planned_end_time', [$startTs, $endTs])
+                    ->whereOr(function ($q2) use ($startTs, $endTs) {
+                        $q2->where('a.planned_start_time', '<', $startTs)->where('a.planned_end_time', '>', $endTs);
+                    })
+                    ->whereOrBetween('a.create_time', [$startTs, $endTs]);
+            })
+            ->field('a.id,a.status,a.quantity,a.completed_quantity,a.planned_start_time,a.planned_end_time,a.actual_start_time,a.actual_end_time,o.order_no,m.name as model_name,p.name as process_name,COALESCE(u.nickname,u.username,CONCAT("用户#",a.user_id)) as user_name')
+            ->order('a.planned_start_time', 'asc')
+            ->order('a.id', 'asc')
+            ->limit(200)
+            ->select()
+            ->toArray();
+
+        $items = [];
+        foreach ($rows as $r) {
+            $plannedStart = (int) ($r['planned_start_time'] ?? 0);
+            $plannedEnd = (int) ($r['planned_end_time'] ?? 0);
+            $actualStart = (int) ($r['actual_start_time'] ?? 0);
+            $actualEnd = (int) ($r['actual_end_time'] ?? 0);
+            $createTime = time();
+            try {
+                $createTime = (int) ($r['create_time'] ?? 0);
+            } catch (\Throwable $e) {
+            }
+            if ($plannedStart <= 0) {
+                $plannedStart = $createTime > 0 ? $createTime : $startTs;
+            }
+            if ($plannedEnd <= 0 || $plannedEnd <= $plannedStart) {
+                $plannedEnd = min($endTs, $plannedStart + 4 * 3600);
+            }
+            if ($actualStart > 0 && ($actualEnd <= 0 || $actualEnd <= $actualStart)) {
+                $actualEnd = min($endTs, $actualStart + 2 * 3600);
+            }
+
+            $orderNo = (string) ($r['order_no'] ?? '');
+            $modelName = (string) ($r['model_name'] ?? '');
+            $processName = (string) ($r['process_name'] ?? '');
+            $userName = (string) ($r['user_name'] ?? '');
+            $label = trim(($processName !== '' ? $processName : '工序') . ' / ' . ($userName !== '' ? $userName : '') . ' / ' . ($orderNo !== '' ? $orderNo : '') . ($modelName !== '' ? (' ' . $modelName) : '') . ' #' . (int) ($r['id'] ?? 0));
+
+            $qty = (int) ($r['quantity'] ?? 0);
+            $done = (int) ($r['completed_quantity'] ?? 0);
+            $progress = $qty > 0 ? round($done / $qty * 100, 1) : 0.0;
+
+            $items[] = [
+                'id' => (int) ($r['id'] ?? 0),
+                'label' => $label,
+                'status' => (int) ($r['status'] ?? 0),
+                'quantity' => $qty,
+                'completed_quantity' => $done,
+                'progress' => $progress,
+                'planned_start' => $plannedStart,
+                'planned_end' => $plannedEnd,
+                'actual_start' => $actualStart,
+                'actual_end' => $actualEnd,
+            ];
+        }
+
+        return $this->success('', [
+            'start_time' => $startTs,
+            'end_time' => $endTs,
+            'items' => $items,
+        ]);
+    }
+
+    private function getOrderFlowStats(int $tenantId, int $now): array
+    {
+        $orderT = Db::name('mes_order')->getTable();
+        $planT = Db::name('mes_production_plan')->getTable();
+
+        $orderQ = Db::table($orderT . ' o')->whereIn('o.status', [0, 1]);
+        if ($tenantId > 0) {
+            $orderQ->where('o.tenant_id', $tenantId);
+        }
+        $activeOrders = (int) $orderQ->count();
+
+        $pendingPlanQ = Db::table($orderT . ' o')
+            ->leftJoin($planT . ' p', 'p.order_id = o.id')
+            ->whereIn('o.status', [0, 1])
+            ->whereNull('p.id')
+            ->field('COUNT(*) as c');
+        if ($tenantId > 0) {
+            $pendingPlanQ->where('o.tenant_id', $tenantId);
+        }
+        $pendingPlan = (int) (($pendingPlanQ->find())['c'] ?? 0);
+
+        $allocInProdQ = AllocationModel::where('status', 1);
+        if ($tenantId > 0) {
+            $allocInProdQ->where('tenant_id', $tenantId);
+        }
+        $inProduction = (int) $allocInProdQ->count();
+
+        $pendingShipmentQ = ShipmentModel::where('status', 0);
+        if ($tenantId > 0) {
+            $pendingShipmentQ->where('tenant_id', $tenantId);
+        }
+        $pendingShipment = (int) $pendingShipmentQ->count();
+
+        $signed30dQ = ShipmentModel::where('status', '>=', 2)->where('sign_time', '>=', $now - 30 * 86400)->where('sign_time', '>', 0);
+        if ($tenantId > 0) {
+            $signed30dQ->where('tenant_id', $tenantId);
+        }
+        $signed30d = (int) $signed30dQ->count();
+
+        return [
+            [
+                'key' => 'orders',
+                'title' => '在途订单',
+                'value' => $activeOrders,
+                'link' => $this->adminUrl('/mes/order'),
+            ],
+            [
+                'key' => 'pending_plan',
+                'title' => '待排产',
+                'value' => $pendingPlan,
+                'link' => $this->adminUrl('/mes/production_plan'),
+            ],
+            [
+                'key' => 'in_production',
+                'title' => '生产中',
+                'value' => $inProduction,
+                'link' => $this->adminUrl('/mes/allocation'),
+            ],
+            [
+                'key' => 'pending_audit',
+                'title' => '待审核',
+                'value' => (int) ReportModel::when($tenantId > 0, fn ($q) => $q->where('tenant_id', $tenantId))->where('status', 0)->count(),
+                'link' => $this->adminUrl('/mes/report'),
+            ],
+            [
+                'key' => 'pending_quality',
+                'title' => '待质检',
+                'value' => (int) QualityCheckModel::when($tenantId > 0, fn ($q) => $q->where('tenant_id', $tenantId))->where('status', 0)->count(),
+                'link' => $this->adminUrl('/mes/quality/check'),
+            ],
+            [
+                'key' => 'pending_shipment',
+                'title' => '待发货',
+                'value' => $pendingShipment,
+                'link' => $this->adminUrl('/mes/shipment'),
+            ],
+            [
+                'key' => 'signed_30d',
+                'title' => '已签收(30天)',
+                'value' => $signed30d,
+                'link' => $this->adminUrl('/mes/shipment'),
+            ],
+        ];
+    }
+
+    private function resolveDashboardTenantId(): int
+    {
+        $tenantId = (int) $this->getTenantId();
+        if ($tenantId > 0) {
+            return $tenantId;
+        }
+        $tp = (int) $this->request->get('tenant_id', 0);
+        return $tp > 0 ? $tp : 0;
+    }
+
+    private function adminUrl(string $path): string
+    {
+        $base = (string) ($this->request->root() ?: '');
+        $base = rtrim($base, '/');
+        if ($base === '') {
+            $base = '/admin';
+        }
+        if (!str_starts_with($path, '/')) {
+            $path = '/' . $path;
+        }
+        return $base . $path;
+    }
+
+    private function warnByThreshold(float $value, float $redBelow, float $greenAbove): string
+    {
+        if ($value < $redBelow) {
+            return 'danger';
+        }
+        if ($value < $greenAbove) {
+            return 'warning';
+        }
+        return 'success';
+    }
+
+    private function warnByUpper(float $value, float $warningAbove, float $dangerAbove): string
+    {
+        if ($value >= $dangerAbove) {
+            return 'danger';
+        }
+        if ($value >= $warningAbove) {
+            return 'warning';
+        }
+        return 'success';
+    }
+
+    private function buildFullChainAlerts(array $counts): array
+    {
+        $list = [];
+        $total = 0;
+
+        $map = [
+            [
+                'key' => 'pending_reports',
+                'title' => '待审核报工',
+                'level' => 'warning',
+                'link' => $this->adminUrl('/mes/report'),
+            ],
+            [
+                'key' => 'today_bad',
+                'title' => '今日不良',
+                'level' => 'danger',
+                'link' => $this->adminUrl('/mes/quality/check'),
+            ],
+            [
+                'key' => 'stock_warning',
+                'title' => '库存预警',
+                'level' => 'warning',
+                'link' => $this->adminUrl('/mes/stock/alert'),
+            ],
+            [
+                'key' => 'mrp_shortage',
+                'title' => 'MRP缺料',
+                'level' => 'danger',
+                'link' => $this->adminUrl('/mes/mrp'),
+            ],
+            [
+                'key' => 'shipment_overdue',
+                'title' => '发货逾期',
+                'level' => 'danger',
+                'link' => $this->adminUrl('/mes/shipment'),
+            ],
+            [
+                'key' => 'purchase_pending',
+                'title' => '采购待审',
+                'level' => 'warning',
+                'link' => $this->adminUrl('/mes/purchase/request'),
+            ],
+            [
+                'key' => 'quality_pending',
+                'title' => '质检待处理',
+                'level' => 'warning',
+                'link' => $this->adminUrl('/mes/quality/check'),
+            ],
+        ];
+
+        foreach ($map as $it) {
+            $cnt = (int) ($counts[$it['key']] ?? 0);
+            if ($cnt <= 0) {
+                continue;
+            }
+            $total += $cnt;
+            $list[] = [
+                'type' => $it['title'],
+                'count' => $cnt,
+                'level' => $it['level'],
+                'link' => $it['link'],
+            ];
+        }
+
+        return ['total' => $total, 'list' => $list];
+    }
+
+    private function getWorkOrderRealtimeList(int $tenantId, int $now, int $limit): array
+    {
+        $allocT = Db::name('mes_allocation')->getTable();
+        $orderT = Db::name('mes_order')->getTable();
+        $modelT = Db::name('mes_product_model')->getTable();
+        $processT = Db::name('mes_process')->getTable();
+        $userT = Db::name('user')->getTable();
+        $q = Db::table($allocT . ' a')
+            ->leftJoin($orderT . ' o', 'a.order_id = o.id')
+            ->leftJoin($modelT . ' m', 'a.model_id = m.id')
+            ->leftJoin($processT . ' p', 'a.process_id = p.id')
+            ->leftJoin($userT . ' u', 'a.user_id = u.id')
+            ->field('a.id,a.status,a.quantity,a.completed_quantity,a.planned_end_time,o.order_no,o.order_name,m.name as model_name,p.name as process_name,COALESCE(u.nickname,u.username,CONCAT("用户#",a.user_id)) as user_name')
+            ->order('a.status', 'asc')
+            ->order('a.planned_end_time', 'asc')
+            ->order('a.id', 'desc')
+            ->limit($limit);
+        if ($tenantId > 0) {
+            $q->where('a.tenant_id', $tenantId);
+        }
+        $rows = $q->select()->toArray();
+        $statusMap = AllocationModel::getStatusList();
+        foreach ($rows as &$r) {
+            $qty = (int) ($r['quantity'] ?? 0);
+            $done = (int) ($r['completed_quantity'] ?? 0);
+            $progress = $qty > 0 ? round($done / $qty * 100, 1) : 0;
+            $pe = (int) ($r['planned_end_time'] ?? 0);
+            $remainingHours = $pe > 0 ? round(max(0, $pe - $now) / 3600, 1) : 0;
+            $r['status_text'] = $statusMap[(int) ($r['status'] ?? 0)] ?? '';
+            $r['progress'] = $progress;
+            $r['remaining_hours'] = $remainingHours;
+            $r['planned_end_time_text'] = $pe > 0 ? date('m-d H:i', $pe) : '';
+            $r['link'] = $this->adminUrl('/mes/allocation');
+        }
+        unset($r);
+        return $rows;
+    }
+
+    private function getAllocationStatusStats(int $tenantId): array
+    {
+        $q = AllocationModel::field('status, COUNT(*) as count')->group('status');
+        if ($tenantId > 0) {
+            $q->where('tenant_id', $tenantId);
+        }
+        $rows = $q->select()->toArray();
+        $map = [0 => 0, 1 => 0, 2 => 0];
+        foreach ($rows as $r) {
+            $map[(int) ($r['status'] ?? 0)] = (int) ($r['count'] ?? 0);
+        }
+        return [
+            ['name' => '待开始', 'value' => $map[0]],
+            ['name' => '进行中', 'value' => $map[1]],
+            ['name' => '已完成', 'value' => $map[2]],
+        ];
+    }
+
+    private function getOutputTrend(int $tenantId, int $days): array
+    {
+        $days = max(7, min(31, $days));
+        $out = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-{$i} days"));
+            $start = strtotime($date . ' 00:00:00');
+            $end = strtotime($date . ' 23:59:59');
+            $q = ReportModel::where('status', 1)->where('create_time', 'between', [$start, $end]);
+            if ($tenantId > 0) {
+                $q->where('tenant_id', $tenantId);
+            }
+            $sum = (float) $q->sum('quantity');
+            $out[] = ['date' => $date, 'quantity' => $sum];
+        }
+        return $out;
+    }
+
+    private function getCapacityTop(int $tenantId, int $start, int $end, int $limit): array
+    {
+        $limit = max(5, min(50, $limit));
+        $userT = Db::name('user')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $q = Db::table($reportT . ' r')
+            ->leftJoin($userT . ' u', 'r.user_id = u.id')
+            ->where('r.status', 1)
+            ->where('r.create_time', 'between', [$start, $end])
+            ->field('r.user_id, COALESCE(u.nickname,u.username,CONCAT("用户#",r.user_id)) as user_name, SUM(r.quantity) as quantity, SUM(r.work_hours) as hours')
+            ->group('r.user_id')
+            ->order('quantity', 'desc')
+            ->limit($limit);
+        if ($tenantId > 0) {
+            $q->where('r.tenant_id', $tenantId);
+        }
+        $rows = $q->select()->toArray();
+        foreach ($rows as &$r) {
+            $r['quantity'] = (float) ($r['quantity'] ?? 0);
+            $r['hours'] = (float) ($r['hours'] ?? 0);
+        }
+        unset($r);
+        return $rows;
+    }
+
+    private function getProcessRouteCompliance(int $tenantId): array
+    {
+        $modelT = Db::name('mes_product_model')->getTable();
+        $productT = Db::name('mes_product')->getTable();
+        $routeQ = ProcessRouteModel::where('status', 2);
+        if ($tenantId > 0) {
+            $routeQ->where('tenant_id', $tenantId);
+        }
+        $routeModelIds = $routeQ->column('model_id');
+        $routeModelIds = array_values(array_unique(array_filter(array_map('intval', $routeModelIds))));
+
+        $totalModelsQ = ProductModelModel::where('status', 1);
+        if ($tenantId > 0) {
+            $totalModelsQ->where('tenant_id', $tenantId);
+        }
+        $totalModels = (int) $totalModelsQ->count();
+        $withRoute = count($routeModelIds);
+        $rate = $totalModels > 0 ? round($withRoute / $totalModels * 100, 1) : 0;
+
+        $missing = [];
+        if ($totalModels > 0) {
+            $missingQ = Db::table($modelT . ' m')
+                ->leftJoin($productT . ' p', 'm.product_id = p.id')
+                ->where('m.status', 1)
+                ->field('m.id,m.name as model_name,COALESCE(p.name,"") as product_name')
+                ->order('m.id', 'desc')
+                ->limit(8);
+            if ($tenantId > 0) {
+                $missingQ->where('m.tenant_id', $tenantId);
+            }
+            if ($routeModelIds) {
+                $missingQ->whereNotIn('m.id', $routeModelIds);
+            }
+            $missing = $missingQ->select()->toArray();
+            foreach ($missing as &$m) {
+                $label = trim(($m['product_name'] ?? '') . ' ' . ($m['model_name'] ?? ''));
+                $m['label'] = $label !== '' ? $label : ('型号#' . (int) ($m['id'] ?? 0));
+                $m['link'] = $this->adminUrl('/mes/process_route');
+            }
+            unset($m);
+        }
+
+        return [
+            'total_models' => $totalModels,
+            'with_route' => $withRoute,
+            'rate' => $rate,
+            'missing' => $missing,
+        ];
+    }
+
+    private function getStockOverview(int $tenantId, int $now): array
+    {
+        $materialQ = MaterialModel::where('id', '>', 0);
+        $productQ = ProductModelModel::where('id', '>', 0);
+        $wipQ = AllocationModel::whereIn('status', [0, 1]);
+        $warnQ = MaterialModel::whereColumn('stock', '<', 'min_stock')->where('min_stock', '>', 0);
+
+        if ($tenantId > 0) {
+            $materialQ->where('tenant_id', $tenantId);
+            $productQ->where('tenant_id', $tenantId);
+            $wipQ->where('tenant_id', $tenantId);
+            $warnQ->where('tenant_id', $tenantId);
+        }
+
+        $materialStock = (float) $materialQ->sum('stock');
+        $productStock = (float) $productQ->sum('stock');
+        $wipRow = $wipQ->fieldRaw('SUM(GREATEST(quantity - completed_quantity,0)) as s')->find();
+        $wip = (float) (($wipRow['s'] ?? 0));
+        $warningCount = (int) $warnQ->count();
+        $warningList = $warnQ->field('id,name,code,stock,min_stock')->orderRaw('(min_stock - stock) DESC')->limit(8)->select()->toArray();
+        foreach ($warningList as &$w) {
+            $w['shortage'] = max(0, (float) ($w['min_stock'] ?? 0) - (float) ($w['stock'] ?? 0));
+            $w['link'] = $this->adminUrl('/mes/stock/alert');
+        }
+        unset($w);
+
+        $stockLogQ = Db::name('mes_stock_log')
+            ->whereIn('business_type', ['shipment_out', 'production_out'])
+            ->where('create_time', '>=', $now - 30 * 86400)
+            ->where('change_quantity', '<', 0);
+        if ($tenantId > 0) {
+            $stockLogQ->where('tenant_id', $tenantId);
+        }
+        $outbound30 = (float) $stockLogQ->sum('change_quantity');
+        $outbound30 = abs($outbound30);
+        $totalStock = $materialStock + $productStock;
+        $turnoverDays = 0.0;
+        if ($outbound30 > 0) {
+            $daily = $outbound30 / 30;
+            $turnoverDays = $daily > 0 ? round($totalStock / $daily, 1) : 0.0;
+        }
+
+        return [
+            'material_stock' => $materialStock,
+            'product_stock' => $productStock,
+            'wip_stock' => $wip,
+            'warning_count' => $warningCount,
+            'warning_list' => $warningList,
+            'turnover_days' => $turnoverDays,
+        ];
+    }
+
+    private function getPurchaseOverview(int $tenantId, int $now): array
+    {
+        $start = $now - 30 * 86400;
+
+        $reqQ = PurchaseRequestModel::where('create_time', '>=', $start);
+        if ($tenantId > 0) {
+            $reqQ->where('tenant_id', $tenantId);
+        }
+        $totalReq = (int) $reqQ->count();
+        $pending = (int) (clone $reqQ)->where('status', 0)->count();
+
+        $inbounded = 0;
+        try {
+            $itemT = (new PurchaseInboundItemModel())->getTable();
+            $inboundT = (new PurchaseInboundModel())->getTable();
+            $q = Db::table($itemT . ' i')
+                ->join($inboundT . ' b', 'i.inbound_id = b.id')
+                ->where('b.status', 2)
+                ->where('i.purchase_request_id', '>', 0)
+                ->where('i.create_time', '>=', $start);
+            if ($tenantId > 0) {
+                $q->where('i.tenant_id', $tenantId);
+            }
+            $inbounded = (int) $q->group('i.purchase_request_id')->count();
+        } catch (\Throwable $e) {
+            $inbounded = 0;
+        }
+
+        $timelyRate = $totalReq > 0 ? round($inbounded / $totalReq * 100, 1) : 0.0;
+
+        $mrp = $this->getMrpShortageList($tenantId, 8);
+
+        $supplierTop = [];
+        try {
+            $inboundT = (new PurchaseInboundModel())->getTable();
+            $supplierT = Db::name('mes_supplier')->getTable();
+            $q = Db::table($inboundT . ' b')
+                ->leftJoin($supplierT . ' s', 'b.supplier_id = s.id')
+                ->where('b.status', 2)
+                ->where('b.create_time', '>=', $start)
+                ->field('b.supplier_id, COALESCE(s.name, CONCAT("供应商#",b.supplier_id)) as supplier_name, SUM(b.total_amount) as amount')
+                ->group('b.supplier_id')
+                ->order('amount', 'desc')
+                ->limit(8);
+            if ($tenantId > 0) {
+                $q->where('b.tenant_id', $tenantId);
+            }
+            $supplierTop = $q->select()->toArray();
+            foreach ($supplierTop as &$s) {
+                $s['amount'] = (float) ($s['amount'] ?? 0);
+                $s['link'] = $this->adminUrl('/mes/supplier');
+            }
+            unset($s);
+        } catch (\Throwable $e) {
+            $supplierTop = [];
+        }
+
+        return [
+            'total_count' => $totalReq,
+            'pending_count' => $pending,
+            'inbounded_count' => $inbounded,
+            'timely_rate' => $timelyRate,
+            'mrp_shortage_count' => count($mrp),
+            'mrp_shortage_list' => $mrp,
+            'supplier_top' => $supplierTop,
+        ];
+    }
+
+    private function getMrpShortageList(int $tenantId, int $limit): array
+    {
+        $limit = max(5, min(50, $limit));
+        $orderIdsQ = OrderModel::whereIn('status', [0, 1]);
+        if ($tenantId > 0) {
+            $orderIdsQ->where('tenant_id', $tenantId);
+        }
+        $orderIds = $orderIdsQ->column('id');
+        if (!$orderIds) {
+            return [];
+        }
+
+        $rows = Db::name('mes_order_material')->whereIn('order_id', $orderIds)->field('material_id, SUM(required_quantity) as required')->group('material_id')->select()->toArray();
+        if (!$rows) {
+            return [];
+        }
+
+        $materialIds = array_values(array_unique(array_filter(array_map(fn ($r) => (int) ($r['material_id'] ?? 0), $rows))));
+        if (!$materialIds) {
+            return [];
+        }
+        $materialsQ = MaterialModel::whereIn('id', $materialIds);
+        if ($tenantId > 0) {
+            $materialsQ->where('tenant_id', $tenantId);
+        }
+        $materials = $materialsQ->field('id,name,code,unit,stock')->select()->toArray();
+        $matMap = [];
+        foreach ($materials as $m) {
+            $matMap[(int) ($m['id'] ?? 0)] = $m;
+        }
+
+        $list = [];
+        foreach ($rows as $r) {
+            $mid = (int) ($r['material_id'] ?? 0);
+            if ($mid <= 0 || !isset($matMap[$mid])) {
+                continue;
+            }
+            $req = (float) ($r['required'] ?? 0);
+            $stock = (float) ($matMap[$mid]['stock'] ?? 0);
+            $shortage = max(0, $req - $stock);
+            if ($shortage <= 0) {
+                continue;
+            }
+            $list[] = [
+                'material_id' => $mid,
+                'material_name' => (string) ($matMap[$mid]['name'] ?? ''),
+                'material_code' => (string) ($matMap[$mid]['code'] ?? ''),
+                'unit' => (string) ($matMap[$mid]['unit'] ?? ''),
+                'required' => $req,
+                'stock' => $stock,
+                'shortage' => $shortage,
+                'link' => $this->adminUrl('/mes/mrp'),
+            ];
+        }
+
+        usort($list, fn ($a, $b) => ($b['shortage'] <=> $a['shortage']));
+        return array_slice($list, 0, $limit);
+    }
+
+    private function getShipmentOverview(int $tenantId, int $now): array
+    {
+        $start = $now - 30 * 86400;
+
+        $pendingQ = ShipmentModel::where('status', 0);
+        if ($tenantId > 0) {
+            $pendingQ->where('tenant_id', $tenantId);
+        }
+        $pendingCount = (int) $pendingQ->count();
+
+        $shipmentT = (new ShipmentModel())->getTable();
+        $orderT = (new OrderModel())->getTable();
+        $customerT = (new CustomerModel())->getTable();
+        $overdueQ = Db::table($shipmentT . ' s')
+            ->leftJoin($orderT . ' o', 's.order_id = o.id')
+            ->leftJoin($customerT . ' c', 's.customer_id = c.id')
+            ->where('s.status', '<', 2)
+            ->where('o.delivery_time', '>', 0)
+            ->where('o.delivery_time', '<', $now)
+            ->field('s.id,s.shipment_no,s.status,o.order_no,COALESCE(c.customer_name,"") as customer_name,o.delivery_time')
+            ->order('o.delivery_time', 'asc')
+            ->limit(8);
+        if ($tenantId > 0) {
+            $overdueQ->where('s.tenant_id', $tenantId);
+        }
+        $overdueList = $overdueQ->select()->toArray();
+        foreach ($overdueList as &$r) {
+            $r['delivery_time_text'] = (int) ($r['delivery_time'] ?? 0) > 0 ? date('m-d H:i', (int) $r['delivery_time']) : '';
+            $r['link'] = $this->adminUrl('/mes/shipment');
+        }
+        unset($r);
+
+        $overdueCount = (int) Db::table($shipmentT . ' s')->leftJoin($orderT . ' o', 's.order_id = o.id')
+            ->when($tenantId > 0, fn ($q) => $q->where('s.tenant_id', $tenantId))
+            ->where('s.status', '<', 2)
+            ->where('o.delivery_time', '>', 0)
+            ->where('o.delivery_time', '<', $now)
+            ->count();
+
+        $signedQ = Db::table($shipmentT . ' s')->leftJoin($orderT . ' o', 's.order_id = o.id')
+            ->where('s.status', '>=', 2)
+            ->where('s.sign_time', '>=', $start)
+            ->where('s.sign_time', '>', 0)
+            ->field('COUNT(*) as total, SUM(CASE WHEN o.delivery_time=0 OR s.sign_time<=o.delivery_time THEN 1 ELSE 0 END) as ontime');
+        if ($tenantId > 0) {
+            $signedQ->where('s.tenant_id', $tenantId);
+        }
+        $signedRow = $signedQ->find();
+        $signedTotal = (int) ($signedRow['total'] ?? 0);
+        $signedOnTime = (int) ($signedRow['ontime'] ?? 0);
+        $onTimeRate = $signedTotal > 0 ? round($signedOnTime / $signedTotal * 100, 1) : 0.0;
+
+        return [
+            'pending_count' => $pendingCount,
+            'overdue_count' => $overdueCount,
+            'overdue_list' => $overdueList,
+            'ontime_rate' => $onTimeRate,
+        ];
+    }
+
+    private function getQualityOverview(int $tenantId, int $now, int $todayStart, int $todayEnd): array
+    {
+        $start = $now - 30 * 86400;
+
+        $pendingReportsQ = ReportModel::where('status', 0);
+        if ($tenantId > 0) {
+            $pendingReportsQ->where('tenant_id', $tenantId);
+        }
+        $pendingReports = (int) $pendingReportsQ->count();
+
+        $todayBadQ = ReportModel::where('status', 1)->where('quality_status', 2)->where('create_time', 'between', [$todayStart, $todayEnd]);
+        if ($tenantId > 0) {
+            $todayBadQ->where('tenant_id', $tenantId);
+        }
+        $todayBad = (int) $todayBadQ->sum('quantity');
+
+        $qtyQ = ReportModel::where('status', 1)->where('create_time', '>=', $start);
+        if ($tenantId > 0) {
+            $qtyQ->where('tenant_id', $tenantId);
+        }
+        $totalQty = (float) $qtyQ->sum('quantity');
+        $qualifiedQty = (float) (clone $qtyQ)->where('quality_status', 1)->sum('quantity');
+        $firstPassRate = $totalQty > 0 ? round($qualifiedQty / $totalQty * 100, 1) : 0.0;
+
+        $pendingCheckQ = QualityCheckModel::where('status', 0);
+        if ($tenantId > 0) {
+            $pendingCheckQ->where('tenant_id', $tenantId);
+        }
+        $pendingCheckCount = (int) $pendingCheckQ->count();
+
+        $allocT = Db::name('mes_allocation')->getTable();
+        $processT = Db::name('mes_process')->getTable();
+        $reportT = Db::name('mes_report')->getTable();
+        $defectByProcessQ = Db::table($reportT . ' r')
+            ->join($allocT . ' a', 'r.allocation_id = a.id')
+            ->leftJoin($processT . ' p', 'a.process_id = p.id')
+            ->where('r.status', 1)
+            ->where('r.quality_status', 2)
+            ->where('r.create_time', '>=', $start)
+            ->field('a.process_id, COALESCE(p.name, CONCAT("工序#",a.process_id)) as process_name, SUM(r.quantity) as bad_quantity')
+            ->group('a.process_id')
+            ->order('bad_quantity', 'desc')
+            ->limit(8);
+        if ($tenantId > 0) {
+            $defectByProcessQ->where('r.tenant_id', $tenantId);
+        }
+        $defectByProcess = $defectByProcessQ->select()->toArray();
+        foreach ($defectByProcess as &$d) {
+            $d['bad_quantity'] = (float) ($d['bad_quantity'] ?? 0);
+            $d['link'] = $this->adminUrl('/mes/quality/check');
+        }
+        unset($d);
+
+        return [
+            'pending_reports' => $pendingReports,
+            'today_bad' => $todayBad,
+            'first_pass_rate' => $firstPassRate,
+            'pending_check_count' => $pendingCheckCount,
+            'defect_by_process' => $defectByProcess,
+        ];
+    }
+
+    private function getPlanOverview(int $tenantId, int $now): array
+    {
+        $start = $now - 30 * 86400;
+        $q = ProductionPlanModel::where('status', 2)->where('planned_end_time', '>', 0)->where('actual_end_time', '>', 0)->where('actual_end_time', '>=', $start);
+        if ($tenantId > 0) {
+            $q->where('tenant_id', $tenantId);
+        }
+        $total = (int) $q->count();
+        $ontime = (int) (clone $q)->whereColumn('actual_end_time', '<=', 'planned_end_time')->count();
+        $rate = $total > 0 ? round($ontime / $total * 100, 1) : 0.0;
+        return [
+            'total_completed_30d' => $total,
+            'ontime_completed_30d' => $ontime,
+            'achieve_rate' => $rate,
+        ];
+    }
+
+    private function getCustomerOverview(int $tenantId, int $now): array
+    {
+        $start = $now - 30 * 86400;
+
+        $shipmentT = (new ShipmentModel())->getTable();
+        $customerT = (new CustomerModel())->getTable();
+        $topQ = Db::table($shipmentT . ' s')
+            ->leftJoin($customerT . ' c', 's.customer_id = c.id')
+            ->where('s.create_time', '>=', $start)
+            ->field('s.customer_id, COALESCE(c.customer_name, CONCAT("客户#",s.customer_id)) as customer_name, SUM(s.shipment_quantity) as quantity')
+            ->group('s.customer_id')
+            ->order('quantity', 'desc')
+            ->limit(10);
+        if ($tenantId > 0) {
+            $topQ->where('s.tenant_id', $tenantId);
+        }
+        $top = $topQ->select()->toArray();
+        foreach ($top as &$t) {
+            $t['quantity'] = (float) ($t['quantity'] ?? 0);
+            $t['link'] = $this->adminUrl('/mes/customer');
+        }
+        unset($t);
+
+        $aftQ = AfterSalesModel::where('create_time', '>=', $start);
+        if ($tenantId > 0) {
+            $aftQ->where('tenant_id', $tenantId);
+        }
+        $total = (int) $aftQ->count();
+        $open = (int) (clone $aftQ)->whereIn('status', [0, 1])->count();
+        $satisfaction = $total > 0 ? round((1 - $open / $total) * 5, 1) : 5.0;
+        if ($satisfaction < 0) {
+            $satisfaction = 0.0;
+        }
+        if ($satisfaction > 5) {
+            $satisfaction = 5.0;
+        }
+
+        return [
+            'satisfaction' => $satisfaction,
+            'top_customers' => $top,
+        ];
     }
 
     /**

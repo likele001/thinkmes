@@ -1,0 +1,165 @@
+<!-- 页面标题 -->
+<div class="ai-page-header">
+  <h1 class="ai-page-title"><i class="fas fa-clock-rotate-left me-2" style="-webkit-text-fill-color:#7c5cfc;"></i>生成历史</h1>
+  <p class="ai-page-desc">查看所有生成记录，收藏管理</p>
+</div>
+
+<!-- 筛选按钮 -->
+<div class="ai-btn-group" style="margin-bottom:20px;">
+  <button class="ai-btn ai-btn-ghost active" id="hist-all">全部</button>
+  <button class="ai-btn ai-btn-ghost" id="hist-fav"><i class="fas fa-star me-1"></i>收藏</button>
+</div>
+
+<!-- 列表 -->
+<div id="hist-list"></div>
+
+<!-- 加载更多 -->
+<div id="hist-more" style="text-align:center; margin-top:20px; display:none;">
+  <button class="ai-btn ai-btn-ghost" id="hist-load-more">加载更多</button>
+</div>
+
+<script>
+(function(){
+  var page = 1, limit = 20, favOnly = false, loading = false;
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function loadHistory(append){
+    if (loading) return;
+    loading = true;
+    if (!append) { page = 1; $('#hist-list').html(''); }
+    $('#hist-load-more').html('<i class="fas fa-spinner fa-spin me-1"></i>加载中…');
+
+    $.get('/api/prompt/generate/history', { page: page, limit: limit, favorite: favOnly ? 1 : 0 }, function(r){
+      loading = false;
+      $('#hist-load-more').html('加载更多');
+      if (r.code !== 1) {
+        if (!append) $('#hist-list').html('<div class="ai-empty"><p>' + (r.msg||'加载失败') + '</p></div>');
+        return;
+      }
+      var list = r.data.list || [];
+      var total = r.data.total || 0;
+      if (list.length === 0 && !append) {
+        $('#hist-list').html('<div class="ai-empty"><i class="fas fa-inbox"></i><p>暂无记录</p></div>');
+        $('#hist-more').hide();
+        return;
+      }
+      var html = append ? $('#hist-list').html() : '';
+      list.forEach(function(h){
+        var time = h.create_time ? new Date(h.create_time * 1000).toLocaleString() : '-';
+        var statusBadge = h.status === 1
+          ? '<span class="ai-badge ai-badge-success">成功</span>'
+          : '<span class="ai-badge ai-badge-danger">失败</span>';
+        var favIcon = h.is_favorite ? 'fas fa-star' : 'far fa-star';
+        var favColor = h.is_favorite ? 'color:#fbbf24;' : 'color:var(--ai-text-muted);';
+        var preview = h.output_text || h.error_msg || '无内容';
+        var imageBadge = '';
+        if (h.image_status === 'SUCCESS' && h.image_url) imageBadge = '<span class="ai-badge ai-badge-info">图片</span>';
+        else if (h.image_status === 'PROCESSING') imageBadge = '<span class="ai-badge ai-badge-warning">图片生成中</span>';
+        else if (h.image_status === 'FAIL') imageBadge = '<span class="ai-badge ai-badge-danger">图片失败</span>';
+
+        var videoBadge = '';
+        if (h.video_status === 'SUCCESS' && h.video_url) videoBadge = '<span class="ai-badge ai-badge-info">视频</span>';
+        else if (h.video_status === 'PROCESSING') videoBadge = '<span class="ai-badge ai-badge-warning">视频生成中</span>';
+        else if (h.video_status === 'FAIL') videoBadge = '<span class="ai-badge ai-badge-danger">视频失败</span>';
+
+        html += '<div class="ai-hist-item" data-id="' + h.id + '">';
+        html += '<div class="ai-hist-meta">';
+        html += '<span class="ai-hist-tpl">' + esc(h.template_title || '未知模板') + '</span>';
+        html += '<span style="display:flex; align-items:center; gap:8px;">';
+        html += statusBadge;
+        if (imageBadge) html += imageBadge;
+        if (videoBadge) html += videoBadge;
+        html += '<span class="ai-hist-time">' + time + '</span>';
+        html += '</span></div>';
+        html += '<div class="ai-hist-preview">' + esc(preview) + '</div>';
+        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:10px; flex-wrap:wrap;">';
+        html += '<div class="ai-btn-group" style="flex-wrap:wrap;">';
+        html += '<button class="ai-btn ai-btn-ghost ai-btn-sm btn-hist-copy"><i class="fas fa-copy"></i></button>';
+        html += '<button class="ai-btn ai-btn-ghost ai-btn-sm btn-hist-fav"><i class="' + favIcon + '" style="' + favColor + '"></i></button>';
+        if (h.image_url) html += '<a class="ai-btn ai-btn-ghost ai-btn-sm" href="' + esc(h.image_url) + '" target="_blank"><i class="fas fa-image"></i></a>';
+        if (h.video_url) html += '<a class="ai-btn ai-btn-ghost ai-btn-sm" href="' + esc(h.video_url) + '" target="_blank"><i class="fas fa-video"></i></a>';
+        if (h.image_status === 'PROCESSING' || h.video_status === 'PROCESSING') html += '<button class="ai-btn ai-btn-ghost ai-btn-sm btn-hist-refresh"><i class="fas fa-rotate"></i></button>';
+        if (!h.image_url) html += '<button class="ai-btn ai-btn-ghost ai-btn-sm btn-hist-gen-image"><i class="fas fa-image"></i></button>';
+        if (!h.video_url) html += '<button class="ai-btn ai-btn-ghost ai-btn-sm btn-hist-gen-video"><i class="fas fa-video"></i></button>';
+        html += '</div>';
+        if (h.tokens_used) html += '<span class="text-sm text-muted">' + h.tokens_used + ' tokens</span>';
+        html += '</div></div>';
+      });
+      $('#hist-list').html(html);
+
+      if (list.length >= limit && $('#hist-list .ai-hist-item').length < total) {
+        $('#hist-more').show();
+      } else {
+        $('#hist-more').hide();
+      }
+    }, 'json');
+  }
+
+  $(document).on('click', '.btn-hist-fav', function(){
+    var $item = $(this).closest('.ai-hist-item');
+    var id = $item.data('id');
+    $.post('/api/prompt/generate/favorite', { id: id }, function(r){
+      if (r.code === 1) {
+        var $icon = $item.find('.btn-hist-fav i');
+        if (r.data.is_favorite) {
+          $icon.removeClass('far fa-star').addClass('fas fa-star').attr('style', 'color:#fbbf24;');
+        } else {
+          $icon.removeClass('fas fa-star').addClass('far fa-star').attr('style', 'color:var(--ai-text-muted);');
+        }
+      }
+    }, 'json');
+  });
+
+  $(document).on('click', '.btn-hist-copy', function(){
+    var text = $(this).closest('.ai-hist-item').find('.ai-hist-preview').text();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function(){ alert('已复制到剪贴板'); });
+    } else {
+      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      alert('已复制到剪贴板');
+    }
+  });
+
+  function updateItemMedia(id){
+    $.get('/api/prompt/generate/queryImageTask', { generation_id: id }, function(){}, 'json');
+    $.get('/api/prompt/generate/queryVideoTask', { generation_id: id }, function(){}, 'json');
+    setTimeout(function(){ loadHistory(false); }, 800);
+  }
+
+  $(document).on('click', '.btn-hist-refresh', function(){
+    var id = $(this).closest('.ai-hist-item').data('id');
+    updateItemMedia(id);
+  });
+
+  $(document).on('click', '.btn-hist-gen-video', function(){
+    var id = $(this).closest('.ai-hist-item').data('id');
+    $.post('/api/prompt/generate/generateVideo', { generation_id: id, duration: 5, quality: 'quality', with_audio: true }, function(r){
+      if (r.code !== 1) { alert(r.msg || '提交失败'); return; }
+      updateItemMedia(id);
+    }, 'json');
+  });
+
+  $(document).on('click', '.btn-hist-gen-image', function(){
+    var id = $(this).closest('.ai-hist-item').data('id');
+    $.post('/api/prompt/generate/generateImage', { generation_id: id, size: '1280x1280', quality: 'hd' }, function(r){
+      if (r.code !== 1) { alert(r.msg || '提交失败'); return; }
+      updateItemMedia(id);
+    }, 'json');
+  });
+
+  $('#hist-all').on('click', function(){
+    favOnly = false;
+    $(this).addClass('active'); $('#hist-fav').removeClass('active');
+    loadHistory(false);
+  });
+  $('#hist-fav').on('click', function(){
+    favOnly = true;
+    $(this).addClass('active'); $('#hist-all').removeClass('active');
+    loadHistory(false);
+  });
+
+  $('#hist-load-more').on('click', function(){ page++; loadHistory(true); });
+  loadHistory(false);
+})();
+</script>

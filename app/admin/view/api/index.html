@@ -1,0 +1,16 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>API接口访问</em> 提供系统 API 文档入口与调用说明</div>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <div>API 基地址：<code>{$api_base}</code></div>
+            <div>API 文档：<a href="{$doc_url}" target="_blank">{$doc_url}</a></div>
+            <div>OpenAPI JSON：<a href="{$doc_url}?format=json" target="_blank">{$doc_url}?format=json</a></div>
+        </div>
+        <div class="alert alert-warning">
+            <div>鉴权方式以接口文档为准（小程序接口与后台接口不同）。</div>
+            <div>如遇到 502，请优先检查 Nginx 是否将 <code>/api/</code> 反向代理到错误上游。</div>
+        </div>
+    </div>
+</div>

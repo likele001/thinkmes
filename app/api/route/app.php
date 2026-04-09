@@ -4,6 +4,7 @@ use think\facade\Route;
 Route::get('index/index', 'Index/index');
 Route::get('doc', 'Doc/index');
 Route::get('doc/index', 'Doc/index');
+Route::get('doc/spec', 'Doc/spec');
 
 // C端用户：无需登录
 Route::post('user/register', 'User/register');
@@ -51,18 +52,25 @@ Route::post('miniapp/bind', 'Miniapp/bind')->middleware(\app\api\middleware\User
 
 require __DIR__ . '/restaurant_wxa.php';
 require __DIR__ . '/restaurant_openclaw.php';
+require __DIR__ . '/prompt.php';
 
 // C端用户：文件上传（需登录）
 Route::post('common/upload', 'Common/upload')->middleware(\app\api\middleware\UserAuth::class);
 
 // 员工报工相关接口（需登录，按租户隔离）- 前端报工小程序
-Route::get('worker/dashboard', 'Worker/dashboard')->middleware(\app\api\middleware\UserAuth::class);
-Route::get('worker/taskInfo', 'Worker/taskInfo')->middleware(\app\api\middleware\UserAuth::class);
-Route::post('worker/report', 'Worker/report')->middleware(\app\api\middleware\UserAuth::class);
-Route::get('worker/reports', 'Worker/reports')->middleware(\app\api\middleware\UserAuth::class);
-Route::get('worker/reportDetail', 'Worker/reportDetail')->middleware(\app\api\middleware\UserAuth::class);
-Route::get('worker/wages', 'Worker/wages')->middleware(\app\api\middleware\UserAuth::class);
-Route::post('worker/uploadImage', 'Worker/uploadImage')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('mesuser/dashboard', 'Mesuser/dashboard')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('mesuser/taskInfo', 'Mesuser/taskInfo')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('mesuser/report', 'Mesuser/report')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('mesuser/reports', 'Mesuser/reports')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('mesuser/reportDetail', 'Mesuser/reportDetail')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('mesuser/wages', 'Mesuser/wages')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('mesuser/uploadImage', 'Mesuser/uploadImage')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('mesuser/notifications', 'Mesuser/notifications')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('mesuser/readNotifications', 'Mesuser/readNotifications')->middleware(\app\api\middleware\UserAuth::class);
+
+// MES 大屏（需登录，按租户隔离）
+Route::get('mesdashboard/data', 'Mesdashboard/data')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('mesdashboard/gantt', 'Mesdashboard/gantt')->middleware(\app\api\middleware\UserAuth::class);
 
 Route::get('cockpit/getData', 'Cockpit/getData')->middleware(\app\api\middleware\UserAuth::class);
 
@@ -71,144 +79,177 @@ Route::post('ai/transcribe', 'Ai/transcribe')->middleware(\app\api\middleware\Us
 Route::post('ai/parse', 'Ai/parse')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
 Route::post('ai/ask', 'Ai/ask')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
 
-// 后端管理小程序 API（参考 FastAdmin Scanwork，需管理员 Token）
-Route::post('scanwork/adminLogin', 'Scanwork/adminLogin');
-Route::get('scanwork/checkToken', 'Scanwork/checkToken')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getScanworkMenu', 'Scanwork/getScanworkMenu')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getOrders', 'Scanwork/getOrders')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getOrderDetail', 'Scanwork/getOrderDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getOrderModels', 'Scanwork/getOrderModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getAllocations', 'Scanwork/getAllocations')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getAllocationDetail', 'Scanwork/getAllocationDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getTaskByScan', 'Scanwork/getTaskByScan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createAllocation', 'Scanwork/createAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getReports', 'Scanwork/getReports')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getActiveReports', 'Scanwork/getActiveReports')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getReportDetail', 'Scanwork/getReportDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getReportStatistics', 'Scanwork/getReportStatistics')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/auditReport', 'Scanwork/auditReport')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/uploadAuditImage', 'Scanwork/uploadAuditImage')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/uploadAuditVideo', 'Scanwork/uploadAuditVideo')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/uploadReportImage', 'Scanwork/uploadReportImage')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getProducts', 'Scanwork/getProducts')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getModels', 'Scanwork/getModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getProcesses', 'Scanwork/getProcesses')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getProcessPriceList', 'Scanwork/getProcessPriceList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getUsers', 'Scanwork/getUsers')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 后端管理小程序 API（需管理员 Token）
+Route::post('mesadmin/adminLogin', 'Mesadmin/adminLogin');
+Route::get('mesadmin/checkToken', 'Mesadmin/checkToken')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getScanworkMenu', 'Mesadmin/getScanworkMenu')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getOrders', 'Mesadmin/getOrders')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getOrderDetail', 'Mesadmin/getOrderDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getOrderModels', 'Mesadmin/getOrderModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getAllocationRemain', 'Mesadmin/getAllocationRemain')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getAllocations', 'Mesadmin/getAllocations')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getAllocationDetail', 'Mesadmin/getAllocationDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getTaskByScan', 'Mesadmin/getTaskByScan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createAllocation', 'Mesadmin/createAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getReports', 'Mesadmin/getReports')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getActiveReports', 'Mesadmin/getActiveReports')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getReportDetail', 'Mesadmin/getReportDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getReportStatistics', 'Mesadmin/getReportStatistics')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/auditReport', 'Mesadmin/auditReport')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/uploadAuditImage', 'Mesadmin/uploadAuditImage')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/uploadAuditVideo', 'Mesadmin/uploadAuditVideo')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/uploadReportImage', 'Mesadmin/uploadReportImage')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProducts', 'Mesadmin/getProducts')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProductDetail', 'Mesadmin/getProductDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getModels', 'Mesadmin/getModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProcesses', 'Mesadmin/getProcesses')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProcessPriceList', 'Mesadmin/getProcessPriceList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getUsers', 'Mesadmin/getUsers')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 
 // 订单
-Route::get('scanwork/getOrderMaterialList', 'Scanwork/getOrderMaterialList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createOrder', 'Scanwork/createOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateOrder', 'Scanwork/updateOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteOrder', 'Scanwork/deleteOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getOrderMaterialList', 'Mesadmin/getOrderMaterialList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createOrder', 'Mesadmin/createOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateOrder', 'Mesadmin/updateOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteOrder', 'Mesadmin/deleteOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 客户
-Route::get('scanwork/getCustomerList', 'Scanwork/getCustomerList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getCustomerDetail', 'Scanwork/getCustomerDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createCustomer', 'Scanwork/createCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateCustomer', 'Scanwork/updateCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteCustomer', 'Scanwork/deleteCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getCustomerList', 'Mesadmin/getCustomerList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getCustomerDetail', 'Mesadmin/getCustomerDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createCustomer', 'Mesadmin/createCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateCustomer', 'Mesadmin/updateCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteCustomer', 'Mesadmin/deleteCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 供应商
-Route::get('scanwork/getSupplierList', 'Scanwork/getSupplierList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getSupplierDetail', 'Scanwork/getSupplierDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createSupplier', 'Scanwork/createSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateSupplier', 'Scanwork/updateSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteSupplier', 'Scanwork/deleteSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getSupplierList', 'Mesadmin/getSupplierList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getSupplierDetail', 'Mesadmin/getSupplierDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createSupplier', 'Mesadmin/createSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateSupplier', 'Mesadmin/updateSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteSupplier', 'Mesadmin/deleteSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 工序
-Route::post('scanwork/createProcess', 'Scanwork/createProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateProcess', 'Scanwork/updateProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteProcess', 'Scanwork/deleteProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('mesadmin/createProcess', 'Mesadmin/createProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateProcess', 'Mesadmin/updateProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteProcess', 'Mesadmin/deleteProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 产品/型号/工序工价
-Route::post('scanwork/createProduct', 'Scanwork/createProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateProduct', 'Scanwork/updateProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteProduct', 'Scanwork/deleteProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createProductModel', 'Scanwork/createProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateProductModel', 'Scanwork/updateProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteProductModel', 'Scanwork/deleteProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/batchAddProductModels', 'Scanwork/batchAddProductModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createProcessPrice', 'Scanwork/createProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateProcessPrice', 'Scanwork/updateProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteProcessPrice', 'Scanwork/deleteProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/batchProcessPrice', 'Scanwork/batchProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('mesadmin/createProduct', 'Mesadmin/createProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateProduct', 'Mesadmin/updateProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteProduct', 'Mesadmin/deleteProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createProductModel', 'Mesadmin/createProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateProductModel', 'Mesadmin/updateProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteProductModel', 'Mesadmin/deleteProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/batchAddProductModels', 'Mesadmin/batchAddProductModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createProcessPrice', 'Mesadmin/createProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateProcessPrice', 'Mesadmin/updateProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteProcessPrice', 'Mesadmin/deleteProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/batchProcessPrice', 'Mesadmin/batchProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 物料
-Route::get('scanwork/getMaterialList', 'Scanwork/getMaterialList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getMaterialDetail', 'Scanwork/getMaterialDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createMaterial', 'Scanwork/createMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateMaterial', 'Scanwork/updateMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteMaterial', 'Scanwork/deleteMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getMaterialList', 'Mesadmin/getMaterialList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getMaterialCategoryList', 'Mesadmin/getMaterialCategoryList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createMaterialCategory', 'Mesadmin/createMaterialCategory')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateMaterialCategory', 'Mesadmin/updateMaterialCategory')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteMaterialCategory', 'Mesadmin/deleteMaterialCategory')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+
+// 员工产能
+Route::get('mesadmin/getCapacityList', 'Mesadmin/getCapacityList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createCapacity', 'Mesadmin/createCapacity')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateCapacity', 'Mesadmin/updateCapacity')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteCapacity', 'Mesadmin/deleteCapacity')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+
+// 工艺路线
+Route::get('mesadmin/getProcessRouteList', 'Mesadmin/getProcessRouteList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProcessRouteDetail', 'Mesadmin/getProcessRouteDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createProcessRoute', 'Mesadmin/createProcessRoute')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateProcessRoute', 'Mesadmin/updateProcessRoute')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteProcessRoute', 'Mesadmin/deleteProcessRoute')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+
+// 智能排产
+Route::get('mesadmin/getScheduleList', 'Mesadmin/getScheduleList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/generateSchedule', 'Mesadmin/generateSchedule')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getScheduleGanttData', 'Mesadmin/getScheduleGanttData')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/publishSchedule', 'Mesadmin/publishSchedule')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteSchedule', 'Mesadmin/deleteSchedule')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+
+Route::get('mesadmin/getMaterialDetail', 'Mesadmin/getMaterialDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createMaterial', 'Mesadmin/createMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateMaterial', 'Mesadmin/updateMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteMaterial', 'Mesadmin/deleteMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 仓库
-Route::get('scanwork/getWarehouseList', 'Scanwork/getWarehouseList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getWarehouseDetail', 'Scanwork/getWarehouseDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createWarehouse', 'Scanwork/createWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateWarehouse', 'Scanwork/updateWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteWarehouse', 'Scanwork/deleteWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getWarehouseList', 'Mesadmin/getWarehouseList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getWarehouseDetail', 'Mesadmin/getWarehouseDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createWarehouse', 'Mesadmin/createWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateWarehouse', 'Mesadmin/updateWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteWarehouse', 'Mesadmin/deleteWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 库存
-Route::get('scanwork/getStockList', 'Scanwork/getStockList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getStockLog', 'Scanwork/getStockLog')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/stockIn', 'Scanwork/stockIn')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/stockOut', 'Scanwork/stockOut')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/stockCheck', 'Scanwork/stockCheck')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getStockList', 'Mesadmin/getStockList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getStockLog', 'Mesadmin/getStockLog')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getMaterialStockLog', 'Mesadmin/getMaterialStockLog')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProductStockLog', 'Mesadmin/getProductStockLog')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getStockAlertList', 'Mesadmin/getStockAlertList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getStockOutboundList', 'Mesadmin/getStockOutboundList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/stockIn', 'Mesadmin/stockIn')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/stockOut', 'Mesadmin/stockOut')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/stockCheck', 'Mesadmin/stockCheck')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // BOM
-Route::get('scanwork/getBomList', 'Scanwork/getBomList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getBomDetail', 'Scanwork/getBomDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getBomItems', 'Scanwork/getBomItems')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createBom', 'Scanwork/createBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateBom', 'Scanwork/updateBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteBom', 'Scanwork/deleteBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/addBomItem', 'Scanwork/addBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateBomItem', 'Scanwork/updateBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteBomItem', 'Scanwork/deleteBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/approveBom', 'Scanwork/approveBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getBomList', 'Mesadmin/getBomList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getBomDetail', 'Mesadmin/getBomDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getBomItems', 'Mesadmin/getBomItems')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createBom', 'Mesadmin/createBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateBom', 'Mesadmin/updateBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteBom', 'Mesadmin/deleteBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/addBomItem', 'Mesadmin/addBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateBomItem', 'Mesadmin/updateBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteBomItem', 'Mesadmin/deleteBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/approveBom', 'Mesadmin/approveBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 生产计划
-Route::get('scanwork/getProductionPlanList', 'Scanwork/getProductionPlanList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getProductionPlanDetail', 'Scanwork/getProductionPlanDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getProductionPlanAllocations', 'Scanwork/getProductionPlanAllocations')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getProductionPlanProgress', 'Scanwork/getProductionPlanProgress')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getProductionPlanProgressStats', 'Scanwork/getProductionPlanProgressStats')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createProductionPlan', 'Scanwork/createProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateProductionPlan', 'Scanwork/updateProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteProductionPlan', 'Scanwork/deleteProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getProductionPlanList', 'Mesadmin/getProductionPlanList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProductionPlanDetail', 'Mesadmin/getProductionPlanDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProductionPlanAllocations', 'Mesadmin/getProductionPlanAllocations')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProductionPlanProgress', 'Mesadmin/getProductionPlanProgress')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProductionPlanProgressStats', 'Mesadmin/getProductionPlanProgressStats')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createProductionPlan', 'Mesadmin/createProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateProductionPlan', 'Mesadmin/updateProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteProductionPlan', 'Mesadmin/deleteProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/setProductionPlanStatus', 'Mesadmin/setProductionPlanStatus')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getProductionPlanProgressOverview', 'Mesadmin/getProductionPlanProgressOverview')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 分工分配
-Route::post('scanwork/updateAllocation', 'Scanwork/updateAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteAllocation', 'Scanwork/deleteAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/batchCreateAllocation', 'Scanwork/batchCreateAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/generateQrcode', 'Scanwork/generateQrcode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('mesadmin/updateAllocation', 'Mesadmin/updateAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteAllocation', 'Mesadmin/deleteAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/batchCreateAllocation', 'Mesadmin/batchCreateAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/generateQrcode', 'Mesadmin/generateQrcode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 报工
-Route::post('scanwork/deleteReport', 'Scanwork/deleteReport')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('mesadmin/deleteReport', 'Mesadmin/deleteReport')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 采购
-Route::get('scanwork/getPurchaseRequestList', 'Scanwork/getPurchaseRequestList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getPurchaseList', 'Scanwork/getPurchaseList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getPurchaseDetail', 'Scanwork/getPurchaseDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createPurchase', 'Scanwork/createPurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updatePurchase', 'Scanwork/updatePurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deletePurchase', 'Scanwork/deletePurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/purchaseInbound', 'Scanwork/purchaseInbound')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getPurchaseRequestList', 'Mesadmin/getPurchaseRequestList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getPurchaseList', 'Mesadmin/getPurchaseList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getPurchaseDetail', 'Mesadmin/getPurchaseDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createPurchase', 'Mesadmin/createPurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updatePurchase', 'Mesadmin/updatePurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deletePurchase', 'Mesadmin/deletePurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/purchaseInbound', 'Mesadmin/purchaseInbound')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 发货
-Route::get('scanwork/getShipmentList', 'Scanwork/getShipmentList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getShipmentDetail', 'Scanwork/getShipmentDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createShipment', 'Scanwork/createShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateShipment', 'Scanwork/updateShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteShipment', 'Scanwork/deleteShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getShipmentList', 'Mesadmin/getShipmentList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getShipmentDetail', 'Mesadmin/getShipmentDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createShipment', 'Mesadmin/createShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateShipment', 'Mesadmin/updateShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteShipment', 'Mesadmin/deleteShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 质检
-Route::get('scanwork/getQualityStandards', 'Scanwork/getQualityStandards')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getQualityChecks', 'Scanwork/getQualityChecks')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getQualityStandards', 'Mesadmin/getQualityStandards')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getQualityChecks', 'Mesadmin/getQualityChecks')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 工资
-Route::get('scanwork/getWageList', 'Scanwork/getWageList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getWageStatistics', 'Scanwork/getWageStatistics')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getWageList', 'Mesadmin/getWageList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getWageStatistics', 'Mesadmin/getWageStatistics')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 追溯码
-Route::get('scanwork/getTraceCodeList', 'Scanwork/getTraceCodeList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/generateTraceCode', 'Scanwork/generateTraceCode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/queryTraceCode', 'Scanwork/queryTraceCode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getTraceCodeList', 'Mesadmin/getTraceCodeList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/generateTraceCode', 'Mesadmin/generateTraceCode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/queryTraceCode', 'Mesadmin/queryTraceCode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // 售后
-Route::get('scanwork/getAfterSalesList', 'Scanwork/getAfterSalesList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getAfterSalesDetail', 'Scanwork/getAfterSalesDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/createAfterSales', 'Scanwork/createAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/updateAfterSales', 'Scanwork/updateAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::post('scanwork/deleteAfterSales', 'Scanwork/deleteAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getAfterSalesList', 'Mesadmin/getAfterSalesList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getAfterSalesDetail', 'Mesadmin/getAfterSalesDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/createAfterSales', 'Mesadmin/createAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/updateAfterSales', 'Mesadmin/updateAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::post('mesadmin/deleteAfterSales', 'Mesadmin/deleteAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 // BI
-Route::get('scanwork/getDashboardData', 'Scanwork/getDashboardData')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getBiProductionEfficiency', 'Scanwork/getBiProductionEfficiency')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getBiQualityAnalysis', 'Scanwork/getBiQualityAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
-Route::get('scanwork/getBiCostAnalysis', 'Scanwork/getBiCostAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('mesadmin/getDashboardData', 'Mesadmin/getDashboardData')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getBiProductionEfficiency', 'Mesadmin/getBiProductionEfficiency')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getBiQualityAnalysis', 'Mesadmin/getBiQualityAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
+Route::get('mesadmin/getBiCostAnalysis', 'Mesadmin/getBiCostAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\MesadminPermission::class]);
 
 if (is_file(__DIR__ . '/restaurant.php')) {
     require __DIR__ . '/restaurant.php';
@@ -222,3 +263,7 @@ Route::post('tenant_purchase/pay', 'TenantPurchase/pay');
 Route::get('tenant_purchase/return', 'TenantPurchase/return');
 Route::post('tenant_purchase/notify', 'TenantPurchase/notify');
 Route::get('tenant_purchase/order_status', 'TenantPurchase/orderStatus');
+
+if (is_file(__DIR__ . '/prompt.php')) {
+    require __DIR__ . '/prompt.php';
+}

@@ -14,6 +14,19 @@ Route::group('payment', function () {
     Route::get('config_wechat', 'payment.Config/configWechat');
     Route::get('config_xunhupay', 'payment.Config/configXunhupay');
     Route::get('config_epay', 'payment.Config/configEpay');
+    Route::post('config_alipay', 'payment.Config/configAlipay');
+    Route::post('config_wechat', 'payment.Config/configWechat');
+    Route::post('config_xunhupay', 'payment.Config/configXunhupay');
+    Route::post('config_epay', 'payment.Config/configEpay');
+
+    Route::get('config_alipay/index', 'payment.Config/configAlipay');
+    Route::get('config_wechat/index', 'payment.Config/configWechat');
+    Route::get('config_xunhupay/index', 'payment.Config/configXunhupay');
+    Route::get('config_epay/index', 'payment.Config/configEpay');
+    Route::post('config_alipay/index', 'payment.Config/configAlipay');
+    Route::post('config_wechat/index', 'payment.Config/configWechat');
+    Route::post('config_xunhupay/index', 'payment.Config/configXunhupay');
+    Route::post('config_epay/index', 'payment.Config/configEpay');
 
     Route::get('order/index', 'payment.Order/index');
 

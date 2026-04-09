@@ -45,7 +45,16 @@ class UserAuth
             $token = preg_replace('/^Bearer\s+/i', '', trim($token));
         }
         if (empty($token)) {
+            $token = (string) $request->header('token', '');
+        }
+        if (empty($token)) {
             $token = $request->get('token', '');
+        }
+        if (empty($token)) {
+            $token = (string) ($request->cookie('user_token') ?? '');
+            if ($token !== '') {
+                $token = urldecode($token);
+            }
         }
         if (empty($token)) {
             return $this->jsonError('请先登录', 401);

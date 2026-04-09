@@ -8,6 +8,16 @@ const userApi = {
   getTaskInfo(allocationId) {
     return getAppRef().userRequest({ url: '/worker/taskInfo', method: 'GET', data: { allocation_id: allocationId } });
   },
+  getNotifications(page, limit, isRead) {
+    const data = { page: page || 1, limit: limit || 20 };
+    if (isRead !== undefined && isRead !== '' && isRead !== null) data.is_read = isRead;
+    return getAppRef().userRequest({ url: '/worker/notifications', method: 'GET', data });
+  },
+  readNotifications(ids) {
+    const data = {};
+    if (Array.isArray(ids) && ids.length) data.ids = ids;
+    return getAppRef().userRequest({ url: '/worker/readNotifications', method: 'POST', data });
+  },
   submitReport(data) {
     return getAppRef().userRequest({ url: '/worker/report', method: 'POST', data });
   },

@@ -162,6 +162,8 @@ abstract class Backend extends BaseController
             'menu_url'        => $adminBase . '/index/menu',
             // 当前语言包（Backend + 当前控制器已合并），供 JS 使用
             'lang'           => Lang::get(),
+            'is_platform_admin' => $this->isPlatformAdmin() ? 1 : 0,
+            'tenant_view_id' => $this->getTenantId(),
         ];
 
         View::assign('config', $config);
@@ -204,10 +206,43 @@ abstract class Backend extends BaseController
         }
     }
 
+    protected function applyTenantFilterWithGlobal(\think\db\BaseQuery $query, string $field = 'tenant_id'): void
+    {
+        $tenantId = $this->getTenantId();
+        if ($tenantId > 0) {
+            $query->where(function ($q) use ($field, $tenantId) {
+                $q->where($field, $tenantId)->whereOr($field, 0);
+            });
+            return;
+        }
+        $tenantParam = (int) $this->request->get('tenant_id', 0);
+        if ($tenantParam > 0) {
+            $query->where(function ($q) use ($field, $tenantParam) {
+                $q->where($field, $tenantParam)->whereOr($field, 0);
+            });
+        }
+    }
+
     /** 当前请求的租户 ID（0=平台），由 TenantResolve 中间件设置 */
     protected function getTenantId(): int
     {
+        if ($this->isPlatformAdmin()) {
+            return 0;
+        }
         return (int) ($this->request->tenantId ?? 0);
+    }
+
+    protected function resolveTenantId(): int
+    {
+        $tenantId = $this->getTenantId();
+        if ($tenantId > 0) return $tenantId;
+        $p = $this->request->param('tenant_id');
+        if ($p !== null && $p !== '') return (int) $p;
+        $g = $this->request->get('tenant_id');
+        if ($g !== null && $g !== '') return (int) $g;
+        $post = $this->request->post('tenant_id');
+        if ($post !== null && $post !== '') return (int) $post;
+        return 0;
     }
 
     /** 当前登录管理员是否为平台超管（admin.tenant_id=0），不依赖请求解析的租户（如域名） */
@@ -253,6 +288,95 @@ abstract class Backend extends BaseController
             return in_array($column, $fields, true);
         } catch (\Throwable $e) {
             return false;
+        }
+    }
+
+    protected function ensureAdminNotificationTable(): void
+    {
+        if ($this->hasTableColumn('admin_notification', 'id')) {
+            return;
+        }
+        $prefix = config('database.connections.mysql.prefix', 'fa_');
+        $full = $prefix . 'admin_notification';
+        Db::execute(
+            'CREATE TABLE IF NOT EXISTS `' . $full . '` ('
+            . '`id` int(10) unsigned NOT NULL AUTO_INCREMENT,'
+            . '`tenant_id` int(10) unsigned NOT NULL DEFAULT 0,'
+            . '`admin_id` int(10) unsigned NOT NULL DEFAULT 0,'
+            . '`title` varchar(255) NOT NULL DEFAULT "",'
+            . '`content` text NULL,'
+            . '`level` varchar(20) NOT NULL DEFAULT "info",'
+            . '`is_read` tinyint(1) NOT NULL DEFAULT 0,'
+            . '`read_time` int(10) unsigned NOT NULL DEFAULT 0,'
+            . '`create_time` int(10) unsigned NOT NULL DEFAULT 0,'
+            . 'PRIMARY KEY (`id`),'
+            . 'KEY `idx_tenant_admin` (`tenant_id`,`admin_id`),'
+            . 'KEY `idx_read` (`tenant_id`,`is_read`,`create_time`)'
+            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+        );
+    }
+
+    protected function pushAdminNotification(string $title, string $content = '', string $level = 'info', int $adminId = 0, ?int $tenantId = null): void
+    {
+        try {
+            $this->ensureAdminNotificationTable();
+            $tid = $tenantId !== null ? $tenantId : $this->getTenantId();
+            Db::name('admin_notification')->insert([
+                'tenant_id' => $tid,
+                'admin_id' => $adminId,
+                'title' => $title,
+                'content' => $content,
+                'level' => $level !== '' ? $level : 'info',
+                'is_read' => 0,
+                'read_time' => 0,
+                'create_time' => time(),
+            ]);
+        } catch (\Throwable $e) {
+        }
+    }
+
+    protected function ensureUserNotificationTable(): void
+    {
+        if ($this->hasTableColumn('user_notification', 'id')) {
+            return;
+        }
+        $prefix = config('database.connections.mysql.prefix', 'fa_');
+        $full = $prefix . 'user_notification';
+        Db::execute(
+            'CREATE TABLE IF NOT EXISTS `' . $full . '` ('
+            . '`id` int(10) unsigned NOT NULL AUTO_INCREMENT,'
+            . '`tenant_id` int(10) unsigned NOT NULL DEFAULT 0,'
+            . '`user_id` int(10) unsigned NOT NULL DEFAULT 0,'
+            . '`title` varchar(255) NOT NULL DEFAULT "",'
+            . '`content` text NULL,'
+            . '`level` varchar(20) NOT NULL DEFAULT "info",'
+            . '`is_read` tinyint(1) NOT NULL DEFAULT 0,'
+            . '`read_time` int(10) unsigned NOT NULL DEFAULT 0,'
+            . '`create_time` int(10) unsigned NOT NULL DEFAULT 0,'
+            . 'PRIMARY KEY (`id`),'
+            . 'KEY `idx_tenant_user` (`tenant_id`,`user_id`),'
+            . 'KEY `idx_read` (`tenant_id`,`user_id`,`is_read`,`create_time`)'
+            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+        );
+    }
+
+    protected function pushUserNotification(int $userId, string $title, string $content = '', string $level = 'info', ?int $tenantId = null): void
+    {
+        if ($userId <= 0) return;
+        try {
+            $this->ensureUserNotificationTable();
+            $tid = $tenantId !== null ? $tenantId : $this->getTenantId();
+            Db::name('user_notification')->insert([
+                'tenant_id' => $tid,
+                'user_id' => $userId,
+                'title' => $title,
+                'content' => $content,
+                'level' => $level !== '' ? $level : 'info',
+                'is_read' => 0,
+                'read_time' => 0,
+                'create_time' => time(),
+            ]);
+        } catch (\Throwable $e) {
         }
     }
 

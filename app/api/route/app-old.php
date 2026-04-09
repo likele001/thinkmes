@@ -1,0 +1,227 @@
+<?php
+use think\facade\Route;
+
+Route::get('index/index', 'Index/index');
+Route::get('doc', 'Doc/index');
+Route::get('doc/index', 'Doc/index');
+Route::get('doc/spec', 'Doc/spec');
+
+// C端用户：无需登录
+Route::post('user/register', 'User/register');
+Route::post('user/login', 'User/login');
+Route::post('user/forgot', 'User/forgot');
+Route::post('user/resetPassword', 'User/resetPassword');
+Route::get('user/captcha', 'User/captcha');
+Route::get('user/captchaMode', 'User/captchaMode');
+
+// 小程序：根据 AppID 获取租户配置（无需登录）
+Route::get('miniapp/getConfig', 'Miniapp/getConfig');
+Route::post('miniapp/getConfig', 'Miniapp/getConfig');
+// 小程序登录（无需登录，按租户隔离）
+Route::post('miniapp/login', 'Miniapp/login');
+// 小程序绑定已有员工（无需登录）
+Route::post('miniapp/bindWithEmployee', 'Miniapp/bindWithEmployee');
+
+// C端用户：需登录
+Route::get('user/profile', 'User/profile')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('user/profile', 'User/profile')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('user/updateProfile', 'User/updateProfile')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('user/changePassword', 'User/changePassword')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('user/logout', 'User/logout')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('user/logout', 'User/logout')->middleware(\app\api\middleware\UserAuth::class);
+
+// 支付：异步通知（第三方回调，无需登录）
+Route::post('payment/notify/:gateway_id', 'Payment/notify');
+Route::any('payment/notify/:gateway_id', 'Payment/notify');
+// 支付：创建订单（内部或后台调用）
+Route::post('payment/create', 'Payment/create');
+
+// 客户门户：无需登录
+Route::post('customer/login', 'Customer/login');
+
+// 客户门户：需登录
+Route::get('customer/profile', 'Customer/profile')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::get('customer/products', 'Customer/products')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::post('customer/createOrder', 'Customer/createOrder')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::post('customer/confirmOrder', 'Customer/confirmOrder')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::post('customer/updateOrder', 'Customer/updateOrder')->middleware(\app\api\middleware\CustomerAuth::class);
+Route::get('customer/orders', 'Customer/orders')->middleware(\app\api\middleware\CustomerAuth::class);
+
+// 小程序绑定（需登录）
+Route::post('miniapp/bind', 'Miniapp/bind')->middleware(\app\api\middleware\UserAuth::class);
+
+require __DIR__ . '/restaurant_wxa.php';
+require __DIR__ . '/restaurant_openclaw.php';
+
+// C端用户：文件上传（需登录）
+Route::post('common/upload', 'Common/upload')->middleware(\app\api\middleware\UserAuth::class);
+
+// 员工报工相关接口（需登录，按租户隔离）- 前端报工小程序
+Route::get('worker/dashboard', 'Worker/dashboard')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/taskInfo', 'Worker/taskInfo')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('worker/report', 'Worker/report')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/reports', 'Worker/reports')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/reportDetail', 'Worker/reportDetail')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/wages', 'Worker/wages')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('worker/uploadImage', 'Worker/uploadImage')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('worker/notifications', 'Worker/notifications')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('worker/readNotifications', 'Worker/readNotifications')->middleware(\app\api\middleware\UserAuth::class);
+
+Route::get('cockpit/getData', 'Cockpit/getData')->middleware(\app\api\middleware\UserAuth::class);
+
+// AI 接口（员工端）
+Route::post('ai/transcribe', 'Ai/transcribe')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
+Route::post('ai/parse', 'Ai/parse')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
+Route::post('ai/ask', 'Ai/ask')->middleware(\app\api\middleware\UserAuth::class)->middleware(\app\common\middleware\AICheck::class)->middleware(\app\common\middleware\AIBilling::class);
+
+// 后端管理小程序 API（参考 FastAdmin Scanwork，需管理员 Token）
+Route::post('scanwork/adminLogin', 'Scanwork/adminLogin');
+Route::get('scanwork/checkToken', 'Scanwork/checkToken')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getScanworkMenu', 'Scanwork/getScanworkMenu')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getOrders', 'Scanwork/getOrders')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getOrderDetail', 'Scanwork/getOrderDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getOrderModels', 'Scanwork/getOrderModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getAllocations', 'Scanwork/getAllocations')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getAllocationDetail', 'Scanwork/getAllocationDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getTaskByScan', 'Scanwork/getTaskByScan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createAllocation', 'Scanwork/createAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getReports', 'Scanwork/getReports')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getActiveReports', 'Scanwork/getActiveReports')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getReportDetail', 'Scanwork/getReportDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getReportStatistics', 'Scanwork/getReportStatistics')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/auditReport', 'Scanwork/auditReport')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/uploadAuditImage', 'Scanwork/uploadAuditImage')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/uploadAuditVideo', 'Scanwork/uploadAuditVideo')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/uploadReportImage', 'Scanwork/uploadReportImage')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getProducts', 'Scanwork/getProducts')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getModels', 'Scanwork/getModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getProcesses', 'Scanwork/getProcesses')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getProcessPriceList', 'Scanwork/getProcessPriceList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getUsers', 'Scanwork/getUsers')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+
+// 订单
+Route::get('scanwork/getOrderMaterialList', 'Scanwork/getOrderMaterialList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createOrder', 'Scanwork/createOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateOrder', 'Scanwork/updateOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteOrder', 'Scanwork/deleteOrder')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 客户
+Route::get('scanwork/getCustomerList', 'Scanwork/getCustomerList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getCustomerDetail', 'Scanwork/getCustomerDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createCustomer', 'Scanwork/createCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateCustomer', 'Scanwork/updateCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteCustomer', 'Scanwork/deleteCustomer')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 供应商
+Route::get('scanwork/getSupplierList', 'Scanwork/getSupplierList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getSupplierDetail', 'Scanwork/getSupplierDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createSupplier', 'Scanwork/createSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateSupplier', 'Scanwork/updateSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteSupplier', 'Scanwork/deleteSupplier')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 工序
+Route::post('scanwork/createProcess', 'Scanwork/createProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateProcess', 'Scanwork/updateProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteProcess', 'Scanwork/deleteProcess')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 产品/型号/工序工价
+Route::post('scanwork/createProduct', 'Scanwork/createProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateProduct', 'Scanwork/updateProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteProduct', 'Scanwork/deleteProduct')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createProductModel', 'Scanwork/createProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateProductModel', 'Scanwork/updateProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteProductModel', 'Scanwork/deleteProductModel')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/batchAddProductModels', 'Scanwork/batchAddProductModels')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createProcessPrice', 'Scanwork/createProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateProcessPrice', 'Scanwork/updateProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteProcessPrice', 'Scanwork/deleteProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/batchProcessPrice', 'Scanwork/batchProcessPrice')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 物料
+Route::get('scanwork/getMaterialList', 'Scanwork/getMaterialList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getMaterialDetail', 'Scanwork/getMaterialDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createMaterial', 'Scanwork/createMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateMaterial', 'Scanwork/updateMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteMaterial', 'Scanwork/deleteMaterial')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 仓库
+Route::get('scanwork/getWarehouseList', 'Scanwork/getWarehouseList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getWarehouseDetail', 'Scanwork/getWarehouseDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createWarehouse', 'Scanwork/createWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateWarehouse', 'Scanwork/updateWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteWarehouse', 'Scanwork/deleteWarehouse')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 库存
+Route::get('scanwork/getStockList', 'Scanwork/getStockList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getStockLog', 'Scanwork/getStockLog')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/stockIn', 'Scanwork/stockIn')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/stockOut', 'Scanwork/stockOut')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/stockCheck', 'Scanwork/stockCheck')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// BOM
+Route::get('scanwork/getBomList', 'Scanwork/getBomList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getBomDetail', 'Scanwork/getBomDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getBomItems', 'Scanwork/getBomItems')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createBom', 'Scanwork/createBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateBom', 'Scanwork/updateBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteBom', 'Scanwork/deleteBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/addBomItem', 'Scanwork/addBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateBomItem', 'Scanwork/updateBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteBomItem', 'Scanwork/deleteBomItem')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/approveBom', 'Scanwork/approveBom')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 生产计划
+Route::get('scanwork/getProductionPlanList', 'Scanwork/getProductionPlanList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getProductionPlanDetail', 'Scanwork/getProductionPlanDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getProductionPlanAllocations', 'Scanwork/getProductionPlanAllocations')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getProductionPlanProgress', 'Scanwork/getProductionPlanProgress')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getProductionPlanProgressStats', 'Scanwork/getProductionPlanProgressStats')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createProductionPlan', 'Scanwork/createProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateProductionPlan', 'Scanwork/updateProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteProductionPlan', 'Scanwork/deleteProductionPlan')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 分工分配
+Route::post('scanwork/updateAllocation', 'Scanwork/updateAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteAllocation', 'Scanwork/deleteAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/batchCreateAllocation', 'Scanwork/batchCreateAllocation')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/generateQrcode', 'Scanwork/generateQrcode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 报工
+Route::post('scanwork/deleteReport', 'Scanwork/deleteReport')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 采购
+Route::get('scanwork/getPurchaseRequestList', 'Scanwork/getPurchaseRequestList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getPurchaseList', 'Scanwork/getPurchaseList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getPurchaseDetail', 'Scanwork/getPurchaseDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createPurchase', 'Scanwork/createPurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updatePurchase', 'Scanwork/updatePurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deletePurchase', 'Scanwork/deletePurchase')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/purchaseInbound', 'Scanwork/purchaseInbound')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 发货
+Route::get('scanwork/getShipmentList', 'Scanwork/getShipmentList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getShipmentDetail', 'Scanwork/getShipmentDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createShipment', 'Scanwork/createShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateShipment', 'Scanwork/updateShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteShipment', 'Scanwork/deleteShipment')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 质检
+Route::get('scanwork/getQualityStandards', 'Scanwork/getQualityStandards')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getQualityChecks', 'Scanwork/getQualityChecks')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 工资
+Route::get('scanwork/getWageList', 'Scanwork/getWageList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getWageStatistics', 'Scanwork/getWageStatistics')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 追溯码
+Route::get('scanwork/getTraceCodeList', 'Scanwork/getTraceCodeList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/generateTraceCode', 'Scanwork/generateTraceCode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/queryTraceCode', 'Scanwork/queryTraceCode')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// 售后
+Route::get('scanwork/getAfterSalesList', 'Scanwork/getAfterSalesList')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getAfterSalesDetail', 'Scanwork/getAfterSalesDetail')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/createAfterSales', 'Scanwork/createAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/updateAfterSales', 'Scanwork/updateAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::post('scanwork/deleteAfterSales', 'Scanwork/deleteAfterSales')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+// BI
+Route::get('scanwork/getDashboardData', 'Scanwork/getDashboardData')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getBiProductionEfficiency', 'Scanwork/getBiProductionEfficiency')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getBiQualityAnalysis', 'Scanwork/getBiQualityAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+Route::get('scanwork/getBiCostAnalysis', 'Scanwork/getBiCostAnalysis')->middleware([\app\api\middleware\AdminAuth::class, \app\api\middleware\ScanworkPermission::class]);
+
+if (is_file(__DIR__ . '/restaurant.php')) {
+    require __DIR__ . '/restaurant.php';
+}
+
+// 租户自助购买API
+Route::get('tenant_purchase/package_list', 'TenantPurchase/packageList');
+Route::post('tenant_purchase/create_order', 'TenantPurchase/createOrder');
+Route::get('tenant_purchase/payment_methods', 'TenantPurchase/paymentMethods');
+Route::post('tenant_purchase/pay', 'TenantPurchase/pay');
+Route::get('tenant_purchase/return', 'TenantPurchase/return');
+Route::post('tenant_purchase/notify', 'TenantPurchase/notify');
+Route::get('tenant_purchase/order_status', 'TenantPurchase/orderStatus');

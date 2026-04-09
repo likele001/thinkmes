@@ -21,7 +21,7 @@ class Payment extends BaseController
     {
         $gatewayId = (int) Request::param('gateway_id', 0);
         if ($gatewayId <= 0) {
-            return response('fail', 200, [], 'text/plain');
+            return Response::create('fail', 'html', 200)->header(['Content-Type' => 'text/plain; charset=utf-8']);
         }
         $input = Request::post();
         if (empty($input)) {
@@ -29,9 +29,9 @@ class Payment extends BaseController
         }
         $result = PaymentService::handleNotify($gatewayId, $input);
         if ($result['handled'] && $result['message'] === 'success') {
-            return response('success', 200, [], 'text/plain');
+            return Response::create('success', 'html', 200)->header(['Content-Type' => 'text/plain; charset=utf-8']);
         }
-        return response('fail', 200, [], 'text/plain');
+        return Response::create('fail', 'html', 200)->header(['Content-Type' => 'text/plain; charset=utf-8']);
     }
 
     /**
@@ -47,10 +47,13 @@ class Payment extends BaseController
         $notifyUrl = trim((string) Request::post('notify_url', ''));
         $returnUrl = trim((string) Request::post('return_url', ''));
         $tenantId = (int) Request::post('tenant_id', 0);
-        if ($gatewayId <= 0 || $orderNo === '' || $amount <= 0 || $notifyUrl === '') {
+        if ($gatewayId <= 0 || $orderNo === '' || $amount <= 0) {
             return json(['code' => 0, 'msg' => '参数不完整']);
         }
         $baseUrl = Request::domain();
+        if ($notifyUrl === '') {
+            $notifyUrl = $baseUrl . '/api/payment/notify/' . $gatewayId;
+        }
         if (strpos($notifyUrl, 'http') !== 0) {
             $notifyUrl = $baseUrl . '/' . ltrim($notifyUrl, '/');
         }

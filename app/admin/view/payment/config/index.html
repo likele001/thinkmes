@@ -3,6 +3,11 @@
         <div class="panel-lead"><em>{$title|default='支付网关'}</em> 配置并管理该渠道下的支付网关</div>
     </div>
     <div class="card-body">
+        <div class="alert alert-info">
+            <div><strong>异步通知URL</strong>：支付平台回调给服务器的地址（用于验签与改订单状态）。</div>
+            <div><strong>同步返回URL</strong>：用户支付完成后浏览器跳转地址（用于展示支付结果）。</div>
+            <div>标准回调：<code>{$Request.domain}/api/payment/notify/网关ID</code></div>
+        </div>
         <div id="toolbar" class="toolbar mb-2">
             <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
             <a href="javascript:;" id="btn-add" class="btn btn-success btn-add" title="添加网关"><i class="fas fa-plus"></i> 添加网关</a>

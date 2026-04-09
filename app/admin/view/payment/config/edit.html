@@ -14,7 +14,11 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">配置(JSON)</label>
                 <div class="col-sm-8">
-                    <textarea name="config" id="config" class="form-control" rows="8">{$row.config_json}</textarea>
+                    <div id="config-fields"></div>
+                    <textarea name="config" id="config" class="form-control" rows="8" style="display:none;">{$row.config_json}</textarea>
+                    <div class="mt-2">
+                        <a href="javascript:;" id="toggle-raw" class="btn btn-default btn-sm">高级JSON</a>
+                    </div>
                 </div>
             </div>
             <div class="form-group row">
@@ -34,15 +38,133 @@
         </form>
     </div>
 </div>
+<script type="application/json" id="payment-config-schema">{:json_encode($configFields, 256)}</script>
 <script>
 (function(){
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var form = document.getElementById('form-edit');
+    var fieldsWrap = document.getElementById('config-fields');
+    var rawEl = document.getElementById('config');
+    var toggleRawEl = document.getElementById('toggle-raw');
+    var rawVisible = false;
+    var existing = {};
+    try { existing = rawEl.value ? JSON.parse(rawEl.value) : {}; } catch (e) { existing = {}; }
+    existing = (existing && typeof existing === 'object') ? existing : {};
+    var code = '{$row.code}';
+    var schemaText = (document.getElementById('payment-config-schema') && document.getElementById('payment-config-schema').textContent) ? document.getElementById('payment-config-schema').textContent : '{}';
+    var schema = {};
+    try { schema = schemaText ? JSON.parse(schemaText) : {}; } catch (e) { schema = {}; }
+    var schemaKeys = Object.keys(schema || {});
+    var extra = {};
+    for (var k in existing) {
+        if (schemaKeys.indexOf(k) === -1) extra[k] = existing[k];
+    }
+
     form.setAttribute('action', base + '/payment/config/edit?id=' + (document.querySelector('input[name=id]').value));
+
+    function escapeHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, function (m) {
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+    }
+
+    function buildFieldRow(key, meta, value) {
+        var label = meta && meta.label ? meta.label : key;
+        var required = meta && meta.required ? true : false;
+        var type = meta && meta.type ? meta.type : 'text';
+        var placeholder = meta && meta.placeholder ? meta.placeholder : '';
+        var options = meta && meta.options ? meta.options : null;
+        var defaultVal = (value !== undefined && value !== null && value !== '') ? value : (meta && meta.default !== undefined ? meta.default : '');
+
+        var html = '<div class="form-group row">';
+        html += '<label class="col-sm-2 col-form-label">' + escapeHtml(label) + (required ? ' *' : '') + '</label>';
+        html += '<div class="col-sm-6">';
+        if (options) {
+            html += '<select class="form-control" data-config-key="' + escapeHtml(key) + '"' + (required ? ' required' : '') + '>';
+            if (!required) html += '<option value="">请选择</option>';
+            for (var ov in options) {
+                var sel = String(defaultVal) === String(ov) ? ' selected' : '';
+                html += '<option value="' + escapeHtml(ov) + '"' + sel + '>' + escapeHtml(options[ov]) + '</option>';
+            }
+            html += '</select>';
+        } else if (type === 'textarea') {
+            html += '<textarea class="form-control" rows="4" data-config-key="' + escapeHtml(key) + '"' + (required ? ' required' : '') + (placeholder ? ' placeholder="' + escapeHtml(placeholder) + '"' : '') + '>' + escapeHtml(defaultVal) + '</textarea>';
+        } else {
+            var inputType = type === 'password' ? 'password' : 'text';
+            html += '<input type="' + inputType + '" class="form-control" data-config-key="' + escapeHtml(key) + '" value="' + escapeHtml(defaultVal) + '"' + (required ? ' required' : '') + (placeholder ? ' placeholder="' + escapeHtml(placeholder) + '"' : '') + '>';
+        }
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    function defaultByCode(code, key) {
+        if (key !== 'type') return '';
+        if (code === 'xunhupay_alipay') return 'alipay';
+        if (code === 'xunhupay_wechat') return 'wechat';
+        return '';
+    }
+
+    function getCurrentConfigFromForm() {
+        var obj = {};
+        var inputs = fieldsWrap.querySelectorAll('[data-config-key]');
+        for (var i = 0; i < inputs.length; i++) {
+            var el = inputs[i];
+            var key = el.getAttribute('data-config-key');
+            var val = el.value;
+            if (val !== '' && val !== null && val !== undefined) obj[key] = val;
+        }
+        return obj;
+    }
+
+    function setRawFromForm() {
+        var obj = getCurrentConfigFromForm();
+        for (var k in extra) {
+            if (obj[k] === undefined) obj[k] = extra[k];
+        }
+        rawEl.value = JSON.stringify(obj, null, 2);
+    }
+
+    function renderFields() {
+        fieldsWrap.innerHTML = '';
+        if (!schema || !schemaKeys.length) {
+            fieldsWrap.innerHTML = '<div class="text-muted">该网关暂无配置项</div>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < schemaKeys.length; i++) {
+            var key = schemaKeys[i];
+            var meta = schema[key] || {};
+            var val = existing[key] !== undefined ? existing[key] : '';
+            if ((val === '' || val === null || val === undefined) && meta && meta.default !== undefined) {
+                val = meta.default;
+            }
+            var d = defaultByCode(code, key);
+            if ((val === '' || val === null || val === undefined) && d) val = d;
+            html += buildFieldRow(key, meta, val);
+        }
+        fieldsWrap.innerHTML = html;
+        var inputs = fieldsWrap.querySelectorAll('[data-config-key]');
+        for (var j = 0; j < inputs.length; j++) {
+            inputs[j].addEventListener('input', setRawFromForm);
+            inputs[j].addEventListener('change', setRawFromForm);
+        }
+        setRawFromForm();
+    }
+
+    toggleRawEl.addEventListener('click', function () {
+        rawVisible = !rawVisible;
+        rawEl.style.display = rawVisible ? 'block' : 'none';
+        if (rawVisible) setRawFromForm();
+    });
+
+    renderFields();
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         var fd = new FormData(form);
-        var configStr = document.getElementById('config').value.trim();
+        setRawFromForm();
+        var configStr = rawEl.value.trim();
         try {
             if (configStr) JSON.parse(configStr);
         } catch (err) {

@@ -1,0 +1,40 @@
+<form id="form-edit" class="form-horizontal" style="padding:20px">
+  <input type="hidden" name="id" value="{$row.id}">
+  <div class="form-group">
+    <label class="col-sm-3 control-label">分类名称 <span class="text-danger">*</span></label>
+    <div class="col-sm-6"><input type="text" name="name" class="form-control" value="{$row.name}" required></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">图标</label>
+    <div class="col-sm-6"><input type="text" name="icon" class="form-control" value="{$row.icon}"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">排序</label>
+    <div class="col-sm-3"><input type="number" name="sort" class="form-control" value="{$row.sort}"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">状态</label>
+    <div class="col-sm-6">
+      <label class="radio-inline"><input type="radio" name="status" value="1" {if $row.status==1}checked{/if}> 启用</label>
+      <label class="radio-inline"><input type="radio" name="status" value="0" {if $row.status==0}checked{/if}> 禁用</label>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-3 col-sm-6">
+      <button type="submit" class="btn btn-primary">保 存</button>
+    </div>
+  </div>
+</form>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '/admin';
+    $('#form-edit').attr('action', base + '/prompt/category/edit');
+    $('#form-edit').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            if (r.code == 1) { parent.layer.msg('保存成功', {icon: 1}); parent.layer.closeAll(); }
+            else { parent.layer.msg(r.msg || '保存失败', {icon: 2}); }
+        }, 'json');
+    });
+});
+</script>

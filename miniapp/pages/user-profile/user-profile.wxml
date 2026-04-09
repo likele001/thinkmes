@@ -56,6 +56,10 @@
           </view>
         </view>
         <view class="menu-grid">
+          <view class="menu-item" bindtap="goNotices">
+            <view class="menu-icon blue">信</view>
+            <text class="menu-text">消息通知</text>
+          </view>
           <view class="menu-item" bindtap="logout">
             <view class="menu-icon red">退</view>
             <text class="menu-text">退出登录</text>

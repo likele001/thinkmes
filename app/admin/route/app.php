@@ -12,6 +12,8 @@ Route::get('index/index', 'Index/index');
 Route::get('index/setLang', 'Index/setLang');
 Route::get('index/langDebug', 'Index/langDebug');
 Route::get('index/menu', 'Index/menu');
+Route::get('index/tenantList', 'Index/tenantList');
+Route::post('index/switchTenantView', 'Index/switchTenantView');
 
 // 个人中心
 Route::get('profile/index', 'Profile/index');

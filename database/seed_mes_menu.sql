@@ -380,6 +380,7 @@ SET @schedule_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/schedule' LIM
 
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
 ('mes/schedule/index', '排产列表', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/schedule/ganttData', '排产视图数据', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/schedule/generate', '生成排产', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/schedule/publish', '下发分工', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/schedule/del', '删除排产', 2, 0, 1, @schedule_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
@@ -449,10 +450,205 @@ ON DUPLICATE KEY UPDATE
 SET @bi_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/bi' LIMIT 1);
 
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
-('mes/bi/dashboard', '数据大屏', 2, 0, 1, @bi_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/bi/dashboard', 'MES数据监管大屏', 1, 1, 1, @bi_pid, 'fa fa-desktop', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/bi/productionEfficiency', '生产效率', 2, 0, 1, @bi_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/bi/qualityAnalysis', '质量分析', 2, 0, 1, @bi_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('mes/bi/costAnalysis', '成本分析', 2, 0, 1, @bi_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
 ON DUPLICATE KEY UPDATE 
     `title` = VALUES(`title`),
-    `pid` = @bi_pid;
+    `pid` = @bi_pid,
+    `type` = VALUES(`type`),
+    `ismenu` = VALUES(`ismenu`),
+    `status` = VALUES(`status`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/mrp', '缺料计算(MRP)', 1, 1, 1, @mes_pid, 'fa fa-calculator', 21, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/allocation_qrcode', '分工二维码', 1, 1, 1, @mes_pid, 'fa fa-qrcode', 13, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @wage_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/wage' LIMIT 1);
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/wage/statistics', '工资统计', 2, 1, 1, @wage_pid, 'fa fa-chart-bar', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/wage/index', '工资明细', 2, 1, 1, @wage_pid, 'fa fa-list', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @wage_pid,
+    `ismenu` = VALUES(`ismenu`),
+    `status` = VALUES(`status`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/shipment', '发货管理', 1, 1, 1, @mes_pid, 'fa fa-truck', 16, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @shipment_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/shipment' LIMIT 1);
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/shipment/index', '发货单列表', 1, 1, 1, @shipment_pid, '', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/shipment/add', '添加发货单', 2, 0, 1, @shipment_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/shipment/track', '物流追踪', 2, 0, 1, @shipment_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @shipment_pid;
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/quality', '质检管理', 1, 1, 1, @mes_pid, 'fa fa-check-circle', 17, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @quality_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/quality' LIMIT 1);
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/quality/standard', '质检标准', 1, 1, 1, @quality_pid, '', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/quality/check', '质检记录', 1, 1, 1, @quality_pid, '', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/quality/statistics', '质检统计', 1, 1, 1, @quality_pid, '', 3, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @quality_pid,
+    `ismenu` = VALUES(`ismenu`),
+    `status` = VALUES(`status`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/purchase', '采购管理', 1, 1, 1, @mes_pid, 'fa fa-shopping-cart', 15, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @purchase_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/purchase' LIMIT 1);
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/purchase/request', '采购单列表', 1, 1, 1, @purchase_pid, '', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/purchase/inbound', '采购入库', 1, 1, 1, @purchase_pid, '', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @purchase_pid,
+    `ismenu` = VALUES(`ismenu`),
+    `status` = VALUES(`status`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`);
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/warehouse', '仓库管理', 1, 1, 1, @mes_pid, 'fa fa-home', 14, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @warehouse_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/warehouse' LIMIT 1);
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/warehouse/index', '仓库列表', 1, 1, 1, @warehouse_pid, '', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/warehouse/add', '添加仓库', 1, 1, 1, @warehouse_pid, '', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @warehouse_pid;
+
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) 
+VALUES ('mes/stock', '库存管理', 1, 1, 1, @mes_pid, 'fa fa-warehouse', 12, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `pid` = @mes_pid;
+
+SET @stock_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes/stock' LIMIT 1);
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/stock/index', '库存查询', 1, 1, 1, @stock_pid, '', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/stock/outbound', '生产领料', 1, 1, 1, @stock_pid, '', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/stock/log', '库存流水', 1, 1, 1, @stock_pid, '', 3, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/stock/product_log', '产品流水', 1, 1, 1, @stock_pid, '', 4, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/stock/check', '库存盘点', 1, 1, 1, @stock_pid, '', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/stock/alert', '库存预警', 1, 1, 1, @stock_pid, 'fa fa-exclamation-triangle', 5, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE 
+    `title` = VALUES(`title`),
+    `pid` = @stock_pid,
+    `ismenu` = VALUES(`ismenu`),
+    `status` = VALUES(`status`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`);
+
+SET @mes_pid = (SELECT id FROM fa_auth_rule WHERE name = 'mes' LIMIT 1);
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('mes/group_production', '生产执行', 1, 1, 1, @mes_pid, 'fa fa-industry', 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/group_base', '基础资料', 1, 1, 1, @mes_pid, 'fa fa-database', 2, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/group_warehouse', '仓储管理', 1, 1, 1, @mes_pid, 'fa fa-warehouse', 3, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/group_purchase', '采购供应', 1, 1, 1, @mes_pid, 'fa fa-shopping-cart', 4, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/group_shipping', '发货管理', 1, 1, 1, @mes_pid, 'fa fa-truck', 5, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/group_quality', '质量管理', 1, 1, 1, @mes_pid, 'fa fa-check-circle', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/group_report', '报表分析', 1, 1, 1, @mes_pid, 'fa fa-chart-bar', 7, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('mes/group_customer', '客户管理', 1, 1, 1, @mes_pid, 'fa fa-users', 8, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE
+    `title` = VALUES(`title`),
+    `type` = 1,
+    `ismenu` = 1,
+    `status` = 1,
+    `pid` = VALUES(`pid`),
+    `icon` = VALUES(`icon`),
+    `sort` = VALUES(`sort`),
+    `update_time` = UNIX_TIMESTAMP();
+
+SET @g_production = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_production' LIMIT 1);
+SET @g_base = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_base' LIMIT 1);
+SET @g_warehouse = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_warehouse' LIMIT 1);
+SET @g_purchase = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_purchase' LIMIT 1);
+SET @g_shipping = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_shipping' LIMIT 1);
+SET @g_quality = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_quality' LIMIT 1);
+SET @g_report = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_report' LIMIT 1);
+SET @g_customer = (SELECT id FROM fa_auth_rule WHERE name = 'mes/group_customer' LIMIT 1);
+
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/order';
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 2, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/production_plan';
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 3, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/schedule';
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 4, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/allocation';
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 5, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/allocation_qrcode';
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 6, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/report';
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 7, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/wage';
+UPDATE `fa_auth_rule` SET `pid` = @g_production, `sort` = 8, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/trace_code';
+
+UPDATE `fa_auth_rule` SET `pid` = @g_base, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/product';
+UPDATE `fa_auth_rule` SET `pid` = @g_base, `sort` = 2, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/product_model';
+UPDATE `fa_auth_rule` SET `pid` = @g_base, `sort` = 3, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/bom';
+UPDATE `fa_auth_rule` SET `pid` = @g_base, `sort` = 4, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/process';
+UPDATE `fa_auth_rule` SET `pid` = @g_base, `sort` = 5, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/process_price';
+UPDATE `fa_auth_rule` SET `pid` = @g_base, `sort` = 6, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/process_route';
+UPDATE `fa_auth_rule` SET `pid` = @g_base, `sort` = 7, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/user_process_capacity';
+
+UPDATE `fa_auth_rule` SET `pid` = @g_warehouse, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/warehouse';
+UPDATE `fa_auth_rule` SET `pid` = @g_warehouse, `sort` = 2, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/stock';
+UPDATE `fa_auth_rule` SET `pid` = @g_warehouse, `sort` = 3, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/material_category';
+UPDATE `fa_auth_rule` SET `pid` = @g_warehouse, `sort` = 4, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/material';
+
+UPDATE `fa_auth_rule` SET `pid` = @g_purchase, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/purchase';
+UPDATE `fa_auth_rule` SET `pid` = @g_purchase, `sort` = 2, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/supplier';
+
+UPDATE `fa_auth_rule` SET `pid` = @g_shipping, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/shipment';
+
+UPDATE `fa_auth_rule` SET `pid` = @g_quality, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/quality';
+
+UPDATE `fa_auth_rule` SET `pid` = @g_report, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/bi';
+UPDATE `fa_auth_rule` SET `pid` = @g_report, `sort` = 2, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/mrp';
+
+UPDATE `fa_auth_rule` SET `pid` = @g_customer, `sort` = 1, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/customer';
+UPDATE `fa_auth_rule` SET `pid` = @g_customer, `sort` = 2, `update_time` = UNIX_TIMESTAMP() WHERE `name` = 'mes/customer_product';

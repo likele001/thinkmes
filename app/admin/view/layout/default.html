@@ -34,6 +34,13 @@
                 <span style="margin:0 6px;color:#ccc;">|</span>
                 <a href="{:url('index/setLang', ['lang'=>'ko'])}" target="_top">한국어</a>
             </span>
+            {if isset($admin.tenant_id) && $admin.tenant_id==0}
+            <span style="display:inline-block;margin-right:10px;">
+                <select id="tenant-view" class="form-control form-control-sm" style="display:inline-block;width:220px;height:28px;line-height:28px;padding:2px 8px;">
+                    <option value="">加载租户...</option>
+                </select>
+            </span>
+            {/if}
             <a href="javascript:;" id="btn-clear-cache" data-url="{:url('index/clearCache')}" title="{:__('clear_cache')}"><i class="layui-icon layui-icon-refresh"></i></a>
             <span class="layui-badge-dot"></span>
             <span>{$admin.nickname|default=$admin.username}</span>
@@ -87,5 +94,44 @@
     </div>
 </div>
 {include file="common/script" /}
+{if isset($admin.tenant_id) && $admin.tenant_id==0}
+<script>
+(function(){
+  if (typeof jQuery === 'undefined') return;
+  var $ = jQuery;
+  var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '/admin';
+  function loadTenants(){
+    $.get(base + '/index/tenantList', function(r){
+      if (!r || r.code != 1) return;
+      var d = r.data || {};
+      var list = d.list || [];
+      var cur = String(d.current || '');
+      var $sel = $('#tenant-view');
+      if (!$sel.length) return;
+      $sel.empty();
+      $sel.append('<option value="0">全部租户（不切换）</option>');
+      for (var i=0;i<list.length;i++){
+        var it = list[i] || {};
+        var id = String(it.id || '');
+        var name = (it.name || '') + ' (#' + id + ')';
+        $sel.append('<option value="' + id + '">' + name + '</option>');
+      }
+      $sel.val(cur !== '' ? cur : '0');
+    }, 'json');
+  }
+  $(function(){
+    loadTenants();
+    $(document).off('change', '#tenant-view').on('change', '#tenant-view', function(){
+      var tid = $(this).val();
+      if (tid === '' || tid === null) return;
+      $.post(base + '/index/switchTenantView', { tenant_id: tid }, function(r){
+        if (!r || r.code != 1) { alert((r && r.msg) ? r.msg : '切换失败'); return; }
+        window.top.location.reload();
+      }, 'json');
+    });
+  });
+})();
+</script>
+{/if}
 </body>
 </html>

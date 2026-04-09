@@ -1,0 +1,87 @@
+<form id="form-edit" class="form-horizontal" style="padding:20px">
+  <input type="hidden" name="id" value="{$row.id}">
+  <div class="form-group">
+    <label class="col-sm-3 control-label">配置名称</label>
+    <div class="col-sm-6"><input type="text" name="name" class="form-control" value="{$row.name}" required></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">服务商</label>
+    <div class="col-sm-5">
+      <select name="provider" class="form-control">
+        <option value="openai" {if $row.provider=='openai'}selected{/if}>OpenAI (ChatGPT)</option>
+        <option value="zhipu" {if $row.provider=='zhipu'}selected{/if}>智谱AI (GLM)</option>
+        <option value="qwen" {if $row.provider=='qwen'}selected{/if}>通义千问</option>
+        <option value="deepseek" {if $row.provider=='deepseek'}selected{/if}>DeepSeek</option>
+        <option value="moonshot" {if $row.provider=='moonshot'}selected{/if}>月之暗面 (Kimi)</option>
+        <option value="other" {if !in_array($row.provider,['openai','zhipu','qwen','deepseek','moonshot'])}selected{/if}>其他</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">API 地址</label>
+    <div class="col-sm-7"><input type="text" name="api_base" class="form-control" value="{$row.api_base}"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">API Key</label>
+    <div class="col-sm-7"><input type="password" name="api_key" class="form-control" value="{$row.api_key}" placeholder="不修改请留空"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">模型名称</label>
+    <div class="col-sm-5"><input type="text" name="model" class="form-control" value="{$row.model}"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">图片模型</label>
+    <div class="col-sm-5"><input type="text" name="image_model" class="form-control" value="{$row.image_model|default=''}" placeholder="cogview-3-flash"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">视频模型</label>
+    <div class="col-sm-5"><input type="text" name="video_model" class="form-control" value="{$row.video_model|default=''}" placeholder="cogvideox-flash"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">最大Token数</label>
+    <div class="col-sm-3"><input type="number" name="max_tokens" class="form-control" value="{$row.max_tokens}"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">Temperature</label>
+    <div class="col-sm-3"><input type="number" name="temperature" class="form-control" value="{$row.temperature}" min="0" max="2" step="0.05"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">排序</label>
+    <div class="col-sm-3"><input type="number" name="sort" class="form-control" value="{$row.sort}"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">状态</label>
+    <div class="col-sm-6">
+      <label class="radio-inline"><input type="radio" name="status" value="1" {if $row.status==1}checked{/if}> 启用</label>
+      <label class="radio-inline"><input type="radio" name="status" value="0" {if $row.status==0}checked{/if}> 禁用</label>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-3 col-sm-8">
+      <button type="submit" class="btn btn-primary">保 存</button>
+      <button type="button" class="btn btn-default" id="btn-test" style="margin-left:10px">测试连接</button>
+    </div>
+  </div>
+</form>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '/admin';
+    $('#form-edit').attr('action', base + '/prompt/ai_config/edit');
+    $('#form-edit').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            if (r.code == 1) { parent.layer.msg('保存成功', {icon: 1}); parent.layer.closeAll(); }
+            else { parent.layer.msg(r.msg || '保存失败', {icon: 2}); }
+        }, 'json');
+    });
+    $('#btn-test').on('click', function () {
+        var data = $('#form-edit').serialize();
+        $(this).text('测试中...').prop('disabled', true);
+        var $btn = $(this);
+        $.post(base + '/prompt/ai_config/test', data, function (r) {
+            $btn.text('测试连接').prop('disabled', false);
+            alert(r.msg || (r.code == 1 ? '连接成功' : '连接失败'));
+        }, 'json');
+    });
+});
+</script>

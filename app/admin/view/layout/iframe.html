@@ -7,6 +7,12 @@
     (function() {
         if (window.self === window.top) {
             try {
+                var url0 = new URL(window.location.href);
+                if (url0.searchParams.has('screen') && url0.searchParams.get('screen') === '1') {
+                    return;
+                }
+            } catch(e) {}
+            try {
                 var url = new URL(window.location.href);
                 var changed = false;
                 if (url.searchParams.has('iframe')) { url.searchParams.delete('iframe'); changed = true; }

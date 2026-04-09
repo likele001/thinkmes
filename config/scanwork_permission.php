@@ -21,6 +21,7 @@ return [
     // 分工/任务
     'getAllocations' => 'mes/allocation',
     'getAllocationDetail' => 'mes/allocation',
+    'getAllocationRemain' => 'mes/allocation',
     'getTaskByScan' => 'mes/allocation',
     'createAllocation' => 'mes/allocation',
     'updateAllocation' => 'mes/allocation',
@@ -41,6 +42,7 @@ return [
 
     // 产品/型号/工序
     'getProducts' => 'mes/product',
+    'getProductDetail' => 'mes/product',
     'getModels' => 'mes/product',
     'createProduct' => 'mes/product',
     'updateProduct' => 'mes/product',
@@ -83,6 +85,11 @@ return [
     'updateMaterial' => 'mes/material',
     'deleteMaterial' => 'mes/material',
 
+    'getMaterialCategoryList' => 'mes/material_category',
+    'createMaterialCategory' => 'mes/material_category',
+    'updateMaterialCategory' => 'mes/material_category',
+    'deleteMaterialCategory' => 'mes/material_category',
+
     // 仓库
     'getWarehouseList' => 'mes/warehouse',
     'getWarehouseDetail' => 'mes/warehouse',
@@ -93,6 +100,10 @@ return [
     // 库存
     'getStockList' => 'mes/stock',
     'getStockLog' => 'mes/stock',
+    'getMaterialStockLog' => 'mes/stock',
+    'getProductStockLog' => 'mes/stock',
+    'getStockAlertList' => 'mes/stock',
+    'getStockOutboundList' => 'mes/stock',
     'stockIn' => 'mes/stock',
     'stockOut' => 'mes/stock',
     'stockCheck' => 'mes/stock',
@@ -114,10 +125,12 @@ return [
     'getProductionPlanDetail' => 'mes/production_plan',
     'getProductionPlanAllocations' => 'mes/production_plan',
     'getProductionPlanProgress' => 'mes/production_plan',
+    'getProductionPlanProgressOverview' => 'mes/production_plan',
     'getProductionPlanProgressStats' => 'mes/production_plan',
     'createProductionPlan' => 'mes/production_plan',
     'updateProductionPlan' => 'mes/production_plan',
     'deleteProductionPlan' => 'mes/production_plan',
+    'setProductionPlanStatus' => 'mes/production_plan',
 
     // 采购
     'getPurchaseRequestList' => 'mes/purchase',
@@ -142,6 +155,23 @@ return [
     // 工资
     'getWageList' => 'mes/wage',
     'getWageStatistics' => 'mes/wage',
+
+    'getCapacityList' => 'mes/user_process_capacity',
+    'createCapacity' => 'mes/user_process_capacity',
+    'updateCapacity' => 'mes/user_process_capacity',
+    'deleteCapacity' => 'mes/user_process_capacity',
+
+    'getProcessRouteList' => 'mes/process_route',
+    'getProcessRouteDetail' => 'mes/process_route',
+    'createProcessRoute' => 'mes/process_route',
+    'updateProcessRoute' => 'mes/process_route',
+    'deleteProcessRoute' => 'mes/process_route',
+
+    'getScheduleList' => 'mes/schedule',
+    'getScheduleGanttData' => 'mes/schedule',
+    'generateSchedule' => 'mes/schedule',
+    'publishSchedule' => 'mes/schedule',
+    'deleteSchedule' => 'mes/schedule',
 
     // 追溯码
     'getTraceCodeList' => 'mes/trace_code',

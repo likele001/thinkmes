@@ -1,0 +1,29 @@
+<view class="page-container safe-area-top safe-area-bottom">
+  <view class="top-nav">
+    <view class="nav-title">消息通知</view>
+  </view>
+
+  <view class="main-content">
+    <view class="toolbar">
+      <view class="tabs">
+        <view class="tab {{filterRead===''?'active':''}}" data-v="" bindtap="changeFilter">全部</view>
+        <view class="tab {{filterRead===0?'active':''}}" data-v="0" bindtap="changeFilter">未读</view>
+        <view class="tab {{filterRead===1?'active':''}}" data-v="1" bindtap="changeFilter">已读</view>
+      </view>
+      <button class="btn" size="mini" bindtap="markAllRead">全部已读</button>
+    </view>
+
+    <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="openItem">
+      <view class="row">
+        <text class="title">{{item.title}}</text>
+        <text class="badge {{item.is_read? 'read':'unread'}}">{{item.is_read? '已读':'未读'}}</text>
+      </view>
+      <view class="content">{{item.content}}</view>
+      <view class="time">{{item.createtime_text}}</view>
+    </view>
+
+    <view class="empty" wx:if="{{!loading && list.length===0}}">暂无通知</view>
+    <view class="loading" wx:if="{{loading}}">加载中...</view>
+    <button class="load-more" wx:if="{{!loading && hasMore}}" bindtap="loadMore">加载更多</button>
+  </view>
+</view>

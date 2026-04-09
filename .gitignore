@@ -21,3 +21,7 @@ test_url.sh
 test_controllers.php
 test_route.php
 test_purchase.php
+miniappnews
+/miniappnews/
+.gitignore
+/workbuddy/

@@ -35,7 +35,7 @@ class Allocation extends Backend
         $page = $offset !== null && $offset !== '' ? (int) floor((int) $offset / $limit) + 1 : max(1, (int) $this->request->get('page', 1));
         
         $tenantId = $this->getTenantId();
-        $query = AllocationModel::with(['order', 'model.product', 'process'])
+        $query = AllocationModel::with(['order', 'model.product', 'process', 'user'])
             ->order('id', 'desc');
         if ($tenantId > 0) {
             $query->where('tenant_id', $tenantId);
@@ -233,7 +233,17 @@ class Allocation extends Backend
         View::assign('orderList', $orderList);
         View::assign('processList', $processList ?: []);
         View::assign('userList', $userList ?: []);
-        View::assign('data', $data->toArray());
+        $dataArr = $data->toArray();
+        $model = $dataArr['model'] ?? null;
+        if (is_array($model)) {
+            $productName = $model['product']['name'] ?? '';
+            $modelName = $model['name'] ?? '';
+            $modelCode = $model['model_code'] ?? '';
+            $full = $productName !== '' ? ($productName . ' - ' . $modelName) : $modelName;
+            if ($modelCode !== '') $full .= ' (' . $modelCode . ')';
+            $dataArr['model']['full_name'] = $full;
+        }
+        View::assign('data', $dataArr);
         View::assign('title', '编辑分工分配');
         return $this->fetchWithLayout('mes/allocation/edit');
     }

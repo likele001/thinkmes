@@ -134,7 +134,30 @@ class Scanwork extends BaseController
             $query->where('status', (int) $status);
         }
         $total = $query->count();
-        $list = $query->page($page, $limit)->select()->toArray();
+        $rows = $query->page($page, $limit)->select();
+        $list = [];
+        foreach ($rows as $o) {
+            $arr = $o->toArray();
+            $ctRaw = $arr['create_time'] ?? null;
+            $ct = 0;
+            if (is_int($ctRaw) || is_float($ctRaw) || (is_string($ctRaw) && $ctRaw !== '' && ctype_digit($ctRaw))) {
+                $ct = (int) $ctRaw;
+            } elseif (is_string($ctRaw) && $ctRaw !== '') {
+                $ts = strtotime($ctRaw);
+                if ($ts) $ct = (int) $ts;
+            }
+            $arr['createtime_text'] = $ct > 0 ? date('Y-m-d H:i:s', $ct) : '';
+            $dtRaw = $arr['delivery_time'] ?? null;
+            $dt = 0;
+            if (is_int($dtRaw) || is_float($dtRaw) || (is_string($dtRaw) && $dtRaw !== '' && ctype_digit($dtRaw))) {
+                $dt = (int) $dtRaw;
+            } elseif (is_string($dtRaw) && $dtRaw !== '') {
+                $ts = strtotime($dtRaw);
+                if ($ts) $dt = (int) $ts;
+            }
+            if ($dt > 0) $arr['delivery_time'] = date('Y-m-d', $dt);
+            $list[] = $arr;
+        }
         return $this->success('获取成功', ['total' => $total, 'list' => $list]);
     }
 
@@ -231,7 +254,7 @@ class Scanwork extends BaseController
             if ($totalQuantity === 0) {
                 throw new \Exception('至少需要一个型号及数量');
             }
-            $order->save(['total_quantity' => $totalQuantity]);
+            Db::name('mes_order')->where('tenant_id', $tenantId)->where('id', $order->id)->update(['total_quantity' => $totalQuantity]);
             Db::commit();
             return $this->success('添加成功', ['id' => $order->id]);
         } catch (\Throwable $e) {
@@ -1765,6 +1788,59 @@ class Scanwork extends BaseController
     /** 列表项扁平化，与 report 项目一致便于前端展示 */
     private function flattenReportList($rows): array
     {
+        $tenantId = $this->getTenantId();
+        $allocationIds = [];
+        $userIds = [];
+        foreach ($rows as $r) {
+            if (is_object($r)) {
+                $aid = (int) ($r->allocation_id ?? 0);
+                if ($aid > 0) $allocationIds[] = $aid;
+                $uid = (int) ($r->user_id ?? 0);
+                if ($uid > 0) $userIds[] = $uid;
+            } elseif (is_array($r)) {
+                $aid = (int) ($r['allocation_id'] ?? 0);
+                if ($aid > 0) $allocationIds[] = $aid;
+                $uid = (int) ($r['user_id'] ?? 0);
+                if ($uid > 0) $userIds[] = $uid;
+            }
+        }
+        $allocationIds = array_values(array_unique(array_filter($allocationIds)));
+        $userIds = array_values(array_unique(array_filter($userIds)));
+
+        $allocMap = [];
+        if ($allocationIds) {
+            $rows2 = Db::name('mes_allocation')->alias('a')
+                ->leftJoin('mes_order o', 'o.id = a.order_id AND o.tenant_id = a.tenant_id')
+                ->leftJoin('mes_product_model m', 'm.id = a.model_id AND m.tenant_id = a.tenant_id')
+                ->leftJoin('mes_product p', 'p.id = m.product_id AND p.tenant_id = m.tenant_id')
+                ->leftJoin('mes_process pr', 'pr.id = a.process_id AND pr.tenant_id = a.tenant_id')
+                ->where('a.tenant_id', $tenantId)
+                ->whereIn('a.id', $allocationIds)
+                ->field('a.id as allocation_id,o.order_no,p.name as product_name,m.name as model_name,pr.name as process_name')
+                ->select()
+                ->toArray();
+            foreach ($rows2 as $x) {
+                $aid = (int) ($x['allocation_id'] ?? 0);
+                if ($aid <= 0) continue;
+                $allocMap[$aid] = [
+                    'order_no' => (string) ($x['order_no'] ?? ''),
+                    'product_name' => (string) ($x['product_name'] ?? ''),
+                    'model_name' => (string) ($x['model_name'] ?? ''),
+                    'process_name' => (string) ($x['process_name'] ?? ''),
+                ];
+            }
+        }
+
+        $userMap = [];
+        if ($userIds) {
+            $rows3 = Db::name('user')->whereIn('id', $userIds)->field('id,username,nickname')->select()->toArray();
+            foreach ($rows3 as $u) {
+                $id = (int) ($u['id'] ?? 0);
+                if ($id <= 0) continue;
+                $userMap[$id] = (string) ($u['nickname'] ?? ($u['username'] ?? ''));
+            }
+        }
+
         $list = [];
         foreach ($rows as $r) {
             $arr = is_array($r) ? $r : $r->toArray();
@@ -1779,6 +1855,26 @@ class Scanwork extends BaseController
             $arr['model_name'] = $model ? (is_object($model) ? ($model->name ?? '') : ($model['name'] ?? '')) : '';
             $arr['process_name'] = $process ? (is_object($process) ? ($process->name ?? '') : ($process['name'] ?? '')) : '';
             $arr['user_name'] = $user ? (is_object($user) ? ($user->nickname ?? $user->username ?? '') : ($user['nickname'] ?? $user['username'] ?? '')) : '';
+            $aid = (int) ($arr['allocation_id'] ?? 0);
+            if ($aid > 0 && isset($allocMap[$aid])) {
+                if ($arr['order_no'] === '') $arr['order_no'] = $allocMap[$aid]['order_no'] ?? '';
+                if ($arr['product_name'] === '') $arr['product_name'] = $allocMap[$aid]['product_name'] ?? '';
+                if ($arr['model_name'] === '') $arr['model_name'] = $allocMap[$aid]['model_name'] ?? '';
+                if ($arr['process_name'] === '') $arr['process_name'] = $allocMap[$aid]['process_name'] ?? '';
+            }
+            $uid = (int) ($arr['user_id'] ?? 0);
+            if ($arr['user_name'] === '' && $uid > 0 && isset($userMap[$uid])) {
+                $arr['user_name'] = $userMap[$uid];
+            }
+            $ctRaw = $arr['create_time'] ?? null;
+            $ct = 0;
+            if (is_int($ctRaw) || is_float($ctRaw) || (is_string($ctRaw) && $ctRaw !== '' && ctype_digit($ctRaw))) {
+                $ct = (int) $ctRaw;
+            } elseif (is_string($ctRaw) && $ctRaw !== '') {
+                $ts = strtotime($ctRaw);
+                if ($ts) $ct = (int) $ts;
+            }
+            $arr['createtime_text'] = $ct > 0 ? date('Y-m-d H:i:s', $ct) : '';
             $list[] = $arr;
         }
         return $list;

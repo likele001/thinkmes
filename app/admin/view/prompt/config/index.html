@@ -1,0 +1,33 @@
+<form id="form-config" class="form-horizontal" style="padding:20px">
+  {foreach $configs as $key => $cfg}
+  <div class="form-group">
+    <label class="col-sm-4 control-label">{$cfg.title}</label>
+    <div class="col-sm-4">
+      {if $cfg.type == 'switch'}
+      <div class="checkbox"><label>
+        <input type="checkbox" name="{$key}" value="1" {if $cfg.value=='1'}checked{/if}> 开启
+      </label></div>
+      {else}
+      <input type="{$cfg.type}" name="{$key}" class="form-control" value="{$cfg.value}">
+      {/if}
+    </div>
+  </div>
+  {/foreach}
+  <div class="form-group">
+    <div class="col-sm-offset-4 col-sm-6">
+      <button type="submit" class="btn btn-primary btn-lg">保 存 设 置</button>
+    </div>
+  </div>
+</form>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '/admin';
+    $('#form-config').attr('action', base + '/prompt/config/index');
+    $('#form-config').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            alert(r.msg || (r.code == 1 ? '保存成功' : '保存失败'));
+        }, 'json');
+    });
+});
+</script>

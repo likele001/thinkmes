@@ -1,0 +1,93 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>{$title|default='易支付(8-pay)配置'}</em> 配置并管理易支付网关参数</div>
+    </div>
+    <div class="card-body">
+        <form id="form-epay" method="post" class="form-horizontal">
+            <div class="mb-3">
+                <a href="{$legacy_url}&legacy=1" class="btn btn-default btn-sm">查看网关列表</a>
+            </div>
+
+            <div class="card card-outline card-primary mb-3">
+                <div class="card-header"><h3 class="card-title">易支付配置</h3></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">启用</label>
+                        <div class="col-sm-6">
+                            <label><input type="checkbox" name="enabled" value="1" {$row.enabled == 1 ? 'checked' : ''}> 启用</label>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">商户ID *</label>
+                        <div class="col-sm-4"><input type="text" name="pid" class="form-control" value="{$row.config.pid|default=''}"></div>
+                        <label class="col-sm-2 col-form-label">商户密钥 *</label>
+                        <div class="col-sm-4"><input type="password" name="key" class="form-control" value="{$row.config.key|default=''}"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">提交地址 *</label>
+                        <div class="col-sm-10"><input type="text" name="submit_url" class="form-control" value="{$row.config.submit_url|default=''}" placeholder="https://xxx.com/submit.php"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">默认支付类型</label>
+                        <div class="col-sm-4">
+                            <select name="type" class="form-control">
+                                <option value="">自动</option>
+                                <option value="alipay" {if isset($row.config.type) && $row.config.type=='alipay'}selected{/if}>支付宝</option>
+                                <option value="wxpay" {if isset($row.config.type) && $row.config.type=='wxpay'}selected{/if}>微信</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-outline card-secondary mb-3">
+                <div class="card-header"><h3 class="card-title">通用配置</h3></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">异步通知URL</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="common[notify_url]" class="form-control" value="{$common.notify_url|default=''}" placeholder="留空则由业务下单时传入">
+                            <small class="text-muted">支付平台回调给服务器的地址（用于验签与改订单状态）。本系统推荐：<code>{$notify_url}</code></small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">同步返回URL</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="common[return_url]" class="form-control" value="{$common.return_url|default=''}" placeholder="https://你的域名/支付成功页面">
+                            <small class="text-muted">用户支付完成后浏览器跳转地址（用于展示支付结果）。不参与验签。</small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">WAP网址</label>
+                        <div class="col-sm-10"><input type="text" name="common[wap_url]" class="form-control" value="{$common.wap_url|default=''}"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">WAP网站名称</label>
+                        <div class="col-sm-10"><input type="text" name="common[wap_name]" class="form-control" value="{$common.wap_name|default=''}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="javascript:history.back();" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var form = document.getElementById('form-epay');
+    form.setAttribute('action', base + '/payment/config_epay');
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var fd = new FormData(form);
+        fetch(form.getAttribute('action'), { method: 'POST', body: fd }).then(function(r){ return r.json(); }).then(function(r){
+            alert(r.msg || '');
+        }).catch(function(){ alert('请求失败'); });
+    });
+})();
+</script>

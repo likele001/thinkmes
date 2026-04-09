@@ -15,31 +15,69 @@
                     <small class="form-text text-muted">可多选，选择要设置工价的产品型号</small>
                 </div>
             </div>
+
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">工序 <span class="text-danger">*</span></label>
+                <label class="col-sm-2 col-form-label">批量填充</label>
                 <div class="col-sm-8">
-                    <select name="process_ids[]" class="form-control select2" multiple="multiple" id="process_ids" required style="width: 100%;">
-                        {volist name="processList" id="vo"}
-                        <option value="{$key}">{$vo}</option>
-                        {/volist}
-                    </select>
-                    <small class="form-text text-muted">可多选，选择要设置工价的工序</small>
+                    <div class="form-row">
+                        <div class="col-md-4 mb-2">
+                            <input type="number" id="fill_price" class="form-control" step="0.01" min="0" placeholder="计件(元/件)">
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <input type="number" id="fill_time_price" class="form-control" step="0.01" min="0" placeholder="计时(元/小时)">
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <button type="button" class="btn btn-outline-primary btn-block" id="btn-fill-all">填充到已勾选工序</button>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">先勾选要设置的工序，再用此处一键填充；也可以逐行填写不同工价</small>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">工序工价 <span class="text-danger">*</span></label>
+                <div class="col-sm-10">
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-check-all">全选</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-uncheck-all">全不选</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm" id="process-price-table">
+                            <thead>
+                            <tr>
+                                <th style="width:60px;">选择</th>
+                                <th>工序</th>
+                                <th style="width:180px;">计件(元/件)</th>
+                                <th style="width:180px;">计时(元/小时)</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {volist name="processList" id="vo"}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="prices[{$key}][enabled]" value="1" class="pp-enabled" data-process-id="{$key}">
+                                </td>
+                                <td>{$vo}</td>
+                                <td>
+                                    <input type="number" name="prices[{$key}][price]" class="form-control form-control-sm pp-price" step="0.01" min="0" placeholder="0.00">
+                                </td>
+                                <td>
+                                    <input type="number" name="prices[{$key}][time_price]" class="form-control form-control-sm pp-time-price" step="0.01" min="0" placeholder="0.00">
+                                </td>
+                            </tr>
+                            {/volist}
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="form-text text-muted">按工序逐行设置工价；未勾选的工序不会提交</small>
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-sm-2 col-form-label">计件工价(元/件) <span class="text-danger">*</span></label>
-                <div class="col-sm-6">
-                    <input type="number" name="price" class="form-control" step="0.01" min="0" placeholder="请输入计件工价" required>
+                <div class="col-sm-10 offset-sm-2">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle"></i> 将为勾选的工序逐个设置工价，并对选中的所有型号生效：存在则更新，不存在则新增。
+                    </div>
                 </div>
-            </div>
-            <div class="form-group row">
-                <label class="col-sm-2 col-form-label">计时工价(元/小时)</label>
-                <div class="col-sm-6">
-                    <input type="number" name="time_price" class="form-control" step="0.01" min="0" placeholder="请输入计时工价" value="0">
-                </div>
-            </div>
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> 提示：将批量为选中的产品型号和工序组合设置工价。如果已存在工价，将更新；如果不存在，将新增。
             </div>
             <div class="form-group row">
                 <div class="col-sm-8 offset-sm-2">

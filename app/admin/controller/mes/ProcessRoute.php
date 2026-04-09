@@ -177,7 +177,7 @@ class ProcessRoute extends Backend
         View::assign('modelList', $modelList);
         $processList = [];
         if ($tenantId > 0) {
-            $processList = ProcessModel::whereIn('tenant_id', [0, $tenantId])->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->column('name', 'id');
+            $processList = ProcessModel::where('tenant_id', $tenantId)->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->column('name', 'id');
         }
         View::assign('processList', $processList ?: []);
         $routeTemplates = [];
@@ -303,7 +303,7 @@ class ProcessRoute extends Backend
         View::assign('modelList', $modelList);
         $processList = [];
         if ($routeTenantId > 0) {
-            $processList = ProcessModel::whereIn('tenant_id', [0, $routeTenantId])->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->column('name', 'id');
+            $processList = ProcessModel::where('tenant_id', $routeTenantId)->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->column('name', 'id');
         }
         View::assign('processList', $processList ?: []);
         $routeTemplates = [];
@@ -378,7 +378,7 @@ class ProcessRoute extends Backend
         return $prefix . str_pad((string) $num, 4, '0', STR_PAD_LEFT);
     }
 
-    private function resolveTenantId(): int
+    protected function resolveTenantId(): int
     {
         $tenantId = $this->getTenantId();
         if ($tenantId > 0) return $tenantId;

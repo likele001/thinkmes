@@ -36,6 +36,11 @@
         return name;
     }
 
+    function userFmt(value, row) {
+        var u = row.user || {};
+        return u.nickname || u.username || '-';
+    }
+
     var Controller = {
         index: function () {
             var $table = $('#table');
@@ -59,6 +64,7 @@
                     {field: 'model.product.name', title: '产品', align: 'left'},
                     {field: 'model.name', title: '产品型号', align: 'left', formatter: modelFmt},
                     {field: 'process.name', title: '工序', align: 'left'},
+                    {field: 'user.nickname', title: '员工', align: 'left', formatter: userFmt},
                     {field: 'quantity', title: '分配数量', width: 100, align: 'right'},
                     {field: 'completed_quantity', title: '完成数量', width: 100, align: 'right'},
                     {field: 'completion_rate', title: '完成率', width: 120, formatter: progressFmt},

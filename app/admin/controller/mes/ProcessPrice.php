@@ -203,12 +203,45 @@ class ProcessPrice extends Backend
     {
         if ($this->request->isPost()) {
             $modelIds = $this->request->post('model_ids/a', []);
+            $prices = $this->request->post('prices/a', []);
             $processIds = $this->request->post('process_ids/a', []);
             $price = (float) $this->request->post('price', 0);
             $timePrice = (float) $this->request->post('time_price', 0);
             
-            if (empty($modelIds) || empty($processIds)) {
-                return $this->error('请选择型号和工序');
+            if (empty($modelIds)) {
+                return $this->error('请选择型号');
+            }
+
+            $items = [];
+            if (!empty($prices)) {
+                foreach ($prices as $processId => $row) {
+                    $processId = (int) $processId;
+                    if ($processId <= 0 || !is_array($row)) {
+                        continue;
+                    }
+                    $enabled = (int) ($row['enabled'] ?? 0);
+                    if ($enabled !== 1) {
+                        continue;
+                    }
+                    $p = (float) ($row['price'] ?? 0);
+                    $tp = (float) ($row['time_price'] ?? 0);
+                    if ($p <= 0 && $tp <= 0) {
+                        continue;
+                    }
+                    $items[] = ['process_id' => $processId, 'price' => $p, 'time_price' => $tp];
+                }
+            }
+
+            if (empty($items) && !empty($processIds)) {
+                foreach ($processIds as $processId) {
+                    $processId = (int) $processId;
+                    if ($processId <= 0) continue;
+                    $items[] = ['process_id' => $processId, 'price' => $price, 'time_price' => $timePrice];
+                }
+            }
+
+            if (empty($items)) {
+                return $this->error('请选择工序并填写工价');
             }
             
             $tenantId = $this->getTenantId();
@@ -218,15 +251,20 @@ class ProcessPrice extends Backend
             Db::startTrans();
             try {
                 foreach ($modelIds as $modelId) {
-                    foreach ($processIds as $processId) {
+                    $modelId = (int) $modelId;
+                    if ($modelId <= 0) continue;
+                    foreach ($items as $it) {
+                        $processId = (int) $it['process_id'];
+                        $p = (float) $it['price'];
+                        $tp = (float) $it['time_price'];
                         $exists = ProcessPriceModel::where('tenant_id', $tenantId)
                             ->where('model_id', $modelId)
                             ->where('process_id', $processId)
                             ->find();
                         
                         if ($exists) {
-                            $exists->price = $price;
-                            $exists->time_price = $timePrice;
+                            $exists->price = $p;
+                            $exists->time_price = $tp;
                             $exists->update_time = time();
                             $exists->save();
                             $skipCount++;
@@ -235,8 +273,8 @@ class ProcessPrice extends Backend
                                 'tenant_id' => $tenantId,
                                 'model_id' => $modelId,
                                 'process_id' => $processId,
-                                'price' => $price,
-                                'time_price' => $timePrice,
+                                'price' => $p,
+                                'time_price' => $tp,
                                 'status' => 1,
                                 'create_time' => time(),
                                 'update_time' => time(),

@@ -1,0 +1,121 @@
+<script type="application/json" id="payment-config-schema">{:json_encode($schema ?? [], 256)}</script>
+<script type="application/json" id="payment-config-existing">{:json_encode($row.config ?? [], 256)}</script>
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>{$title|default='官方微信支付配置'}</em> 配置并管理官方微信支付参数</div>
+    </div>
+    <div class="card-body">
+        <form id="form-official" method="post" class="form-horizontal">
+            <div class="mb-3">
+                <a href="{$legacy_url}&legacy=1" class="btn btn-default btn-sm">查看网关列表</a>
+            </div>
+
+            <div class="card card-outline card-success mb-3">
+                <div class="card-header"><h3 class="card-title">微信支付配置</h3></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">启用</label>
+                        <div class="col-sm-6">
+                            <label><input type="checkbox" name="enabled" value="1" {$row.enabled == 1 ? 'checked' : ''}> 启用</label>
+                        </div>
+                    </div>
+                    <div id="config-fields"></div>
+                </div>
+            </div>
+
+            <div class="card card-outline card-secondary mb-3">
+                <div class="card-header"><h3 class="card-title">通用配置</h3></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">异步通知URL</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="common[notify_url]" class="form-control" value="{$common.notify_url|default=''}" placeholder="https://你的域名/api/payment/notify/网关ID 或 业务自己的 notify">
+                            <small class="text-muted">支付平台回调地址（后台服务器接收并验签）。建议用：<code>{$Request.domain}/api/payment/notify/网关ID</code></small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">同步返回URL</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="common[return_url]" class="form-control" value="{$common.return_url|default=''}" placeholder="https://你的域名/支付成功页面">
+                            <small class="text-muted">用户支付完成后浏览器跳转地址（用于展示支付结果）。不参与验签。</small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">WAP网址</label>
+                        <div class="col-sm-10"><input type="text" name="common[wap_url]" class="form-control" value="{$common.wap_url|default=''}"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">WAP网站名称</label>
+                        <div class="col-sm-10"><input type="text" name="common[wap_name]" class="form-control" value="{$common.wap_name|default=''}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="javascript:history.back();" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var form = document.getElementById('form-official');
+    var fieldsWrap = document.getElementById('config-fields');
+    var schemaText = (document.getElementById('payment-config-schema') && document.getElementById('payment-config-schema').textContent) ? document.getElementById('payment-config-schema').textContent : '{}';
+    var schema = {};
+    try { schema = schemaText ? JSON.parse(schemaText) : {}; } catch (e) { schema = {}; }
+    var existingText = (document.getElementById('payment-config-existing') && document.getElementById('payment-config-existing').textContent) ? document.getElementById('payment-config-existing').textContent : '{}';
+    var existing = {};
+    try { existing = existingText ? JSON.parse(existingText) : {}; } catch (e) { existing = {}; }
+    existing = (existing && typeof existing === 'object') ? existing : {};
+
+    function esc(s){
+        return String(s||'').replace(/[&<>"']/g,function(m){
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+    }
+    function buildField(key, meta, val){
+        var label = meta && meta.label ? meta.label : key;
+        var required = meta && meta.required ? true : false;
+        var type = meta && meta.type ? meta.type : 'text';
+        var def = (val !== undefined && val !== null && val !== '') ? val : (meta && meta.default !== undefined ? meta.default : '');
+        var html = '<div class=\"form-group row\">';
+        html += '<label class=\"col-sm-2 col-form-label\">' + esc(label) + (required ? ' *' : '') + '</label>';
+        html += '<div class=\"col-sm-10\">';
+        if (type === 'textarea') {
+            html += '<textarea class=\"form-control\" rows=\"4\" data-config-key=\"' + esc(key) + '\"' + (required ? ' required' : '') + '>' + esc(def) + '</textarea>';
+        } else {
+            var it = type === 'password' ? 'password' : 'text';
+            html += '<input type=\"' + it + '\" class=\"form-control\" data-config-key=\"' + esc(key) + '\" value=\"' + esc(def) + '\"' + (required ? ' required' : '') + '>';
+        }
+        html += '</div></div>';
+        return html;
+    }
+    var html = '';
+    for (var k in schema) {
+        html += buildField(k, schema[k], existing[k]);
+    }
+    fieldsWrap.innerHTML = html;
+
+    form.setAttribute('action', base + '/payment/config_wechat');
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var cfg = {};
+        var inputs = fieldsWrap.querySelectorAll('[data-config-key]');
+        for (var i=0;i<inputs.length;i++){
+            var el = inputs[i];
+            var key = el.getAttribute('data-config-key');
+            var val = el.value;
+            if (val !== '' && val !== null && val !== undefined) cfg[key] = val;
+        }
+        var fd = new FormData(form);
+        fd.delete('config');
+        for (var k2 in cfg) fd.append('config['+k2+']', cfg[k2]);
+        fetch(form.getAttribute('action'), { method:'POST', body: fd }).then(function(r){return r.json();}).then(function(r){alert(r.msg||'');}).catch(function(){alert('请求失败');});
+    });
+})();
+</script>

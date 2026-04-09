@@ -1,117 +1,221 @@
-<!-- 生产进度大屏监控（与 scanwork 布局一致：6 卡片 + 4 图表 + 4 Tab 表） -->
-<div class="dashboard-screen">
-    <div class="dashboard-header d-flex justify-content-between align-items-center flex-wrap mb-3">
-        <h1 class="h4 mb-0"><i class="fas fa-tachometer-alt"></i> 生产进度大屏监控系统</h1>
-        <div class="d-flex align-items-center gap-2">
-            <span class="text-muted small">更新: <span id="dashboard-update-sec">0</span>s</span>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="dashboard-btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="dashboard-btn-pause" title="暂停/继续"><i class="fas fa-pause"></i> 暂停</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="dashboard-btn-fullscreen" title="全屏"><i class="fas fa-expand"></i> 全屏</button>
+<div class="mes-screen" id="mes-screen">
+    <div class="mes-topbar">
+        <div class="mes-topbar-left">
+            <div class="mes-title">MES 数据监管大屏</div>
+            <div class="mes-subtitle">全链路生产数据监管</div>
         </div>
-    </div>
-
-    <!-- 无数据时提示 -->
-    <div class="alert alert-info py-2 mb-2 d-none" id="dashboard-empty-hint" role="alert">
-        <i class="fas fa-info-circle"></i> 暂无生产计划与报工数据。请先：<strong>订单管理</strong> 创建订单 → <strong>生产计划</strong> 排产 → <strong>分工/分配</strong> 生成小工单 → 员工<strong>报工</strong>后，此处会显示进度。
-    </div>
-
-    <!-- 1) 顶部 6 张卡片（与 scanwork 一致） -->
-    <div class="row mb-3">
-        <div class="col-lg-2 col-4 mb-2">
-            <div class="small-box bg-secondary text-white rounded p-2 text-center">
-                <h5 class="mb-0" id="stat-total-orders">0</h5>
-                <p class="mb-0 small">总订单数</p>
-                <small class="opacity-75">活跃订单数量</small>
+        <div class="mes-topbar-center">
+            <div class="mes-time">
+                <span id="mes-date"></span>
+                <span class="mes-time-split"></span>
+                <span id="mes-clock"></span>
+                <span class="mes-time-split"></span>
+                <span id="mes-shift"></span>
             </div>
         </div>
-        <div class="col-lg-2 col-4 mb-2">
-            <div class="small-box bg-info text-white rounded p-2 text-center">
-                <h5 class="mb-0" id="stat-total-plans">0</h5>
-                <p class="mb-0 small">总计划数</p>
-                <small class="opacity-75">生产计划总数</small>
-            </div>
-        </div>
-        <div class="col-lg-2 col-4 mb-2">
-            <div class="small-box bg-primary text-white rounded p-2 text-center">
-                <h5 class="mb-0" id="stat-total-allocations">0</h5>
-                <p class="mb-0 small">小工单数</p>
-                <small class="opacity-75">分配任务总数</small>
-            </div>
-        </div>
-        <div class="col-lg-2 col-4 mb-2">
-            <div class="small-box bg-secondary text-white rounded p-2 text-center">
-                <h5 class="mb-0" id="stat-total-quantity">0</h5>
-                <p class="mb-0 small">总数量</p>
-                <small class="opacity-75">计划生产总量</small>
-            </div>
-        </div>
-        <div class="col-lg-2 col-4 mb-2">
-            <div class="small-box bg-success text-white rounded p-2 text-center">
-                <h5 class="mb-0" id="stat-completed-quantity">0</h5>
-                <p class="mb-0 small">已完成</p>
-                <small class="opacity-75">实际完成数量</small>
-            </div>
-        </div>
-        <div class="col-lg-2 col-4 mb-2">
-            <div class="small-box bg-warning text-white rounded p-2 text-center">
-                <h5 class="mb-0" id="stat-completion-rate">0%</h5>
-                <p class="mb-0 small">完成率</p>
-                <small class="opacity-75">整体完成进度</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2) 中间 4 个图表 2x2 -->
-    <div class="row mb-3">
-        <div class="col-lg-6 mb-2">
-            <div class="card h-100">
-                <div class="card-header py-2"><h6 class="mb-0">整体生产进度</h6></div>
-                <div class="card-body p-2"><div id="chart-overall" style="height: 220px;"></div></div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-2">
-            <div class="card h-100">
-                <div class="card-header py-2"><h6 class="mb-0">工序完成率分布</h6></div>
-                <div class="card-body p-2"><div id="chart-process" style="height: 220px;"></div></div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-2">
-            <div class="card h-100">
-                <div class="card-header py-2"><h6 class="mb-0">员工完成率排行</h6></div>
-                <div class="card-body p-2"><div id="chart-employee" style="height: 220px;"></div></div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-2">
-            <div class="card h-100">
-                <div class="card-header py-2"><h6 class="mb-0">订单进度对比</h6></div>
-                <div class="card-body p-2"><div id="chart-order" style="height: 220px;"></div></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3) 底部 4 Tab 表格：按订单 / 产品 / 工序 / 员工 -->
-    <div class="card">
-        <div class="card-header py-2">
-            <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-order">按订单统计</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-product">按产品统计</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-process">按工序统计</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-employee">按员工统计</a></li>
-            </ul>
-        </div>
-        <div class="card-body p-2">
-            <div class="tab-content">
-                <div class="tab-pane active" id="tab-order">
-                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>订单名称</th><th>订单编号</th><th>计划数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-order"></tbody></table></div>
+        <div class="mes-topbar-right">
+            <select id="mes-role" class="mes-role">
+                <option value="director">车间主任</option>
+                <option value="leader">班组长</option>
+                <option value="worker">一线员工</option>
+                <option value="manager">管理层</option>
+            </select>
+            <button type="button" class="mes-btn mes-btn-alert" id="mes-btn-alert">
+                预警 <span class="mes-badge" id="mes-alert-badge">0</span>
+            </button>
+            <div class="mes-dropdown">
+                <button type="button" class="mes-btn" id="mes-btn-menu">菜单入口</button>
+                <div class="mes-dropdown-menu" id="mes-menu">
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/order">生产执行-订单管理</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/production_plan">生产执行-生产计划</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/allocation">生产执行-分工分配</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/report">生产执行-报工管理</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/process_route">基础资料-工艺路线</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/stock">仓储管理-库存管理</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/purchase/request">采购供应-采购申请</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/mrp">报表分析-缺料计算(MRP)</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/shipment">发货管理-发货管理</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/quality/check">质量管理-质检记录</a>
+                    <a href="javascript:;" class="mes-menu-item" data-link="/mes/customer">客户管理-客户管理</a>
                 </div>
-                <div class="tab-pane" id="tab-product">
-                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>产品名称</th><th>计划数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-product"></tbody></table></div>
+            </div>
+            <button type="button" class="mes-btn" id="mes-btn-refresh">刷新</button>
+            <button type="button" class="mes-btn" id="mes-btn-pause">暂停</button>
+            <button type="button" class="mes-btn" id="mes-btn-fullscreen">全屏</button>
+        </div>
+    </div>
+
+    <div class="mes-kpi" id="mes-kpi">
+        <div class="mes-kpi-item" data-kpi="production_completion_rate">
+            <div class="mes-kpi-title">今日工单完工率</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">%</span></div>
+        </div>
+        <div class="mes-kpi-item" data-kpi="process_compliance_rate">
+            <div class="mes-kpi-title">工艺合规率</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">%</span></div>
+        </div>
+        <div class="mes-kpi-item" data-kpi="stock_turnover_days">
+            <div class="mes-kpi-title">库存周转天数</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">天</span></div>
+        </div>
+        <div class="mes-kpi-item" data-kpi="purchase_timely_rate">
+            <div class="mes-kpi-title">采购及时率</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">%</span></div>
+        </div>
+        <div class="mes-kpi-item" data-kpi="shipment_ontime_rate">
+            <div class="mes-kpi-title">发货准时率</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">%</span></div>
+        </div>
+        <div class="mes-kpi-item" data-kpi="first_pass_rate">
+            <div class="mes-kpi-title">一次合格率</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">%</span></div>
+        </div>
+        <div class="mes-kpi-item" data-kpi="plan_achieve_rate">
+            <div class="mes-kpi-title">计划达成率</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">%</span></div>
+        </div>
+        <div class="mes-kpi-item" data-kpi="customer_satisfaction">
+            <div class="mes-kpi-title">客户满意度</div>
+            <div class="mes-kpi-value"><span class="mes-kpi-num" data-kpi-value></span><span class="mes-kpi-unit">星</span></div>
+        </div>
+    </div>
+
+    <div class="mes-main">
+        <div class="mes-col mes-col-left">
+            <div class="mes-panel mes-panel-workorders">
+                <div class="mes-panel-title">工单作业实时监控</div>
+                <div class="mes-panel-body">
+                    <div class="mes-table-wrap mes-flex-1">
+                        <table class="mes-table">
+                            <thead>
+                            <tr>
+                                <th style="width:68px;">工单ID</th>
+                                <th style="width:76px;">状态</th>
+                                <th>订单</th>
+                                <th style="width:110px;">工序</th>
+                                <th style="width:86px;">负责人</th>
+                                <th style="width:80px;">进度</th>
+                                <th style="width:96px;">计划完工</th>
+                            </tr>
+                            </thead>
+                            <tbody id="mes-workorders"></tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="tab-pane" id="tab-process">
-                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>工序名称</th><th>小工单数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-process"></tbody></table></div>
+            </div>
+            <div class="mes-panel mes-panel-capacity">
+                <div class="mes-panel-title">人员产能看板</div>
+                <div class="mes-panel-body">
+                    <div class="mes-split mes-flex-1">
+                        <div class="mes-chart" id="mes-chart-capacity"></div>
+                        <div class="mes-mini-table-wrap">
+                            <table class="mes-mini-table">
+                                <thead><tr><th>员工</th><th style="width:84px;text-align:right;">产量</th><th style="width:84px;text-align:right;">工时</th></tr></thead>
+                                <tbody id="mes-capacity-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="tab-pane" id="tab-employee">
-                    <div class="table-responsive"><table class="table table-sm table-striped mb-0"><thead><tr><th>员工姓名</th><th>小工单数</th><th>总数量</th><th>已完成</th><th>完成率</th></tr></thead><tbody id="table-employee"></tbody></table></div>
+            </div>
+            <div class="mes-panel mes-panel-route">
+                <div class="mes-panel-title">工艺合规监控</div>
+                <div class="mes-panel-body">
+                    <div class="mes-split mes-flex-1">
+                        <div class="mes-chart" id="mes-chart-route"></div>
+                        <div class="mes-list" id="mes-route-missing"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mes-col mes-col-center">
+            <div class="mes-panel mes-panel-monitor">
+                <div class="mes-panel-title">生产实时监控</div>
+                <div class="mes-panel-body">
+                    <div class="mes-split mes-flex-1">
+                        <div class="mes-chart" id="mes-chart-allocation-status"></div>
+                        <div class="mes-list" id="mes-allocation-status-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mes-panel mes-panel-trend">
+                <div class="mes-panel-title">产品产量趋势</div>
+                <div class="mes-panel-body">
+                    <div class="mes-chart mes-flex-1" id="mes-chart-output-trend"></div>
+                </div>
+            </div>
+            <div class="mes-panel mes-panel-alert">
+                <div class="mes-panel-title">异常告警中心</div>
+                <div class="mes-panel-body">
+                    <div class="mes-alert-list mes-flex-1" id="mes-alert-list"></div>
+                </div>
+            </div>
+            <div class="mes-panel mes-panel-flow">
+                <div class="mes-panel-title">订单全链路追踪</div>
+                <div class="mes-panel-body">
+                    <div class="mes-flow mes-flex-1" id="mes-order-flow"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mes-col mes-col-right">
+            <div class="mes-panel mes-panel-purchase">
+                <div class="mes-panel-title">采购供应看板</div>
+                <div class="mes-panel-body">
+                    <div class="mes-purchase-body mes-flex-1">
+                        <div class="mes-row">
+                            <div class="mes-kv">采购待审：<span id="mes-purchase-pending">0</span></div>
+                            <div class="mes-kv">缺料条目：<span id="mes-mrp-count">0</span></div>
+                        </div>
+                        <div class="mes-subtitle2">MRP缺料预警</div>
+                        <div class="mes-mini-table-wrap mes-flex-1">
+                            <table class="mes-mini-table">
+                                <thead><tr><th>物料</th><th style="width:84px;text-align:right;">缺料</th></tr></thead>
+                                <tbody id="mes-mrp-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mes-panel mes-panel-stock">
+                <div class="mes-panel-title">仓储库存看板</div>
+                <div class="mes-panel-body">
+                    <div class="mes-split mes-flex-1">
+                        <div class="mes-chart" id="mes-chart-stock-structure"></div>
+                        <div class="mes-list" id="mes-stock-warning"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mes-panel mes-panel-shipment">
+                <div class="mes-panel-title">发货管理看板</div>
+                <div class="mes-panel-body">
+                    <div class="mes-row">
+                        <div class="mes-kv">发货逾期：<span id="mes-shipment-overdue">0</span></div>
+                    </div>
+                    <div class="mes-list mes-flex-1" id="mes-shipment-overdue-list"></div>
+                </div>
+            </div>
+            <div class="mes-panel mes-panel-quality">
+                <div class="mes-panel-title">质量管控看板</div>
+                <div class="mes-panel-body">
+                    <div class="mes-split mes-flex-1">
+                        <div class="mes-chart" id="mes-chart-defect-process"></div>
+                        <div class="mes-list" id="mes-quality-meta"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mes-panel mes-panel-customer">
+                <div class="mes-panel-title">客户管理看板</div>
+                <div class="mes-panel-body">
+                    <div class="mes-row">
+                        <div class="mes-kv">满意度：<span id="mes-customer-star">0</span></div>
+                    </div>
+                    <div class="mes-mini-table-wrap mes-flex-1">
+                        <table class="mes-mini-table">
+                            <thead><tr><th>客户</th><th style="width:84px;text-align:right;">发货量</th></tr></thead>
+                            <tbody id="mes-customer-top"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -119,8 +223,81 @@
 </div>
 
 <style>
-.dashboard-screen { padding: 0.5rem; }
-.small-box .small { font-size: 0.85rem; }
+html, body { background: transparent; height: 100%; overflow: hidden; }
+.mes-screen { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(1200px 800px at 50% 0%, rgba(54, 120, 255, .18), rgba(11, 18, 32, 0) 55%), linear-gradient(180deg, #0b1220 0%, #071021 100%); color: #dbe7ff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif; padding: 10px 12px; box-sizing: border-box; display: flex; flex-direction: column; }
+.mes-topbar { display: grid; grid-template-columns: 280px 1fr 520px; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); border-radius: 10px; }
+.mes-title { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+.mes-subtitle { font-size: 12px; color: rgba(219,231,255,.75); margin-top: 2px; }
+.mes-time { font-size: 14px; text-align: center; color: rgba(219,231,255,.9); }
+.mes-time-split { display: inline-block; width: 12px; }
+.mes-topbar-right { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.mes-role { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #dbe7ff; border-radius: 8px; padding: 6px 10px; outline: none; }
+.mes-btn { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #dbe7ff; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.mes-btn:hover { background: rgba(255,255,255,.10); }
+.mes-btn-alert { border-color: rgba(255, 209, 82, .35); }
+.mes-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; border-radius: 10px; padding: 0 6px; margin-left: 6px; font-size: 12px; background: rgba(255, 78, 78, .85); color: #fff; }
+.mes-dropdown { position: relative; }
+.mes-dropdown-menu { position: absolute; right: 0; top: calc(100% + 8px); min-width: 240px; max-height: 320px; overflow: auto; background: rgba(9, 14, 28, .98); border: 1px solid rgba(255,255,255,.10); border-radius: 10px; padding: 6px; display: none; }
+.mes-dropdown.open .mes-dropdown-menu { display: block; }
+.mes-menu-item { display: block; padding: 8px 10px; border-radius: 8px; color: rgba(219,231,255,.92); text-decoration: none; font-size: 13px; }
+.mes-menu-item:hover { background: rgba(255,255,255,.08); }
+.mes-kpi { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; margin-top: 10px; }
+.mes-kpi-item { border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.mes-kpi-item[data-warn="danger"] { border-color: rgba(255, 78, 78, .55); box-shadow: 0 0 0 1px rgba(255, 78, 78, .15) inset; }
+.mes-kpi-item[data-warn="warning"] { border-color: rgba(255, 209, 82, .55); box-shadow: 0 0 0 1px rgba(255, 209, 82, .10) inset; }
+.mes-kpi-item[data-warn="success"] { border-color: rgba(46, 200, 120, .45); box-shadow: 0 0 0 1px rgba(46, 200, 120, .10) inset; }
+.mes-kpi-title { font-size: 12px; color: rgba(219,231,255,.75); }
+.mes-kpi-value { margin-top: 8px; font-size: 22px; font-weight: 700; }
+.mes-kpi-unit { font-size: 12px; margin-left: 6px; color: rgba(219,231,255,.75); }
+.mes-main { display: grid; grid-template-columns: 30% 40% 30%; gap: 10px; margin-top: 10px; flex: 1; min-height: 0; }
+.mes-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.mes-panel { border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); border-radius: 10px; display: flex; flex-direction: column; min-height: 0; }
+.mes-panel-title { padding: 8px 12px; font-size: 13px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,.08); color: rgba(219,231,255,.95); }
+.mes-panel-body { padding: 8px 10px; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
+.mes-flex-1 { flex: 1; min-height: 0; }
+.mes-chart { width: 100%; height: auto; min-height: 160px; flex: 1; }
+.mes-split { display: grid; grid-template-columns: 58% 42%; gap: 10px; min-height: 0; flex: 1; }
+.mes-row { display: flex; gap: 12px; margin-bottom: 6px; }
+.mes-kv { font-size: 12px; color: rgba(219,231,255,.80); }
+.mes-subtitle2 { font-size: 12px; margin: 6px 0; color: rgba(219,231,255,.75); }
+.mes-list { overflow: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 8px; min-height: 0; flex: 1; }
+.mes-alert-list { overflow: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 8px; min-height: 0; flex: 1; }
+.mes-flow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.mes-flow-item { border: 1px solid rgba(255,255,255,.10); border-radius: 10px; padding: 8px; background: rgba(255,255,255,.03); cursor: pointer; }
+.mes-flow-title { font-size: 12px; color: rgba(219,231,255,.75); }
+.mes-flow-value { margin-top: 8px; font-size: 18px; font-weight: 700; }
+.mes-table-wrap { overflow: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); min-height: 0; flex: 1; }
+.mes-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.mes-table th, .mes-table td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mes-table th { position: sticky; top: 0; background: rgba(9, 14, 28, .96); color: rgba(219,231,255,.85); z-index: 1; }
+.mes-mini-table-wrap { overflow: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); min-height: 0; flex: 1; }
+.mes-mini-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.mes-mini-table th, .mes-mini-table td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.06); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mes-mini-table th { position: sticky; top: 0; background: rgba(9, 14, 28, .96); color: rgba(219,231,255,.85); z-index: 1; }
+.mes-purchase-body { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.mes-tag { display: inline-flex; align-items: center; justify-content: center; height: 18px; padding: 0 8px; border-radius: 10px; font-size: 12px; }
+.mes-tag-s0 { background: rgba(120, 120, 120, .25); color: rgba(219,231,255,.85); border: 1px solid rgba(255,255,255,.08); }
+.mes-tag-s1 { background: rgba(54, 120, 255, .25); color: rgba(219,231,255,.92); border: 1px solid rgba(54, 120, 255, .30); }
+.mes-tag-s2 { background: rgba(46, 200, 120, .22); color: rgba(219,231,255,.92); border: 1px solid rgba(46, 200, 120, .28); }
+.mes-tag-danger { background: rgba(255, 78, 78, .20); border: 1px solid rgba(255, 78, 78, .35); color: rgba(255, 210, 210, .95); }
+.mes-tag-warning { background: rgba(255, 209, 82, .15); border: 1px solid rgba(255, 209, 82, .30); color: rgba(255, 238, 190, .95); }
+.mes-item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+.mes-item:hover { background: rgba(255,255,255,.06); }
+.mes-item-title { font-size: 12px; color: rgba(219,231,255,.90); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mes-item-meta { font-size: 12px; color: rgba(219,231,255,.70); white-space: nowrap; }
+
+.mes-col-left .mes-panel-workorders { flex: 1.5; }
+.mes-col-left .mes-panel-capacity { flex: 1; }
+.mes-col-left .mes-panel-route { flex: 1; }
+.mes-col-center .mes-panel-monitor { flex: 1; }
+.mes-col-center .mes-panel-trend { flex: 1; }
+.mes-col-center .mes-panel-alert { flex: 1; }
+.mes-col-center .mes-panel-flow { flex: 0.9; }
+.mes-col-right .mes-panel-purchase { flex: 1; }
+.mes-col-right .mes-panel-stock { flex: 1; }
+.mes-col-right .mes-panel-shipment { flex: 0.9; }
+.mes-col-right .mes-panel-quality { flex: 1; }
+.mes-col-right .mes-panel-customer { flex: 0.9; }
 </style>
 <script src="/assets/lib/echarts/echarts.min.js"></script>
 <script src="/assets/js/backend/mes/bi-dashboard.js"></script>

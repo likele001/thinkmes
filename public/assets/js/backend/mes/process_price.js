@@ -126,6 +126,7 @@
         batch: function () {
             Controller.api.bindevent();
             Controller.api.initSelect2();
+            Controller.api.bindBatchUI();
         },
         api: {
             bindevent: function () {
@@ -155,16 +156,28 @@
                         // 批量设置验证
                         if (formId === 'form-batch') {
                             var modelIds = $('#model_ids').val();
-                            var processIds = $('#process_ids').val();
                             if (!modelIds || modelIds.length == 0) {
                                 alert('请选择产品型号');
                                 return;
                             }
-                            if (!processIds || processIds.length == 0) {
+                            var checked = $('#process-price-table input.pp-enabled:checked').length;
+                            if (!checked) {
                                 alert('请选择工序');
                                 return;
                             }
-                            if (!confirm('确定要为 ' + modelIds.length + ' 个型号和 ' + processIds.length + ' 个工序批量设置工价吗？')) {
+                            var invalid = false;
+                            $('#process-price-table tbody tr').each(function() {
+                                var $tr = $(this);
+                                if (!$tr.find('input.pp-enabled').prop('checked')) return;
+                                var p = parseFloat($tr.find('input.pp-price').val() || '0');
+                                var tp = parseFloat($tr.find('input.pp-time-price').val() || '0');
+                                if (!(p > 0 || tp > 0)) invalid = true;
+                            });
+                            if (invalid) {
+                                alert('已勾选工序必须填写计件或计时工价(大于0)');
+                                return;
+                            }
+                            if (!confirm('确定要为 ' + modelIds.length + ' 个型号批量设置工价吗？')) {
                                 return;
                             }
                         }
@@ -194,6 +207,28 @@
                         allowClear: true
                     });
                 }
+            },
+            bindBatchUI: function() {
+                var $table = $('#process-price-table');
+                if (!$table.length) return;
+
+                $(document).off('click', '#btn-check-all').on('click', '#btn-check-all', function() {
+                    $table.find('input.pp-enabled').prop('checked', true);
+                });
+                $(document).off('click', '#btn-uncheck-all').on('click', '#btn-uncheck-all', function() {
+                    $table.find('input.pp-enabled').prop('checked', false);
+                });
+                $(document).off('click', '#btn-fill-all').on('click', '#btn-fill-all', function() {
+                    var price = $('#fill_price').val();
+                    var timePrice = $('#fill_time_price').val();
+                    $table.find('tbody tr').each(function() {
+                        var $tr = $(this);
+                        var enabled = $tr.find('input.pp-enabled').prop('checked');
+                        if (!enabled) return;
+                        if (price !== '' && price !== null) $tr.find('input.pp-price').val(price);
+                        if (timePrice !== '' && timePrice !== null) $tr.find('input.pp-time-price').val(timePrice);
+                    });
+                });
             }
         }
     };

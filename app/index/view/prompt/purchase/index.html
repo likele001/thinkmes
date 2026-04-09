@@ -1,0 +1,259 @@
+<!-- 页面标题 -->
+<div class="ai-page-header">
+  <h1 class="ai-page-title"><i class="fas fa-gem me-2" style="-webkit-text-fill-color:#7c5cfc;"></i>购买额度</h1>
+  <p class="ai-page-desc">灵活套餐，持续创作无压力</p>
+</div>
+
+<!-- 当前额度 -->
+<div class="ai-card ai-card-glow" style="margin-bottom:20px;">
+  <div class="ai-card-title"><i class="fas fa-bolt"></i> 当前余额</div>
+  <div style="display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;">
+    <div>
+      <div class="ai-quota-num" id="disp-free">0</div>
+      <div style="font-size:12px; color:var(--ai-text-muted);">免费次数</div>
+    </div>
+    <div style="font-size:24px; color:var(--ai-text-muted);">+</div>
+    <div>
+      <div class="ai-quota-num" id="disp-paid">0</div>
+      <div style="font-size:12px; color:var(--ai-text-muted);">付费次数</div>
+    </div>
+    <div style="margin-left:auto; text-align:right;">
+      <div style="font-size:14px; color:var(--ai-text-secondary);">已使用 <strong style="color:var(--ai-text);" id="disp-used">0</strong> 次</div>
+    </div>
+  </div>
+</div>
+
+<!-- 套餐列表 -->
+<div class="ai-card ai-card-glow" style="margin-bottom:20px;">
+  <div class="ai-card-title"><i class="fas fa-box-open"></i> 选择套餐</div>
+  <div id="pkg-list"></div>
+  <div id="pkg-disabled" style="display:none" class="ai-alert ai-alert-info">
+    <i class="fas fa-info-circle me-1"></i> 付费功能暂未开放，请联系管理员开启。
+  </div>
+</div>
+
+<!-- 支付方式选择 -->
+<div class="ai-card" id="pay-method-card" style="display:none; margin-bottom:20px;">
+  <div class="ai-card-title"><i class="fas fa-credit-card"></i> 选择支付方式</div>
+  <div id="pay-method-list"></div>
+  <div id="no-pay-method" style="display:none" class="ai-alert ai-alert-warning">
+    <i class="fas fa-triangle-exclamation me-1"></i> 暂无可用的支付方式，请联系管理员配置。
+  </div>
+</div>
+
+<!-- 购买按钮 -->
+<button class="ai-btn ai-btn-primary ai-btn-block ai-btn-lg" id="btn-buy" style="display:none; margin-bottom:20px;">
+  <i class="fas fa-credit-card"></i> 立即支付 <span id="btn-price"></span>
+</button>
+
+<!-- 支付成功提示 -->
+<div id="pay-success-tip" style="display:none" class="ai-alert ai-alert-success" style="margin-bottom:20px;">
+  <i class="fas fa-check-circle me-1"></i> 支付成功！额度已充值，<a href="/index/prompt/generate/index">去使用</a>
+</div>
+
+<!-- 我的订单 -->
+<div class="ai-card">
+  <div class="ai-card-title d-flex justify-content-between" style="align-items:center;">
+    <span><i class="fas fa-receipt me-1"></i> 我的订单</span>
+    <button class="ai-btn ai-btn-ghost ai-btn-sm" id="btn-refresh-orders"><i class="fas fa-rotate"></i></button>
+  </div>
+  <div id="order-list-wrap">
+    <div class="ai-empty"><i class="fas fa-spinner fa-spin"></i><p>加载中…</p></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var selectedPkg = null;
+  var selectedGatewayId = 0;
+  var gateways = [];
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function loadQuota(){
+    $.get('/api/prompt/generate/quota', function(r){
+      if (r.code !== 1) return;
+      var d = r.data;
+      $('#disp-free').text(d.free_quota || 0);
+      $('#disp-paid').text(d.paid_quota || 0);
+      $('#disp-used').text(d.total_used || 0);
+      $('#header-quota').html('<i class="fas fa-bolt me-1"></i>余额: <strong>' + d.total + '</strong>');
+    }, 'json');
+  }
+
+  function loadProducts(){
+    $.get('/api/prompt/purchase/products', function(r){
+      if (r.code !== 1) {
+        $('#pkg-disabled').show();
+        return;
+      }
+      var list = r.data.list || [];
+      if (list.length === 0) {
+        $('#pkg-list').html('<div class="ai-empty"><p>暂无套餐</p></div>');
+        return;
+      }
+      var html = '<div class="ai-pkg-grid">';
+      list.forEach(function(p){
+        html += '<div class="ai-pkg-card pkg-item" data-key="' + esc(p.key) + '" data-name="' + esc(p.name) + '" data-price="' + p.price + '" data-quota="' + p.quota + '">';
+        html += '<div class="ai-pkg-name">' + esc(p.name) + '</div>';
+        html += '<div class="ai-pkg-quota">' + p.quota + ' <small>次</small></div>';
+        html += '<div class="ai-pkg-price">¥' + parseFloat(p.price).toFixed(2) + ' <small>' + (p.price > 0 ? '元' : '免费') + '</small></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      $('#pkg-list').html(html);
+    }, 'json');
+  }
+
+  function loadPaymentMethods(){
+    $.get('/api/prompt/purchase/paymentMethods', function(r){
+      if (r.code !== 1 || !r.data.list || r.data.list.length === 0) {
+        // 没有可用支付方式，隐藏支付方式卡片，但仍允许免费套餐购买
+        return;
+      }
+      gateways = r.data.list;
+      var html = '<div class="ai-pkg-grid">';
+      gateways.forEach(function(g){
+        var icon = 'fab fa-' + (g.code.indexOf('alipay') !== -1 ? 'alipay' : 'wechat');
+        var color = g.code.indexOf('alipay') !== -1 ? '#1677ff' : '#07c160';
+        html += '<div class="ai-pkg-card gateway-item" data-id="' + g.id + '" data-code="' + esc(g.code) + '">';
+        html += '<div style="font-size:28px; color:' + color + '; margin-bottom:8px;"><i class="' + icon + '"></i></div>';
+        html += '<div class="ai-pkg-name" style="font-size:13px;">' + esc(g.name) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      $('#pay-method-list').html(html);
+    }, 'json');
+  }
+
+  $(document).on('click', '.pkg-item', function(){
+    $('.pkg-item').removeClass('selected');
+    $(this).addClass('selected');
+    selectedPkg = $(this).data('key');
+    var price = parseFloat($(this).data('price'));
+    // 如果是免费套餐，直接购买
+    if (price <= 0) {
+      $('#pay-method-card').hide();
+      $('#btn-buy').show();
+      $('#btn-price').text('');
+    } else {
+      // 显示支付方式选择
+      if (gateways.length > 0) {
+        $('#pay-method-card').show();
+      } else {
+        $('#no-pay-method').show();
+        $('#btn-buy').hide();
+      }
+      $('#btn-buy').hide();
+      $('#btn-price').text('¥' + price.toFixed(2));
+    }
+  });
+
+  $(document).on('click', '.gateway-item', function(){
+    $('.gateway-item').removeClass('selected');
+    $(this).addClass('selected');
+    selectedGatewayId = parseInt($(this).data('id'), 10);
+    $('#btn-buy').show();
+  });
+
+  $('#btn-buy').on('click', function(){
+    if (!selectedPkg) { alert('请选择套餐'); return; }
+    var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 创建订单中…');
+    $.post('/api/prompt/purchase/create', { product: selectedPkg, gateway_id: selectedGatewayId }, function(r){
+      $btn.prop('disabled', false).html('<i class="fas fa-credit-card"></i> 立即支付');
+      if (r.code !== 1) { alert(r.msg || '创建订单失败'); return; }
+      var d = r.data;
+      // 免费套餐直接充值
+      if (d.free) {
+        alert('充值成功！已获得 ' + d.quota + ' 次额度');
+        loadQuota(); loadOrders();
+        return;
+      }
+      // 跳转到支付页面
+      if (d.pay_url) {
+        // 轮询订单状态
+        var pollTimer = setInterval(function(){
+          $.get('/api/prompt/purchase/orderStatus', { order_no: d.order_no }, function(pr){
+            if (pr.code === 1 && pr.data.status === 1) {
+              clearInterval(pollTimer);
+              loadQuota();
+              loadOrders();
+              $('#pay-success-tip').show();
+              setTimeout(function(){ $('#pay-success-tip').hide(); }, 5000);
+            }
+          }, 'json');
+        }, 3000);
+        // 最多轮询 5 分钟
+        setTimeout(function(){ clearInterval(pollTimer); }, 300000);
+        // 跳转支付
+        window.location.href = d.pay_url;
+      } else {
+        alert('创建支付失败，未获取到支付链接');
+      }
+    }, 'json').fail(function(){
+      $btn.prop('disabled', false).html('<i class="fas fa-credit-card"></i> 立即支付');
+      alert('网络请求失败');
+    });
+  });
+
+  // 检查 URL 参数，是否刚支付回来
+  function checkReturnPaid(){
+    var params = new URLSearchParams(location.search);
+    if (params.get('paid') === '1') {
+      var orderNo = params.get('order_no') || '';
+      if (orderNo) {
+        // 轮询支付状态
+        var count = 0;
+        var timer = setInterval(function(){
+          count++;
+          $.get('/api/prompt/purchase/orderStatus', { order_no: orderNo }, function(r){
+            if (r.code === 1 && r.data.status === 1) {
+              clearInterval(timer);
+              loadQuota();
+              loadOrders();
+              $('#pay-success-tip').show();
+              // 清除 URL 参数
+              if (window.history.replaceState) {
+                window.history.replaceState({}, '', '/index/prompt/purchase/index');
+              }
+            }
+          }, 'json');
+          if (count > 20) clearInterval(timer); // 最多查 20 次
+        }, 2000);
+      }
+    }
+  }
+
+  function loadOrders(){
+    $.get('/api/prompt/purchase/orders', { page: 1 }, function(r){
+      if (r.code !== 1) { $('#order-list-wrap').html('<div class="ai-empty"><p>加载失败</p></div>'); return; }
+      var list = r.data.list || [];
+      if (list.length === 0) {
+        $('#order-list-wrap').html('<div class="ai-empty"><p>暂无订单</p></div>');
+        return;
+      }
+      var html = '<div style="overflow-x:auto;"><table class="ai-table"><thead><tr>';
+      html += '<th>订单号</th><th>产品</th><th>额度</th><th>金额</th><th>状态</th><th>时间</th>';
+      html += '</tr></thead><tbody>';
+      list.forEach(function(o){
+        var statusMap = { '0': '<span class="ai-badge ai-badge-warning">待支付</span>', '1': '<span class="ai-badge ai-badge-success">已支付</span>', '2': '<span class="ai-badge" style="background:var(--ai-card-bg);color:var(--ai-text-muted);">已关闭</span>' };
+        var time = o.create_time ? new Date(o.create_time * 1000).toLocaleString() : '-';
+        html += '<tr>';
+        html += '<td style="font-size:12px;">' + esc(o.order_no) + '</td>';
+        html += '<td>' + esc(o.product_name) + '</td>';
+        html += '<td>' + o.quota_count + ' 次</td>';
+        html += '<td>¥' + parseFloat(o.amount).toFixed(2) + '</td>';
+        html += '<td>' + (statusMap[o.status] || o.status) + '</td>';
+        html += '<td style="font-size:12px;">' + time + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      $('#order-list-wrap').html(html);
+    }, 'json');
+  }
+
+  $('#btn-refresh-orders').on('click', loadOrders);
+  loadQuota(); loadProducts(); loadPaymentMethods(); loadOrders();
+  checkReturnPaid();
+})();
+</script>

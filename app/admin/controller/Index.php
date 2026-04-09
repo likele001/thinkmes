@@ -597,4 +597,34 @@ class Index extends Backend
         }
         return $this->success('缓存已清理');
     }
+
+    public function tenantList(): Response
+    {
+        if (!$this->isPlatformAdmin()) {
+            return $this->error('仅平台超级管理员可操作');
+        }
+        $list = Db::name('tenant')->where('status', 1)->order('id', 'asc')->field('id,name')->select()->toArray();
+        $current = 0;
+        try {
+            $v = Session::get('platform_tenant_view_id');
+            if ($v !== null && $v !== '') $current = max(0, (int) $v);
+        } catch (\Throwable $e) {
+            $current = 0;
+        }
+        return $this->success('', ['current' => $current, 'list' => $list]);
+    }
+
+    public function switchTenantView(): Response
+    {
+        if (!$this->isPlatformAdmin()) {
+            return $this->error('仅平台超级管理员可操作');
+        }
+        $tenantId = (int) $this->request->post('tenant_id', 0);
+        if ($tenantId > 0) {
+            $exist = Db::name('tenant')->where('id', $tenantId)->where('status', 1)->find();
+            if (!$exist) return $this->error('租户不存在或已禁用');
+        }
+        Session::set('platform_tenant_view_id', $tenantId);
+        return $this->success('已切换', ['tenant_id' => $tenantId]);
+    }
 }

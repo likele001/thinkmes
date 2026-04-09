@@ -11,6 +11,14 @@ VALUES ('payment/config', '支付配置', 1, 1, 1, @pay_pid, 'fa fa-cog', 1, UNI
 ON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `pid` = @pay_pid;
 
 SET @cfg_pid = COALESCE((SELECT id FROM fa_auth_rule WHERE name = 'payment/config' LIMIT 1), 0);
+-- 各支付渠道快捷入口（一级菜单：跳转到网关列表并预筛选）
+INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
+('payment/config_alipay', '官方支付宝', 1, 1, 1, @pay_pid, 'fa fa-alipay', 5, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('payment/config_wechat', '官方微信支付', 1, 1, 1, @pay_pid, 'fa fa-wechat', 6, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('payment/config_xunhupay', '虎皮椒(讯虎)', 1, 1, 1, @pay_pid, 'fa fa-link', 7, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('payment/config_epay', '易支付(8-pay)', 1, 1, 1, @pay_pid, 'fa fa-credit-card', 8, UNIX_TIMESTAMP(), UNIX_TIMESTAMP())
+ON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `pid` = @pay_pid, `ismenu` = 1, `status` = 1, `icon` = VALUES(`icon`), `sort` = VALUES(`sort`);
+
 INSERT INTO `fa_auth_rule` (`name`, `title`, `type`, `ismenu`, `status`, `pid`, `icon`, `sort`, `create_time`, `update_time`) VALUES
 ('payment/config/index', '网关列表', 2, 0, 1, @cfg_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 ('payment/config/add', '添加网关', 2, 0, 1, @cfg_pid, '', 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),

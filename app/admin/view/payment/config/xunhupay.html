@@ -1,0 +1,105 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>{$title|default='虎皮椒(讯虎)支付配置'}</em> 配置并管理讯虎支付的网关参数</div>
+    </div>
+    <div class="card-body">
+        <form id="form-xunhu" method="post" class="form-horizontal">
+            <div class="mb-3">
+                <a href="{$legacy_url}&legacy=1" class="btn btn-default btn-sm">查看网关列表</a>
+            </div>
+
+            <div class="card card-outline card-success mb-3">
+                <div class="card-header"><h3 class="card-title">微信支付配置</h3></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">启用微信支付</label>
+                        <div class="col-sm-6">
+                            <label><input type="checkbox" name="wechat_enabled" value="1" {$wechat.enabled == 1 ? 'checked' : ''}> 启用</label>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">AppID *</label>
+                        <div class="col-sm-4"><input type="text" name="wechat_appid" class="form-control" value="{$wechat.config.appid|default=''}" placeholder="虎皮椒微信支付 AppID"></div>
+                        <label class="col-sm-2 col-form-label">AppSecret *</label>
+                        <div class="col-sm-4"><input type="text" name="wechat_appsecret" class="form-control" value="{$wechat.config.appsecret|default=''}" placeholder="虎皮椒微信支付 AppSecret"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">API地址</label>
+                        <div class="col-sm-10"><input type="text" name="wechat_api_url" class="form-control" value="{$wechat.config.api_url|default='https://api.xunhupay.com/payment/do.html'}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-outline card-primary mb-3">
+                <div class="card-header"><h3 class="card-title">支付宝支付配置</h3></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">启用支付宝支付</label>
+                        <div class="col-sm-6">
+                            <label><input type="checkbox" name="alipay_enabled" value="1" {$alipay.enabled == 1 ? 'checked' : ''}> 启用</label>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">AppID *</label>
+                        <div class="col-sm-4"><input type="text" name="alipay_appid" class="form-control" value="{$alipay.config.appid|default=''}" placeholder="虎皮椒支付宝 AppID"></div>
+                        <label class="col-sm-2 col-form-label">AppSecret *</label>
+                        <div class="col-sm-4"><input type="text" name="alipay_appsecret" class="form-control" value="{$alipay.config.appsecret|default=''}" placeholder="虎皮椒支付宝 AppSecret"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">API地址</label>
+                        <div class="col-sm-10"><input type="text" name="alipay_api_url" class="form-control" value="{$alipay.config.api_url|default='https://api.xunhupay.com/payment/do.html'}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-outline card-secondary mb-3">
+                <div class="card-header"><h3 class="card-title">通用配置</h3></div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">异步通知URL</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="common[notify_url]" class="form-control" value="{$common.notify_url|default=''}" placeholder="留空则由业务下单时传入">
+                            <small class="text-muted">支付平台回调给服务器的地址（用于验签与改订单状态）。本系统推荐：微信用 <code>{$wechat_notify_url}</code>；支付宝用 <code>{$alipay_notify_url}</code></small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">同步返回URL</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="common[return_url]" class="form-control" value="{$common.return_url|default=''}" placeholder="https://你的域名/支付成功页面">
+                            <small class="text-muted">用户支付完成后浏览器跳转地址（用于展示支付结果）。不参与验签。</small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">WAP网址</label>
+                        <div class="col-sm-10"><input type="text" name="common[wap_url]" class="form-control" value="{$common.wap_url|default=''}"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">WAP网站名称</label>
+                        <div class="col-sm-10"><input type="text" name="common[wap_name]" class="form-control" value="{$common.wap_name|default=''}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-sm-6 offset-sm-2">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="javascript:history.back();" class="btn btn-default ml-2">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function(){
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
+    var form = document.getElementById('form-xunhu');
+    form.setAttribute('action', base + '/payment/config_xunhupay');
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var fd = new FormData(form);
+        fetch(form.getAttribute('action'), { method: 'POST', body: fd }).then(function(r){ return r.json(); }).then(function(r){
+            alert(r.msg || '');
+        }).catch(function(){ alert('请求失败'); });
+    });
+})();
+</script>

@@ -2,6 +2,7 @@
 use think\facade\Route;
 
 // 先注册具体路由，避免被后面的 :lang 单段路由抢先匹配导致 /index/user/index、/index/customer/index 等 404
+Route::get('dashboard', 'MesDashboard/index');
 Route::get('user/login', 'User/login');
 Route::get('user/register', 'User/register');
 Route::get('user/logout', 'User/logout');
@@ -100,3 +101,7 @@ Route::get('lang/:lang', function ($lang) {
 Route::get('purchase/form', 'Purchase/form');
 Route::get('purchase', 'Purchase/index');
 Route::get('register', 'Purchase/register');
+
+if (is_file(__DIR__ . '/prompt.php')) {
+    require __DIR__ . '/prompt.php';
+}

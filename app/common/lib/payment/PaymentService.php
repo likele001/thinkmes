@@ -29,9 +29,18 @@ class PaymentService
         }
         $config = $gateway['config'] ? json_decode($gateway['config'], true) : [];
         $config = is_array($config) ? $config : [];
+        if ($notifyUrl === '') {
+            $notifyUrl = trim((string) ($config['notify_url'] ?? ''));
+        }
+        if ($returnUrl === '') {
+            $returnUrl = trim((string) ($config['return_url'] ?? ''));
+        }
         $gw = PaymentGatewayFactory::get($gateway['code'], $config);
         if (!$gw) {
             return ['error' => '不支持的支付类型'];
+        }
+        if ($notifyUrl === '') {
+            return ['error' => '缺少异步通知URL'];
         }
         $exists = Db::name('payment_order')->where('order_no', $orderNo)->find();
         if ($exists) {

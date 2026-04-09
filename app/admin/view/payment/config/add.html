@@ -20,8 +20,11 @@
             <div class="form-group row">
                 <label class="col-sm-2 col-form-label">配置(JSON)</label>
                 <div class="col-sm-8">
-                    <textarea name="config" id="config" class="form-control" rows="8" placeholder='{"appid":"","appsecret":"","type":"alipay"} 或 {"pid":"","key":"","submit_url":"https://xxx.com/submit.php"}'></textarea>
-                    <small class="text-muted">虎皮椒：appid, appsecret, type(alipay/wechat), api_url(可选)。易支付：pid, key, submit_url, type(可选)。</small>
+                    <div id="config-fields"></div>
+                    <textarea name="config" id="config" class="form-control" rows="8" style="display:none;"></textarea>
+                    <div class="mt-2">
+                        <a href="javascript:;" id="toggle-raw" class="btn btn-default btn-sm">高级JSON</a>
+                    </div>
                 </div>
             </div>
             <div class="form-group row">
@@ -45,11 +48,136 @@
 (function(){
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var form = document.getElementById('form-add');
+    var codeEl = document.getElementById('code');
+    var fieldsWrap = document.getElementById('config-fields');
+    var rawEl = document.getElementById('config');
+    var toggleRawEl = document.getElementById('toggle-raw');
+    var rawVisible = false;
+    var lastFields = {};
     form.setAttribute('action', base + '/payment/config/add');
+
+    function escapeHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, function (m) {
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+    }
+
+    function buildFieldRow(key, meta, value) {
+        var label = meta && meta.label ? meta.label : key;
+        var required = meta && meta.required ? true : false;
+        var type = meta && meta.type ? meta.type : 'text';
+        var placeholder = meta && meta.placeholder ? meta.placeholder : '';
+        var options = meta && meta.options ? meta.options : null;
+        var defaultVal = (value !== undefined && value !== null && value !== '') ? value : (meta && meta.default !== undefined ? meta.default : '');
+
+        var html = '<div class="form-group row">';
+        html += '<label class="col-sm-2 col-form-label">' + escapeHtml(label) + (required ? ' *' : '') + '</label>';
+        html += '<div class="col-sm-6">';
+        if (options) {
+            html += '<select class="form-control" data-config-key="' + escapeHtml(key) + '"' + (required ? ' required' : '') + '>';
+            var hasEmpty = false;
+            for (var k in options) { hasEmpty = true; break; }
+            if (!required) {
+                html += '<option value="">请选择</option>';
+            }
+            for (var ov in options) {
+                var sel = String(defaultVal) === String(ov) ? ' selected' : '';
+                html += '<option value="' + escapeHtml(ov) + '"' + sel + '>' + escapeHtml(options[ov]) + '</option>';
+            }
+            html += '</select>';
+        } else if (type === 'textarea') {
+            html += '<textarea class="form-control" rows="4" data-config-key="' + escapeHtml(key) + '"' + (required ? ' required' : '') + (placeholder ? ' placeholder="' + escapeHtml(placeholder) + '"' : '') + '>' + escapeHtml(defaultVal) + '</textarea>';
+        } else {
+            var inputType = type === 'password' ? 'password' : 'text';
+            html += '<input type="' + inputType + '" class="form-control" data-config-key="' + escapeHtml(key) + '" value="' + escapeHtml(defaultVal) + '"' + (required ? ' required' : '') + (placeholder ? ' placeholder="' + escapeHtml(placeholder) + '"' : '') + '>';
+        }
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    function defaultByCode(code, key) {
+        if (key !== 'type') return '';
+        if (code === 'xunhupay_alipay') return 'alipay';
+        if (code === 'xunhupay_wechat') return 'wechat';
+        return '';
+    }
+
+    function getCurrentConfigFromForm() {
+        var obj = {};
+        var inputs = fieldsWrap.querySelectorAll('[data-config-key]');
+        for (var i = 0; i < inputs.length; i++) {
+            var el = inputs[i];
+            var key = el.getAttribute('data-config-key');
+            var val = el.value;
+            if (val !== '' && val !== null && val !== undefined) obj[key] = val;
+        }
+        return obj;
+    }
+
+    function setRawFromForm() {
+        var obj = getCurrentConfigFromForm();
+        rawEl.value = JSON.stringify(obj, null, 2);
+    }
+
+    function renderFields(code, presetObj) {
+        fieldsWrap.innerHTML = '';
+        lastFields = {};
+        if (!code) return;
+        fetch(base + '/payment/config/configFields?code=' + encodeURIComponent(code), { method: 'GET' })
+            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r || r.code != 1) {
+                    fieldsWrap.innerHTML = '<div class="text-danger">读取配置项失败</div>';
+                    return;
+                }
+                var fields = r.data || {};
+                lastFields = fields;
+                var html = '';
+                for (var key in fields) {
+                    var meta = fields[key] || {};
+                    var val = presetObj && presetObj[key] !== undefined ? presetObj[key] : '';
+                    if ((val === '' || val === null || val === undefined) && meta && meta.default !== undefined) {
+                        val = meta.default;
+                    }
+                    var d = defaultByCode(code, key);
+                    if ((val === '' || val === null || val === undefined) && d) val = d;
+                    html += buildFieldRow(key, meta, val);
+                }
+                fieldsWrap.innerHTML = html || '<div class="text-muted">该网关暂无配置项</div>';
+                var inputs = fieldsWrap.querySelectorAll('[data-config-key]');
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].addEventListener('input', setRawFromForm);
+                    inputs[i].addEventListener('change', setRawFromForm);
+                }
+                setRawFromForm();
+            })
+            .catch(function () {
+                fieldsWrap.innerHTML = '<div class="text-danger">读取配置项失败</div>';
+            });
+    }
+
+    codeEl.addEventListener('change', function () {
+        renderFields(codeEl.value, null);
+    });
+
+    toggleRawEl.addEventListener('click', function () {
+        rawVisible = !rawVisible;
+        rawEl.style.display = rawVisible ? 'block' : 'none';
+        if (rawVisible) {
+            setRawFromForm();
+        }
+    });
+
+    if (codeEl.value) {
+        renderFields(codeEl.value, null);
+    }
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         var fd = new FormData(form);
-        var configStr = document.getElementById('config').value.trim();
+        setRawFromForm();
+        var configStr = rawEl.value.trim();
         try {
             if (configStr) JSON.parse(configStr);
         } catch (err) {

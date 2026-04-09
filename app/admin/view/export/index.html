@@ -1,0 +1,28 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>数据导出</em> 导出 CSV（最多 10000 条）</div>
+    </div>
+    <div class="card-body">
+        <div class="form-inline mb-2">
+            <select id="exp-type" class="form-control mr-2" style="width:180px;">
+                <option value="orders">订单</option>
+                <option value="plans">生产计划</option>
+                <option value="allocations">分工分配</option>
+                <option value="reports">报工记录</option>
+            </select>
+            <input type="text" id="exp-order-no" class="form-control mr-2" placeholder="订单号（可选）" style="width:220px;">
+            <input type="date" id="exp-from" class="form-control mr-2">
+            <input type="date" id="exp-to" class="form-control mr-2">
+            <select id="exp-status" class="form-control mr-2" style="width:140px;">
+                <option value="">报工状态(可选)</option>
+                <option value="0">待审核</option>
+                <option value="1">已通过</option>
+                <option value="2">已拒绝</option>
+            </select>
+            <a href="javascript:;" class="btn btn-success" id="btn-export"><i class="fas fa-download"></i> 导出</a>
+        </div>
+        <div class="alert alert-info">
+            <div>导出按当前租户数据与筛选条件生成，字段以导出文件为准。</div>
+        </div>
+    </div>
+</div>

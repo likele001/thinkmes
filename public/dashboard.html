@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>
+    (function () {
+      var qs = window.location.search || '';
+      window.location.replace('/index/dashboard' + qs);
+    })();
+  </script>
+  <title>MES 全链路数据监管大屏</title>
+  <style>
+    :root{
+      --bg0:#070f1d;
+      --bg1:#0b1220;
+      --bg2:#071021;
+      --text:#dbe7ff;
+      --muted:rgba(219,231,255,.70);
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.07);
+      --card:rgba(255,255,255,.035);
+      --card2:rgba(255,255,255,.05);
+      --blue:#3a7bff;
+      --green:#2ec878;
+      --yellow:#ffd152;
+      --red:#ff4e4e;
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --shadow2:0 12px 30px rgba(0,0,0,.30);
+      --radius:16px;
+    }
+    html, body { height: 100%; margin: 0; overflow: auto; background: var(--bg0); }
+    body { color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif; letter-spacing: .2px; }
+    .screen { min-height: 100vh; padding: 18px 20px; box-sizing: border-box; background: radial-gradient(1400px 900px at 50% 0%, rgba(58,123,255,.20), rgba(11, 18, 32, 0) 58%), radial-gradient(1200px 900px at 10% 90%, rgba(46,200,120,.10), rgba(11, 18, 32, 0) 60%), linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%); display: flex; flex-direction: column; gap: 14px; position: relative; }
+    .screen::before{ content:""; position:absolute; inset:-40px; background: radial-gradient(900px 500px at 15% 15%, rgba(58,123,255,.18), rgba(58,123,255,0) 60%), radial-gradient(800px 500px at 85% 20%, rgba(255,209,82,.10), rgba(255,209,82,0) 60%), radial-gradient(900px 600px at 55% 85%, rgba(46,200,120,.10), rgba(46,200,120,0) 62%); filter: blur(10px); opacity:.9; pointer-events:none; animation: floatbg 14s ease-in-out infinite alternate; }
+    @keyframes floatbg { from{ transform: translate3d(0,0,0) scale(1); } to{ transform: translate3d(18px,-12px,0) scale(1.02);} }
+    .topbar { height: 76px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border-radius: var(--radius); display: grid; grid-template-columns: 1fr 520px; align-items: center; padding: 0 18px; gap: 12px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .topbar::after{ content:""; position:absolute; inset:0; background: linear-gradient(90deg, rgba(58,123,255,.0), rgba(58,123,255,.12), rgba(58,123,255,0)); opacity:.5; pointer-events:none; }
+    .brand { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
+    .brand-title { font-size: 28px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 18px rgba(58,123,255,.28); }
+    .brand-sub { font-size: 13px; color: var(--muted); }
+    .time { text-align: left; font-size: 14px; color: rgba(219,231,255,.92); display:flex; align-items:center; gap:10px; justify-content:flex-end; position: relative; z-index: 1; }
+    .time .muted{ color: var(--muted); }
+    .tools { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+    .btnx { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); color: var(--text); border-radius: 12px; padding: 8px 12px; cursor: pointer; font-size: 13px; backdrop-filter: blur(8px); }
+    .btnx:hover { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
+    .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 18px; border-radius: 10px; padding: 0 6px; margin-left: 6px; font-size: 12px; background: rgba(255, 78, 78, .85); color: #fff; box-shadow: 0 0 18px rgba(255,78,78,.25); }
+    .kpis { display: grid; grid-template-columns: repeat(8, 1fr); gap: 14px; position: relative; z-index: 1; }
+    .kpi { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02)); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow2); position: relative; overflow: hidden; }
+    .kpi::before{ content:""; position:absolute; left:0; top:0; bottom:0; width: 4px; background: linear-gradient(180deg, rgba(58,123,255,.95), rgba(46,200,120,.65)); opacity:.95; }
+    .kpi::after{ content:""; position:absolute; right:-40px; top:-40px; width: 120px; height: 120px; background: radial-gradient(circle at 30% 30%, rgba(58,123,255,.22), rgba(58,123,255,0) 60%); transform: rotate(12deg); }
+    .kpi-title { font-size: 13px; color: rgba(219,231,255,.78); }
+    .kpi-value { font-size: 34px; font-weight: 900; letter-spacing: .6px; text-shadow: 0 0 16px rgba(58,123,255,.18); }
+    .kpi-sub { font-size: 12px; color: var(--muted); }
+    .main { flex: 1; min-height: 0; display: grid; grid-template-columns: 28% 44% 28%; gap: 14px; position: relative; z-index: 1; }
+    .col { min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+    .panel { min-height: 0; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018)); border-radius: var(--radius); display: flex; flex-direction: column; box-shadow: var(--shadow2); position: relative; overflow: hidden; }
+    .panel::before{ content:""; position:absolute; inset:0; border-radius: var(--radius); pointer-events:none; box-shadow: 0 0 0 1px rgba(58,123,255,.10) inset, 0 0 26px rgba(58,123,255,.10); opacity:.9; }
+    .panel-title { padding: 12px 16px; border-bottom: 1px solid var(--line2); font-size: 15px; font-weight: 900; letter-spacing: 1px; display:flex; align-items:center; gap:10px; }
+    .panel-title::before{ content:""; width: 10px; height: 10px; border-radius: 10px; background: linear-gradient(180deg, rgba(58,123,255,1), rgba(46,200,120,.85)); box-shadow: 0 0 18px rgba(58,123,255,.35); }
+    .panel-body { flex: 1; min-height: 0; padding: 10px 12px; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+    .panel-body { padding: 12px 14px; gap: 12px; }
+    .chart { flex: 1; min-height: 240px; }
+    .chart-lg { flex: 1; min-height: 360px; }
+    .chart-xl { flex: 1; min-height: 460px; }
+    .tabs { display: flex; gap: 8px; padding: 0 2px; }
+    .tab { padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); cursor: pointer; font-size: 13px; color: rgba(219,231,255,.85); }
+    .tab.active { background: rgba(58,123,255,.20); border-color: rgba(58,123,255,.40); color: #dbe7ff; }
+    .table-wrap { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: rgba(9, 14, 28, .25); }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.06); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    th { position: sticky; top: 0; background: rgba(9, 14, 28, .92); color: rgba(219,231,255,.88); z-index: 1; }
+    tr:hover td { background: rgba(255,255,255,.04); }
+    .muted { color: rgba(219,231,255,.60); }
+    .right { text-align: right; }
+    .list { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: rgba(9, 14, 28, .22); }
+    .item { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: default; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); }
+    .item:hover { background: rgba(255,255,255,.05); }
+    .item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(219,231,255,.92); font-size: 12px; }
+    .tag { display: inline-flex; align-items: center; justify-content: center; height: 18px; padding: 0 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+    .tag-danger { background: rgba(255,78,78,.18); border: 1px solid rgba(255,78,78,.35); color: rgba(255,210,210,.95); }
+    .tag-warning { background: rgba(255,209,82,.14); border: 1px solid rgba(255,209,82,.30); color: rgba(255,238,190,.95); }
+    .tag-success { background: rgba(46,200,120,.14); border: 1px solid rgba(46,200,120,.28); color: rgba(210,255,230,.95); }
+    .split { display: grid; grid-template-columns: 55% 45%; gap: 12px; min-height: 0; flex: 1; }
+    .mini { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+    @media (max-width: 1400px) {
+      .kpis { grid-template-columns: repeat(4, 1fr); }
+      .main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen" id="screen">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-title">MES 全链路数据监管大屏</div>
+        <div class="brand-sub">订单 → 排产 → 分工 → 报工 → 质检 → 入库 → 发货</div>
+      </div>
+      <div class="time">
+        <span id="date"></span>
+        <span id="clock"></span>
+        <span class="muted">更新</span> <span id="updateSec">0</span>s
+        <div class="tools">
+          <button class="btnx" id="btnRefresh">刷新</button>
+          <button class="btnx" id="btnPause">暂停</button>
+          <button class="btnx" id="btnFull">全屏</button>
+          <button class="btnx" id="btnAlerts">预警 <span class="badge" id="alertBadge">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-title">总订单数</div>
+        <div class="kpi-value" id="k_total_orders">0</div>
+        <div class="kpi-sub">活跃订单数量</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">总计划数</div>
+        <div class="kpi-value" id="k_total_plans">0</div>
+        <div class="kpi-sub">生产计划总数</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">小工单数</div>
+        <div class="kpi-value" id="k_total_allocations">0</div>
+        <div class="kpi-sub">分配任务总数</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">总数量</div>
+        <div class="kpi-value" id="k_total_quantity">0</div>
+        <div class="kpi-sub">计划生产总量</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">已完成</div>
+        <div class="kpi-value" id="k_completed_quantity">0</div>
+        <div class="kpi-sub">实际完成数量</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">完成率</div>
+        <div class="kpi-value" id="k_completion_rate">0%</div>
+        <div class="kpi-sub">整体完成进度</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">待审核</div>
+        <div class="kpi-value" id="k_pending_reports">0</div>
+        <div class="kpi-sub">报工待审核</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">今日不良</div>
+        <div class="kpi-value" id="k_today_bad">0</div>
+        <div class="kpi-sub">不合格数量</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="col">
+        <div class="panel" style="flex:1.2;">
+          <div class="panel-title">工单滚动监控</div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:66px;">工单</th>
+                    <th style="width:70px;">状态</th>
+                    <th>订单/型号</th>
+                    <th style="width:110px;">工序</th>
+                    <th style="width:90px;">负责人</th>
+                    <th class="right" style="width:76px;">进度</th>
+                  </tr>
+                </thead>
+                <tbody id="workorderTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">产能 TOP10</div>
+          <div class="panel-body">
+            <div class="split">
+              <div class="chart" id="chart_capacity"></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>员工</th><th class="right" style="width:90px;">产量</th><th class="right" style="width:90px;">工时</th></tr></thead>
+                  <tbody id="capacityTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="panel" style="flex:1.2;">
+          <div class="panel-title">产线甘特图（分工任务）</div>
+          <div class="panel-body">
+            <div class="chart-xl" id="chart_gantt"></div>
+          </div>
+        </div>
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">产量趋势 &amp; 订单对比</div>
+          <div class="panel-body">
+            <div class="split">
+              <div class="chart-lg" id="chart_output_trend"></div>
+              <div class="chart-lg" id="chart_order"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">明细统计</div>
+          <div class="panel-body">
+            <div class="tabs" id="tabs">
+              <div class="tab active" data-tab="order">按订单统计</div>
+              <div class="tab" data-tab="product">按产品统计</div>
+              <div class="tab" data-tab="process">按工序统计</div>
+              <div class="tab" data-tab="employee">按员工统计</div>
+            </div>
+            <div class="table-wrap" id="tableWrap">
+              <table>
+                <thead id="thead"></thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">异常告警中心</div>
+          <div class="panel-body">
+            <div class="list" id="alertList"></div>
+          </div>
+        </div>
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">库存结构 &amp; 库存预警</div>
+          <div class="panel-body">
+            <div class="split">
+              <div class="chart" id="chart_stock"></div>
+              <div class="list" id="stockWarnList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">采购缺料（MRP）</div>
+          <div class="panel-body">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>物料</th><th class="right" style="width:100px;">缺料</th></tr></thead>
+                <tbody id="mrpTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="flex:1;">
+          <div class="panel-title">质量不良分布</div>
+          <div class="panel-body">
+            <div class="split">
+              <div class="chart" id="chart_defect"></div>
+              <div class="mini">
+                <div class="list" id="qualityMeta"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/lib/jquery/jquery.min.js"></script>
+  <script src="/assets/lib/echarts/echarts.min.js"></script>
+  <script>
+    (function () {
+      var paused = false;
+      var charts = {};
+      var lastLoadTime = 0;
+      var tickTimer = null;
+      var refreshTimer = null;
+      var updateTimer = null;
+      var ganttTimer = null;
+      var ganttLast = null;
+
+      function pad2(n) { n = Number(n) || 0; return n < 10 ? '0' + n : String(n); }
+      function setClock() {
+        var d = new Date();
+        document.getElementById('date').textContent = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+        document.getElementById('clock').textContent = pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+      }
+      function tickUpdateSec() {
+        if (!lastLoadTime) return;
+        var sec = Math.floor(Date.now() / 1000 - lastLoadTime);
+        document.getElementById('updateSec').textContent = String(sec);
+      }
+
+      function getTenantId() {
+        var qs = new URLSearchParams(window.location.search);
+        var tenantId = qs.get('tenant_id');
+        return tenantId ? String(tenantId) : '';
+      }
+
+      function apiUrl() {
+        var url = '/admin/mes/bi/getDashboardData';
+        var qs = new URLSearchParams(window.location.search);
+        qs.set('mode', 'full');
+        var tenantId = getTenantId();
+        if (tenantId && tenantId !== '0') qs.set('tenant_id', tenantId);
+        return url + '?' + qs.toString();
+      }
+
+      function ganttUrl() {
+        var url = '/admin/mes/bi/getAllocationGanttData';
+        var qs = new URLSearchParams();
+        qs.set('days', '7');
+        var tenantId = getTenantId();
+        if (tenantId && tenantId !== '0') qs.set('tenant_id', tenantId);
+        return url + '?' + qs.toString();
+      }
+
+      function ensureChart(key, el) {
+        if (!el) return null;
+        if (!charts[key]) charts[key] = echarts.init(el);
+        return charts[key];
+      }
+
+      function renderKpis(os) {
+        os = os || {};
+        document.getElementById('k_total_orders').textContent = String(os.total_orders || 0);
+        document.getElementById('k_total_plans').textContent = String(os.total_plans || 0);
+        document.getElementById('k_total_allocations').textContent = String(os.total_allocations || 0);
+        document.getElementById('k_total_quantity').textContent = String(os.total_quantity || 0);
+        document.getElementById('k_completed_quantity').textContent = String(os.completed_quantity || 0);
+        document.getElementById('k_completion_rate').textContent = String((os.completion_rate || 0)) + '%';
+      }
+
+      function renderAlerts(alerts) {
+        alerts = alerts || {};
+        document.getElementById('alertBadge').textContent = String(alerts.total || 0);
+      }
+
+      function renderCharts(d) {
+        var os = d.overall_stats || {};
+        var totalQty = Number(os.total_quantity || 0);
+        var completed = Number(os.completed_quantity || 0);
+        var remaining = Math.max(0, totalQty - completed);
+
+        var processList = d.process_stats || [];
+
+        var orderList = d.order_stats || [];
+        var c4 = ensureChart('order', document.getElementById('chart_order'));
+        if (c4) {
+          var top8 = orderList.slice(0, 8);
+          c4.setOption({
+            grid: { left: 50, right: 18, top: 18, bottom: 38, containLabel: true },
+            xAxis: { type: 'category', data: top8.map(function (o) { return (o.order_name || o.order_no || '').slice(0, 10); }), axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, axisLabel: { color: 'rgba(219,231,255,.75)' } },
+            yAxis: { type: 'value', max: 150, axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, splitLine: { lineStyle: { color: 'rgba(219,231,255,.08)' } }, axisLabel: { color: 'rgba(219,231,255,.75)' } },
+            series: [{ type: 'line', smooth: true, data: top8.map(function (o) { return Number(o.completion_rate || 0); }), itemStyle: { color: '#3a7bff' }, lineStyle: { width: 2 } }]
+          }, true);
+        }
+
+        var trend = (d.production && d.production.output_trend) ? d.production.output_trend : [];
+        var cTrend = ensureChart('trend', document.getElementById('chart_output_trend'));
+        if (cTrend) {
+          var x = trend.map(function (r) { return (r.date || '').slice(5); });
+          var y = trend.map(function (r) { return Number(r.quantity || 0); });
+          cTrend.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: 46, right: 18, top: 18, bottom: 30, containLabel: true },
+            xAxis: { type: 'category', data: x, axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, axisLabel: { color: 'rgba(219,231,255,.75)' } },
+            yAxis: { type: 'value', axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, splitLine: { lineStyle: { color: 'rgba(219,231,255,.08)' } }, axisLabel: { color: 'rgba(219,231,255,.75)' } },
+            series: [
+              { type: 'bar', data: y, barWidth: 10, itemStyle: { color: 'rgba(58,123,255,.65)' } },
+              { type: 'line', data: y, smooth: true, itemStyle: { color: '#2ec878' }, lineStyle: { width: 2 } }
+            ]
+          }, true);
+        }
+
+        var cap = (d.production && d.production.capacity_top) ? d.production.capacity_top : [];
+        renderCapacity(cap);
+
+        var stock = d.stock || {};
+        renderStock(stock);
+
+        var purchase = d.purchase || {};
+        renderMrp(purchase);
+
+        var quality = d.quality || {};
+        renderQuality(quality);
+
+        renderWorkorders(d.workorders || []);
+        renderAlertList(d.alerts || {});
+        document.getElementById('k_pending_reports').textContent = String(quality.pending_reports || 0);
+        document.getElementById('k_today_bad').textContent = String(quality.today_bad || 0);
+      }
+
+      var tables = { order: [], product: [], process: [], employee: [] };
+      function renderTable(tab) {
+        var thead = document.getElementById('thead');
+        var tbody = document.getElementById('tbody');
+        var rows = tables[tab] || [];
+
+        if (tab === 'order') {
+          thead.innerHTML = '<tr><th style="width:220px;">订单名称</th><th style="width:160px;">订单编号</th><th class="right" style="width:90px;">计划数</th><th class="right" style="width:90px;">总数量</th><th class="right" style="width:90px;">已完成</th><th class="right" style="width:90px;">完成率</th></tr>';
+          tbody.innerHTML = rows.length ? rows.map(function (r) {
+            return '<tr><td>' + (r.order_name || '') + '</td><td>' + (r.order_no || '') + '</td><td class="right">' + (r.total_plans || 0) + '</td><td class="right">' + (r.total_quantity || 0) + '</td><td class="right">' + (r.completed_quantity || 0) + '</td><td class="right">' + (r.completion_rate || 0) + '%</td></tr>';
+          }).join('') : '<tr><td class="muted" colspan="6">暂无数据</td></tr>';
+          return;
+        }
+        if (tab === 'product') {
+          thead.innerHTML = '<tr><th>产品名称</th><th class="right" style="width:90px;">计划数</th><th class="right" style="width:90px;">总数量</th><th class="right" style="width:90px;">已完成</th><th class="right" style="width:90px;">完成率</th></tr>';
+          tbody.innerHTML = rows.length ? rows.map(function (r) {
+            return '<tr><td>' + (r.product_name || '') + '</td><td class="right">' + (r.total_plans || 0) + '</td><td class="right">' + (r.total_quantity || 0) + '</td><td class="right">' + (r.completed_quantity || 0) + '</td><td class="right">' + (r.completion_rate || 0) + '%</td></tr>';
+          }).join('') : '<tr><td class="muted" colspan="5">暂无数据</td></tr>';
+          return;
+        }
+        if (tab === 'process') {
+          thead.innerHTML = '<tr><th>工序名称</th><th class="right" style="width:110px;">小工单数</th><th class="right" style="width:90px;">总数量</th><th class="right" style="width:90px;">已完成</th><th class="right" style="width:90px;">完成率</th></tr>';
+          tbody.innerHTML = rows.length ? rows.map(function (r) {
+            return '<tr><td>' + (r.process_name || '') + '</td><td class="right">' + (r.total_allocations || 0) + '</td><td class="right">' + (r.total_quantity || 0) + '</td><td class="right">' + (r.completed_quantity || 0) + '</td><td class="right">' + (r.completion_rate || 0) + '%</td></tr>';
+          }).join('') : '<tr><td class="muted" colspan="5">暂无数据</td></tr>';
+          return;
+        }
+        thead.innerHTML = '<tr><th>员工姓名</th><th class="right" style="width:110px;">小工单数</th><th class="right" style="width:90px;">总数量</th><th class="right" style="width:90px;">已完成</th><th class="right" style="width:90px;">完成率</th></tr>';
+        tbody.innerHTML = rows.length ? rows.map(function (r) {
+          return '<tr><td>' + (r.user_name || '') + '</td><td class="right">' + (r.total_allocations || 0) + '</td><td class="right">' + (r.total_quantity || 0) + '</td><td class="right">' + (r.completed_quantity || 0) + '</td><td class="right">' + (r.completion_rate || 0) + '%</td></tr>';
+        }).join('') : '<tr><td class="muted" colspan="5">暂无数据</td></tr>';
+      }
+
+      function loadData() {
+        if (paused) return;
+        $.get(apiUrl(), function (r) {
+          if (!r || r.code !== 1 || !r.data) {
+            return;
+          }
+          lastLoadTime = Math.floor(Date.now() / 1000);
+          document.getElementById('updateSec').textContent = '0';
+          var d = r.data;
+          renderKpis(d.overall_stats);
+          renderAlerts(d.alerts);
+          renderCharts(d);
+          tables.order = d.order_stats || [];
+          tables.product = d.product_stats || [];
+          tables.process = d.process_stats || [];
+          tables.employee = d.employee_stats || [];
+          var active = document.querySelector('.tab.active');
+          renderTable(active ? active.getAttribute('data-tab') : 'order');
+        }, 'json');
+      }
+
+      function renderWorkorders(list) {
+        var tbody = document.getElementById('workorderTbody');
+        if (!tbody) return;
+        list = list || [];
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td class="muted" colspan="6">暂无数据</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(function (r) {
+          var st = Number(r.status || 0);
+          var stText = r.status_text || '';
+          var tagCls = st === 2 ? 'tag-success' : (st === 1 ? 'tag-warning' : 'tag');
+          if (st === 1) tagCls = 'tag-warning';
+          if (st === 2) tagCls = 'tag-success';
+          if (st === 0) tagCls = 'tag';
+          var ord = (r.order_no || '') + (r.model_name ? ('/' + r.model_name) : '');
+          return '<tr><td>' + (r.id || '') + '</td><td><span class="tag ' + tagCls + '">' + stText + '</span></td><td>' + ord + '</td><td>' + (r.process_name || '') + '</td><td>' + (r.user_name || '') + '</td><td class="right">' + (r.progress != null ? r.progress : 0) + '%</td></tr>';
+        }).join('');
+      }
+
+      function renderCapacity(list) {
+        var tbody = document.getElementById('capacityTbody');
+        if (tbody) {
+          if (!list || !list.length) tbody.innerHTML = '<tr><td class="muted" colspan="3">暂无数据</td></tr>';
+          else tbody.innerHTML = list.slice(0, 10).map(function (r) {
+            return '<tr><td>' + (r.user_name || '') + '</td><td class="right">' + (r.quantity || 0) + '</td><td class="right">' + (r.hours || 0) + '</td></tr>';
+          }).join('');
+        }
+        var el = document.getElementById('chart_capacity');
+        var c = ensureChart('capacity', el);
+        if (!c) return;
+        var top5 = (list || []).slice(0, 5);
+        var names = top5.map(function (r) { return r.user_name || ''; }).reverse();
+        var vals = top5.map(function (r) { return Number(r.quantity || 0); }).reverse();
+        c.setOption({
+          grid: { left: 50, right: 18, top: 18, bottom: 18, containLabel: true },
+          xAxis: { type: 'value', axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, splitLine: { lineStyle: { color: 'rgba(219,231,255,.08)' } }, axisLabel: { color: 'rgba(219,231,255,.75)' } },
+          yAxis: { type: 'category', data: names, axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, axisLabel: { color: 'rgba(219,231,255,.85)' } },
+          series: [{ type: 'bar', data: vals, barWidth: 12, itemStyle: { color: '#3a7bff' } }]
+        }, true);
+      }
+
+      function renderStock(stock) {
+        stock = stock || {};
+        var el = document.getElementById('chart_stock');
+        var c = ensureChart('stock', el);
+        if (c) {
+          var material = Number(stock.material_stock || 0);
+          var wip = Number(stock.wip_stock || 0);
+          var product = Number(stock.product_stock || 0);
+          c.setOption({
+            tooltip: { trigger: 'item' },
+            legend: { bottom: 0, textStyle: { color: 'rgba(219,231,255,.75)' } },
+            series: [{ type: 'pie', radius: ['45%', '70%'], label: { show: false }, labelLine: { show: false }, data: [
+              { name: '原材料', value: material, itemStyle: { color: '#3a7bff' } },
+              { name: '在制', value: wip, itemStyle: { color: '#ffd152' } },
+              { name: '成品', value: product, itemStyle: { color: '#2ec878' } }
+            ] }]
+          }, true);
+        }
+        var listEl = document.getElementById('stockWarnList');
+        if (!listEl) return;
+        var list = stock.warning_list || [];
+        if (!list.length) {
+          listEl.innerHTML = '<div class="item"><div class="item-title">暂无库存预警</div><div></div></div>';
+          return;
+        }
+        listEl.innerHTML = list.map(function (r) {
+          var title = (r.name || '') + (r.code ? ('(' + r.code + ')') : '');
+          return '<div class="item"><div class="item-title">' + title + '</div><div><span class="tag tag-danger">缺 ' + (r.shortage || 0) + '</span></div></div>';
+        }).join('');
+      }
+
+      function renderMrp(purchase) {
+        purchase = purchase || {};
+        var tbody = document.getElementById('mrpTbody');
+        if (!tbody) return;
+        var list = purchase.mrp_shortage_list || [];
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td class="muted" colspan="2">暂无缺料</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(function (r) {
+          var title = (r.material_name || '') + (r.material_code ? ('(' + r.material_code + ')') : '');
+          return '<tr><td>' + title + '</td><td class="right">' + (r.shortage || 0) + '</td></tr>';
+        }).join('');
+      }
+
+      function renderAlertList(alerts) {
+        alerts = alerts || {};
+        var el = document.getElementById('alertList');
+        if (!el) return;
+        var list = alerts.list || [];
+        if (!list.length) {
+          el.innerHTML = '<div class="item"><div class="item-title">暂无异常</div><div></div></div>';
+          return;
+        }
+        el.innerHTML = list.map(function (it) {
+          var cls = it.level === 'danger' ? 'tag-danger' : 'tag-warning';
+          return '<div class="item"><div class="item-title">' + (it.type || '') + '</div><div><span class="tag ' + cls + '">' + (it.count || 0) + '</span></div></div>';
+        }).join('');
+      }
+
+      function renderQuality(quality) {
+        quality = quality || {};
+        var el = document.getElementById('chart_defect');
+        var c = ensureChart('defect', el);
+        if (c) {
+          var ds = (quality.defect_by_process || []).map(function (d) { return { name: d.process_name || '', value: Number(d.bad_quantity || 0) }; });
+          c.setOption({
+            tooltip: { trigger: 'item' },
+            legend: { orient: 'vertical', right: 0, top: 'center', type: 'scroll', textStyle: { color: 'rgba(219,231,255,.75)' } },
+            series: [{ type: 'pie', radius: ['45%', '70%'], label: { show: false }, labelLine: { show: false }, data: ds }]
+          }, true);
+        }
+        var meta = document.getElementById('qualityMeta');
+        if (!meta) return;
+        meta.innerHTML = ''
+          + '<div class="item"><div class="item-title">待审核报工</div><div><span class="tag tag-warning">' + String(quality.pending_reports || 0) + '</span></div></div>'
+          + '<div class="item"><div class="item-title">今日不良</div><div><span class="tag tag-danger">' + String(quality.today_bad || 0) + '</span></div></div>'
+          + '<div class="item"><div class="item-title">待质检</div><div><span class="tag tag-warning">' + String(quality.pending_check_count || 0) + '</span></div></div>';
+      }
+
+      function renderGantt(gd) {
+        var el = document.getElementById('chart_gantt');
+        var c = ensureChart('gantt', el);
+        if (!c) return;
+        gd = gd || {};
+        var items = gd.items || [];
+        if (!items.length) {
+          c.clear();
+          c.setOption({ title: { text: '暂无排程/计划时间数据', left: 'center', top: 'middle', textStyle: { color: 'rgba(219,231,255,.65)', fontSize: 14 } } });
+          return;
+        }
+        var categories = items.map(function (it) { return it.label || ''; });
+        var start = Number(gd.start_time || 0) * 1000;
+        var end = Number(gd.end_time || 0) * 1000;
+        var data = items.map(function (it, idx) {
+          return {
+            value: [idx, Number(it.planned_start || 0) * 1000, Number(it.planned_end || 0) * 1000, Number(it.progress || 0), Number(it.status || 0)],
+            actual: [Number(it.actual_start || 0) * 1000, Number(it.actual_end || 0) * 1000]
+          };
+        });
+        function renderItem(params, api) {
+          var categoryIndex = api.value(0);
+          var startCoord = api.coord([api.value(1), categoryIndex]);
+          var endCoord = api.coord([api.value(2), categoryIndex]);
+          var h = api.size([0, 1])[1] * 0.6;
+          var y = startCoord[1] - h / 2;
+          var rect = echarts.graphic.clipRectByRect({
+            x: startCoord[0],
+            y: y,
+            width: endCoord[0] - startCoord[0],
+            height: h
+          }, {
+            x: params.coordSys.x,
+            y: params.coordSys.y,
+            width: params.coordSys.width,
+            height: params.coordSys.height
+          });
+          var st = api.value(4);
+          var color = st === 2 ? '#2ec878' : (st === 1 ? '#3a7bff' : '#9aa6c7');
+          return rect && {
+            type: 'rect',
+            shape: rect,
+            style: api.style({ fill: color, opacity: 0.85 })
+          };
+        }
+        c.setOption({
+          tooltip: {
+            formatter: function (p) {
+              var it = items[p.dataIndex] || {};
+              var s = it.planned_start ? new Date(it.planned_start * 1000) : null;
+              var e = it.planned_end ? new Date(it.planned_end * 1000) : null;
+              var ss = s ? (pad2(s.getMonth() + 1) + '-' + pad2(s.getDate()) + ' ' + pad2(s.getHours()) + ':' + pad2(s.getMinutes())) : '-';
+              var ee = e ? (pad2(e.getMonth() + 1) + '-' + pad2(e.getDate()) + ' ' + pad2(e.getHours()) + ':' + pad2(e.getMinutes())) : '-';
+              return (it.label || '') + '<br/>计划：' + ss + ' ~ ' + ee + '<br/>进度：' + (it.progress || 0) + '%';
+            }
+          },
+          grid: { left: 260, right: 18, top: 18, bottom: 20 },
+          xAxis: { type: 'time', min: start, max: end, axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, splitLine: { lineStyle: { color: 'rgba(219,231,255,.08)' } }, axisLabel: { color: 'rgba(219,231,255,.75)' } },
+          yAxis: { type: 'category', data: categories, axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, axisLabel: { color: 'rgba(219,231,255,.85)', width: 240, overflow: 'truncate' } },
+          series: [{ type: 'custom', renderItem: renderItem, encode: { x: [1, 2], y: 0 }, data: data }]
+        }, true);
+      }
+
+      function loadGantt() {
+        if (paused) return;
+        $.get(ganttUrl(), function (r) {
+          if (!r || r.code !== 1 || !r.data) return;
+          ganttLast = r.data;
+          renderGantt(ganttLast);
+        }, 'json');
+      }
+
+      function bind() {
+        document.getElementById('btnRefresh').addEventListener('click', function () { loadData(); });
+        document.getElementById('btnPause').addEventListener('click', function () {
+          paused = !paused;
+          document.getElementById('btnPause').textContent = paused ? '继续' : '暂停';
+        });
+        document.getElementById('btnFull').addEventListener('click', function () {
+          var el = document.documentElement;
+          if (!document.fullscreenElement) {
+            if (el.requestFullscreen) el.requestFullscreen();
+          } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+          }
+        });
+        document.getElementById('tabs').addEventListener('click', function (e) {
+          var t = e.target;
+          if (!t || !t.classList || !t.classList.contains('tab')) return;
+          var tab = t.getAttribute('data-tab');
+          document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+          t.classList.add('active');
+          renderTable(tab);
+        });
+        window.addEventListener('resize', function () {
+          Object.keys(charts).forEach(function (k) {
+            if (charts[k] && charts[k].resize) charts[k].resize();
+          });
+        });
+      }
+
+      function init() {
+        setClock();
+        tickTimer = setInterval(setClock, 1000);
+        updateTimer = setInterval(tickUpdateSec, 1000);
+        refreshTimer = setInterval(loadData, 30000);
+        ganttTimer = setInterval(loadGantt, 15000);
+        bind();
+        loadData();
+        loadGantt();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

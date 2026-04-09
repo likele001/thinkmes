@@ -8,6 +8,7 @@
     "pages/user-report-detail/user-report-detail",
     "pages/user-wages/user-wages",
     "pages/user-profile/user-profile",
+    "pages/user-notices/user-notices",
     "pages/user-scan/user-scan",
     "pages/index/index",
     "pages/orders/orders",

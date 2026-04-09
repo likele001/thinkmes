@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace app\common\controller;
 
+use app\admin\model\AdminModel;
+use app\admin\model\TenantPackageModel;
+use app\common\model\UserModel;
 use think\App;
 use think\exception\ValidateException;
 use think\Response;
@@ -74,6 +77,62 @@ abstract class BaseController
             $v->batch(true);
         }
         return $v->failException(true)->check($data);
+    }
+
+    protected function checkResourceLimit(string $resourceType): array
+    {
+        $tenantId = (int) ($this->request->tenantId ?? 0);
+        if ($tenantId === 0) {
+            return ['allowed' => true, 'current' => 0, 'max' => 0, 'msg' => ''];
+        }
+
+        $package = $this->request->package ?? null;
+        if (!$package) {
+            $tenant = $this->request->tenant ?? null;
+            $packageId = 0;
+            if ($tenant && isset($tenant->package_id)) {
+                $packageId = (int) $tenant->package_id;
+            }
+            if ($packageId > 0) {
+                $package = TenantPackageModel::find($packageId);
+            }
+        }
+
+        if (!$package) {
+            return ['allowed' => true, 'current' => 0, 'max' => 0, 'msg' => ''];
+        }
+
+        $current = 0;
+        $max = 0;
+        $resourceName = '';
+
+        if ($resourceType === 'admin') {
+            $current = (int) ($this->request->adminCount ?? 0);
+            if ($current <= 0) {
+                $current = (int) AdminModel::where('tenant_id', $tenantId)->where('status', 1)->count();
+            }
+            $max = (int) ($package->max_admin ?? 0);
+            $resourceName = '管理员';
+        } elseif ($resourceType === 'user') {
+            $current = (int) ($this->request->userCount ?? 0);
+            if ($current <= 0) {
+                $current = (int) UserModel::where('tenant_id', $tenantId)->where('status', 1)->count();
+            }
+            $max = (int) ($package->max_user ?? 0);
+            $resourceName = '用户';
+        } else {
+            return ['allowed' => false, 'current' => 0, 'max' => 0, 'msg' => '未知的资源类型'];
+        }
+
+        $allowed = ($max === 0 || $current < $max);
+        $msg = $allowed ? '' : "已达到最大{$resourceName}数限制（{$max}人），请升级套餐";
+
+        return [
+            'allowed' => $allowed,
+            'current' => $current,
+            'max' => $max,
+            'msg' => $msg,
+        ];
     }
 
 }

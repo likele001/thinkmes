@@ -50,6 +50,7 @@
             'production_out': '生产领料',
             'check_in': '盘点入库',
             'check_out': '盘点出库',
+              'production_in': '完工入库',
             'other_in': '其他入库',
             'other_out': '其他出库'
         };
@@ -67,13 +68,14 @@
                 {field: 'material_id', title: '物料名称', formatter: function(v, row) {
                     return row.material ? row.material.name : '-';
                 }},
-                {field: 'quantity', title: '变动数量', formatter: function(v) {
-                    return v > 0 ? '<span class="text-success">+' + v + '</span>' : '<span class="text-danger">' + v + '</span>';
+                  {field: 'change_quantity', title: '变动数量', formatter: function(v, row) {
+                      var val = (v !== undefined && v !== null && v !== '') ? v : (row && row.quantity !== undefined ? row.quantity : 0);
+                      return parseFloat(val) > 0 ? '<span class="text-success">+' + val + '</span>' : '<span class="text-danger">' + val + '</span>';
                 }},
                 {field: 'business_type', title: '业务类型', formatter: function(v) {
                     return typeMap[v] || v;
                 }},
-                {field: 'operator_id', title: '操作人'},
+                  {field: 'operator_id', title: '操作人', formatter: function(v, row) { return (row && row.operator_name) ? row.operator_name : (v || '-'); }},
                 {field: 'create_time', title: '操作时间'},
                 {field: 'remark', title: '备注'}
             ],
@@ -218,6 +220,7 @@
 
             var typeMap = {
                 'shipment_out': '发货出库',
+                'production_in':'完工入库',
                 'report_in':    '报工入库',
                 'check_in':     '盘点入库',
                 'check_out':    '盘点出库',
@@ -248,14 +251,15 @@
                         }
                         return v || '-';
                     }},
-                    {field: 'quantity', title: '变动数量', width: 120, formatter: function (v) {
-                        var n = parseFloat(v);
-                        return n > 0 ? '<span class="text-success">+' + v + '</span>' : '<span class="text-danger">' + v + '</span>';
+                    {field: 'change_quantity', title: '变动数量', width: 120, formatter: function (v, row) {
+                        var val = (v !== undefined && v !== null && v !== '') ? v : (row && row.quantity !== undefined ? row.quantity : 0);
+                        var n = parseFloat(val);
+                        return n > 0 ? '<span class="text-success">+' + val + '</span>' : '<span class="text-danger">' + val + '</span>';
                     }},
                     {field: 'business_type', title: '业务类型', width: 130, formatter: function (v) {
                         return typeMap[v] || v;
                     }},
-                    {field: 'operator_id', title: '操作人', width: 100},
+                    {field: 'operator_id', title: '操作人', width: 120, formatter: function(v, row){ return (row && row.operator_name) ? row.operator_name : (v || '-'); }},
                     {field: 'create_time', title: '操作时间', width: 180},
                     {field: 'remark', title: '备注'}
                 ],

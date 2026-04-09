@@ -1,0 +1,132 @@
+<form id="form-add" class="form-horizontal" style="padding:20px">
+  <div class="form-group">
+    <label class="col-sm-2 control-label">所属分类 <span class="text-danger">*</span></label>
+    <div class="col-sm-4">
+      <select name="category_id" class="form-control" required>
+        <option value="">请选择</option>
+        {foreach $categories as $cat}<option value="{$cat.id}">{$cat.name}</option>{/foreach}
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">模板标题 <span class="text-danger">*</span></label>
+    <div class="col-sm-8"><input type="text" name="title" class="form-control" required placeholder="例如：爆款标题生成"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">简介</label>
+    <div class="col-sm-8"><input type="text" name="description" class="form-control" placeholder="一句话描述此模板的用途"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">图标</label>
+    <div class="col-sm-4"><input type="text" name="icon" class="form-control" value="fas fa-magic"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">系统提示词</label>
+    <div class="col-sm-8"><textarea name="system_prompt" class="form-control" rows="2" placeholder="可选，设置AI的角色，例如：你是一位资深营销专家"></textarea></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">提示词内容 <span class="text-danger">*</span></label>
+    <div class="col-sm-8">
+      <textarea name="prompt_text" class="form-control" rows="6" required placeholder="在此填写提示词，使用 {变量名} 作为占位符，例如：请为「{topic}」生成10个标题"></textarea>
+      <p class="help-block">使用 <code>{变量名}</code> 格式定义变量，用户填写后自动替换</p>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">变量定义</label>
+    <div class="col-sm-8">
+      <textarea name="variables" class="form-control" rows="5" placeholder='JSON格式，例如：[{"name":"topic","label":"主题","placeholder":"请输入主题","required":true}]'></textarea>
+      <p class="help-block">JSON数组，每项包含：name(变量名)、label(显示名)、placeholder(提示文字)、required(是否必填)</p>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">最大字数</label>
+    <div class="col-sm-3"><input type="number" name="output_words" class="form-control" value="0" min="0" placeholder="0不限制"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">附加要求</label>
+    <div class="col-sm-8">
+      <textarea name="ext_prompt" class="form-control" rows="3" placeholder="会自动追加到最终提示词，可用 {mood}/{emotion}/{audience} 等变量"></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">扩展变量</label>
+    <div class="col-sm-8">
+      <div style="margin-bottom:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-default btn-sm" data-add-ext="word_count">+ 字数</button>
+        <button type="button" class="btn btn-default btn-sm" data-add-ext="audience">+ 受众群体</button>
+        <button type="button" class="btn btn-default btn-sm" data-add-ext="mood">+ 心情</button>
+        <button type="button" class="btn btn-default btn-sm" data-add-ext="emotion">+ 情绪</button>
+        <button type="button" class="btn btn-default btn-sm" data-add-ext="tone">+ 语气风格</button>
+        <button type="button" class="btn btn-primary btn-sm" data-add-ext-prompt="1">插入四要素要求</button>
+      </div>
+      <textarea name="ext_variables" class="form-control" rows="5" placeholder='JSON格式，例如：[{"name":"audience","label":"受众群体","placeholder":"例如：宝妈/学生/上班族","required":false}]'></textarea>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">排序</label>
+    <div class="col-sm-3"><input type="number" name="sort" class="form-control" value="0"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label">状态</label>
+    <div class="col-sm-6">
+      <label class="radio-inline"><input type="radio" name="status" value="1" checked> 启用</label>
+      <label class="radio-inline"><input type="radio" name="status" value="0"> 禁用</label>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-8">
+      <button type="submit" class="btn btn-primary btn-lg">保 存</button>
+    </div>
+  </div>
+</form>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '/admin';
+    $('#form-add').attr('action', base + '/prompt/template/add');
+    function parseJsonSafe(text) {
+        try { return JSON.parse(text || '[]'); } catch (e) { return []; }
+    }
+    function stringifyPretty(val) {
+        try { return JSON.stringify(val, null, 2); } catch (e) { return '[]'; }
+    }
+    function getPreset(name) {
+        if (name === 'word_count') return { name: 'word_count', label: '字数', type: 'select', required: false, placeholder: '请选择', options: [100,200,300,500,800,1200], tip: '如需限制上限，请设置上面的“最大字数”' };
+        if (name === 'audience') return { name: 'audience', label: '受众群体', placeholder: '例如：宝妈/学生/上班族/职场新人', required: false, tip: '影响文案表达风格与用词' };
+        if (name === 'mood') return { name: 'mood', label: '心情', placeholder: '例如：开心/治愈/温暖/焦虑', required: false, tip: '让文案贴合氛围' };
+        if (name === 'emotion') return { name: 'emotion', label: '情绪', placeholder: '例如：激动/共鸣/委屈/愤怒', required: false, tip: '用于情绪驱动表达' };
+        if (name === 'tone') return { name: 'tone', label: '语气风格', type: 'select', required: false, placeholder: '请选择', options: ['温柔治愈','接地气实在','犀利现实','幽默搞笑','正能量励志','沉稳成熟','感性走心','简洁干练','亲切口语','高级质感','温和理性','共鸣扎心'], tip: '直接影响文案表达口吻' };
+        return null;
+    }
+    $(document).on('click', '[data-add-ext]', function(){
+        var name = $(this).attr('data-add-ext');
+        var preset = getPreset(name);
+        if (!preset) return;
+        var $ta = $('textarea[name="ext_variables"]');
+        var arr = parseJsonSafe($ta.val());
+        if (!Array.isArray(arr)) arr = [];
+        var exists = arr.some(function(v){ return v && v.name === preset.name; });
+        if (!exists) arr.push(preset);
+        $ta.val(stringifyPretty(arr));
+    });
+    $(document).on('click', '[data-add-ext-prompt]', function(){
+        var $ta = $('textarea[name="ext_prompt"]');
+        var txt = String($ta.val() || '').trim();
+        var block = "写作设定：\n- 受众群体：{audience}\n- 心情：{mood}\n- 情绪：{emotion}\n- 语气风格：{tone}\n请确保整体表达符合上述设定。";
+        if (!txt) {
+            $ta.val(block);
+            return;
+        }
+        if (txt.indexOf('{audience}') !== -1 || txt.indexOf('{mood}') !== -1 || txt.indexOf('{emotion}') !== -1 || txt.indexOf('{tone}') !== -1) {
+            return;
+        }
+        $ta.val(txt + "\n\n" + block);
+    });
+    $('#form-add').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            if (r.code == 1) { parent.layer.msg('添加成功', {icon: 1}); parent.layer.closeAll(); }
+            else { parent.layer.msg(r.msg || '添加失败', {icon: 2}); }
+        }, 'json');
+    });
+});
+</script>

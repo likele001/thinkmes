@@ -93,7 +93,7 @@ class AiReport extends Backend
         return $this->success('已生成');
     }
 
-    private function resolveTenantId(): int
+    protected function resolveTenantId(): int
     {
         $tenantId = $this->getTenantId();
         if ($tenantId > 0) return $tenantId;

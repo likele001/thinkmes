@@ -7,12 +7,54 @@
             <a href="{$config.moduleurl}/mes/user_process_capacity/index" class="btn btn-default"><i class="fas fa-user-cog"></i> 员工产能</a>
             <input type="date" id="start-date" value="<?=date('Y-m-d')?>">
             <input type="number" id="days" value="7" min="1" max="60" style="width:80px">
+            <label class="ml-1"><input type="checkbox" id="filter-date"> 列表按日期过滤</label>
+            <input type="text" id="plan-ids" class="form-control d-inline-block" style="width:220px; margin-left:8px;" placeholder="计划ID，逗号分隔（可选）">
+            <a href="javascript:void(0);" class="btn btn-secondary" id="btn-select-plans" style="margin-left:8px;">选择计划</a>
             <label class="ml-2"><input type="checkbox" id="reset" checked> 覆盖未下发</label>
+            <label class="ml-2"><input type="checkbox" id="enforce-upstream"> 严格按完工衔接</label>
             <a href="javascript:;" class="btn btn-info" id="btn-generate"><i class="fas fa-magic"></i> 生成排产</a>
             <a href="javascript:;" class="btn btn-success" id="btn-publish"><i class="fas fa-paper-plane"></i> 一键下发分工</a>
+            <a href="javascript:;" class="btn btn-danger" id="btn-revoke"><i class="fas fa-undo"></i> 撤销下发</a>
+            <span class="ml-2">
+                <a href="javascript:;" class="btn btn-default btn-sm" id="btn-view-list">列表</a>
+                <a href="javascript:;" class="btn btn-default btn-sm" id="btn-view-user">按员工</a>
+                <a href="javascript:;" class="btn btn-default btn-sm" id="btn-view-process">按工序</a>
+                <a href="javascript:;" class="btn btn-default btn-sm" id="btn-export-csv">导出CSV</a>
+            </span>
+        </div>
+        <!-- 计划选择模态框 -->
+        <div class="modal fade" id="plan-select-modal" tabindex="-1" role="dialog" aria-labelledby="planSelectModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="planSelectModalLabel">选择要排产的生产计划</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="关闭"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <table id="plan-select-table" class="table table-striped table-bordered table-hover" width="100%"></table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="btn-plan-select-ok">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
             <span class="ml-2 text-muted" id="batch-tip"></span>
+            <a href="javascript:;" class="btn btn-default btn-sm ml-1" id="btn-clear-batch">清除批次</a>
+        </div>
+        <div id="gantt-wrap" style="display:none;">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm" id="gantt-table" width="100%"></table>
+            </div>
         </div>
         <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
     </div>
 </div>
-
+<style>
+#gantt-table th,#gantt-table td{ white-space:nowrap; font-size:12px; padding:6px 8px; vertical-align:top; }
+#gantt-table thead th{ position:sticky; top:0; background:#fff; z-index:2; }
+#gantt-table .gantt-rowhead{ position:sticky; left:0; background:#fff; z-index:1; min-width:160px; }
+#gantt-table td.gantt-cell{ min-width:110px; }
+#gantt-table .gantt-total{ font-weight:600; color:#0d9488; }
+</style>

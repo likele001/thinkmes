@@ -1,0 +1,39 @@
+<form id="form-add" class="form-horizontal" style="padding:20px">
+  <div class="form-group">
+    <label class="col-sm-3 control-label">分类名称 <span class="text-danger">*</span></label>
+    <div class="col-sm-6"><input type="text" name="name" class="form-control" required placeholder="例如：写作创作"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">图标</label>
+    <div class="col-sm-6"><input type="text" name="icon" class="form-control" value="fas fa-star" placeholder="FontAwesome图标类名"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">排序</label>
+    <div class="col-sm-3"><input type="number" name="sort" class="form-control" value="0"></div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">状态</label>
+    <div class="col-sm-6">
+      <label class="radio-inline"><input type="radio" name="status" value="1" checked> 启用</label>
+      <label class="radio-inline"><input type="radio" name="status" value="0"> 禁用</label>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-3 col-sm-6">
+      <button type="submit" class="btn btn-primary">保 存</button>
+    </div>
+  </div>
+</form>
+<script>
+$(function () {
+    var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '/admin';
+    $('#form-add').attr('action', base + '/prompt/category/add');
+    $('#form-add').on('submit', function (e) {
+        e.preventDefault();
+        $.post($(this).attr('action'), $(this).serialize(), function (r) {
+            if (r.code == 1) { parent.layer.msg('添加成功', {icon: 1}); parent.layer.closeAll(); }
+            else { parent.layer.msg(r.msg || '添加失败', {icon: 2}); }
+        }, 'json');
+    });
+});
+</script>

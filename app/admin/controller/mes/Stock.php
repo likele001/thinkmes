@@ -146,6 +146,56 @@ class Stock extends Backend
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
 
+        $operatorIds = [];
+        foreach ($list as $row) {
+            $oid = (int) ($row['operator_id'] ?? 0);
+            if ($oid > 0) $operatorIds[] = $oid;
+        }
+        $operatorIds = array_values(array_unique($operatorIds));
+
+        $adminMap = [];
+        $userMap = [];
+        if ($operatorIds) {
+            try {
+                $admins = Db::name('admin')
+                    ->whereIn('id', $operatorIds)
+                    ->whereIn('tenant_id', [$tenantId, 0])
+                    ->field('id,username,nickname')
+                    ->select()
+                    ->toArray();
+                foreach ($admins as $a) {
+                    $id = (int) ($a['id'] ?? 0);
+                    if ($id <= 0) continue;
+                    $adminMap[$id] = (string) (($a['nickname'] ?? '') ?: ($a['username'] ?? ''));
+                }
+            } catch (\Throwable $e) {
+                $adminMap = [];
+            }
+            try {
+                $users = Db::name('user')
+                    ->where('tenant_id', $tenantId)
+                    ->whereIn('id', $operatorIds)
+                    ->field('id,username,nickname')
+                    ->select()
+                    ->toArray();
+                foreach ($users as $u) {
+                    $id = (int) ($u['id'] ?? 0);
+                    if ($id <= 0) continue;
+                    $userMap[$id] = (string) (($u['nickname'] ?? '') ?: ($u['username'] ?? ''));
+                }
+            } catch (\Throwable $e) {
+                $userMap = [];
+            }
+        }
+
+        foreach ($list as &$row) {
+            if (!isset($row['quantity']) && isset($row['change_quantity'])) {
+                $row['quantity'] = $row['change_quantity'];
+            }
+            $oid = (int) ($row['operator_id'] ?? 0);
+            $row['operator_name'] = $adminMap[$oid] ?? ($userMap[$oid] ?? ($oid > 0 ? (string) $oid : ''));
+        }
+
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
@@ -306,6 +356,56 @@ class Stock extends Backend
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
 
+        $operatorIds = [];
+        foreach ($list as $row) {
+            $oid = (int) ($row['operator_id'] ?? 0);
+            if ($oid > 0) $operatorIds[] = $oid;
+        }
+        $operatorIds = array_values(array_unique($operatorIds));
+
+        $adminMap = [];
+        $userMap = [];
+        if ($operatorIds) {
+            try {
+                $admins = Db::name('admin')
+                    ->where('tenant_id', $tenantId)
+                    ->whereIn('id', $operatorIds)
+                    ->field('id,username,nickname')
+                    ->select()
+                    ->toArray();
+                foreach ($admins as $a) {
+                    $id = (int) ($a['id'] ?? 0);
+                    if ($id <= 0) continue;
+                    $adminMap[$id] = (string) (($a['nickname'] ?? '') ?: ($a['username'] ?? ''));
+                }
+            } catch (\Throwable $e) {
+                $adminMap = [];
+            }
+            try {
+                $users = Db::name('user')
+                    ->where('tenant_id', $tenantId)
+                    ->whereIn('id', $operatorIds)
+                    ->field('id,username,nickname')
+                    ->select()
+                    ->toArray();
+                foreach ($users as $u) {
+                    $id = (int) ($u['id'] ?? 0);
+                    if ($id <= 0) continue;
+                    $userMap[$id] = (string) (($u['nickname'] ?? '') ?: ($u['username'] ?? ''));
+                }
+            } catch (\Throwable $e) {
+                $userMap = [];
+            }
+        }
+
+        foreach ($list as &$row) {
+            if (!isset($row['quantity']) && isset($row['change_quantity'])) {
+                $row['quantity'] = $row['change_quantity'];
+            }
+            $oid = (int) ($row['operator_id'] ?? 0);
+            $row['operator_name'] = $adminMap[$oid] ?? ($userMap[$oid] ?? ($oid > 0 ? (string) $oid : ''));
+        }
+
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
 
@@ -342,6 +442,56 @@ class Stock extends Backend
 
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
+
+        $operatorIds = [];
+        foreach ($list as $row) {
+            $oid = (int) ($row['operator_id'] ?? 0);
+            if ($oid > 0) $operatorIds[] = $oid;
+        }
+        $operatorIds = array_values(array_unique($operatorIds));
+
+        $adminMap = [];
+        $userMap = [];
+        if ($operatorIds) {
+            try {
+                $admins = Db::name('admin')
+                    ->whereIn('id', $operatorIds)
+                    ->whereIn('tenant_id', [$tenantId, 0])
+                    ->field('id,username,nickname')
+                    ->select()
+                    ->toArray();
+                foreach ($admins as $a) {
+                    $id = (int) ($a['id'] ?? 0);
+                    if ($id <= 0) continue;
+                    $adminMap[$id] = (string) (($a['nickname'] ?? '') ?: ($a['username'] ?? ''));
+                }
+            } catch (\Throwable $e) {
+                $adminMap = [];
+            }
+            try {
+                $users = Db::name('user')
+                    ->where('tenant_id', $tenantId)
+                    ->whereIn('id', $operatorIds)
+                    ->field('id,username,nickname')
+                    ->select()
+                    ->toArray();
+                foreach ($users as $u) {
+                    $id = (int) ($u['id'] ?? 0);
+                    if ($id <= 0) continue;
+                    $userMap[$id] = (string) (($u['nickname'] ?? '') ?: ($u['username'] ?? ''));
+                }
+            } catch (\Throwable $e) {
+                $userMap = [];
+            }
+        }
+
+        foreach ($list as &$row) {
+            if (!isset($row['quantity']) && isset($row['change_quantity'])) {
+                $row['quantity'] = $row['change_quantity'];
+            }
+            $oid = (int) ($row['operator_id'] ?? 0);
+            $row['operator_name'] = $adminMap[$oid] ?? ($userMap[$oid] ?? ($oid > 0 ? (string) $oid : ''));
+        }
 
         return $this->success('', ['total' => $total, 'list' => $list]);
     }

@@ -749,6 +749,7 @@ class Report extends Backend
         $adminId = $this->auth->id ?? 0;
         $success = 0;
         $fail = 0;
+        $userNotify = [];
 
         Db::startTrans();
         try {
@@ -803,6 +804,14 @@ class Report extends Backend
                 $report->save();
 
                 $allocation = null;
+                $allocationInfo = null;
+                try {
+                    $allocationInfo = AllocationModel::with(['order', 'model.product', 'process'])
+                        ->where('tenant_id', $tenantId)
+                        ->find($report->allocation_id);
+                } catch (\Throwable $e) {
+                    $allocationInfo = null;
+                }
                 if ($status == 1 && $qualityStatus == 1) {
                     $allocation = AllocationModel::where('tenant_id', $tenantId)->find($report->allocation_id);
                     if ($allocation && $report->quantity > 0 && $allocation->model_id > 0) {
@@ -861,12 +870,53 @@ class Report extends Backend
                 }
 
                 $success++;
+
+                $orderNo = '';
+                $productName = '';
+                $modelName = '';
+                $processName = '';
+                if ($allocationInfo) {
+                    $orderNo = (string) (($allocationInfo->order->order_no ?? '') ?: '');
+                    $modelName = (string) (($allocationInfo->model->name ?? '') ?: '');
+                    $productName = (string) ((($allocationInfo->model && $allocationInfo->model->product) ? ($allocationInfo->model->product->name ?? '') : '') ?: '');
+                    $processName = (string) (($allocationInfo->process->name ?? '') ?: '');
+                }
+                $tTitle = $status === 1 ? '报工已通过' : '报工已拒绝';
+                $tLevel = $status === 1 ? 'info' : 'warning';
+                $tContent = '订单：' . $orderNo
+                    . '，产品：' . $productName
+                    . '，型号：' . $modelName
+                    . '，工序：' . $processName
+                    . '，数量：' . (string) ((int) $report->quantity);
+                if ($status !== 1 && $reason !== '') {
+                    $tContent .= '，原因：' . $reason;
+                }
+                $userId = (int) $report->user_id;
+                if ($userId > 0) {
+                    $userNotify[] = [
+                        'user_id' => $userId,
+                        'title' => $tTitle,
+                        'content' => $tContent,
+                        'level' => $tLevel,
+                    ];
+                }
             }
 
             Db::commit();
             $msg = "审核成功：{$success} 条";
             if ($fail > 0) {
                 $msg .= "，失败：{$fail} 条（可能是记录不存在或已审核）";
+            }
+            $st = (int) $status;
+            $act = $st === 1 ? '通过' : '拒绝';
+            $lvl = $st === 1 ? 'info' : 'warning';
+            $extra = '';
+            if ($st !== 1 && $reason !== '') {
+                $extra = '，原因：' . $reason;
+            }
+            $this->pushAdminNotification('报工审核' . $act, '成功：' . $success . '，失败：' . $fail . $extra, $lvl, 0, $tenantId);
+            foreach ($userNotify as $n) {
+                $this->pushUserNotification((int) ($n['user_id'] ?? 0), (string) ($n['title'] ?? ''), (string) ($n['content'] ?? ''), (string) ($n['level'] ?? 'info'), $tenantId);
             }
             return $this->auditRespond(true, $msg);
         } catch (\Exception $e) {

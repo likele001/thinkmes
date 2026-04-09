@@ -41,6 +41,10 @@ Page({
     wx.switchTab({ url: '/pages/user-index/user-index' });
   },
 
+  goNotices() {
+    wx.navigateTo({ url: '/pages/user-notices/user-notices' });
+  },
+
   logout() {
     wx.showModal({
       title: '确认退出',

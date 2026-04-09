@@ -65,6 +65,7 @@ Route::group('mes', function () {
 
     Route::get('schedule/index', 'mes.Schedule/index');
     Route::get('schedule', 'mes.Schedule/index');
+    Route::get('schedule/ganttData', 'mes.Schedule/ganttData');
     Route::post('schedule/generate', 'mes.Schedule/generate');
     Route::post('schedule/publish', 'mes.Schedule/publish');
     Route::post('schedule/del', 'mes.Schedule/del');

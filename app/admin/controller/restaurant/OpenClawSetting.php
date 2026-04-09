@@ -82,7 +82,7 @@ class OpenClawSetting extends Backend
         return $this->fetchWithLayout('restaurant/openclaw_setting/index');
     }
 
-    private function resolveTenantId(): int
+    protected function resolveTenantId(): int
     {
         $tenantId = $this->getTenantId();
         if ($tenantId > 0) return $tenantId;

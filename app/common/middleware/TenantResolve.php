@@ -25,6 +25,19 @@ class TenantResolve
                 $request->tenantId = $tenantId;
                 return $next($request);
             }
+            if (!empty($admin) && isset($admin['tenant_id']) && (int)$admin['tenant_id'] === 0) {
+                $viewTenantId = 0;
+                try {
+                    $v = Session::get('platform_tenant_view_id');
+                    if ($v !== null && $v !== '') {
+                        $viewTenantId = max(0, (int) $v);
+                    }
+                } catch (\Throwable $e) {
+                    $viewTenantId = 0;
+                }
+                $request->tenantId = $viewTenantId;
+                return $next($request);
+            }
         } catch (\Throwable $e) {
             // 忽略 session 读取错误，继续下面的解析逻辑
         }

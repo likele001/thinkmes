@@ -1,0 +1,538 @@
+<!-- 页面标题 -->
+<div class="ai-page-header">
+  <h1 class="ai-page-title"><i class="fas fa-magic me-2" style="-webkit-text-fill-color:#7c5cfc;"></i>AI 生成</h1>
+  <p class="ai-page-desc">选择模板，填写变量，一键生成专业内容</p>
+</div>
+
+<!-- 快速选择模板 -->
+<div class="ai-card ai-card-glow" style="margin-bottom:20px;">
+  <div class="ai-card-title"><i class="fas fa-layer-group"></i> 选择模板</div>
+  <div class="ai-cat-bar" id="gen-cat-bar"></div>
+  <div class="ai-tpl-grid" id="gen-tpl-list" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));"></div>
+</div>
+
+<!-- 变量填写 -->
+<div class="ai-card ai-card-glow" id="gen-vars-area" style="display:none; margin-bottom:20px;">
+  <div class="ai-card-title"><i class="fas fa-pen-to-square"></i> 填写变量</div>
+  <div id="gen-vars-fields"></div>
+  <div style="margin-top:10px;">
+    <button class="ai-btn ai-btn-ghost ai-btn-sm" type="button" id="gen-adv-toggle"><i class="fas fa-sliders-h me-1"></i>高级编辑</button>
+  </div>
+  <div id="gen-adv-area" style="display:none; margin-top:12px;">
+    <label class="ai-label">系统提示词</label>
+    <textarea class="ai-textarea" id="gen-adv-system" rows="2" placeholder="可选"></textarea>
+    <div style="height:10px;"></div>
+    <label class="ai-label">提示词内容</label>
+    <textarea class="ai-textarea" id="gen-adv-prompt" rows="6" placeholder="可编辑模板内容"></textarea>
+    <div style="height:10px;"></div>
+    <label class="ai-label">最终提示词预览（联动上方选择）</label>
+    <div class="ai-result-box" id="gen-adv-preview" style="white-space:pre-wrap; max-height:260px; overflow:auto;"></div>
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="ai-btn ai-btn-ghost ai-btn-sm" type="button" id="gen-adv-reset">恢复模板默认</button>
+      <span style="font-size:12px; color:var(--ai-text-muted); line-height:28px;">仅影响本次生成，不会修改模板</span>
+    </div>
+  </div>
+  <div style="margin-top:20px;">
+    <button class="ai-btn ai-btn-primary ai-btn-block ai-btn-lg" id="btn-gen-run">
+      <i class="fas fa-rocket"></i> 开始生成
+    </button>
+  </div>
+</div>
+
+<!-- 生成结果 -->
+<div class="ai-card" id="gen-result-area" style="display:none; margin-bottom:20px;">
+  <div class="ai-card-title"><i class="fas fa-check-circle"></i> 生成结果</div>
+  <div class="ai-result-box" id="gen-result-text"></div>
+  <div style="margin-top:16px; display:flex; gap:8px;">
+    <button class="ai-btn ai-btn-ghost flex-fill" id="gen-btn-copy"><i class="fas fa-copy me-1"></i>复制</button>
+    <button class="ai-btn ai-btn-primary flex-fill" id="gen-btn-regen"><i class="fas fa-rotate me-1"></i>重新生成</button>
+    <button class="ai-btn ai-btn-info flex-fill" id="gen-btn-image" style="display:none;"><i class="fas fa-image me-1"></i>生成图片</button>
+    <button class="ai-btn ai-btn-success flex-fill" id="gen-btn-video" style="display:none;"><i class="fas fa-video me-1"></i>生成视频</button>
+  </div>
+  <div style="margin-top:10px; font-size:12px; color:var(--ai-text-muted);" id="gen-result-meta"></div>
+
+  <div id="gen-image-area" style="display:none; margin-top:16px; padding:16px; background:#f8f9fa; border-radius:8px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <i class="fas fa-image" style="color:#7c5cfc;"></i>
+      <span style="font-weight:600;">图片生成</span>
+      <span id="gen-image-status" style="font-size:12px; color:#666;"></span>
+    </div>
+    <div id="gen-image-progress" style="display:none; margin-bottom:12px;">
+      <div style="height:6px; background:#e9ecef; border-radius:3px; overflow:hidden;">
+        <div id="gen-image-progress-bar" style="height:100%; background:linear-gradient(90deg,#7c5cfc,#4facfe); width:0%; transition:width 0.3s;"></div>
+      </div>
+      <div style="font-size:12px; color:#666; margin-top:4px;" id="gen-image-progress-text">提交中...</div>
+    </div>
+    <div id="gen-image-result" style="display:none;">
+      <img id="gen-image-preview" style="width:100%; max-width:640px; border-radius:8px; display:block;" />
+      <div style="margin-top:8px;">
+        <a id="gen-image-download" class="ai-btn ai-btn-ghost ai-btn-sm" target="_blank"><i class="fas fa-download me-1"></i>下载图片</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 视频生成区域 -->
+  <div id="gen-video-area" style="display:none; margin-top:16px; padding:16px; background:#f8f9fa; border-radius:8px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+      <i class="fas fa-video" style="color:#7c5cfc;"></i>
+      <span style="font-weight:600;">视频生成</span>
+      <span id="gen-video-status" style="font-size:12px; color:#666;"></span>
+    </div>
+    <div id="gen-video-progress" style="display:none; margin-bottom:12px;">
+      <div style="height:6px; background:#e9ecef; border-radius:3px; overflow:hidden;">
+        <div id="gen-video-progress-bar" style="height:100%; background:linear-gradient(90deg,#7c5cfc,#a78bfa); width:0%; transition:width 0.3s;"></div>
+      </div>
+      <div style="font-size:12px; color:#666; margin-top:4px;" id="gen-video-progress-text">提交中...</div>
+    </div>
+    <div id="gen-video-result" style="display:none;">
+      <video id="gen-video-player" controls style="width:100%; max-height:400px; border-radius:8px; background:#000;"></video>
+      <div style="margin-top:8px;">
+        <a id="gen-video-download" class="ai-btn ai-btn-ghost ai-btn-sm" target="_blank"><i class="fas fa-download me-1"></i>下载视频</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 未选模板提示 -->
+<div id="gen-no-tpl" class="ai-empty">
+  <i class="fas fa-hand-pointer"></i>
+  <p>请在上方选择一个模板开始创作</p>
+  <a href="/index/prompt/template/index" class="ai-btn ai-btn-ghost ai-btn-sm" style="margin-top:12px;">前往模板广场</a>
+</div>
+
+<!-- 额度不足 -->
+<div id="gen-no-quota" style="display:none" class="ai-alert ai-alert-warning">
+  <i class="fas fa-triangle-exclamation me-1"></i> 额度不足，请先 <a href="/index/prompt/purchase/index">购买额度</a>
+</div>
+
+<script>
+(function(){
+  var currentCat = 0, selectedTplId = 0, tplData = null, currentGenerationId = 0;
+  var videoPollTimer = null;
+  var tplDefaultPrompt = '', tplDefaultSystem = '';
+  var advDirty = false;
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function collectVars($scope) {
+    var vars = {};
+    $scope.find('input,textarea,select').each(function(){
+      var name = $(this).attr('name');
+      if (!name) return;
+      vars[name] = $(this).val();
+    });
+    return vars;
+  }
+
+  function applyVars(text, vars) {
+    var out = String(text || '');
+    Object.keys(vars || {}).forEach(function(k){
+      out = out.split('{' + k + '}').join(String(vars[k]));
+    });
+    return out;
+  }
+
+  function buildFinalPrompt(promptTemplate, systemTemplate, vars) {
+    var promptText = applyVars(promptTemplate, vars);
+    var systemText = applyVars(systemTemplate, vars);
+
+    var maxWords = parseInt((tplData && tplData.output_words) || 0, 10) || 0;
+    var userWords = parseInt(vars.word_count || 0, 10) || 0;
+    if (maxWords > 0 && userWords > maxWords) userWords = maxWords;
+    if (userWords > 0) {
+      promptText += "\n\n请用中文输出，字数约" + userWords + "字（可上下浮动20%），内容尽量具体可落地，不要只给要点。";
+    }
+
+    var extPrompt = String((tplData && tplData.ext_prompt) || '').trim();
+    if (extPrompt) {
+      promptText += "\n\n" + applyVars(extPrompt, vars);
+    } else {
+      var aud = String(vars.audience || '').trim();
+      var mood = String(vars.mood || '').trim();
+      var emo = String(vars.emotion || '').trim();
+      var tone = String(vars.tone || '').trim();
+      if (aud || mood || emo || tone) {
+        promptText += "\n\n写作设定：\n"
+          + (aud ? "- 受众群体：" + aud + "\n" : "")
+          + (mood ? "- 心情：" + mood + "\n" : "")
+          + (emo ? "- 情绪：" + emo + "\n" : "")
+          + (tone ? "- 语气风格：" + tone + "\n" : "")
+          + "请确保整体表达符合上述设定。";
+      }
+    }
+    return { promptText: promptText, systemText: systemText };
+  }
+
+  function updateAdvPreview() {
+    if (!tplData) return;
+    var vars = collectVars($('#gen-vars-fields'));
+    var basePrompt = $('#gen-adv-prompt').val();
+    var baseSystem = $('#gen-adv-system').val();
+    var res = buildFinalPrompt(basePrompt, baseSystem, vars);
+    var preview = '';
+    if (String(res.systemText || '').trim() !== '') {
+      preview += "【系统提示词】\n" + res.systemText + "\n\n";
+    }
+    preview += "【提示词内容】\n" + res.promptText;
+    $('#gen-adv-preview').text(preview);
+  }
+
+  function loadCategories(){
+    $.get('/api/prompt/template/categories', function(r){
+      if (r.code !== 1) return;
+      var list = r.data.list || [];
+      var html = '<button class="ai-cat-btn active" data-id="0">全部</button>';
+      list.forEach(function(c){
+        html += '<button class="ai-cat-btn" data-id="' + c.id + '"><i class="' + esc(c.icon||'fas fa-tag') + '"></i> ' + esc(c.name) + '</button>';
+      });
+      $('#gen-cat-bar').html(html);
+    }, 'json');
+  }
+
+  function loadTemplates(){
+    $.get('/api/prompt/template/index', { page: 1, limit: 50, category_id: currentCat }, function(r){
+      if (r.code !== 1) return;
+      var list = r.data.list || [];
+      if (list.length === 0) {
+        $('#gen-tpl-list').html('<div style="grid-column:1/-1;" class="ai-empty"><p>该分类暂无模板</p></div>');
+        return;
+      }
+      var html = '';
+      list.forEach(function(t){
+        var sel = t.id === selectedTplId ? ' selected' : '';
+        html += '<div class="ai-tpl-card gen-tpl-item' + sel + '" data-id="' + t.id + '">';
+        html += '<div class="ai-tpl-icon"><i class="' + esc(t.icon||'fas fa-file-alt') + '"></i></div>';
+        html += '<div class="ai-tpl-title">' + esc(t.title) + '</div>';
+        html += '</div>';
+      });
+      $('#gen-tpl-list').html(html);
+    }, 'json');
+  }
+
+  $(document).on('click', '.gen-tpl-item', function(){
+    var id = parseInt($(this).data('id'), 10);
+    if (id === selectedTplId) return;
+    selectedTplId = id;
+    $('.gen-tpl-item').removeClass('selected');
+    $(this).addClass('selected');
+
+    $.get('/api/prompt/template/detail', { id: id }, function(r){
+      if (r.code !== 1) return;
+      tplData = r.data;
+      tplDefaultPrompt = String((tplData && tplData.prompt_text) || '');
+      tplDefaultSystem = String((tplData && tplData.system_prompt) || '');
+      advDirty = false;
+      $('#gen-adv-prompt').val(tplDefaultPrompt);
+      $('#gen-adv-system').val(tplDefaultSystem);
+      function parseVars(v){
+        if (Array.isArray(v)) return v;
+        if (typeof v === 'string') { try { return JSON.parse(v||'[]'); } catch(e) { return []; } }
+        return [];
+      }
+      function mergeVars(a,b){
+        var out = [];
+        var seen = {};
+        (a||[]).concat(b||[]).forEach(function(x){
+          if (!x || !x.name) return;
+          if (seen[x.name]) return;
+          seen[x.name] = 1;
+          out.push(x);
+        });
+        return out;
+      }
+      var defaults = [
+        { name: 'word_count', label: '字数', type: 'select', required: false, placeholder: '请选择', options: [100,200,300,500,800,1200] },
+        { name: 'audience', label: '受众群体', type: 'select', required: false, placeholder: '请选择', options: ['年轻女性','年轻男性','中年男性','中年女性','大学生','职场打工人','上班族白领','宝妈群体','中老年群体','创业者','副业兼职人群','实体店老板','电商卖家','短视频博主','学生党','单身人群','情侣夫妻','高压力人群','低消费人群','品质追求人群'] },
+        { name: 'mood', label: '心情', type: 'select', required: false, placeholder: '请选择', options: ['开心愉悦','轻松放松','温暖治愈','感动走心','平静安心','解压舒缓','期待向往','满足幸福','治愈疗伤','充满希望','轻松自在','温馨舒适'] },
+        { name: 'emotion', label: '情绪', type: 'select', required: false, placeholder: '请选择', options: ['孤独落寞','焦虑烦躁','迷茫无助','压力山大','委屈心酸','疲惫心累','不甘不服','现实扎心','无奈感慨','坚强倔强','自我和解','释然放下'] },
+        { name: 'tone', label: '语气风格', type: 'select', required: false, placeholder: '请选择', options: ['温柔治愈','接地气实在','犀利现实','幽默搞笑','正能量励志','沉稳成熟','感性走心','简洁干练','亲切口语','高级质感','温和理性','共鸣扎心'] }
+      ];
+      var vars = mergeVars(mergeVars(parseVars(tplData.variables), parseVars(tplData.ext_variables)), defaults);
+
+      $('#gen-no-tpl').hide();
+      if (vars.length === 0) {
+        $('#gen-vars-fields').html('<div class="ai-alert ai-alert-info" style="margin:0;">该模板无需填写变量，可直接生成。</div>');
+      } else {
+        var fieldsHtml = '';
+        vars.forEach(function(v){
+          if (v.name === 'word_count' && (tplData.output_words || 0) > 0) {
+            var max = parseInt(tplData.output_words, 10) || 0;
+            if (max > 0 && Array.isArray(v.options)) {
+              var arr = v.options.filter(function(x){ return parseInt(x,10) <= max; });
+              if (arr.indexOf(max) === -1) arr.push(max);
+              arr.sort(function(a,b){ return parseInt(a,10)-parseInt(b,10); });
+              v = $.extend({}, v, { options: arr });
+            }
+          }
+          fieldsHtml += '<div style="margin-bottom:14px;">';
+          fieldsHtml += '<label class="ai-label">' + esc(v.label || v.name) + '</label>';
+          var def = (v.default !== undefined && v.default !== null) ? String(v.default) : '';
+          if (v.type === 'textarea') {
+            fieldsHtml += '<textarea class="ai-textarea" name="' + esc(v.name) + '" rows="3" placeholder="' + esc(v.placeholder || '请输入' + (v.label||v.name)) + '">' + esc(def) + '</textarea>';
+          } else if (v.type === 'select') {
+            fieldsHtml += '<select class="ai-input" name="' + esc(v.name) + '">';
+            fieldsHtml += '<option value="">' + esc(v.placeholder || '请选择') + '</option>';
+            if (Array.isArray(v.options)) {
+              v.options.forEach(function(opt){
+                var val = (typeof opt === 'object' && opt) ? (opt.value !== undefined ? opt.value : (opt.label !== undefined ? opt.label : '')) : opt;
+                var lab = (typeof opt === 'object' && opt) ? (opt.label !== undefined ? opt.label : (opt.value !== undefined ? opt.value : '')) : opt;
+                val = String(val);
+                lab = String(lab);
+                var sel = (def !== '' && val === def) ? ' selected' : '';
+                fieldsHtml += '<option value="' + esc(val) + '"' + sel + '>' + esc(lab) + '</option>';
+              });
+            } else if (v.options && typeof v.options === 'object') {
+              Object.keys(v.options).forEach(function(k){
+                var val = String(k);
+                var lab = String(v.options[k]);
+                var sel = (def !== '' && val === def) ? ' selected' : '';
+                fieldsHtml += '<option value="' + esc(val) + '"' + sel + '>' + esc(lab) + '</option>';
+              });
+            }
+            fieldsHtml += '</select>';
+          } else if (v.type === 'number') {
+            fieldsHtml += '<input type="number" class="ai-input" name="' + esc(v.name) + '" value="' + esc(def) + '" placeholder="' + esc(v.placeholder || '请输入' + (v.label||v.name)) + '">';
+          } else {
+            fieldsHtml += '<input type="text" class="ai-input" name="' + esc(v.name) + '" value="' + esc(def) + '" placeholder="' + esc(v.placeholder || '请输入' + (v.label||v.name)) + '">';
+          }
+          if (v.tip) fieldsHtml += '<div style="font-size:12px; color:var(--ai-text-muted); margin-top:4px;">' + esc(v.tip) + '</div>';
+          fieldsHtml += '</div>';
+        });
+        $('#gen-vars-fields').html(fieldsHtml);
+      }
+      $('#gen-vars-area').show();
+      $('#gen-result-area').hide();
+      updateAdvPreview();
+    }, 'json');
+  });
+
+  $('#gen-adv-toggle').on('click', function(){
+    var show = $('#gen-adv-area').is(':visible');
+    if (show) $('#gen-adv-area').hide();
+    else {
+      $('#gen-adv-area').show();
+      updateAdvPreview();
+    }
+  });
+  $('#gen-adv-reset').on('click', function(){
+    advDirty = false;
+    $('#gen-adv-prompt').val(tplDefaultPrompt);
+    $('#gen-adv-system').val(tplDefaultSystem);
+    updateAdvPreview();
+  });
+  $('#gen-adv-prompt, #gen-adv-system').on('input', function(){
+    advDirty = true;
+    updateAdvPreview();
+  });
+  $(document).on('change input', '#gen-vars-fields input, #gen-vars-fields textarea, #gen-vars-fields select', function(){
+    updateAdvPreview();
+  });
+
+  $('#btn-gen-run').on('click', function(){
+    if (selectedTplId <= 0) return;
+    var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 生成中…');
+    $('#gen-result-area').hide();
+    $('#gen-no-quota').hide();
+
+    var vars = collectVars($('#gen-vars-fields'));
+
+    $.post('/api/prompt/generate/run', {
+      template_id: selectedTplId,
+      variables: JSON.stringify(vars),
+      prompt_text: $('#gen-adv-prompt').val(),
+      system_prompt: $('#gen-adv-system').val()
+    }, function(r){
+      $btn.prop('disabled', false).html('<i class="fas fa-rocket"></i> 开始生成');
+      if (r.code !== 1) {
+        if (r.code === -1) $('#gen-no-quota').show();
+        else alert(r.msg || '生成失败');
+        return;
+      }
+      currentGenerationId = r.data.generation_id || 0;
+      $('#gen-result-text').text(r.data.content || '');
+      $('#gen-result-meta').text('消耗 ' + (r.data.tokens_used||0) + ' tokens · 剩余额度 ' + (r.data.quota ? r.data.quota.total : '-'));
+      $('#gen-result-area').show();
+      $('#gen-btn-video').show();
+      $('#gen-btn-image').show();
+      $('#gen-image-area').hide();
+      $('#gen-video-area').hide();
+      if (r.data.quota) $('#header-quota').html('<i class="fas fa-bolt me-1"></i>余额: <strong>' + r.data.quota.total + '</strong>');
+    }, 'json').fail(function(){
+      $btn.prop('disabled', false).html('<i class="fas fa-rocket"></i> 开始生成');
+      alert('网络请求失败');
+    });
+  });
+
+  $('#gen-btn-copy').on('click', function(){
+    var text = $('#gen-result-text').text();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function(){ alert('已复制到剪贴板'); });
+    } else {
+      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      alert('已复制到剪贴板');
+    }
+  });
+
+  $('#gen-btn-regen').on('click', function(){ $('#btn-gen-run').click(); });
+
+  // 生成视频
+  $('#gen-btn-video').on('click', function(){
+    if (currentGenerationId <= 0) return;
+    var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 提交中…');
+
+    $('#gen-video-area').show();
+    $('#gen-video-progress').show();
+    $('#gen-video-result').hide();
+    $('#gen-video-progress-bar').css('width', '10%');
+    $('#gen-video-progress-text').text('提交视频生成任务…');
+    $('#gen-video-status').text('');
+
+    $.post('/api/prompt/generate/generateVideo', {
+      generation_id: currentGenerationId,
+      duration: 5,
+      quality: 'quality',
+      with_audio: true
+    }, function(r){
+      $btn.prop('disabled', false).html('<i class="fas fa-video me-1"></i>生成中');
+      if (r.code !== 1) {
+        $('#gen-video-progress-bar').css('width', '0%');
+        $('#gen-video-progress-text').text('失败：' + (r.msg || '未知错误'));
+        $('#gen-video-status').text('失败');
+        return;
+      }
+
+      $('#gen-video-progress-bar').css('width', '20%');
+      $('#gen-video-progress-text').text('任务已提交，AI正在生成视频，请稍候…');
+      $('#gen-video-status').text('生成中');
+
+      startVideoPoll(currentGenerationId);
+    }, 'json').fail(function(){
+      $btn.prop('disabled', false).html('<i class="fas fa-video me-1"></i>生成视频');
+      $('#gen-video-progress-bar').css('width', '0%');
+      $('#gen-video-progress-text').text('网络请求失败');
+      $('#gen-video-status').text('失败');
+    });
+  });
+
+  // 轮询视频生成状态
+  function startVideoPoll(generationId) {
+    if (videoPollTimer) clearInterval(videoPollTimer);
+
+    var pollCount = 0;
+    var maxPolls = 60; // 最多轮询60次（约3分钟）
+
+    videoPollTimer = setInterval(function(){
+      pollCount++;
+      if (pollCount > maxPolls) {
+        clearInterval(videoPollTimer);
+        $('#gen-video-progress-text').text('生成超时，请稍后刷新页面查看结果');
+        return;
+      }
+
+      var progress = Math.min(90, 20 + pollCount);
+      $('#gen-video-progress-bar').css('width', progress + '%');
+      $('#gen-video-progress-text').text('AI正在生成视频…（' + pollCount + '秒）');
+
+      $.get('/api/prompt/generate/queryVideoTask', { generation_id: generationId }, function(r){
+        if (r.code !== 1) return;
+
+        var status = r.data.video_status;
+        if (status === 'SUCCESS') {
+          clearInterval(videoPollTimer);
+          $('#gen-video-progress-bar').css('width', '100%');
+          $('#gen-video-progress-text').text('视频生成成功！');
+          $('#gen-video-status').text('完成');
+
+          $('#gen-video-result').show();
+          $('#gen-video-player').attr('src', r.data.video_url);
+          $('#gen-video-download').attr('href', r.data.video_url);
+          $('#gen-btn-video').html('<i class="fas fa-video me-1"></i>已生成');
+        } else if (status === 'FAIL') {
+          clearInterval(videoPollTimer);
+          $('#gen-video-progress-bar').css('width', '0%');
+          $('#gen-video-progress-text').text('生成失败：' + (r.data.video_error_msg || '未知错误'));
+          $('#gen-video-status').text('失败');
+          $('#gen-btn-video').prop('disabled', false).html('<i class="fas fa-video me-1"></i>重试');
+        }
+      }, 'json');
+    }, 3000); // 每3秒查询一次
+  }
+
+  $('#gen-btn-image').on('click', function(){
+    if (currentGenerationId <= 0) return;
+    var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 提交中…');
+
+    $('#gen-image-area').show();
+    $('#gen-image-progress').show();
+    $('#gen-image-result').hide();
+    $('#gen-image-progress-bar').css('width', '10%');
+    $('#gen-image-progress-text').text('提交图片生成任务…');
+    $('#gen-image-status').text('');
+
+    $.post('/api/prompt/generate/generateImage', { generation_id: currentGenerationId, size: '1280x1280', quality: 'hd' }, function(r){
+      $btn.prop('disabled', false).html('<i class="fas fa-image me-1"></i>生成中');
+      if (r.code !== 1) {
+        $('#gen-image-progress-bar').css('width', '0%');
+        $('#gen-image-progress-text').text('失败：' + (r.msg || '未知错误'));
+        $('#gen-image-status').text('失败');
+        return;
+      }
+      $('#gen-image-progress-bar').css('width', '20%');
+      $('#gen-image-progress-text').text('任务已提交，AI正在生成图片，请稍候…');
+      $('#gen-image-status').text('生成中');
+      startImagePoll(currentGenerationId);
+    }, 'json').fail(function(){
+      $btn.prop('disabled', false).html('<i class="fas fa-image me-1"></i>生成图片');
+      $('#gen-image-progress-bar').css('width', '0%');
+      $('#gen-image-progress-text').text('网络请求失败');
+      $('#gen-image-status').text('失败');
+    });
+  });
+
+  function startImagePoll(generationId) {
+    var pollCount = 0;
+    var maxPolls = 60;
+    var timer = setInterval(function(){
+      pollCount++;
+      if (pollCount > maxPolls) {
+        clearInterval(timer);
+        $('#gen-image-progress-text').text('生成超时，请稍后刷新页面查看结果');
+        return;
+      }
+      var progress = Math.min(90, 20 + pollCount);
+      $('#gen-image-progress-bar').css('width', progress + '%');
+      $('#gen-image-progress-text').text('AI正在生成图片…（' + pollCount + '秒）');
+      $.get('/api/prompt/generate/queryImageTask', { generation_id: generationId }, function(r){
+        if (r.code !== 1) return;
+        var status = r.data.image_status;
+        if (status === 'SUCCESS') {
+          clearInterval(timer);
+          $('#gen-image-progress-bar').css('width', '100%');
+          $('#gen-image-progress-text').text('图片生成成功！');
+          $('#gen-image-status').text('完成');
+          $('#gen-image-result').show();
+          $('#gen-image-preview').attr('src', r.data.image_url);
+          $('#gen-image-download').attr('href', r.data.image_url);
+          $('#gen-btn-image').html('<i class="fas fa-image me-1"></i>已生成');
+        }
+        if (status === 'FAIL') {
+          clearInterval(timer);
+          $('#gen-image-progress-text').text('图片生成失败');
+          $('#gen-image-status').text('失败');
+          $('#gen-btn-image').html('<i class="fas fa-image me-1"></i>生成图片');
+        }
+      }, 'json');
+    }, 1000);
+  }
+
+  $(document).on('click', '#gen-cat-bar .ai-cat-btn', function(){
+    $('#gen-cat-bar .ai-cat-btn').removeClass('active');
+    $(this).addClass('active');
+    currentCat = parseInt($(this).data('id'), 10) || 0;
+    loadTemplates();
+  });
+
+  loadCategories();
+  loadTemplates();
+})();
+</script>
