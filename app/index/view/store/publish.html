@@ -1,0 +1,220 @@
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+      <div>
+        <div class="h5 mb-1">发布应用</div>
+        <div class="text-muted small">上传 zip 应用包，填写信息后即可在应用商店上架。</div>
+      </div>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="/index/store/my">我的应用</a>
+        <a class="btn btn-outline-primary" href="/index/store">返回商店</a>
+      </div>
+    </div>
+    <hr>
+
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <label class="form-label">插件标识（唯一，小写字母开头）</label>
+        <input type="text" class="form-control" id="name" placeholder="例如: thinkmes_mes">
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">标题</label>
+        <input type="text" class="form-control" id="title" placeholder="例如: MES 制造执行系统">
+      </div>
+      <div class="col-12">
+        <label class="form-label">描述</label>
+        <textarea class="form-control" id="description" rows="3" placeholder="简单说明功能、适用场景、安装方式"></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">详细介绍与说明</label>
+        <textarea class="form-control" id="detail" rows="8" placeholder="建议包含：功能亮点、使用步骤、安装说明、注意事项、更新说明等"></textarea>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label">分类</label>
+        <select class="form-select" id="category">
+          <option value="plugin">插件</option>
+          <option value="tool">工具</option>
+          <option value="template">模板</option>
+          <option value="theme">主题</option>
+          <option value="other" selected>其它</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label">版本号</label>
+        <input type="text" class="form-control" id="version" value="2.0">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label">价格（元，0 为免费）</label>
+        <input type="number" class="form-control" id="price" value="0" min="0" step="0.01">
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">主页（可选）</label>
+        <input type="text" class="form-control" id="homepage" placeholder="https://">
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">关键词（可选）</label>
+        <input type="text" class="form-control" id="keywords" placeholder="例如: MES,排产,报工">
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">应用包（zip）</label>
+        <input type="file" class="form-control" id="zipFile" accept=".zip">
+        <div class="small text-muted mt-1" id="zipHint">未上传</div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">截图（可选）</label>
+        <input type="file" class="form-control" id="shotFiles" accept="image/*" multiple>
+        <div class="small text-muted mt-1" id="shotHint">未上传</div>
+        <div class="d-flex flex-wrap gap-2 mt-2" id="shotPreview"></div>
+      </div>
+      <div class="col-12">
+        <div class="alert alert-info d-none" id="msg"></div>
+        <button class="btn btn-primary" id="btnPublish">发布</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var zipUrl = '';
+    var shotUrls = [];
+
+    function showMsg(type, text) {
+      var el = $('#msg');
+      el.removeClass('d-none alert-info alert-success alert-danger').addClass('alert-' + type).text(text || '');
+    }
+
+    function uploadFile(file, cb) {
+      var fd = new FormData();
+      fd.append('file', file);
+      $.ajax({
+        url: '/api/store/upload',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: function (r) {
+          if (!r || r.code !== 1 || !r.data || !r.data.url) {
+            cb((r && r.msg) ? r.msg : '上传失败', '');
+            return;
+          }
+          cb('', r.data.url);
+        },
+        error: function () {
+          cb('上传失败', '');
+        }
+      });
+    }
+
+    function esc(s) {
+      s = (s == null) ? '' : String(s);
+      return s.replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+    }
+
+    function renderShots() {
+      if (!shotUrls.length) {
+        $('#shotHint').text('未上传');
+        $('#shotPreview').empty();
+        return;
+      }
+      $('#shotHint').text('已上传 ' + shotUrls.length + ' 张（第一张作为封面）');
+      $('#shotPreview').html(shotUrls.map(function (url, idx) {
+        return ''
+          + '<div class="border rounded p-1 d-flex align-items-center gap-2" style="width: 190px;">'
+          + '  <img src="' + esc(url) + '" style="width:56px;height:56px;object-fit:cover;border-radius:4px;" alt="">'
+          + '  <div class="flex-fill text-truncate small" title="' + esc(url) + '">' + esc(url) + '</div>'
+          + '  <button type="button" class="btn btn-outline-danger btn-sm btn-remove-shot" data-idx="' + idx + '">删</button>'
+          + '</div>';
+      }).join(''));
+    }
+
+    $('#zipFile').on('change', function () {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      showMsg('info', '正在上传应用包...');
+      uploadFile(f, function (err, url) {
+        if (err) {
+          showMsg('danger', err);
+          return;
+        }
+        zipUrl = url;
+        $('#zipHint').text('已上传：' + url);
+        showMsg('success', '应用包上传成功');
+      });
+    });
+
+    function uploadShots(files, idx) {
+      idx = Number(idx || 0);
+      if (!files || idx >= files.length) {
+        renderShots();
+        showMsg('success', '截图上传完成');
+        return;
+      }
+      var f = files[idx];
+      showMsg('info', '正在上传截图 ' + (idx + 1) + ' / ' + files.length + ' ...');
+      uploadFile(f, function (err, url) {
+        if (err) {
+          showMsg('danger', err);
+          return;
+        }
+        shotUrls.push(url);
+        uploadShots(files, idx + 1);
+      });
+    }
+
+    $('#shotFiles').on('change', function () {
+      var files = this.files ? Array.prototype.slice.call(this.files) : [];
+      if (!files.length) return;
+      uploadShots(files, 0);
+      this.value = '';
+    });
+
+    $('#shotPreview').on('click', '.btn-remove-shot', function () {
+      var idx = Number($(this).data('idx'));
+      if (!isFinite(idx) || idx < 0 || idx >= shotUrls.length) return;
+      shotUrls.splice(idx, 1);
+      renderShots();
+    });
+
+    $('#btnPublish').on('click', function () {
+      var payload = {
+        name: $.trim($('#name').val() || ''),
+        title: $.trim($('#title').val() || ''),
+        description: $.trim($('#description').val() || ''),
+        detail: $.trim($('#detail').val() || ''),
+        screenshots: JSON.stringify(shotUrls),
+        category: $('#category').val() || 'other',
+        version: $.trim($('#version').val() || '1.0.0'),
+        price: Number($('#price').val() || 0),
+        homepage: $.trim($('#homepage').val() || ''),
+        keywords: $.trim($('#keywords').val() || ''),
+        download_url: zipUrl,
+        screenshot: shotUrls[0] || ''
+      };
+      if (!payload.download_url) {
+        showMsg('danger', '请先上传 zip 应用包');
+        return;
+      }
+      showMsg('info', '正在发布...');
+      $.post('/api/store/publish', payload, function (r) {
+        if (!r || r.code !== 1) {
+          var msg = (r && r.msg) ? r.msg : '发布失败';
+          if (msg.indexOf('登录') !== -1) {
+            window.location.href = '/index/developer/login?redirect=' + encodeURIComponent(window.location.href);
+            return;
+          }
+          showMsg('danger', msg);
+          return;
+        }
+        showMsg('success', '发布成功');
+        setTimeout(function () {
+          window.location.href = '/index/developer/center';
+        }, 600);
+      }, 'json').fail(function () {
+        showMsg('danger', '接口请求失败或返回非 JSON');
+      });
+    });
+  })();
+</script>

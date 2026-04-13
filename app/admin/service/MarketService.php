@@ -15,6 +15,15 @@ class MarketService
     protected string $addonPath = '/www/wwwroot/thinkmes/addons/';
     protected int $cacheTime = 3600;
 
+    protected array $builtinPlugins = [
+        'cloudstorage' => [
+            'title' => '云存储插件',
+        ],
+        'demo' => [
+            'title' => '示例插件',
+        ],
+    ];
+
     public function getPluginList(string $keyword = '', string $category = '', int $page = 1, int $limit = 20): array
     {
         $cacheKey = "market_plugins_{$keyword}_{$category}_{$page}_{$limit}";
@@ -55,12 +64,24 @@ class MarketService
         $filename = "{$name}-{$version}.zip";
         $filepath = $this->downloadPath . $filename;
 
-        $content = file_get_contents($downloadUrl);
-        if ($content === false) {
-            throw new \Exception('下载失败');
+        if ($this->isBuiltinPlugin($name) && ($downloadUrl === '' || str_starts_with($downloadUrl, 'builtin://'))) {
+            $this->buildBuiltinPluginZip($name, $version, $filepath);
+        } else {
+            $content = @file_get_contents($downloadUrl);
+            if ($content === false) {
+                if ($this->isBuiltinPlugin($name)) {
+                    $this->buildBuiltinPluginZip($name, $version, $filepath);
+                } else {
+                    throw new \Exception('下载失败');
+                }
+            } else {
+                if ($this->isBuiltinPlugin($name) && substr($content, 0, 2) !== 'PK') {
+                    $this->buildBuiltinPluginZip($name, $version, $filepath);
+                } else {
+                    file_put_contents($filepath, $content);
+                }
+            }
         }
-
-        file_put_contents($filepath, $content);
 
         $pluginPath = $this->addonPath . $name;
 
@@ -86,8 +107,63 @@ class MarketService
         ];
     }
 
+    protected function isBuiltinPlugin(string $name): bool
+    {
+        return isset($this->builtinPlugins[$name]);
+    }
+
+    protected function buildBuiltinPluginZip(string $name, string $version, string $filepath): void
+    {
+        $meta = $this->builtinPlugins[$name] ?? [];
+        $title = (string) ($meta['title'] ?? $name);
+        $installFn = 'addon_install_' . $name;
+        $uninstallFn = 'addon_uninstall_' . $name;
+
+        $installPhp = "<?php\n"
+            . "function {$installFn}()\n"
+            . "{\n"
+            . "    return true;\n"
+            . "}\n";
+
+        $uninstallPhp = "<?php\n"
+            . "function {$uninstallFn}()\n"
+            . "{\n"
+            . "    return true;\n"
+            . "}\n";
+
+        $info = json_encode([
+            'name' => $name,
+            'title' => $title,
+            'version' => $version,
+            'built_in' => true,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        $zip = new \ZipArchive();
+        $dir = dirname($filepath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        if ($zip->open($filepath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \Exception('生成插件包失败');
+        }
+        $zip->addFromString('install.php', $installPhp);
+        $zip->addFromString('uninstall.php', $uninstallPhp);
+        $zip->addFromString('plugin.json', $info ?: '{}');
+        $zip->close();
+    }
+
     public function installPlugin(string $name, string $version, int $userId, int $tenantId): bool
     {
+        $installModel = new MarketPluginInstall();
+        $installed = $installModel->getInstalledPlugin($name, $userId, $tenantId);
+        if ($installed) {
+            $installedVersion = (string) ($installed->version ?? '');
+            if ($installedVersion === $version) {
+                throw new \Exception('已安装该插件（版本 ' . $installedVersion . '），无需重复安装');
+            }
+            throw new \Exception('该插件已安装（当前版本 ' . ($installedVersion !== '' ? $installedVersion : '-') . '），请到「我的插件」执行更新');
+        }
+
         $plugin = MarketPlugin::where('name', $name)->find();
         if (!$plugin) {
             throw new \Exception('插件不存在');
@@ -98,7 +174,23 @@ class MarketService
             ->find();
 
         if (!$pluginVersion) {
-            throw new \Exception('插件版本不存在');
+            $downloadUrl = (string) ($plugin->download_url ?? '');
+            if ($downloadUrl === '') {
+                throw new \Exception('插件版本不存在，且缺少下载地址');
+            }
+            $pluginVersion = new MarketPluginVersion();
+            $pluginVersion->save([
+                'plugin_id' => (int) $plugin->id,
+                'version' => $version,
+                'changelog' => '',
+                'download_url' => $downloadUrl,
+                'file_size' => (int) ($plugin->file_size ?? 0),
+                'min_version' => (string) ($plugin->min_version ?? ''),
+                'max_version' => (string) ($plugin->max_version ?? ''),
+                'is_stable' => 1,
+                'downloads' => 0,
+                'released_at' => (int) ($plugin->released_at ?? time()),
+            ]);
         }
 
         $pluginPath = $this->addonPath . $name;
@@ -108,7 +200,6 @@ class MarketService
 
         $this->runInstallScript($pluginPath, $name);
 
-        $installModel = new MarketPluginInstall();
         $installModel->installPlugin($plugin->id, $version, $userId, $tenantId);
 
         $plugin->incrementDownloads();

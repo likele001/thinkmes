@@ -233,7 +233,6 @@ class Workflow extends Backend
     public function approve()
     {
         $instanceId = $this->request->post('instance_id/d');
-        $transitionId = $this->request->post('transition_id/d');
         $comment = $this->request->post('comment', '');
 
         try {
@@ -242,7 +241,7 @@ class Workflow extends Backend
                 $this->auth->id ?? 0,
                 $this->auth->username ?? ''
             );
-            $service->approve($instanceId, $transitionId, $comment);
+            $service->approve($instanceId, $comment, true);
             return $this->success('审批通过');
         } catch (\Exception $e) {
             return $this->error($e->getMessage());
@@ -260,7 +259,7 @@ class Workflow extends Backend
                 $this->auth->id ?? 0,
                 $this->auth->username ?? ''
             );
-            $service->reject($instanceId, $comment);
+            $service->approve($instanceId, $comment, false);
             return $this->success('已驳回');
         } catch (\Exception $e) {
             return $this->error($e->getMessage());

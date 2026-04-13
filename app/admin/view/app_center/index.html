@@ -4,6 +4,9 @@
             <h3 class="card-title">应用中心 <span id="app-count" class="text-muted small font-weight-normal ml-2"></span></h3>
             <div class="card-tools">
                 <span class="text-muted small mr-2">在此安装或卸载内置应用，安装后左侧将显示对应菜单。</span>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-pack-base">
+                    <i class="fas fa-box mr-1"></i>打包基础框架
+                </button>
                 <button type="button" class="btn btn-sm btn-success" id="btn-upload">
                     <i class="fas fa-upload mr-1"></i>上传应用包
                 </button>
@@ -28,6 +31,7 @@ $(function(){
     var installUrl = base + '/app_center/install';
     var uninstallUrl = base + '/app_center/uninstall';
     var uploadUrl = base + '/app_center/upload';
+    var packUrl = base + '/app_center/pack';
     function postAction(url, data, onSuccess) {
         var payload = typeof data === 'string' ? { app: data } : (data || {});
         $.post(url, payload, function(ret){
@@ -35,6 +39,36 @@ $(function(){
             alert((ret && ret.msg) || (ok ? '操作成功' : '操作失败'));
             if (ok && typeof onSuccess === 'function') onSuccess();
         }, 'json').fail(function(){ alert('请求失败'); });
+    }
+
+    function doPack(appKey, title) {
+        if (!appKey) return;
+        var v = prompt('请输入版本号（如 1.0 / 1.0.1 / 20260409）', '1.0');
+        if (v === null) return;
+        v = $.trim(v);
+        if (!v) { alert('版本号不能为空'); return; }
+        var tip = '确定打包「' + (title || appKey) + '」版本 ' + v + ' 吗？\n\n打包完成后会生成 zip，可用于安装或发布。';
+        if (!confirm(tip)) return;
+        $.post(packUrl, { app: appKey, version: v }, function(ret){
+            var ok = ret && ret.code === 1;
+            if (!ok) {
+                alert((ret && ret.msg) || '打包失败');
+                return;
+            }
+            var d = ret.data || {};
+            var msg = '打包完成：' + (d.name || '') + (d.log ? ('\n\n' + d.log) : '');
+            if (d.download_url) {
+                if (confirm(msg + '\n\n是否立即下载？')) {
+                    window.open(d.download_url, '_blank');
+                } else {
+                    alert(msg + '\n\n下载地址：' + d.download_url);
+                }
+            } else {
+                alert(msg);
+            }
+        }, 'json').fail(function(){
+            alert('请求失败');
+        });
     }
     var $table = $('#table-app');
     if ($table.length) {
@@ -79,6 +113,7 @@ $(function(){
                                 ? '<span class="text-muted small">上传应用包后可激活</span>'
                                 : '<span class="text-muted">—</span>';
                         }
+                        html.push('<button type="button" class="btn btn-xs btn-info btn-app-pack" data-app="' + row.key + '" data-title="' + row.title + '">打包</button>');
                         if (row.installed) {
                             html.push('<button type="button" class="btn btn-xs btn-warning btn-app-uninstall" data-app="' + row.key + '">卸载</button>');
                         } else {
@@ -87,6 +122,10 @@ $(function(){
                         return html.join(' ');
                     },
                     events: {
+                        'click .btn-app-pack': function(e, value, row) {
+                            e.preventDefault();
+                            doPack(row.key, row.title);
+                        },
                         'click .btn-app-install': function(e, value, row) {
                             e.preventDefault();
                             if (!confirm('确定要安装「' + row.title + '」吗？将执行数据库迁移并添加菜单。')) return;
@@ -103,6 +142,9 @@ $(function(){
             ]
         });
     }
+    $('#btn-pack-base').on('click', function(){
+        doPack('base', '基础框架');
+    });
     $('#btn-upload').on('click', function(){ $('#input-upload').click(); });
     $('#input-upload').on('change', function(){
         var file = this.files && this.files[0];

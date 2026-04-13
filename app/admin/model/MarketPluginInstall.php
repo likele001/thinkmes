@@ -21,9 +21,12 @@ class MarketPluginInstall extends Model
 
     public function getInstalledPlugins(int $userId, int $tenantId, int $page = 1, int $limit = 20): array
     {
-        return $this->where('user_id', $userId)
-            ->where('tenant_id', $tenantId)
-            ->order('install_time', 'desc')
+        return $this->alias('i')
+            ->join('market_plugin p', 'i.plugin_id = p.id')
+            ->field('i.*, p.name as plugin_name, p.title as plugin_title')
+            ->where('i.user_id', $userId)
+            ->where('i.tenant_id', $tenantId)
+            ->order('i.install_time', 'desc')
             ->paginate([
                 'list_rows' => $limit,
                 'page' => $page,

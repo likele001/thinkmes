@@ -1,0 +1,262 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>系统配置</h4>
+    </div>
+    <div class="panel-body">
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="active" role="presentation">
+                <a href="#zhipuai-tab" aria-controls="zhipuai" role="tab" data-toggle="tab">智谱AI</a>
+            </li>
+            <li role="presentation">
+                <a href="#openai-tab" aria-controls="openai" role="tab" data-toggle="tab">OpenAI</a>
+            </li>
+            <li role="presentation">
+                <a href="#chat-tab" aria-controls="chat" role="tab" data-toggle="tab">聊天设置</a>
+            </li>
+            <li role="presentation">
+                <a href="#ticket-tab" aria-controls="ticket" role="tab" data-toggle="tab">工单设置</a>
+            </li>
+        </ul>
+
+        <form id="config-form" class="form-horizontal tab-content">
+            <!-- 智谱AI配置 -->
+            <div class="tab-pane active" id="zhipuai-tab" role="tabpanel">
+                <div class="panel panel-default" style="margin-top: 20px;">
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">API Key</label>
+                            <div class="col-sm-9">
+                                <input type="password" name="configs[zhipuai_settings][api_key]" class="form-control" placeholder="请输入智谱AI API Key">
+                                <p class="help-block">
+                                    <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank">获取API Key</a> · 
+                                    <span class="text-success">智谱AI提供免费额度</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">模型</label>
+                            <div class="col-sm-9">
+                                <select name="configs[zhipuai_settings][model]" class="form-control">
+                                    <option value="glm-4-flash">GLM-4 Flash (推荐，免费)</option>
+                                    <option value="glm-3-turbo">GLM-3 Turbo (免费)</option>
+                                    <option value="glm-4">GLM-4 (付费)</option>
+                                    <option value="glm-4-plus">GLM-4 Plus (付费)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">温度参数</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="configs[zhipuai_settings][temperature]" class="form-control" value="0.7" step="0.1" min="0" max="1">
+                                <p class="help-block">控制输出的随机性，0-1之间，值越大输出越随机</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">最大Token数</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="configs[zhipuai_settings][max_tokens]" class="form-control" value="4096" min="100" max="128000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">系统提示词</label>
+                            <div class="col-sm-9">
+                                <textarea name="configs[zhipuai_settings][system_prompt]" class="form-control" rows="3">你是一个专业的客服助手，帮助用户解答关于ThinkMES系统的问题。</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OpenAI配置 -->
+            <div class="tab-pane" id="openai-tab" role="tabpanel">
+                <div class="panel panel-default" style="margin-top: 20px;">
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">API Key</label>
+                            <div class="col-sm-9">
+                                <input type="password" name="configs[ai_settings][api_key]" class="form-control" placeholder="sk-...">
+                                <p class="help-block">OpenAI API密钥</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">模型</label>
+                            <div class="col-sm-9">
+                                <select name="configs[ai_settings][model]" class="form-control">
+                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    <option value="gpt-4">GPT-4</option>
+                                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">温度参数</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="configs[ai_settings][temperature]" class="form-control" value="0.7" step="0.1" min="0" max="1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">最大Token数</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="configs[ai_settings][max_tokens]" class="form-control" value="1000" min="100" max="4000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">系统提示词</label>
+                            <div class="col-sm-9">
+                                <textarea name="configs[ai_settings][system_prompt]" class="form-control" rows="3">你是一个专业的客服助手，帮助用户解答关于系统的问题。</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 聊天设置 -->
+            <div class="tab-pane" id="chat-tab" role="tabpanel">
+                <div class="panel panel-default" style="margin-top: 20px;">
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">默认AI提供商</label>
+                            <div class="col-sm-9">
+                                <select name="configs[chat_settings][default_provider]" class="form-control">
+                                    <option value="zhipu">智谱AI（推荐，免费额度）</option>
+                                    <option value="openai">OpenAI</option>
+                                    <option value="auto">自动选择（智能降级）</option>
+                                </select>
+                                <p class="help-block">选择默认使用的AI服务提供商</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">欢迎消息</label>
+                            <div class="col-sm-9">
+                                <input type="text" name="configs[chat_settings][welcome_message]" class="form-control" value="您好！我是智能客服助手，有什么可以帮助您的吗？">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">自动分配</label>
+                            <div class="col-sm-9">
+                                <select name="configs[chat_settings][auto_assign]" class="form-control">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">最大等待时间（秒）</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="configs[chat_settings][max_wait_time]" class="form-control" value="60" min="10" max="300">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工单设置 -->
+            <div class="tab-pane" id="ticket-tab" role="tabpanel">
+                <div class="panel panel-default" style="margin-top: 20px;">
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">自动关闭天数</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="configs[ticket_settings][auto_close_days]" class="form-control" value="7" min="1" max="30">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">启用通知</label>
+                            <div class="col-sm-9">
+                                <select name="configs[ticket_settings][notification_enabled]" class="form-control">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">启用邮件</label>
+                            <div class="col-sm-9">
+                                <select name="configs[ticket_settings][email_enabled]" class="form-control">
+                                    <option value="false">否</option>
+                                    <option value="true">是</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 30px;">
+                <div class="col-sm-offset-3 col-sm-9">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save"></i> 保存配置
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 加载现有配置
+    $.ajax({
+        url: '{:url("CustomerService/getConfig")}',
+        success: function(res) {
+            if (res.code === 1) {
+                const configs = res.data || {};
+                
+                // 智谱AI配置
+                if (configs.zhipuai_settings) {
+                    const zhipuai = configs.zhipuai_settings.value || {};
+                    $('input[name="configs[zhipuai_settings][api_key]"]').val(zhipuai.api_key || '');
+                    $('select[name="configs[zhipuai_settings][model]"]').val(zhipuai.model || 'glm-4-flash');
+                    $('input[name="configs[zhipuai_settings][temperature]"]').val(zhipuai.temperature || 0.7);
+                    $('input[name="configs[zhipuai_settings][max_tokens]"]').val(zhipuai.max_tokens || 4096);
+                    $('textarea[name="configs[zhipuai_settings][system_prompt]"]').val(zhipuai.system_prompt || '');
+                }
+                
+                // OpenAI配置
+                if (configs.ai_settings) {
+                    const ai = configs.ai_settings.value || {};
+                    $('input[name="configs[ai_settings][api_key]"]').val(ai.api_key || '');
+                    $('select[name="configs[ai_settings][model]"]').val(ai.model || 'gpt-3.5-turbo');
+                    $('input[name="configs[ai_settings][temperature]"]').val(ai.temperature || 0.7);
+                    $('input[name="configs[ai_settings][max_tokens]"]').val(ai.max_tokens || 1000);
+                    $('textarea[name="configs[ai_settings][system_prompt]"]').val(ai.system_prompt || '');
+                }
+                
+                // 聊天配置
+                if (configs.chat_settings) {
+                    const chat = configs.chat_settings.value || {};
+                    $('input[name="configs[chat_settings][welcome_message]"]').val(chat.welcome_message || '您好！我是智能客服助手，有什么可以帮助您的吗？');
+                    $('select[name="configs[chat_settings][auto_assign]"]').val(chat.auto_assign || 'true');
+                    $('select[name="configs[chat_settings][default_provider]"]').val(chat.default_provider || 'zhipu');
+                    $('input[name="configs[chat_settings][max_wait_time]"]').val(chat.max_wait_time || 60);
+                }
+                
+                // 工单配置
+                if (configs.ticket_settings) {
+                    const ticket = configs.ticket_settings.value || {};
+                    $('input[name="configs[ticket_settings][auto_close_days]"]').val(ticket.auto_close_days || 7);
+                    $('select[name="configs[ticket_settings][notification_enabled]"]').val(ticket.notification_enabled || 'true');
+                    $('select[name="configs[ticket_settings][email_enabled]"]').val(ticket.email_enabled || 'false');
+                }
+            }
+        }
+    });
+
+    // 保存配置
+    $('#config-form').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '{:url("CustomerService/saveConfig")}',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(res) {
+                if (res.code === 1) {
+                    Toast.success(res.msg);
+                } else {
+                    Toast.error(res.msg);
+                }
+            }
+        });
+    });
+});
+</script>

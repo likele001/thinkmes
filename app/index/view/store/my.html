@@ -1,0 +1,77 @@
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between">
+      <div>
+        <div class="h5 mb-1">我的应用</div>
+        <div class="text-muted small">管理我发布的应用。</div>
+      </div>
+      <div class="d-flex gap-2">
+        <a class="btn btn-primary" href="/index/store/publish">发布应用</a>
+        <a class="btn btn-outline-primary" href="/index/store">返回商店</a>
+      </div>
+    </div>
+    <hr>
+
+    <div id="apps"></div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function esc(s) {
+      s = (s == null) ? '' : String(s);
+      return s.replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+    }
+
+    function money(v) {
+      v = Number(v || 0);
+      if (!isFinite(v) || v <= 0) return '免费';
+      return '￥' + v.toFixed(2);
+    }
+
+    function renderApps(list) {
+      if (!list.length) return '<div class="alert alert-secondary mb-0">暂无数据</div>';
+      return '<div class="table-responsive"><table class="table table-striped align-middle mb-0">'
+        + '<thead><tr>'
+        + '<th>名称</th><th>标识</th><th>版本</th><th>价格</th><th>状态</th><th style="width:220px;">操作</th>'
+        + '</tr></thead><tbody>'
+        + list.map(function (p) {
+          var status = p.status || '';
+          return '<tr>'
+            + '<td>' + esc(p.title || '') + '</td>'
+            + '<td><code>' + esc(p.name || '') + '</code></td>'
+            + '<td>' + esc(p.version || '') + '</td>'
+            + '<td>' + esc(money(p.price)) + '</td>'
+            + '<td>' + esc(status) + '</td>'
+            + '<td>'
+            + '<a class="btn btn-sm btn-outline-primary me-2" href="/index/store/detail?id=' + esc(p.id) + '">查看</a>'
+            + '<a class="btn btn-sm btn-outline-secondary" href="/index/store/publish">发布新版本</a>'
+            + '</td>'
+            + '</tr>';
+        }).join('')
+        + '</tbody></table></div>';
+    }
+
+    function loadApps() {
+      $('#apps').html('<div class="alert alert-info mb-0">加载中...</div>');
+      $.get('/api/store/my_plugins', { page: 1, limit: 50 }, function (r) {
+        if (!r || r.code !== 1 || !r.data) {
+          var msg = (r && r.msg) ? r.msg : '加载失败';
+          if (msg.indexOf('登录') !== -1) {
+            window.location.href = '/index/developer/login?redirect=' + encodeURIComponent(window.location.href);
+            return;
+          }
+          $('#apps').html('<div class="alert alert-danger mb-0">' + esc(msg) + '</div>');
+          return;
+        }
+        $('#apps').html(renderApps(r.data.data || []));
+      }, 'json').fail(function () {
+        $('#apps').html('<div class="alert alert-danger mb-0">接口请求失败或返回非 JSON</div>');
+      });
+    }
+
+    loadApps();
+  })();
+</script>

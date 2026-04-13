@@ -53,13 +53,13 @@ Route::group('market', function () {
     Route::get('index', 'Market/index');
     Route::get('', 'Market/index');
     Route::get('detail', 'Market/detail');
-    Route::group('my_plugins', function () {
-        Route::get('index', 'Market/myPlugins');
-        Route::get('', 'Market/myPlugins');
-    });
+    Route::get('my_plugins', 'Market/myPlugins');
+    Route::get('my_plugins/index', 'Market/myPlugins');  // 兼容旧链接
     Route::post('install', 'Market/install');
     Route::post('uninstall', 'Market/uninstall');
     Route::post('update', 'Market/update');
+    Route::post('enable', 'Market/enable');
+    Route::post('disable', 'Market/disable');
     Route::get('versions', 'Market/getVersions');
     Route::post('review', 'Market/addReview');
     Route::get('reviews', 'Market/getReviews');

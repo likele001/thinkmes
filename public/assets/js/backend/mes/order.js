@@ -1,6 +1,7 @@
 (function () {
     var base = (typeof Config !== 'undefined' && Config.moduleurl) ? Config.moduleurl : '';
     var indexUrl = base + '/mes/order/index';
+    var processDetailUrl = base + '/mes/order/processDetail';
     var addUrl = base + '/mes/order/add';
     var editUrl = base + '/mes/order/edit';
     var delUrl = base + '/mes/order/del';
@@ -105,6 +106,14 @@
                 sidePagination: 'server',
                 pageSize: 20,
                 pageList: [10, 20, 50],
+                queryParams: function (params) {
+                    return {
+                        limit: params.limit,
+                        offset: params.offset,
+                        page: params.page,
+                        workflow_status_filter: $('#workflowStatusFilter').val() || ''
+                    };
+                },
                 responseHandler: function (res) {
                     var data = res.data || {};
                     return { total: data.total || 0, rows: data.list || [] };
@@ -116,6 +125,14 @@
                     {field: 'order_name', title: '订单名称', align: 'left'},
                     {field: 'customer_name', title: '客户名称', align: 'left'},
                     {field: 'total_quantity', title: '总数量', width: 100, align: 'right'},
+                    {field: 'workflow_status', title: '流程状态', width: 160, formatter: function (value) {
+                        var label = '未启动';
+                        var cls = 'secondary';
+                        if (value === '进行中') { label = '进行中'; cls = 'warning'; }
+                        else if (value === '已完成') { label = '已完成'; cls = 'success'; }
+                        else if (value === '已启动') { label = '已启动'; cls = 'info'; }
+                        return '<span class="badge badge-' + cls + ' badge-pill" style="font-size:0.96rem;padding:0.5em 0.85em;min-width:72px;display:inline-block;text-align:center;">' + label + '</span>';
+                    }},
                     {field: 'status', title: '状态', width: 100, formatter: function (value) {
                         var statusMap = {0: '待生产', 1: '生产中', 2: '已完成', 3: '已取消'};
                         var classMap = {0: 'secondary', 1: 'primary', 2: 'success', 3: 'danger'};
@@ -123,24 +140,38 @@
                     }},
                     {field: 'delivery_time', title: '交货时间', width: 180, formatter: fmtTime},
                     {field: 'create_time', title: '创建时间', width: 180, formatter: fmtTime},
-                    {field: 'operate', title: '操作', width: 210, events: {
+                    {field: 'operate', title: '操作', width: 320, events: {
                         'click .btn-edit': function (e, value, row) { location.href = editUrl + '?ids=' + row.id; },
                         'click .btn-material': function (e, value, row) { location.href = materialListUrl + '?ids=' + row.id; },
+                        'click .btn-process': function (e, value, row) { location.href = processDetailUrl + '?order_id=' + row.id; },
                         'click .btn-del': function (e, value, row) {
                             if (!confirm('确定要删除吗？')) return;
                             $.post(delUrl, {ids: row.id}, function (r) {
                                 if (r.code == 1) { $table.bootstrapTable('refresh'); }
                                 alert(r.msg || (r.code == 1 ? '删除成功' : '删除失败'));
                             }, 'json');
+                        },
+                        'click .btn-workflow': function (e, value, row) {
+                            if (row.workflow_instance_id) {
+                                location.href = base + '/workflow/instanceDetail?id=' + row.workflow_instance_id;
+                            }
                         }
                     }, formatter: function (value, row) {
-                        return '<a href="' + editUrl + '?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit">编辑</a> ' +
-                               '<a href="' + materialListUrl + '?ids=' + row.id + '" class="btn btn-xs btn-info btn-material">物料</a> ' +
-                               '<a href="javascript:;" class="btn btn-xs btn-danger btn-del">删除</a>';
+                        var html = '<a href="' + editUrl + '?ids=' + row.id + '" class="btn btn-xs btn-success btn-edit">编辑</a> ' +
+                                   '<a href="' + materialListUrl + '?ids=' + row.id + '" class="btn btn-xs btn-info btn-material">物料</a> ' +
+                                   '<a href="' + processDetailUrl + '?order_id=' + row.id + '" class="btn btn-xs btn-primary btn-process">工序进度</a> ';
+                        if (row.workflow_instance_id) {
+                            html += '<a href="javascript:;" class="btn btn-xs btn-success btn-workflow" title="查看流程详情">流程详情</a> ';
+                        } else {
+                            html += '<a href="javascript:;" class="btn btn-xs btn-outline-secondary disabled" title="该订单尚未启动工作流">流程详情</a> ';
+                        }
+                        html += '<a href="javascript:;" class="btn btn-xs btn-danger btn-del">删除</a>';
+                        return html;
                     }}
                 ]
             });
             $(document).off('click', '#toolbar .btn-refresh').on('click', '#toolbar .btn-refresh', function () { $table.bootstrapTable('refresh'); });
+            $(document).off('change', '#workflowStatusFilter').on('change', '#workflowStatusFilter', function () { $table.bootstrapTable('refresh'); });
             $(document).off('click', '#toolbar .btn-edit').on('click', '#toolbar .btn-edit', function () {
                 var rows = $table.bootstrapTable('getSelections');
                 if (rows.length !== 1) { alert('请选择一条记录'); return; }

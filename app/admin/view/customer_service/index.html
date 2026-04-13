@@ -1,0 +1,95 @@
+<script>
+$(function() {
+    // 加载统计数据
+    $.ajax({
+        url: '{:url("CustomerService/index")}',
+        type: 'GET',
+        dataType: 'json',
+        success: function(res) {
+            if (res.code === 1) {
+                var stats = res.data;
+                $('.stat-today-sessions').text(stats.today_sessions || 0);
+                $('.stat-today-tickets').text(stats.today_tickets || 0);
+                $('.stat-pending-tickets').text(stats.pending_tickets || 0);
+                $('.stat-today-ai').text(stats.today_ai_chats || 0);
+            }
+        }
+    });
+});
+</script>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>客服管理首页</h4>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="panel panel-default">
+                    <div class="panel-body text-center">
+                        <h2 class="no-margin stat-today-sessions">-</h2>
+                        <p class="text-muted">今日会话</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-default">
+                    <div class="panel-body text-center">
+                        <h2 class="no-margin stat-today-tickets">-</h2>
+                        <p class="text-muted">今日工单</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-default">
+                    <div class="panel-body text-center">
+                        <h2 class="no-margin stat-pending-tickets">-</h2>
+                        <p class="text-muted">待处理工单</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-default">
+                    <div class="panel-body text-center">
+                        <h2 class="no-margin stat-today-ai">-</h2>
+                        <p class="text-muted">今日AI对话</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        快捷入口
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <a href="{:url('CustomerService/sessions')}" class="btn btn-outline-primary btn-block mb-2">
+                                    <i class="fa fa-comments"></i> 会话管理
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{:url('CustomerService/tickets')}" class="btn btn-outline-success btn-block mb-2">
+                                    <i class="fa fa-ticket"></i> 工单管理
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{:url('CustomerService/knowledge')}" class="btn btn-outline-info btn-block mb-2">
+                                    <i class="fa fa-book"></i> 知识库
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{:url('CustomerService/config')}" class="btn btn-outline-warning btn-block mb-2">
+                                    <i class="fa fa-cog"></i> 系统配置
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

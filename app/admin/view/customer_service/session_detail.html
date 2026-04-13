@@ -1,0 +1,52 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>会话详情 - {$session_id}</h4>
+            </div>
+            <div class="col-md-6 text-right">
+                <a href="{:url('CustomerService/sessions')}" class="btn btn-default">
+                    <i class="fa fa-arrow-left"></i> 返回
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div id="messages-container" style="max-height: 600px; overflow-y: auto;">
+            <!-- 消息会在这里加载 -->
+        </div>
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 加载消息
+    $.ajax({
+        url: '{:url("CustomerService/getSessionMessages")}',
+        data: {session_id: '{$session_id}'},
+        success: function(res) {
+            if (res.code === 1) {
+                const messages = res.data.list || [];
+                let html = '';
+                messages.forEach(function(msg) {
+                    const isUser = msg.sender_type == 0;
+                    const align = isUser ? 'text-right' : 'text-left';
+                    const color = isUser ? 'bg-primary' : 'bg-secondary';
+                    const sender = isUser ? '访客' : '客服';
+                    const time = msg.create_time > 0 ? new Date(msg.create_time * 1000).toLocaleString('zh-CN') : '';
+                    
+                    html += '<div class="message-item" style="margin-bottom: 20px;">';
+                    html += '<div class="' + align + '">';
+                    html += '<span style="color: #999; font-size: 12px;">' + sender + ' · ' + time + '</span><br>';
+                    html += '<span class="badge ' + color + '" style="padding: 10px 15px; font-size: 14px; white-space: normal; text-align: left; max-width: 70%;">';
+                    html += msg.content || '';
+                    html += '</span>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                $('#messages-container').html(html || '<p class="text-center text-muted">暂无消息</p>');
+            }
+        }
+    });
+});
+</script>

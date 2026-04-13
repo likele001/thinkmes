@@ -1,9 +1,9 @@
 <script src="/assets/lib/jquery/jquery.min.js?v={:time()}"></script>
-<script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/lib/bootstrap-table/js/bootstrap-table.min.js"></script>
-<script src="/assets/lib/fontawesome/js/all.min.js"></script>
-<script src="/assets/js/backend-loader.js"></script>
-<script src="/assets/lib/fastadmin-addtabs/jquery.addtabs.js"></script>
+<script src="/assets/lib/bootstrap/js/bootstrap.bundle.min.js?v={:time()}"></script>
+<script src="/assets/lib/bootstrap-table/js/bootstrap-table.min.js?v={:time()}"></script>
+<script src="/assets/lib/fontawesome/js/all.min.js?v={:time()}"></script>
+<script src="/assets/js/backend-loader.js?v={:time()}"></script>
+<script src="/assets/lib/fastadmin-addtabs/jquery.addtabs.js?v={:time()}"></script>
 <style>
 .tab-addtabs { height: 100%; min-height: 400px; }
 .tab-addtabs .tab-pane { display: none; height: 100%; }
@@ -17,6 +17,70 @@
 (function() {
     if (typeof jQuery === 'undefined') return;
     var $ = jQuery;
+
+    if (!$.fn.serializeObject) {
+        $.fn.serializeObject = function () {
+            var o = {};
+            var a = this.serializeArray();
+            for (var i = 0; i < a.length; i++) {
+                var it = a[i];
+                if (!it || !it.name) continue;
+                if (o[it.name] !== undefined) {
+                    if (!Array.isArray(o[it.name])) o[it.name] = [o[it.name]];
+                    o[it.name].push(it.value || '');
+                } else {
+                    o[it.name] = it.value || '';
+                }
+            }
+            return o;
+        };
+    }
+
+    if (!window.Toast) {
+        function ensureContainer() {
+            var id = 'toast-container';
+            var el = document.getElementById(id);
+            if (el) return el;
+            el = document.createElement('div');
+            el.id = id;
+            el.style.position = 'fixed';
+            el.style.top = '16px';
+            el.style.right = '16px';
+            el.style.zIndex = '99999';
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+            el.style.gap = '10px';
+            document.body.appendChild(el);
+            return el;
+        }
+
+        function show(type, msg) {
+            msg = (msg == null) ? '' : String(msg);
+            if (!msg) return;
+            var container = ensureContainer();
+            var wrap = document.createElement('div');
+            wrap.className = 'toast align-items-center text-bg-' + type + ' border-0 show';
+            wrap.setAttribute('role', 'alert');
+            wrap.setAttribute('aria-live', 'assertive');
+            wrap.setAttribute('aria-atomic', 'true');
+            wrap.innerHTML = '<div class="d-flex"><div class="toast-body"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Close"></button></div>';
+            wrap.querySelector('.toast-body').textContent = msg;
+            wrap.querySelector('.btn-close').addEventListener('click', function () {
+                try { container.removeChild(wrap); } catch (e) {}
+            });
+            container.appendChild(wrap);
+            setTimeout(function () {
+                try { container.removeChild(wrap); } catch (e) {}
+            }, 2500);
+        }
+
+        window.Toast = {
+            success: function (msg) { show('success', msg); },
+            error: function (msg) { show('danger', msg); },
+            info: function (msg) { show('info', msg); },
+            warning: function (msg) { show('warning', msg); }
+        };
+    }
     $(function() {
         var headerH = 50, tabsH = 40;
         var iframeHeight = Math.max(400, $(window).height() - headerH - tabsH);

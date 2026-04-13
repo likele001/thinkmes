@@ -97,6 +97,7 @@ class Purchase extends Backend
 
         try {
             foreach ($idsArr as $id) {
+                /** @var \app\admin\model\mes\PurchaseRequestModel $request */
                 $request = PurchaseRequestModel::where('tenant_id', $tenantId)->find($id);
                 if (!$request) {
                     continue;
@@ -105,6 +106,7 @@ class Purchase extends Backend
                 if ($status == 1) {
                     $request->status = 1;
                     if ($request->order_material_id) {
+                        /** @var \app\admin\model\mes\OrderMaterialModel $om */
                         $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)
                             ->find($request->order_material_id);
                         if ($om) {
@@ -115,6 +117,7 @@ class Purchase extends Backend
                 } else {
                     $request->status = 3;
                     if ($request->order_material_id) {
+                        /** @var \app\admin\model\mes\OrderMaterialModel $om */
                         $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)
                             ->find($request->order_material_id);
                         if ($om) {
@@ -328,6 +331,7 @@ class Purchase extends Backend
                         $req->status = 2; // 已采购
                         $req->save();
                         if ($req->order_material_id) {
+                            /** @var \app\admin\model\mes\OrderMaterialModel $om */
                             $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)->find($req->order_material_id);
                             if ($om) {
                                 $om->purchase_status = 2;
@@ -405,6 +409,7 @@ class Purchase extends Backend
                 }
 
                 if (!empty($params['purchase_request_id'])) {
+                    /** @var \app\admin\model\mes\PurchaseRequestModel $request */
                     $request = PurchaseRequestModel::where('tenant_id', $tenantId)
                         ->find($params['purchase_request_id']);
                     if ($request) {
@@ -412,6 +417,7 @@ class Purchase extends Backend
                         $request->save();
 
                         if ($request->order_material_id) {
+                            /** @var \app\admin\model\mes\OrderMaterialModel $om */
                             $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)
                                 ->find($request->order_material_id);
                             if ($om) {
@@ -481,6 +487,7 @@ class Purchase extends Backend
         }
 
         $tenantId = $this->getTenantId();
+        /** @var \app\admin\model\mes\PurchaseInModel $row */
         $row = PurchaseInModel::where('tenant_id', $tenantId)->find($ids);
         if (!$row) {
             return $this->error('入库单不存在');
@@ -558,8 +565,10 @@ class Purchase extends Backend
                         );
                     }
                     if ($item->purchase_request_id) {
+                        /** @var \app\admin\model\mes\PurchaseRequestModel $req */
                         $req = PurchaseRequestModel::where('tenant_id', $tenantId)->find($item->purchase_request_id);
                         if ($req && $req->order_material_id) {
+                            /** @var \app\admin\model\mes\OrderMaterialModel $om */
                             $om = \app\admin\model\mes\OrderMaterialModel::where('tenant_id', $tenantId)->find($req->order_material_id);
                             if ($om) {
                                 $om->stock_status = 0; // 已备料

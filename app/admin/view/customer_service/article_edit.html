@@ -1,0 +1,108 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>{$article?'编辑文章':'添加文章'}</h4>
+            </div>
+            <div class="col-md-6 text-right">
+                <a href="{:url('CustomerService/knowledge')}" class="btn btn-default">
+                    <i class="fa fa-arrow-left"></i> 返回
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        <form id="article-form" class="form-horizontal" role="form">
+            <div class="form-group">
+                <label class="col-sm-2 control-label"><span class="text-danger">*</span> 分类</label>
+                <div class="col-sm-10">
+                    <select name="category_id" class="form-control" required>
+                        <option value="">请选择分类</option>
+                        {volist name="categories" id="cat"}
+                        <option value="{$cat.id}" {$article&&$article.category_id==$cat.id?'selected':''}>{$cat.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="col-sm-2 control-label"><span class="text-danger">*</span> 标题</label>
+                <div class="col-sm-10">
+                    <input type="text" name="title" class="form-control" value="{$article.title|default=''}" placeholder="请输入文章标题" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="col-sm-2 control-label">摘要</label>
+                <div class="col-sm-10">
+                    <textarea name="summary" class="form-control" rows="3" placeholder="请输入文章摘要">{$article.summary|default=''}</textarea>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="col-sm-2 control-label">内容</label>
+                <div class="col-sm-10">
+                    <textarea name="content" class="form-control" rows="15" placeholder="支持Markdown格式">{$article.content|default=''}</textarea>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="col-sm-2 control-label">标签</label>
+                <div class="col-sm-10">
+                    <input type="text" name="tags" class="form-control" value="{$article.tags|default=''}" placeholder="多个标签用逗号分隔">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="col-sm-2 control-label">关键词</label>
+                <div class="col-sm-10">
+                    <input type="text" name="keywords" class="form-control" value="{$article.keywords|default=''}" placeholder="SEO关键词，多个用逗号分隔">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="col-sm-2 control-label">状态</label>
+                <div class="col-sm-10">
+                    <select name="status" class="form-control">
+                        <option value="0" {$article&&$article.status==0?'selected':''}>草稿</option>
+                        <option value="1" {$article&&$article.status==1?'selected':''}>发布</option>
+                        <option value="2" {$article&&$article.status==2?'selected':''}>下线</option>
+                    </select>
+                </div>
+            </div>
+            
+            <input type="hidden" name="id" value="{$article.id|default=''}">
+            
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-save"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+$(function() {
+    $('#article-form').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '{:url("CustomerService/saveArticle")}',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(res) {
+                if (res.code === 1) {
+                    Toast.success(res.msg);
+                    setTimeout(function() {
+                        location.href = '{:url("CustomerService/knowledge")}';
+                    }, 1000);
+                } else {
+                    Toast.error(res.msg);
+                }
+            }
+        });
+    });
+});
+</script>

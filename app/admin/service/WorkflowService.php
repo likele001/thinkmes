@@ -216,6 +216,95 @@ class WorkflowService
             ->toArray();
     }
 
+    public function getWorkflowGraph(string $tableName, int $recordId): array
+    {
+        $instance = $this->getInstance($tableName, $recordId);
+        $workflow = null;
+
+        if ($instance) {
+            $workflow = Workflow::with(['states', 'transitions.fromState', 'transitions.toState'])
+                ->find($instance->workflow_id);
+        } else {
+            $workflow = (new Workflow())->getActiveWorkflowByTable($tableName, $this->tenantId);
+            if ($workflow) {
+                $workflow->load(['states', 'transitions.fromState', 'transitions.toState']);
+            }
+        }
+
+        if (!$workflow) {
+            return [];
+        }
+
+        $states = [];
+        foreach ($workflow->states as $state) {
+            $states[] = [
+                'id'         => $state->id,
+                'name'       => $state->name,
+                'code'       => $state->code,
+                'is_initial' => (bool)$state->is_initial,
+                'is_final'   => (bool)$state->is_final,
+                'sort'       => (int)$state->sort,
+            ];
+        }
+
+        $transitions = [];
+        $transitionsMap = [];
+        foreach ($workflow->transitions as $transition) {
+            $transitions[] = [
+                'id'               => $transition->id,
+                'from_state_id'    => $transition->from_state_id,
+                'to_state_id'      => $transition->to_state_id,
+                'code'             => $transition->code,
+                'name'             => $transition->name,
+                'require_approval' => (bool)$transition->require_approval,
+                'from_state'       => $transition->fromState ? $transition->fromState->name : '',
+                'to_state'         => $transition->toState ? $transition->toState->name : '',
+            ];
+            $transitionsMap[$transition->from_state_id] = $transition->name ?: '';
+        }
+
+        usort($states, function ($a, $b) {
+            return $a['sort'] <=> $b['sort'];
+        });
+
+        $currentStateSort = 0;
+        if ($instance && $instance->current_state_id) {
+            foreach ($states as $state) {
+                if ($state['id'] === $instance->current_state_id) {
+                    $currentStateSort = $state['sort'];
+                    break;
+                }
+            }
+        }
+
+        foreach ($states as &$state) {
+            if (!$instance) {
+                $state['status'] = $state['is_initial'] ? 'active' : 'upcoming';
+                $state['status_text'] = $state['is_initial'] ? '待启动' : '等待中';
+            } elseif ($state['id'] === $instance->current_state_id) {
+                $state['status'] = 'active';
+                $state['status_text'] = '当前节点';
+            } elseif ($currentStateSort && $state['sort'] < $currentStateSort) {
+                $state['status'] = 'completed';
+                $state['status_text'] = '已完成';
+            } else {
+                $state['status'] = 'upcoming';
+                $state['status_text'] = $state['is_final'] ? '结束节点' : '待执行';
+            }
+            $state['next_transition_name'] = $transitionsMap[$state['id']] ?? '';
+        }
+        unset($state);
+
+        return [
+            'workflow_id'      => $workflow->id,
+            'workflow_name'    => $workflow->name,
+            'current_state_id' => $instance ? $instance->current_state_id : 0,
+            'is_completed'     => $instance ? (bool)$instance->is_completed : false,
+            'states'           => $states,
+            'transitions'      => $transitions,
+        ];
+    }
+
     public function getCurrentStatus(string $tableName, int $recordId): ?array
     {
         $instance = $this->getInstance($tableName, $recordId);
@@ -247,6 +336,31 @@ class WorkflowService
             ->toArray();
 
         return $approvals;
+    }
+
+    public function withdraw(int $instanceId): WorkflowInstance
+    {
+        $instance = WorkflowInstance::find($instanceId);
+        if (!$instance) {
+            throw new \Exception('工作流实例不存在');
+        }
+
+        Db::startTrans();
+        try {
+            WorkflowApproval::where('instance_id', $instanceId)
+                ->where('status', 'pending')
+                ->update(['status' => 'cancelled']);
+
+            $instance->is_completed = 1;
+            $instance->completed_time = time();
+            $instance->save();
+
+            Db::commit();
+            return $instance->refresh();
+        } catch (\Exception $e) {
+            Db::rollback();
+            throw $e;
+        }
     }
 
     public function deleteInstance(string $tableName, int $recordId): bool

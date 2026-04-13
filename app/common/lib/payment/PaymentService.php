@@ -154,6 +154,16 @@ class PaymentService
             }
         } catch (\Throwable $e) {
         }
+        try {
+            if (Db::name('market_plugin_order')->where('order_no', $orderNo)->find()) {
+                Db::name('market_plugin_order')->where('order_no', $orderNo)->update([
+                    'status'      => 1,
+                    'pay_time'    => $now,
+                    'update_time' => $now,
+                ]);
+            }
+        } catch (\Throwable $e) {
+        }
         self::logCallback($gatewayId, $orderNo, $input, 'success');
         return ['handled' => true, 'order_no' => $orderNo, 'message' => 'success'];
     }

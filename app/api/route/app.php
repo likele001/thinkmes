@@ -6,6 +6,25 @@ Route::get('doc', 'Doc/index');
 Route::get('doc/index', 'Doc/index');
 Route::get('doc/spec', 'Doc/spec');
 
+// 应用商店：公开浏览 + 登录后下单/发布
+Route::get('store/plugins', 'Store/plugins');
+Route::get('store/detail', 'Store/detail');
+Route::get('store/payment_methods', 'Store/paymentMethods');
+Route::post('store/publish', 'Store/publish')->middleware(\app\api\middleware\DeveloperAuth::class);
+Route::post('store/upload', 'Store/upload')->middleware(\app\api\middleware\DeveloperAuth::class);
+Route::get('store/my_plugins', 'Store/myPlugins')->middleware(\app\api\middleware\DeveloperAuth::class);
+Route::get('store/my_orders', 'Store/myOrders')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('store/order/create', 'Store/createOrder')->middleware(\app\api\middleware\UserAuth::class);
+Route::post('store/pay', 'Store/pay')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('store/order/status', 'Store/orderStatus')->middleware(\app\api\middleware\UserAuth::class);
+Route::get('store/download', 'Store/download')->middleware(\app\api\middleware\UserAuth::class);
+
+// 开发者中心（独立账号体系）
+Route::post('developer/register', 'Developer/register');
+Route::post('developer/login', 'Developer/login');
+Route::get('developer/profile', 'Developer/profile')->middleware(\app\api\middleware\DeveloperAuth::class);
+Route::post('developer/logout', 'Developer/logout')->middleware(\app\api\middleware\DeveloperAuth::class);
+
 // C端用户：无需登录
 Route::post('user/register', 'User/register');
 Route::post('user/login', 'User/login');

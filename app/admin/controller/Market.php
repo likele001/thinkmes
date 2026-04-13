@@ -11,6 +11,7 @@ use app\admin\service\MarketService;
 use think\facade\Validate;
 use think\facade\View;
 use think\exception\ValidateException;
+use think\Response;
 
 class Market extends Backend
 {
@@ -23,12 +24,12 @@ class Market extends Backend
         $this->model = new MarketPlugin();
     }
 
-    public function index(): string
+    public function index(): string|Response
     {
-        $keyword = $this->request->get('keyword', '');
-        $category = $this->request->get('category', 'all');
-        $page = $this->request->get('page', 1);
-        $limit = $this->request->get('limit', 20);
+        $keyword = (string) $this->request->get('keyword', '');
+        $category = (string) $this->request->get('category', 'all');
+        $page = max(1, (int) $this->request->get('page', 1));
+        $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
 
         if ($this->request->isAjax()) {
             $result = $this->model->searchPlugins($keyword, $category, $page, $limit);
@@ -167,10 +168,10 @@ class Market extends Backend
         }
     }
 
-    public function myPlugins(): string
+    public function myPlugins(): string|Response
     {
-        $page = $this->request->get('page', 1);
-        $limit = $this->request->get('limit', 20);
+        $page = max(1, (int) $this->request->get('page', 1));
+        $limit = max(1, min(100, (int) $this->request->get('limit', 20)));
 
         if ($this->request->isAjax()) {
             $marketService = new MarketService();
@@ -227,6 +228,46 @@ class Market extends Backend
             } catch (\Exception $e) {
                 return json(['code' => 0, 'msg' => $e->getMessage()]);
             }
+        }
+    }
+
+    public function enable()
+    {
+        if ($this->request->isPost()) {
+            $id = $this->request->post('id');
+            if (!$id) {
+                return json(['code' => 0, 'msg' => '参数错误']);
+            }
+
+            $install = MarketPluginInstall::find($id);
+            if (!$install) {
+                return json(['code' => 0, 'msg' => '记录不存在']);
+            }
+
+            $install->status = 1;
+            $install->save();
+
+            return json(['code' => 1, 'msg' => '启用成功']);
+        }
+    }
+
+    public function disable()
+    {
+        if ($this->request->isPost()) {
+            $id = $this->request->post('id');
+            if (!$id) {
+                return json(['code' => 0, 'msg' => '参数错误']);
+            }
+
+            $install = MarketPluginInstall::find($id);
+            if (!$install) {
+                return json(['code' => 0, 'msg' => '记录不存在']);
+            }
+
+            $install->status = 0;
+            $install->save();
+
+            return json(['code' => 1, 'msg' => '禁用成功']);
         }
     }
 

@@ -36,6 +36,7 @@ class TenantWriteGuard
             'attachment/',
             'addon/',
             'payment/config',
+            'customer_service/',
         ];
         foreach ($allowPrefixes as $p) {
             if ($p !== '' && strpos($path, $p) === 0) {

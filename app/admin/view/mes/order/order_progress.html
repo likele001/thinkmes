@@ -16,6 +16,7 @@
                     <th>已完成</th>
                     <th>不良</th>
                     <th>进度</th>
+                    <th>流程状态</th>
                     <th>状态</th>
                     <th>操作</th>
                 </tr>
@@ -37,6 +38,13 @@
                         </div>
                     </td>
                     <td>
+                        {if !empty($item.workflow_status)}
+                        <span class="badge bg-info">{$item.workflow_status}</span>
+                        {else /}
+                        <span class="badge bg-secondary">未启动</span>
+                        {/if}
+                    </td>
+                    <td>
                         {if $item.status_txt == '已完成'}
                         <span class="badge bg-success">{$item.status_txt}</span>
                         {elseif $item.status_txt == '生产中' /}
@@ -47,6 +55,9 @@
                     </td>
                     <td>
                         <a href="{$config.moduleurl}/mes/order/processDetail?order_id={$item.id}" class="btn btn-xs btn-info"><i class="fas fa-list-ol"></i> 工序进度</a>
+                        {if !empty($item.workflow_instance_id)}
+                        <a href="{$config.moduleurl}/workflow/instanceDetail?id={$item.workflow_instance_id}" class="btn btn-xs btn-light ms-1"><i class="fas fa-stream"></i> 流程</a>
+                        {/if}
                     </td>
                 </tr>
                 {/foreach}

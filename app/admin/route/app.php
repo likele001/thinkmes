@@ -154,6 +154,8 @@ Route::get('app_center/index', 'AppCenter/index');
 Route::post('app_center/install', 'AppCenter/install');
 Route::post('app_center/uninstall', 'AppCenter/uninstall');
 Route::post('app_center/upload', 'AppCenter/upload');
+Route::post('app_center/pack', 'AppCenter/pack');
+Route::get('app_center/downloadPack', 'AppCenter/downloadPack');
 
 // 自媒体工作流（配置 + 各模块管理）
 Route::get('wemedia_config/index', 'WemediaConfig/index');
@@ -218,3 +220,35 @@ if (is_file(__DIR__ . '/restaurant.php')) {
 if (is_file(__DIR__ . '/extension.php')) {
     require __DIR__ . '/extension.php';
 }
+
+
+// 客服管理路由（注意：具体路由要放在通用路由前面）
+Route::get('customer_service/sessions', 'CustomerService/sessions');
+Route::get('customer_service/session_detail', 'CustomerService/sessionDetail');
+Route::get('customer_service/get_session_list', 'CustomerService/getSessionList');
+Route::get('customer_service/get_session_messages', 'CustomerService/getSessionMessages');
+Route::get('customer_service/tickets', 'CustomerService/tickets');
+Route::get('customer_service/ticket_detail', 'CustomerService/ticketDetail');
+Route::get('customer_service/get_ticket_list', 'CustomerService/getTicketList');
+Route::post('customer_service/reply_ticket', 'CustomerService/replyTicket');
+Route::post('customer_service/update_ticket_status', 'CustomerService/updateTicketStatus');
+Route::get('customer_service/knowledge', 'CustomerService/knowledge');
+Route::get('customer_service/article_edit', 'CustomerService/articleEdit');
+Route::post('customer_service/save_article', 'CustomerService/saveArticle');
+Route::post('customer_service/delete_article', 'CustomerService/deleteArticle');
+Route::get('customer_service/get_article_list', 'CustomerService/getArticleList');
+Route::get('customer_service/faq', 'CustomerService/faq');
+Route::get('customer_service/get_faq_list', 'CustomerService/getFaqList');
+Route::post('customer_service/save_faq', 'CustomerService/saveFaq');
+Route::post('customer_service/delete_faq', 'CustomerService/deleteFaq');
+Route::get('customer_service/categories', 'CustomerService/categories');
+Route::get('customer_service/get_category_list', 'CustomerService/getCategoryList');
+Route::post('customer_service/save_category', 'CustomerService/saveCategory');
+Route::post('customer_service/delete_category', 'CustomerService/deleteCategory');
+Route::get('customer_service/ai_history', 'CustomerService/aiHistory');
+Route::get('customer_service/get_ai_history_list', 'CustomerService/getAiHistoryList');
+Route::get('customer_service/config', 'CustomerService/config');
+Route::get('customer_service/get_config', 'CustomerService/getConfig');
+Route::post('customer_service/save_config', 'CustomerService/saveConfig');
+// 通用路由必须放在最后
+Route::get('customer_service', 'CustomerService/index');

@@ -480,26 +480,98 @@
           var categoryIndex = api.value(0);
           var startCoord = api.coord([api.value(1), categoryIndex]);
           var endCoord = api.coord([api.value(2), categoryIndex]);
-          var h = api.size([0, 1])[1] * 0.6;
+          var bandH = api.size([0, 1])[1];
+          var h = Math.max(10, bandH * 0.62);
           var y = startCoord[1] - h / 2;
           var w = endCoord[0] - startCoord[0];
           if (!isFinite(w) || w < 2) {
-            w = 2;
+            w = 6;
           }
           var rect = echarts.graphic.clipRectByRect({ x: startCoord[0], y: y, width: w, height: h }, { x: params.coordSys.x, y: params.coordSys.y, width: params.coordSys.width, height: params.coordSys.height });
           var st = api.value(4);
           var color = st === 2 ? '#2ec878' : (st === 1 ? '#3a7bff' : '#9aa6c7');
-          return rect && { type: 'rect', shape: rect, style: api.style({ fill: color, opacity: 0.9 }) };
+          if (!rect) return null;
+
+          var progress = api.value(3);
+          if (!isFinite(progress)) progress = 0;
+          progress = Math.max(0, Math.min(100, progress));
+          var pw = Math.max(2, rect.width * (progress / 100));
+
+          var baseFill = color;
+          var baseBorder = 'rgba(255,255,255,.18)';
+          var progressFill = 'rgba(255,255,255,.35)';
+          if (st === 2) progressFill = 'rgba(255,255,255,.30)';
+          if (st === 0) progressFill = 'rgba(255,255,255,.22)';
+
+          return {
+            type: 'group',
+            children: [
+              {
+                type: 'rect',
+                shape: { x: rect.x, y: rect.y, width: rect.width, height: rect.height, r: 4 },
+                style: {
+                  fill: baseFill,
+                  stroke: baseBorder,
+                  lineWidth: 1,
+                  opacity: 0.92,
+                  shadowBlur: 10,
+                  shadowColor: 'rgba(0,0,0,.35)',
+                  shadowOffsetY: 2
+                }
+              },
+              {
+                type: 'rect',
+                shape: { x: rect.x, y: rect.y, width: pw, height: rect.height, r: 4 },
+                style: {
+                  fill: progressFill,
+                  opacity: 0.95
+                }
+              }
+            ]
+          };
         }
         c.setOption({
-          tooltip: { formatter: function (p) { var it = items[p.dataIndex] || {}; return (it.label || '') + '<br/>进度：' + (it.progress || 0) + '%'; } },
-          grid: { left: 260, right: 18, top: 18, bottom: 20 },
-          xAxis: { type: 'time', min: axisMin, max: axisMax, axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, splitLine: { lineStyle: { color: 'rgba(219,231,255,.08)' } }, axisLabel: { color: 'rgba(219,231,255,.75)' } },
-          yAxis: { type: 'category', data: categories, axisLine: { lineStyle: { color: 'rgba(219,231,255,.25)' } }, axisLabel: { color: 'rgba(219,231,255,.85)', width: 240, overflow: 'truncate' } },
+          tooltip: {
+            formatter: function (p) {
+              var it = items[p.dataIndex] || {};
+              var s = Number(it.planned_start || 0) * 1000;
+              var e = Number(it.planned_end || 0) * 1000;
+              var ss = s > 0 ? new Date(s) : null;
+              var ee = e > 0 ? new Date(e) : null;
+              var sst = ss ? (pad2(ss.getMonth() + 1) + '-' + pad2(ss.getDate()) + ' ' + pad2(ss.getHours()) + ':' + pad2(ss.getMinutes())) : '-';
+              var eet = ee ? (pad2(ee.getMonth() + 1) + '-' + pad2(ee.getDate()) + ' ' + pad2(ee.getHours()) + ':' + pad2(ee.getMinutes())) : '-';
+              return (it.label || '') + '<br/>计划：' + sst + ' ~ ' + eet + '<br/>进度：' + (it.progress || 0) + '%';
+            }
+          },
+          grid: { left: 300, right: 22, top: 18, bottom: 26, containLabel: false },
+          xAxis: {
+            type: 'time',
+            min: axisMin,
+            max: axisMax,
+            axisLine: { lineStyle: { color: 'rgba(219,231,255,.35)' } },
+            axisTick: { lineStyle: { color: 'rgba(219,231,255,.25)' } },
+            splitLine: { lineStyle: { color: 'rgba(219,231,255,.10)' } },
+            axisLabel: {
+              color: 'rgba(219,231,255,.82)',
+              formatter: function (value) {
+                var d = new Date(value);
+                return pad2(d.getMonth() + 1) + '/' + pad2(d.getDate()) + '\n' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+              }
+            }
+          },
+          yAxis: {
+            type: 'category',
+            data: categories,
+            axisLine: { lineStyle: { color: 'rgba(219,231,255,.20)' } },
+            axisTick: { show: false },
+            splitLine: { show: true, lineStyle: { color: 'rgba(255,255,255,.04)' } },
+            axisLabel: { color: 'rgba(219,231,255,.88)', width: 280, overflow: 'truncate' }
+          },
           dataZoom: [
             { type: 'inside', yAxisIndex: 0, filterMode: 'none', startValue: 0, endValue: Math.min(20, categories.length - 1) },
             { type: 'inside', xAxisIndex: 0, filterMode: 'none' }
           ],
+          axisPointer: { show: true, type: 'line', lineStyle: { color: 'rgba(255,255,255,.22)', width: 1 } },
           series: [{ type: 'custom', renderItem: renderItem, encode: { x: [1, 2], y: 0 }, data: data }]
         }, true);
       }

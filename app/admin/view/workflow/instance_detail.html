@@ -1,0 +1,73 @@
+<div class="card panel-intro">
+    <div class="card-header">
+        <div class="panel-lead"><em>流程实例详情</em> 当前流程实例状态与审批记录</div>
+        <div class="card-tools">
+            <a href="{$config.moduleurl}/workflow/instances" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> 返回实例列表</a>
+            {if $instance.table_name == 'mes_order'}
+            <a href="{$config.moduleurl}/mes/order/processDetail?order_id={$instance.record_id}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt"></i> 订单详情</a>
+            {/if}
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card card-body p-3 mb-3">
+                    <h6>流程信息</h6>
+                    <div>流程名称：<strong>{$instance.workflow.name|default='-'}</strong></div>
+                    <div>关联表：<strong>{$instance.table_name}</strong></div>
+                    <div>关联记录：<strong>{$instance.record_id}</strong></div>
+                    <div>流程标题：<strong>{$instance.title|default='-'}</strong></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-body p-3 mb-3">
+                    <h6>当前状态</h6>
+                    <div>当前节点：<strong>{$instance.currentState.name|default='-'}</strong></div>
+                    <div>是否完成：<strong>{if $instance.is_completed}是{else}否{/if}</strong></div>
+                    <div>创建时间：<strong>{$instance.create_time|date='Y-m-d H:i:s',###}</strong></div>
+                    {if $instance.completed_time}
+                    <div>完成时间：<strong>{$instance.completed_time|date='Y-m-d H:i:s',###}</strong></div>
+                    {/if}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-body p-3 mb-3">
+                    <h6>发起人</h6>
+                    <div>发起人：<strong>{$instance.initiator_name|default='-'}</strong></div>
+                    <div>租户ID：<strong>{$instance.tenant_id|default='-'}</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header py-2"><h6 class="mb-0"><i class="fas fa-history"></i> 审批记录</h6></div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th style="width:120px;">审批人</th>
+                        <th style="width:140px;">状态</th>
+                        <th>审批意见</th>
+                        <th style="width:180px;">审批时间</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {foreach $instance.approvals as $approval}
+                    <tr>
+                        <td>{$approval.approver_name|default='-'}</td>
+                        <td>
+                            {if $approval.status == 'pending'}待审批{elseif $approval.status == 'approved'}已通过{elseif $approval.status == 'rejected'}已驳回{elseif $approval.status == 'cancelled'}已取消{else}{$approval.status}{/if}
+                        </td>
+                        <td>{$approval.comment|default='-'}</td>
+                        <td>{if $approval.approval_time}{$approval.approval_time|date='Y-m-d H:i:s'}{else}{$approval.create_time|date='Y-m-d H:i:s'}{/if}</td>
+                    </tr>
+                    {/foreach}
+                    {if empty($instance.approvals)}
+                    <tr><td colspan="4" class="text-center text-muted">暂无审批记录</td></tr>
+                    {/if}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

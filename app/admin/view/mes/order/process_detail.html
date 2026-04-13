@@ -20,6 +20,111 @@
             </div>
         </div>
 
+        <!-- 工作流状态 -->
+        <div class="alert alert-info mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="alert-heading mb-2"><i class="fas fa-project-diagram"></i> 工作流状态</h6>
+                    {if !empty($workflowStatus)}
+                    <div>流程：<strong>{$workflowStatus.workflow_name|default='-'}</strong></div>
+                    <div>当前状态：<strong>{$workflowStatus.current_state|default='-'} {if $workflowStatus.is_completed}（已完成）{else}（进行中）{/if}</strong></div>
+                    <div>发起人：<strong>{$workflowStatus.initiator_name|default='-'}</strong> / 创建时间：<strong>{$workflowStatus.create_time ? date('Y-m-d H:i:s', $workflowStatus.create_time) : '-'}</strong></div>
+                    {if !empty($workflowStatus.instance_id)}
+                    <div class="mt-2">
+                        <a href="{$config.moduleurl}/workflow/instanceDetail?id={$workflowStatus.instance_id}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i> 查看流程实例</a>
+                    </div>
+                    {/if}
+                    {else /}
+                    <p class="mb-0">该订单尚未启动工作流，系统会在创建订单后自动启动工作流；若流程尚未配置，则当前无流程实例。</p>
+                    {/if}
+                </div>
+            </div>
+        </div>
+
+        {if !empty($workflowGraph.states)}
+        <div class="card mb-3">
+            <div class="card-header py-2"><h6 class="mb-0"><i class="fas fa-project-diagram"></i> 流程任务节点图</h6></div>
+            <div class="card-body">
+                <div class="workflow-node-graph d-flex flex-wrap align-items-center justify-content-start">
+                    {foreach $workflowGraph.states as $state}
+                    <div class="workflow-node workflow-node-{$state.status}">
+                        <div class="workflow-node-tag mb-2">
+                            {if $state.is_initial}<span class="badge badge-secondary">起始</span>{/if}
+                            {if $state.is_final}<span class="badge badge-secondary">结束</span>{/if}
+                        </div>
+                        <div class="workflow-node-name">{$state.name}</div>
+                        <div class="workflow-node-meta">
+                            <span class="workflow-node-status">{$state.status_text}</span>
+                            {if $state.code}
+                            <div class="workflow-node-code">{$state.code}</div>
+                            {/if}
+                        </div>
+                    </div>
+                    {if !$foreach.last}
+                    <div class="workflow-node-connector text-center">
+                        <div class="workflow-node-arrow"><i class="fas fa-arrow-right"></i></div>
+                        {if $state.next_transition_name}
+                        <div class="workflow-transition-label">{$state.next_transition_name}</div>
+                        {/if}
+                    </div>
+                    {/if}
+                    {/foreach}
+                </div>
+            </div>
+        </div>
+        {/if}
+
+        {if !empty($workflowStatus.instance_id)}
+        <div class="card mb-3">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-tasks"></i> 工作流审批操作</span>
+                <span class="text-muted">当前实例ID：{$workflowStatus.instance_id}</span>
+            </div>
+            <div class="card-body">
+                {if !empty($pendingApprovals)}
+                <div class="mb-3">
+                    <div class="alert alert-warning">您有待审批任务，请填写审批意见并选择操作。</div>
+                    <div class="mb-2">
+                        <textarea name="workflow_comment" id="workflowComment" class="form-control" rows="3" placeholder="审批意见/备注"></textarea>
+                    </div>
+                    <button type="button" id="btnWorkflowApprove" class="btn btn-success btn-sm me-2" data-instance-id="{$workflowStatus.instance_id}"><i class="fas fa-check"></i> 同意</button>
+                    <button type="button" id="btnWorkflowReject" class="btn btn-danger btn-sm" data-instance-id="{$workflowStatus.instance_id}"><i class="fas fa-times"></i> 驳回</button>
+                </div>
+                {/if}
+
+                <div>
+                    <h6 class="mb-2">当前流程进度</h6>
+                    {if !empty($workflowHistory)}
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                        <tr>
+                            <th style="width:120px;">操作人</th>
+                            <th style="width:100px;">状态</th>
+                            <th>审批意见</th>
+                            <th style="width:180px;">审批时间</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {foreach $workflowHistory as $history}
+                        <tr>
+                            <td>{$history.approver_name|default='系统'}</td>
+                            <td>
+                                {if $history.status == 'pending'}待审批{elseif $history.status == 'approved'}已通过{elseif $history.status == 'rejected'}已驳回{elseif $history.status == 'cancelled'}已取消{else}{$history.status}{/if}
+                            </td>
+                            <td>{$history.comment|default='-'}</td>
+                            <td>{if $history.approval_time}{$history.approval_time|date='Y-m-d H:i:s'}{else}{$history.create_time|date='Y-m-d H:i:s'}{/if}</td>
+                        </tr>
+                        {/foreach}
+                        </tbody>
+                    </table>
+                    {else /}
+                    <p class="text-muted mb-0">尚无审批记录。</p>
+                    {/if}
+                </div>
+            </div>
+        </div>
+        {/if}
+
         <!-- 按产品 → 工序 -->
         {foreach $products as $product}
         <div class="card mb-3">
@@ -73,3 +178,56 @@
         {/if}
     </div>
 </div>
+
+<script>
+    (function () {
+        var moduleUrl = '{$config.moduleurl}';
+        function ajaxAction(url, data, successMessage) {
+            $.post(url, data, function (res) {
+                if (res.code === 1) {
+                    alert(successMessage || res.msg || '操作成功');
+                    location.reload();
+                } else {
+                    alert(res.msg || '操作失败');
+                }
+            }, 'json');
+        }
+
+        $(document).on('click', '#btnWorkflowApprove', function () {
+            var instanceId = $(this).data('instance-id');
+            var comment = $('#workflowComment').val().trim();
+            ajaxAction(moduleUrl + '/workflow/approve', {instance_id: instanceId, comment: comment}, '审批通过');
+        });
+
+        $(document).on('click', '#btnWorkflowReject', function () {
+            var instanceId = $(this).data('instance-id');
+            var comment = $('#workflowComment').val().trim();
+            if (!comment) {
+                alert('请填写驳回原因');
+                return;
+            }
+            if (!confirm('确认驳回当前审批？')) return;
+            ajaxAction(moduleUrl + '/workflow/reject', {instance_id: instanceId, comment: comment}, '已驳回');
+        });
+    })();
+</script>
+<style>
+    .workflow-node-graph { gap: 10px; }
+    .workflow-node { min-width: 160px; max-width: 180px; padding: 16px 18px; border: 1px solid #dee2e6; border-radius: 18px; background: #ffffff; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04); text-align: center; position: relative; }
+    .workflow-node::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; border-top-left-radius: 18px; border-top-right-radius: 18px; background: transparent; }
+    .workflow-node-active { border-color: #0d6efd; background: #e7f1ff; }
+    .workflow-node-active::before { background: linear-gradient(90deg, #0d6efd, #53b3ff); }
+    .workflow-node-completed { border-color: #198754; background: #e9f7ef; }
+    .workflow-node-upcoming { border-color: #ced4da; background: #f8f9fa; }
+    .workflow-node-name { font-weight: 700; margin-bottom: 8px; font-size: 1rem; }
+    .workflow-node-meta { font-size: 0.85rem; color: #495057; line-height: 1.4; }
+    .workflow-node-status { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; color: #495057; background: rgba(108, 117, 125, 0.12); }
+    .workflow-node-completed .workflow-node-status { color: #0f5132; background: rgba(25, 135, 84, 0.12); }
+    .workflow-node-active .workflow-node-status { color: #084298; background: rgba(13, 110, 253, 0.14); }
+    .workflow-node-upcoming .workflow-node-status { color: #495057; background: rgba(113, 120, 128, 0.12); }
+    .workflow-node-code { margin-top: 6px; font-size: 0.82rem; color: #6c757d; }
+    .workflow-node-connector { min-width: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #6c757d; }
+    .workflow-node-arrow { font-size: 22px; margin-bottom: 4px; }
+    .workflow-transition-label { margin-top: 2px; font-size: 0.82rem; color: #6c757d; max-width: 100px; word-break: break-word; }
+    .workflow-node-tag .badge { font-size: 0.72rem; padding: 4px 8px; }
+</style>

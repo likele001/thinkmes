@@ -146,7 +146,7 @@ class AppCenter extends Backend
         if ($checkTable !== '') {
             try {
                 $full = $prefix . $checkTable;
-                $r = Db::query("SHOW TABLES LIKE '" . addslashes($full) . "'");
+                $r = Db::query("SHOW TABLES LIKE ?", [$full]);
                 if (!empty($r)) {
                     return true;
                 }
@@ -285,7 +285,7 @@ class AppCenter extends Backend
         $conn = Db::connect();
         foreach (static::$knownTablePrefixes[$appKey] as $suffix) {
             $pattern = $prefix . $suffix . '%';
-            $rows = Db::query("SHOW TABLES LIKE '" . addslashes($pattern) . "'");
+            $rows = Db::query("SHOW TABLES LIKE ?", [$pattern]);
             foreach ($rows as $row) {
                 $name = (string) reset($row);
                 if ($name !== '') {
@@ -522,5 +522,134 @@ class AppCenter extends Backend
                 'group' => 'base', 'sort' => 0, 'create_time' => time(), 'update_time' => time(),
             ]);
         }
+    }
+
+    protected function allowedPackScripts(): array
+    {
+        $root = root_path();
+        $map = [
+            'base' => $root . 'build/pack_base.php',
+        ];
+        foreach (static::$knownPackagedApps as $key => $_) {
+            $map[$key] = $root . 'build/pack_' . $key . '.php';
+        }
+        $map['miniapp'] = $root . 'build/pack_miniapp.php';
+        foreach ($map as $k => $path) {
+            if (!is_file($path)) {
+                unset($map[$k]);
+            }
+        }
+        return $map;
+    }
+
+    protected function sanitizeVersion(string $version): string
+    {
+        $version = trim($version);
+        if ($version === '') {
+            return '1.0';
+        }
+        if (strlen($version) > 20) {
+            return substr($version, 0, 20);
+        }
+        if (!preg_match('/^[0-9A-Za-z][0-9A-Za-z._-]{0,19}$/', $version)) {
+            return '1.0';
+        }
+        return $version;
+    }
+
+    public function pack(): Response
+    {
+        if ($this->getTenantId() !== 0) {
+            return $this->error('仅平台超级管理员可打包');
+        }
+        if (!$this->request->isPost()) {
+            return $this->error('请求方式错误');
+        }
+        $appKey = trim((string) $this->request->post('app', ''));
+        $version = $this->sanitizeVersion((string) $this->request->post('version', '1.0'));
+        $scripts = $this->allowedPackScripts();
+        if ($appKey === '' || !isset($scripts[$appKey])) {
+            return $this->error('不支持的打包类型');
+        }
+        $script = $scripts[$appKey];
+
+        $cmd = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($script) . ' ' . escapeshellarg($version);
+        $desc = [
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+        $proc = proc_open($cmd, $desc, $pipes, root_path());
+        if (!is_resource($proc)) {
+            return $this->error('无法启动打包进程');
+        }
+        stream_set_timeout($pipes[1], 300);
+        stream_set_timeout($pipes[2], 300);
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($proc);
+
+        $zipName = ($appKey === 'base')
+            ? ('thinkmes-base-' . $version . '.zip')
+            : ('thinkmes-' . $appKey . '-' . $version . '.zip');
+
+        $distPath = root_path() . 'dist/' . $zipName;
+        $buildPath = root_path() . 'build/' . $zipName;
+        $zipPath = is_file($distPath) ? $distPath : (is_file($buildPath) ? $buildPath : '');
+
+        $log = trim((string) $stdout . "\n" . (string) $stderr);
+        if (strlen($log) > 8000) {
+            $log = substr($log, 0, 8000);
+        }
+
+        if ($exitCode !== 0) {
+            return $this->error('打包失败：' . ($log !== '' ? $log : ('exit=' . $exitCode)));
+        }
+        if ($zipPath === '') {
+            return $this->error('打包完成但未找到输出文件：' . $zipName);
+        }
+
+        $downloadUrl = $this->getAdminUrlPrefix() . '/app_center/downloadPack?name=' . urlencode($zipName);
+        return $this->success('打包完成', [
+            'name' => $zipName,
+            'path' => $zipPath,
+            'download_url' => $downloadUrl,
+            'log' => $log,
+        ]);
+    }
+
+    public function downloadPack(): Response
+    {
+        if ($this->getTenantId() !== 0) {
+            return $this->error('仅平台超级管理员可下载');
+        }
+        $name = basename((string) $this->request->get('name', ''));
+        if ($name === '' || strpos($name, '..') !== false) {
+            return $this->error('参数错误');
+        }
+        if (!preg_match('/^thinkmes-([a-z0-9_]+)-[0-9A-Za-z._-]{1,20}\.zip$/', $name, $m)) {
+            return $this->error('文件名不合法');
+        }
+        $appKey = $m[1];
+        $allowed = $this->allowedPackScripts();
+        if (!isset($allowed[$appKey])) {
+            return $this->error('不支持的包');
+        }
+
+        $distPath = root_path() . 'dist/' . $name;
+        $buildPath = root_path() . 'build/' . $name;
+        $path = is_file($distPath) ? $distPath : (is_file($buildPath) ? $buildPath : '');
+        if ($path === '') {
+            return $this->error('文件不存在');
+        }
+        $content = file_get_contents($path);
+        if ($content === false) {
+            return $this->error('读取失败');
+        }
+        return response($content, 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="' . $name . '"',
+        ]);
     }
 }

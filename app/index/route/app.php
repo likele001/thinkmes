@@ -3,6 +3,14 @@ use think\facade\Route;
 
 // 先注册具体路由，避免被后面的 :lang 单段路由抢先匹配导致 /index/user/index、/index/customer/index 等 404
 Route::get('dashboard', 'MesDashboard/index');
+Route::get('store/detail', 'Store/detail');
+Route::get('store/publish', 'Store/publish');
+Route::get('store/my', 'Store/my');
+Route::get('store', 'Store/index');
+Route::get('developer/login', 'DeveloperCenter/login');
+Route::get('developer/register', 'DeveloperCenter/register');
+Route::get('developer/center', 'DeveloperCenter/center');
+Route::get('developer', 'DeveloperCenter/center');
 Route::get('user/login', 'User/login');
 Route::get('user/register', 'User/register');
 Route::get('user/logout', 'User/logout');
@@ -105,3 +113,9 @@ Route::get('register', 'Purchase/register');
 if (is_file(__DIR__ . '/prompt.php')) {
     require __DIR__ . '/prompt.php';
 }
+
+// 客服中心路由
+Route::get('customer-service', 'CustomerService/index');
+Route::get('customer-service/chat', 'CustomerService/chat');
+Route::get('customer-service/knowledge', 'CustomerService/knowledge');
+Route::get('customer-service/ticket', 'CustomerService/ticket');

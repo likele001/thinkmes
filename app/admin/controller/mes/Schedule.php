@@ -40,17 +40,6 @@ class Schedule extends Backend
         if ($batchId !== '') $query->where('batch_id', $batchId);
         $date = trim((string) $this->request->get('work_date', ''));
         if ($date !== '') $query->where('work_date', $date);
-        $startDate = trim((string) $this->request->get('start_date', ''));
-        $days = (int) $this->request->get('days', 0);
-        $filterDate = (int) $this->request->get('filter_date', 0);
-        if ($batchId === '' && $date === '' && $filterDate === 1 && $startDate !== '' && $days > 0) {
-            $startTs = strtotime($startDate . ' 00:00:00');
-            if ($startTs) {
-                $days = max(1, min(60, $days));
-                $endDate = date('Y-m-d', $startTs + ($days - 1) * 86400);
-                $query->where('work_date', '>=', $startDate)->where('work_date', '<=', $endDate);
-            }
-        }
         $status = $this->request->get('status');
         if ($status !== null && $status !== '') $query->where('status', (int) $status);
 
@@ -458,41 +447,6 @@ class Schedule extends Backend
 
             Db::commit();
 
-            $this->pushAdminNotification(
-                '排产下发成功',
-                '批次：' . $batchId . '，分工：' . count($allocRows) . '，二维码：' . $qrcodeCount,
-                'info',
-                0,
-                $tenantId
-            );
-
-            try {
-                $allocIds = array_values(array_unique(array_filter(array_map(fn ($a) => (int) ($a['id'] ?? 0), $insertedAllocations))));
-                if ($allocIds) {
-                    $infoRows = Db::name('mes_allocation')->alias('a')
-                        ->leftJoin('mes_order o', 'o.id = a.order_id AND o.tenant_id = a.tenant_id')
-                        ->leftJoin('mes_product_model m', 'm.id = a.model_id AND m.tenant_id = a.tenant_id')
-                        ->leftJoin('mes_product p', 'p.id = m.product_id AND p.tenant_id = m.tenant_id')
-                        ->leftJoin('mes_process pr', 'pr.id = a.process_id AND pr.tenant_id = a.tenant_id')
-                        ->where('a.tenant_id', $tenantId)
-                        ->whereIn('a.id', $allocIds)
-                        ->field('a.id,a.user_id,a.quantity,o.order_no,p.name as product_name,m.name as model_name,pr.name as process_name')
-                        ->select()
-                        ->toArray();
-                    foreach ($infoRows as $x) {
-                        $uid = (int) ($x['user_id'] ?? 0);
-                        if ($uid <= 0) continue;
-                        $content = '订单：' . (string) ($x['order_no'] ?? '')
-                            . '，产品：' . (string) ($x['product_name'] ?? '')
-                            . '，型号：' . (string) ($x['model_name'] ?? '')
-                            . '，工序：' . (string) ($x['process_name'] ?? '')
-                            . '，数量：' . (string) ((int) ($x['quantity'] ?? 0));
-                        $this->pushUserNotification($uid, '新分工下发', $content, 'info', $tenantId);
-                    }
-                }
-            } catch (\Throwable $e) {
-            }
-
             return $this->success('已下发', [
                 'allocations' => count($allocRows),
                 'qrcodes' => $qrcodeCount,
@@ -500,59 +454,6 @@ class Schedule extends Backend
         } catch (\Throwable $e) {
             Db::rollback();
             return $this->error('下发失败：' . $e->getMessage());
-        }
-    }
-
-    public function revoke(): Response
-    {
-        if (!$this->request->isPost()) return $this->error('非法请求');
-        $tenantId = $this->getTenantId();
-        if ($tenantId <= 0) $tenantId = (int) $this->request->post('tenant_id', 0);
-        $batchId = trim((string) $this->request->post('batch_id', ''));
-        if ($tenantId <= 0) return $this->error('tenant_id required');
-        if ($batchId === '') return $this->error('batch_id required');
-
-        $hasRemark = $this->hasTableColumn('mes_allocation', 'remark');
-        if (!$hasRemark) return $this->error('当前库缺少 mes_allocation.remark 字段，无法定位批次分工进行撤销');
-
-        $allocIds = Db::name('mes_allocation')
-            ->where('tenant_id', $tenantId)
-            ->where('remark', 'batch:' . $batchId)
-            ->column('id');
-        $allocIds = array_values(array_unique(array_filter(array_map('intval', (array) $allocIds))));
-        if (!$allocIds) return $this->error('未找到该批次生成的分工记录');
-
-        $reportCount = (int) Db::name('mes_report')
-            ->where('tenant_id', $tenantId)
-            ->whereIn('allocation_id', $allocIds)
-            ->count();
-        if ($reportCount > 0) return $this->error('存在 ' . $reportCount . ' 条关联报工记录，无法撤销');
-
-        $busyCount = (int) Db::name('mes_allocation')
-            ->where('tenant_id', $tenantId)
-            ->whereIn('id', $allocIds)
-            ->where(function ($q) {
-                $q->where('status', '<>', 0)->whereOr('completed_quantity', '>', 0);
-            })
-            ->count();
-        if ($busyCount > 0) return $this->error('存在已开始/已完成的分工记录，无法撤销');
-
-        Db::startTrans();
-        try {
-            AllocationQrcodeModel::where('tenant_id', $tenantId)->whereIn('allocation_id', $allocIds)->delete();
-            AllocationModel::where('tenant_id', $tenantId)->whereIn('id', $allocIds)->delete();
-            Db::name('mes_schedule_task')
-                ->where('tenant_id', $tenantId)
-                ->where('batch_id', $batchId)
-                ->where('status', 1)
-                ->update(['status' => 3]);
-            Db::commit();
-
-            $this->pushAdminNotification('排产撤销下发', '批次：' . $batchId . '，撤销分工：' . count($allocIds), 'warning', 0, $tenantId);
-            return $this->success('已撤销', ['allocations' => count($allocIds)]);
-        } catch (\Throwable $e) {
-            Db::rollback();
-            return $this->error('撤销失败：' . $e->getMessage());
         }
     }
 

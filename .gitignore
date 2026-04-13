@@ -14,7 +14,8 @@ Thumbs.db
 /runtime/
 /public/uploads/*
 !/public/uploads/.gitkeep
-/build/
+
+/build/output
 /dist/
 dist
 test_url.sh
@@ -25,3 +26,4 @@ miniappnews
 /miniappnews/
 .gitignore
 /workbuddy/
+build/thinkmes

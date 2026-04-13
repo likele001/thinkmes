@@ -14,6 +14,7 @@ use app\admin\model\mes\BomModel;
 use app\admin\model\mes\BomItemModel;
 use app\admin\model\mes\MaterialModel;
 use app\admin\model\mes\PurchaseRequestModel;
+use app\admin\service\WorkflowService;
 use think\facade\Db;
 use think\facade\View;
 use think\Response;
@@ -43,28 +44,58 @@ class Order extends Backend
         
         $orderNo = trim((string) $this->request->get('order_no'));
         $status = $this->request->get('status');
+        $workflowStatusFilter = trim((string) $this->request->get('workflow_status_filter', ''));
 
         $tenantId = $this->getTenantId();
-        $query = OrderModel::with(['orderModels.model.product', 'customer'])
-            ->order('id', 'desc');
+        $workflowInstanceTable = Db::name('workflow_instance')->getTable();
+        $workflowStateTable = Db::name('workflow_state')->getTable();
+
+        $query = OrderModel::alias('o')->with(['orderModels.model.product', 'customer'])
+            ->order('o.id', 'desc');
         if ($tenantId > 0) {
-            $query->where('tenant_id', $tenantId);
+            $query->where('o.tenant_id', $tenantId);
         } else {
             $tenantParam = (int) $this->request->get('tenant_id', 0);
             if ($tenantParam > 0) {
-                $query->where('tenant_id', $tenantParam);
+                $query->where('o.tenant_id', $tenantParam);
             }
         }
 
         if ($orderNo !== '') {
-            $query->where('order_no', 'like', '%' . $orderNo . '%');
+            $query->where('o.order_no', 'like', '%' . $orderNo . '%');
         }
         if ($status !== '' && $status !== null) {
-            $query->where('status', (int) $status);
+            $query->where('o.status', (int) $status);
+        }
+
+        if ($workflowStatusFilter !== '') {
+            $query->leftJoin($workflowInstanceTable . ' wi', 'wi.record_id = o.id AND wi.table_name = "mes_order"', 'left')
+                ->leftJoin($workflowStateTable . ' ws', 'ws.id = wi.current_state_id', 'left')
+                ->group('o.id');
+            if ($workflowStatusFilter === 'not_started') {
+                $query->whereNull('wi.id');
+            } elseif ($workflowStatusFilter === 'in_progress') {
+                $query->whereNotNull('wi.id')->where('wi.is_completed', 0);
+            } elseif ($workflowStatusFilter === 'completed') {
+                $query->where('wi.is_completed', 1);
+            }
         }
 
         $total = $query->count();
         $list = $query->page($page, $limit)->select()->toArray();
+
+        $workflowService = new WorkflowService(
+            $tenantId,
+            $this->auth->id ?? 0,
+            $this->auth->username ?? ''
+        );
+        foreach ($list as &$item) {
+            $workflowStatus = $workflowService->getCurrentStatus('mes_order', (int) $item['id']);
+            $item['workflow_status'] = $workflowStatus['current_state'] ?? '';
+            $item['workflow_instance_id'] = $workflowStatus['instance_id'] ?? 0;
+            $item['workflow_is_completed'] = $workflowStatus['is_completed'] ?? false;
+        }
+        unset($item);
 
         return $this->success('', ['total' => $total, 'list' => $list]);
     }
@@ -166,6 +197,10 @@ class Order extends Backend
                 $this->autoGeneratePurchaseRequests($order->id, $tenantId);
 
                 Db::commit();
+
+                // 启动工作流（如果已在后台定义了对应的工作流）
+                $this->startOrderWorkflow($order->id, $order->order_no ?: $order->order_name);
+
                 return $this->success('添加成功', ['id' => $order->id]);
             } catch (\Exception $e) {
                 Db::rollback();
@@ -544,6 +579,31 @@ class Order extends Backend
             }
         }
         return $created;
+    }
+
+    /**
+     * 启动 MES 订单工作流
+     */
+    protected function startOrderWorkflow(int $orderId, string $title): void
+    {
+        try {
+            $service = new WorkflowService(
+                $this->auth->tenant_id ?? 0,
+                $this->auth->id ?? 0,
+                $this->auth->username ?? ''
+            );
+            $service->startWorkflow('mes_order', $orderId, $title);
+        } catch (\Exception $e) {
+            \think\facade\Db::name('log')->insert([
+                'tenant_id' => $this->getTenantId(),
+                'admin_id' => $this->auth->id ?? 0,
+                'type' => 'workflow',
+                'content' => '启动 MES 订单工作流失败：' . $e->getMessage(),
+                'url' => $this->request->url(),
+                'ip' => $this->request->ip(),
+                'create_time' => time(),
+            ]);
+        }
     }
 
     /**
@@ -1125,6 +1185,12 @@ class Order extends Backend
 
         $list = $query->select()->toArray();
 
+        $workflowService = new WorkflowService(
+            $tenantId,
+            $this->auth->id ?? 0,
+            $this->auth->username ?? ''
+        );
+
         foreach ($list as &$item) {
             $item['finish_num'] = (int) ($item['finish_num'] ?? 0);
             $item['bad_num'] = (int) ($item['bad_num'] ?? 0);
@@ -1136,7 +1202,13 @@ class Order extends Backend
             } else {
                 $item['status_txt'] = '生产中';
             }
+
+            $workflowStatus = $workflowService->getCurrentStatus('mes_order', (int) $item['id']);
+            $item['workflow_status'] = $workflowStatus['current_state'] ?? '';
+            $item['workflow_instance_id'] = $workflowStatus['instance_id'] ?? 0;
+            $item['workflow_is_completed'] = $workflowStatus['is_completed'] ?? false;
         }
+        unset($item);
 
         View::assign('list', $list);
         View::assign('title', '订单生产进度');
@@ -1264,9 +1336,34 @@ class Order extends Backend
             'progress' => $orderPlan > 0 ? round($orderReal / $orderPlan * 100, 1) : 0,
         ];
 
+        $workflowService = new WorkflowService(
+            $tenantId,
+            $this->auth->id ?? 0,
+            $this->auth->username ?? ''
+        );
+        $workflowStatus = $workflowService->getCurrentStatus('mes_order', $orderId);
+        $workflowInstance = $workflowService->getInstance('mes_order', $orderId);
+        $workflowHistory = $workflowService->getInstanceHistory('mes_order', $orderId);
+        $workflowTransitions = $workflowService->getAvailableTransitions('mes_order', $orderId);
+        $workflowGraph = $workflowService->getWorkflowGraph('mes_order', $orderId);
+        $pendingApprovals = [];
+        if ($workflowInstance) {
+            $pendingApprovals = \app\admin\model\WorkflowApproval::where('instance_id', $workflowInstance->id)
+                ->where('approver_id', $this->auth->id ?? 0)
+                ->where('status', 'pending')
+                ->select()
+                ->toArray();
+        }
+
         View::assign('order', $order);
         View::assign('products', array_values($products));
         View::assign('orderTotal', $orderTotal);
+        View::assign('workflowStatus', $workflowStatus);
+        View::assign('workflowInstance', $workflowInstance);
+        View::assign('workflowHistory', $workflowHistory);
+        View::assign('workflowTransitions', $workflowTransitions);
+        View::assign('workflowGraph', $workflowGraph);
+        View::assign('pendingApprovals', $pendingApprovals);
         View::assign('title', '订单进度（按产品·工序） - ' . $order->order_no);
         return $this->fetchWithLayout('mes/order/process_detail');
     }
