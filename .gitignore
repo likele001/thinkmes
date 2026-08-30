@@ -42,7 +42,12 @@ frontend/*/node_modules/
 .qoder/
 .trae/
 # 备份文件（我的临时备份，别误提交）
-*.bak_*
+*.bak*
 
 # 安装锁（本地部署标记，非源码）
 install.lock
+
+# CoreUI 后台模板：三份重复拷贝共 37M，业务代码未引用
+# （keleadmin/index.html 中的 CoreUI 仅为技术栈说明文字）
+# 已移至 /root/thinkmes_removed_20260830/coreui
+/public/assets/lib/coreui/
