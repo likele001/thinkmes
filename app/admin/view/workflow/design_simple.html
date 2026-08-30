@@ -1,0 +1,291 @@
+{include file='common/meta' /}
+<style>
+/* 流程设计器样式 */
+.workflow-canvas {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    position: relative;
+    overflow: auto;
+}
+
+.node {
+    position: absolute;
+    min-width: 120px;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    z-index: 5;
+}
+
+.node-start {
+    background: #28a745;
+    color: white;
+}
+
+.node-approval {
+    background: #007bff;
+    color: white;
+}
+
+.node-end {
+    background: #dc3545;
+    color: white;
+}
+
+.node-actions {
+    position: absolute;
+    right: 5px;
+    top: -30px;
+    display: none;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.node:hover .node-actions {
+    display: block;
+}
+
+.node-actions .btn {
+    margin: 0 2px;
+    cursor: pointer;
+    z-index: 10;
+}
+</style>
+
+<div class="card card-primary card-outline">
+    <div class="card-header">
+        <h3 class="card-title">流程设计器 - {$workflow.name}</h3>
+        <div class="card-tools">
+            <button class="btn btn-success btn-sm" onclick="saveWorkflow()">
+                <i class="fas fa-save"></i> 保存
+            </button>
+            <button class="btn btn-default btn-sm" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i> 返回
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="workflow-canvas" id="canvas">
+            <!-- 节点工具栏 -->
+            <div class="node-toolbar">
+                <div class="node-tool" draggable="true" data-type="start">
+                    <i class="fas fa-play"></i> 开始节点
+                </div>
+                <div class="node-tool" draggable="true" data-type="approval">
+                    <i class="fas fa-user-check"></i> 审批节点
+                </div>
+                <div class="node-tool" draggable="true" data-type="end">
+                    <i class="fas fa-stop"></i> 结束节点
+                </div>
+            </div>
+
+            <!-- SVG连线层 -->
+            <svg id="edges-layer">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                    </marker>
+                </defs>
+            </svg>
+
+            <!-- 节点容器 -->
+            <div id="nodes-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 节点配置对话框 -->
+<div id="node-config-dialog" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; min-width: 400px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h4 style="margin: 0;">节点配置</h4>
+        <button onclick="closeNodeConfigDialog()" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 0;">&times;</button>
+    </div>
+    <div>
+        <div class="form-group">
+            <label>节点名称</label>
+            <input type="text" class="form-control" id="config-node-name" placeholder="请输入节点名称">
+        </div>
+        <div class="form-group" id="approval-type-group">
+            <label>审批类型</label>
+            <select class="form-control" id="config-approval-type">
+                <option value="or">或签（任一人通过即可）</option>
+                <option value="and">会签（所有人都需通过）</option>
+            </select>
+        </div>
+    </div>
+    <div style="text-align: right; margin-top: 15px;">
+        <button type="button" class="btn btn-default" onclick="closeNodeConfigDialog()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="saveNodeConfig()">保存</button>
+    </div>
+</div>
+
+<!-- 遮罩层 -->
+<div id="dialog-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999;"></div>
+
+<script>
+$(function() {
+    // 基本数据
+    var workflowId = {$workflow.id|default=0};
+    var nodes = [];
+    var edges = [];
+    var currentNode = null;
+
+    // 初始化画布
+    initCanvas();
+
+    function initCanvas() {
+        var canvas = document.getElementById('canvas');
+
+        // 拖拽工具栏节点到画布
+        document.querySelectorAll('.node-tool').forEach(function(tool) {
+            tool.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('type', this.dataset.type);
+            });
+        });
+
+        canvas.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('drop', function(e) {
+            e.preventDefault();
+            var type = e.dataTransfer.getData('type');
+            if (!type) return;
+
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left + canvas.scrollLeft;
+            var y = e.clientY - rect.top + canvas.scrollTop;
+
+            var node = {
+                workflow_id: workflowId,
+                node_code: 'node_' + Date.now(),
+                node_name: getNodeTypeName(type),
+                node_type: type,
+                position_x: x,
+                position_y: y,
+                config: {}
+            };
+
+            nodes.push(node);
+            renderNode(node);
+        });
+    }
+
+    function getNodeTypeName(type) {
+        var names = {
+            'start': '开始',
+            'approval': '审批',
+            'end': '结束'
+        };
+        return names[type] || type;
+    }
+
+    function renderNode(node) {
+        var html = '<div class="node node-' + node.node_type + '" ' +
+            'id="' + node.node_code + '" ' +
+            'style="left:' + node.position_x + 'px;top:' + node.position_y + 'px;z-index:5;">';
+
+        html += '<div class="node-actions">';
+        html += '<button class="btn btn-xs btn-info config-btn" onclick="configNode(\'' + node.node_code + '\')">⚙️ 配置</button> ';
+        html += '<button class="btn btn-xs btn-danger delete-btn" onclick="deleteNode(\'' + node.node_code + '\')">🗑️ 删除</button>';
+        html += '</div>';
+        html += '<strong>' + node.node_name + '</strong>';
+        html += '</div>';
+
+        $('#nodes-container').append(html);
+    }
+
+    // 配置节点
+    window.configNode = function(nodeCode) {
+        currentNode = nodes.find(n => n.node_code === nodeCode);
+        if (!currentNode) return;
+
+        $('#config-node-name').val(currentNode.node_name);
+        $('#config-approval-type').val(currentNode.approval_type || 'or');
+
+        $('#dialog-backdrop').show();
+        $('#node-config-dialog').show();
+        $('#config-node-name').focus();
+    };
+
+    // 删除节点
+    window.deleteNode = function(nodeCode) {
+        if (!confirm('确定删除此节点吗？')) return;
+
+        nodes = nodes.filter(n => n.node_code !== nodeCode);
+        edges = edges.filter(e => e.from_node !== nodeCode && e.to_node !== nodeCode);
+        $('#' + nodeCode).remove();
+    };
+
+    // 保存节点配置
+    window.saveNodeConfig = function() {
+        if (!currentNode) return;
+
+        var nodeName = $('#config-node-name').val();
+        if (!nodeName) {
+            alert('请输入节点名称');
+            return;
+        }
+
+        currentNode.node_name = nodeName;
+        currentNode.approval_type = $('#config-approval-type').val();
+        $('#' + currentNode.node_code).find('strong').text(nodeName);
+
+        closeNodeConfigDialog();
+    };
+
+    // 关闭配置对话框
+    window.closeNodeConfigDialog = function() {
+        $('#node-config-dialog').hide();
+        $('#dialog-backdrop').hide();
+        currentNode = null;
+    };
+
+    // 点击背景关闭
+    $('#dialog-backdrop').on('click', function() {
+        closeNodeConfigDialog();
+    });
+
+    // 保存工作流
+    window.saveWorkflow = function() {
+        if (nodes.length === 0) {
+            alert('请先添加节点');
+            return;
+        }
+
+        $.ajax({
+            url: '{:url("workflow/design")}?id=' + workflowId,
+            type: 'POST',
+            data: {
+                nodes: JSON.stringify(nodes),
+                edges: JSON.stringify(edges)
+            },
+            success: function(res) {
+                if (res.code == 1) {
+                    alert('保存成功');
+                } else {
+                    alert(res.msg || '保存失败');
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('保存失败：' + error);
+            }
+        });
+    };
+
+    // 如果有现有节点，渲染它们
+    {if !empty($nodes)}
+    var existingNodes = {$nodes|json_encode|default='[]'};
+    var existingEdges = {$edges|json_encode|default='[]'};
+    nodes = existingNodes;
+    edges = existingEdges;
+    nodes.forEach(function(node) {
+        renderNode(node);
+    });
+    {/if}
+});
+</script>
+{include file='common/script' /}

@@ -2,7 +2,7 @@
     <div class="card-header">
         <div class="panel-lead"><em>流程实例详情</em> 当前流程实例状态与审批记录</div>
         <div class="card-tools">
-            <a href="{$config.moduleurl}/workflow/instances" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> 返回实例列表</a>
+            <a href="{$config.moduleurl}/workflow/instance/index" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> 返回实例列表</a>
             {if $instance.table_name == 'mes_order'}
             <a href="{$config.moduleurl}/mes/order/processDetail?order_id={$instance.record_id}" class="btn btn-outline-primary btn-sm"><i class="fas fa-file-alt"></i> 订单详情</a>
             {/if}

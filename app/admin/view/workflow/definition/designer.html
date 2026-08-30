@@ -1,0 +1,56 @@
+{include file='common/meta' /}
+<style>
+body { padding: 15px; }
+.node-item { border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; margin-bottom: 15px; background: #fff; position: relative; cursor: move; }
+.node-item.active { border-color: #0d6efd; box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1); }
+.node-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
+.node-title { font-weight: bold; color: #333; }
+.node-sort { background: #0d6efd; color: white; padding: 2px 8px; border-radius: 2px; font-size: 12px; }
+.node-placeholder { background: #f8f9fa; color: #999; text-align: center; padding: 15px; border-radius: 4px; margin-bottom: 15px; }
+.condition-item { background: #f8f8f8; padding: 10px; border-radius: 4px; margin-bottom: 10px; position: relative; }
+</style>
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">节点配置：{$definition.name}</h3>
+            <div>
+                <button class="btn btn-sm btn-success" id="btnSave">
+                    <i class="layui-icon layui-icon-ok"></i> 保存节点
+                </button>
+                <a href="/admin/workflow/definition/index" class="btn btn-sm btn-secondary">
+                    <i class="layui-icon layui-icon-left"></i> 返回列表
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- 提示信息 -->
+        <div class="alert alert-info">
+            <i class="layui-icon layui-icon-about"></i>
+            <span>从上到下线性配置审批节点，支持拖拽排序、条件跳过与会签/或签。</span>
+        </div>
+
+        <input type="hidden" id="definitionId" value="{$definition.id}">
+
+        <!-- 发起人占位节点 -->
+        <div class="node-placeholder">
+            <i class="layui-icon layui-icon-user"></i> 发起人
+            <span style="color: #999; margin-left: 10px;">（占位节点，无需配置）</span>
+        </div>
+
+        <!-- 节点列表 -->
+        <div id="nodeList"></div>
+
+        <!-- 添加节点按钮 -->
+        <button class="btn btn-fluid btn-outline-primary" id="btnAddNode" style="margin-bottom: 15px;">
+            <i class="layui-icon layui-icon-addition"></i> 添加审批节点
+        </button>
+
+        <!-- 结束占位节点 -->
+        <div class="node-placeholder">
+            <i class="layui-icon layui-icon-ok-circle"></i> 结束
+            <span style="color: #999; margin-left: 10px;">（占位节点，无需配置）</span>
+        </div>
+    </div>
+</div>
+{include file='common/script' /}

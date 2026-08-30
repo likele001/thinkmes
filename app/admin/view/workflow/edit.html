@@ -1,129 +1,94 @@
 {include file='common/meta' /}
-<form id="form-edit" class="form-horizontal" role="form" data-url="workflow/edit" data-back="workflow">
-    <input type="hidden" name="row[id]" value="{$row.id}">
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">工作流名称<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <input class="form-control" name="row[name]" value="{$row.name}" data-rule="required" placeholder="如：订单审批流程">
+<div class="card card-primary card-outline">
+    <div class="card-header">
+        <h3 class="card-title">编辑工作流</h3>
+        <div class="card-tools">
+            <a href="{:url('workflow/index')}" class="btn btn-default btn-sm">
+                <i class="fas fa-arrow-left"></i> 返回
+            </a>
         </div>
     </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">工作流标识<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <input class="form-control" name="row[code]" value="{$row.code}" data-rule="required;alphaNum" placeholder="如：order_approval">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">关联表名<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[table_name]" id="workflow-table-name" data-rule="required">
-                <option value="">请选择关联表</option>
-                <option value="mes_order" {$row.table_name == 'mes_order' ? 'selected' : ''}>mes_order</option>
-                <option value="mes_purchase" {$row.table_name == 'mes_purchase' ? 'selected' : ''}>mes_purchase</option>
-                <option value="mes_production" {$row.table_name == 'mes_production' ? 'selected' : ''}>mes_production</option>
-                <option value="mes_inventory" {$row.table_name == 'mes_inventory' ? 'selected' : ''}>mes_inventory</option>
-                <option value="mes_material" {$row.table_name == 'mes_material' ? 'selected' : ''}>mes_material</option>
-            </select>
-            <small class="form-text text-muted">请选择该工作流对应的业务表名，系统会自动根据表名提供标题字段选择，避免写错。</small>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">标题字段<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[title_field]" id="workflow-title-field" data-rule="required" disabled>
-                <option value="">请选择标题字段</option>
-            </select>
-            <small class="form-text text-muted">先选择关联表名，再从下拉列表选择标题字段。该字段用作流程实例标题，不能随意填写。</small>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">初始状态<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[initial_state]" id="workflow-initial-state" data-rule="required" disabled>
-                <option value="">请先加载已定义状态</option>
-            </select>
-            <small class="form-text text-muted">系统会自动加载当前工作流已定义的状态标识，选择其中一个作为初始状态。</small>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">描述</label>
-        <div class="col-xs-12 col-sm-8">
-            <textarea class="form-control" name="row[description]" rows="3" placeholder="工作流说明">{$row.description}</textarea>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">状态</label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[status]">
-                <option value="active" {$row.status == 'active' ? 'selected' : ''}>启用</option>
-                <option value="inactive" {$row.status == 'inactive' ? 'selected' : ''}>禁用</option>
-            </select>
-        </div>
-    </div>
-    <div class="form-group layer-footer">
-        <label class="control-label col-xs-12 col-sm-2"></label>
-        <div class="col-xs-12 col-sm-8">
-            <button type="submit" class="btn btn-success btn-embossed">确定</button>
-            <button type="reset" class="btn btn-default btn-embossed">重置</button>
-        </div>
-    </div>
-</form>
-<script>
-$(function() {
-    var workflowTableFields = {
-        mes_order: ['order_no', 'order_name', 'name'],
-        mes_purchase: ['purchase_no', 'name'],
-        mes_production: ['production_no', 'name'],
-        mes_inventory: ['inventory_no', 'name'],
-        mes_material: ['material_no', 'name']
-    };
+    <div class="card-body">
+        <form id="form-edit" class="form-horizontal" role="form" data-url="workflow/edit" data-back="workflow">
+            <input type="hidden" name="id" value="{$row.id}">
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">流程名称<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <input class="form-control" name="name" value="{$row.name}" data-rule="required" placeholder="如：订单审批流程">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">流程代码<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <input class="form-control" name="code" value="{$row.code}" data-rule="required" placeholder="如：order_approval">
+                    <small class="text-muted">唯一标识，只能包含字母、数字和下划线</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">所属模块<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <select class="form-control" name="module_code" data-rule="required">
+                        <option value="">请选择模块</option>
+                        {foreach name="modules" key="k" item="v"}
+                        <option value="{$k}" {if $row.module_code == $k}selected{/if}>{$v}</option>
+                        {/foreach}
+                    </select>
+                    <small class="text-muted">选择此流程所属的业务模块</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">流程描述</label>
+                <div class="col-xs-12 col-sm-8">
+                    <textarea class="form-control" name="description" rows="3" placeholder="请输入流程描述">{$row.description}</textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">状态</label>
+                <div class="col-xs-12 col-sm-8">
+                    <select class="form-control" name="status">
+                        <option value="1" {if $row.status == 1}selected{/if}>启用</option>
+                        <option value="0" {if $row.status == 0}selected{/if}>禁用</option>
+                    </select>
+                </div>
+            </div>
 
-    function updateTitleFieldOptions() {
-        var tableName = $('#workflow-table-name').val();
-        var fields = workflowTableFields[tableName] || [];
-        var html = '<option value="">请选择标题字段</option>';
-        fields.forEach(function(field) {
-            html += '<option value="' + field + '"' + (field === '{$row.title_field}' ? ' selected' : '') + '>' + field + '</option>';
-        });
-        $('#workflow-title-field').html(html).prop('disabled', fields.length === 0);
-    }
+            <div class="form-group layer-footer">
+                <label class="control-label col-xs-12 col-sm-2"></label>
+                <div class="col-xs-12 col-sm-8">
+                    <button type="submit" class="btn btn-success btn-embossed">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <button type="reset" class="btn btn-default btn-embossed">
+                        <i class="fas fa-redo"></i> 重置
+                    </button>
+                    <a href="{:url('workflow/design', ['id' => $row.id])}" class="btn btn-info btn-embossed">
+                        <i class="fas fa-project-diagram"></i> 设计流程
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
-    function updateInitialStateOptions(states) {
-        var selected = '{$row.initial_state}';
-        if (!states || states.length === 0) {
-            $('#workflow-initial-state').html('<option value="">请先在工作流定义中添加状态</option>').prop('disabled', true);
-            return;
-        }
-        var html = '<option value="">请选择初始状态</option>';
-        states.forEach(function(code) {
-            html += '<option value="' + code + '"' + (code === selected ? ' selected' : '') + '>' + code + '</option>';
-        });
-        $('#workflow-initial-state').html(html).prop('disabled', false);
-    }
-
-    function loadWorkflowStates() {
-        var workflowId = '{$row.id}';
-        if (!workflowId) {
-            return;
-        }
-        $.getJSON('workflow/getStates', {workflow_id: workflowId}, function(res) {
-            if (res.code === 0 && Array.isArray(res.data)) {
-                var states = res.data.map(function(item) {
-                    return item.code;
-                }).filter(function(code) {
-                    return code;
-                });
-                updateInitialStateOptions(states);
-            }
-        });
-    }
-
-    $('#workflow-table-name').on('change', function() {
-        updateTitleFieldOptions();
-    });
-
-    updateTitleFieldOptions();
-    loadWorkflowStates();
-});
-</script>
-{include file='common/script-iframe' /}
+<div class="card card-info card-outline mt-3">
+    <div class="card-header">
+        <h4 class="card-title"><i class="fas fa-info-circle"></i> 流程信息</h4>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th>创建时间</th>
+                <td>{$row.create_time}</td>
+            </tr>
+            <tr>
+                <th>更新时间</th>
+                <td>{$row.update_time}</td>
+            </tr>
+            <tr>
+                <th>流程ID</th>
+                <td>{$row.id}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{include file='common/script' /}

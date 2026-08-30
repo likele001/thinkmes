@@ -1,0 +1,97 @@
+{include file='common/meta' /}
+<div class="card card-primary card-outline">
+    <div class="card-header">
+        <h3 class="card-title">工作流模块配置</h3>
+        <div class="card-tools">
+            <span class="badge badge-info">已启用工作流</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>模块代码</th>
+                    <th>模块名称</th>
+                    <th>关联表</th>
+                    <th>标题字段</th>
+                    <th>状态</th>
+                    <th>默认流程</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="module-list">
+                <!-- 数据由JS加载 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+$(function() {
+    // 加载模块列表
+    loadModules();
+
+    function loadModules() {
+        $.ajax({
+            url: '{:url("workflow/moduleConfig")}',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if (res.code == 0) {
+                    renderModules(res.data);
+                }
+            }
+        });
+    }
+
+    function renderModules(modules) {
+        console.log('渲染模块数据:', modules);
+        var html = '';
+        if (modules && modules.length > 0) {
+            $.each(modules, function(i, module) {
+                html += '<tr>';
+                html += '<td>' + module.module_code + '</td>';
+                html += '<td>' + module.module_name + '</td>';
+                html += '<td>' + module.table_name + '</td>';
+                html += '<td>' + module.title_field + '</td>';
+                html += '<td>' + (module.is_enabled == 1 ?
+                    '<span class="badge badge-success">已启用</span>' :
+                    '<span class="badge badge-default">未启用</span>') + '</td>';
+                html += '<td>' + (module.default_workflow_id || '-') + '</td>';
+                html += '<td>';
+                html += '<button class="btn btn-sm btn-success" onclick="toggleModule(\'' + module.module_code + '\', 1)">启用</button> ';
+                html += '<button class="btn btn-sm btn-warning" onclick="toggleModule(\'' + module.module_code + '\', 0)">禁用</button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+        } else {
+            html = '<tr><td colspan="7">暂无数据</td></tr>';
+        }
+        console.log('生成的HTML:', html);
+        $('#module-list').html(html);
+    }
+
+    window.toggleModule = function(moduleCode, isEnabled) {
+        $.ajax({
+            url: '{:url("workflow/toggleModule")}',
+            type: 'POST',
+            data: {
+                module_code: moduleCode,
+                is_enabled: isEnabled
+            },
+            success: function(res) {
+                if (res.code == 1) {
+                    Layer.msg(res.msg || '操作成功');
+                    loadModules();
+                } else {
+                    Layer.msg(res.msg || '操作失败');
+                }
+            },
+            error: function() {
+                Layer.msg('网络错误，请稍后重试');
+            }
+        });
+    };
+});
+</script>
+{include file='common/script' /}

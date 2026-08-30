@@ -1,0 +1,413 @@
+{include file='common/meta' /}
+<style>
+.workflow-canvas {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    position: relative;
+    overflow: auto;
+}
+
+.node {
+    position: absolute;
+    min-width: 120px;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    z-index: 5;
+}
+
+.node-start {
+    background: #28a745;
+    color: white;
+}
+
+.node-approval {
+    background: #007bff;
+    color: white;
+}
+
+.node-end {
+    background: #dc3545;
+    color: white;
+}
+
+.node-actions {
+    position: absolute;
+    right: 5px;
+    top: -30px;
+    display: none;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.node:hover .node-actions {
+    display: block;
+}
+
+.node-actions .btn {
+    margin: 0 2px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.edge {
+    stroke: #666;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#arrowhead);
+}
+
+.node-toolbar {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 100;
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.node-tool {
+    padding: 5px 10px;
+    margin: 5px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: move;
+    display: inline-block;
+}
+
+.node-tool:hover {
+    background: #f0f0f0;
+}
+</style>
+
+<div class="card card-primary card-outline">
+    <div class="card-header">
+        <h3 class="card-title">流程设计器 - {$workflow.name}</h3>
+        <div class="card-tools">
+            <button class="btn btn-success btn-sm" onclick="saveWorkflow()">
+                <i class="fas fa-save"></i> 保存
+            </button>
+            <button class="btn btn-default btn-sm" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i> 返回
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="workflow-canvas" id="canvas">
+            <div class="node-toolbar">
+                <div class="node-tool" draggable="true" data-type="start">
+                    <i class="fas fa-play"></i> 开始节点
+                </div>
+                <div class="node-tool" draggable="true" data-type="approval">
+                    <i class="fas fa-user-check"></i> 审批节点
+                </div>
+                <div class="node-tool" draggable="true" data-type="end">
+                    <i class="fas fa-stop"></i> 结束节点
+                </div>
+            </div>
+
+            <svg id="edges-layer">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                    </marker>
+                </defs>
+            </svg>
+
+            <div id="nodes-container"></div>
+        </div>
+    </div>
+</div>
+
+<div id="node-config-dialog" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; min-width: 400px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h4 style="margin: 0;">节点配置</h4>
+        <button onclick="closeNodeConfigDialog()" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 0;">&times;</button>
+    </div>
+    <div>
+        <div class="form-group">
+            <label>节点名称</label>
+            <input type="text" class="form-control" id="config-node-name" placeholder="请输入节点名称">
+        </div>
+        <div class="form-group" id="approval-type-group">
+            <label>审批类型</label>
+            <select class="form-control" id="config-approval-type">
+                <option value="or">或签（任一人通过即可）</option>
+                <option value="and">会签（所有人都需通过）</option>
+            </select>
+        </div>
+    </div>
+    <div style="text-align: right; margin-top: 15px;">
+        <button type="button" class="btn btn-default" onclick="closeNodeConfigDialog()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="saveNodeConfig()">保存</button>
+    </div>
+</div>
+
+<div id="dialog-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999;"></div>
+
+<!-- 隐藏的数据存储，用于JavaScript读取 -->
+<script type="application/json" id="workflow-nodes-data"><?= json_encode($nodes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT) ?></script>
+<script type="application/json" id="workflow-edges-data"><?= json_encode($edges, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT) ?></script>
+
+<script>
+$(function() {
+    var workflowId = <?php echo $workflow['id'] ?? 0; ?>;
+
+    // 直接从后端获取数据，避免PHP输出问题
+    var nodes = [];
+    var edges = [];
+
+    // 先尝试从隐藏的script标签中读取数据
+    try {
+        var nodesData = document.getElementById('workflow-nodes-data');
+        var edgesData = document.getElementById('workflow-edges-data');
+
+        console.log('=== 检查数据源 ===');
+        console.log('nodesData元素:', nodesData);
+        console.log('edgesData元素:', edgesData);
+
+        if (nodesData) {
+            var nodesText = nodesData.textContent || nodesData.innerHTML;
+            console.log('nodes原始文本:', nodesText);
+            nodes = JSON.parse(nodesText);
+            console.log('解析后的nodes:', nodes);
+        }
+        if (edgesData) {
+            var edgesText = edgesData.textContent || edgesData.innerHTML;
+            console.log('edges原始文本:', edgesText);
+            edges = JSON.parse(edgesText);
+            console.log('解析后的edges:', edges);
+        }
+    } catch (e) {
+        console.error('解析数据失败:', e);
+        console.log('将加载空数组');
+        nodes = [];
+        edges = [];
+    }
+
+    var draggedNode = null;
+    var connectingNode = null;
+    var currentNode = null;
+
+    console.log('=== 初始化流程设计器 ===');
+    console.log('工作流ID:', workflowId);
+    console.log('最终节点数量:', nodes.length);
+    console.log('最终连线数量:', edges.length);
+    console.log('节点数据:', JSON.stringify(nodes, null, 2));
+    console.log('连线数据:', JSON.stringify(edges, null, 2));
+
+    initCanvas();
+
+    // 渲染已存在的节点
+    if (nodes && nodes.length > 0) {
+        console.log('开始渲染已存在的节点...');
+        nodes.forEach(function(node) {
+            console.log('渲染节点:', node);
+            renderNode(node);
+        });
+        console.log('节点渲染完成');
+    }
+
+    function initCanvas() {
+        var canvas = document.getElementById('canvas');
+
+        document.querySelectorAll('.node-tool').forEach(function(tool) {
+            tool.addEventListener('dragstart', function(e) {
+                draggedNode = {
+                    type: this.dataset.type
+                };
+            });
+        });
+
+        canvas.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (!draggedNode) return;
+
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left + canvas.scrollLeft;
+            var y = e.clientY - rect.top + canvas.scrollTop;
+
+            var node = {
+                workflow_id: workflowId,
+                node_code: 'node_' + Date.now(),
+                node_name: getNodeTypeName(draggedNode.type),
+                node_type: draggedNode.type,
+                position_x: x,
+                position_y: y,
+                config: {}
+            };
+
+            nodes.push(node);
+            renderNode(node);
+            draggedNode = null;
+        });
+    }
+
+    function getNodeTypeName(type) {
+        var names = {
+            'start': '开始',
+            'approval': '审批',
+            'end': '结束'
+        };
+        return names[type] || type;
+    }
+
+    function renderNode(node) {
+        var html = '<div class="node node-' + node.node_type + '" ' +
+            'id="' + node.node_code + '" ' +
+            'style="left:' + node.position_x + 'px;top:' + node.position_y + 'px;z-index:5;">';
+
+        html += '<div class="node-actions">';
+        html += '<button class="btn btn-xs btn-info config-btn" onclick="configNode(\'' + node.node_code + '\')">⚙️ 配置</button> ';
+        html += '<button class="btn btn-xs btn-danger delete-btn" onclick="deleteNode(\'' + node.node_code + '\')">🗑️ 删除</button>';
+        html += '</div>';
+        html += '<strong>' + node.node_name + '</strong>';
+        html += '</div>';
+
+        $('#nodes-container').append(html);
+    }
+
+    window.configNode = function(nodeCode) {
+        currentNode = nodes.find(n => n.node_code === nodeCode);
+        if (!currentNode) return;
+
+        $('#config-node-name').val(currentNode.node_name);
+        $('#config-approval-type').val(currentNode.approval_type || 'or');
+
+        if (currentNode.node_type === 'approval') {
+            $('#approval-type-group').show();
+        } else {
+            $('#approval-type-group').hide();
+        }
+
+        $('#dialog-backdrop').show();
+        $('#node-config-dialog').show();
+        $('#config-node-name').focus();
+    };
+
+    window.deleteNode = function(nodeCode) {
+        if (!confirm('确定删除此节点吗？')) return;
+
+        nodes = nodes.filter(n => n.node_code !== nodeCode);
+        edges = edges.filter(e => e.from_node !== nodeCode && e.to_node !== nodeCode);
+        $('#' + nodeCode).remove();
+    };
+
+    window.saveNodeConfig = function() {
+        if (!currentNode) return;
+
+        var nodeName = $('#config-node-name').val();
+        if (!nodeName) {
+            alert('请输入节点名称');
+            return;
+        }
+
+        currentNode.node_name = nodeName;
+        currentNode.approval_type = $('#config-approval-type').val();
+        $('#' + currentNode.node_code).find('strong').text(nodeName);
+
+        closeNodeConfigDialog();
+    };
+
+    window.closeNodeConfigDialog = function() {
+        $('#node-config-dialog').hide();
+        $('#dialog-backdrop').hide();
+        currentNode = null;
+    };
+
+    $('#dialog-backdrop').on('click', function() {
+        closeNodeConfigDialog();
+    });
+
+    // 简单的自定义通知函数，在iframe中也能正常工作
+    function showNotification(message, isSuccess) {
+        var bgColor = isSuccess ? '#28a745' : '#dc3545';
+        var notification = $('<div></div>')
+            .css({
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                padding: '15px 20px',
+                background: bgColor,
+                color: 'white',
+                borderRadius: '4px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                zIndex: 999999,
+                minWidth: '300px',
+                fontSize: '14px'
+            })
+            .text(message)
+            .appendTo('body');
+
+        setTimeout(function() {
+            notification.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+
+    window.saveWorkflow = function() {
+        if (nodes.length === 0) {
+            showNotification('请先添加节点', false);
+            return;
+        }
+
+        console.log('=== 开始保存工作流 ===');
+        console.log('节点数量:', nodes.length);
+        console.log('连线数量:', edges.length);
+        console.log('节点数据:', JSON.stringify(nodes, null, 2));
+        console.log('连线数据:', JSON.stringify(edges, null, 2));
+
+        $.ajax({
+            url: '{:url("workflow/design")}?id=' + workflowId,
+            type: 'POST',
+            data: {
+                nodes: JSON.stringify(nodes),
+                edges: JSON.stringify(edges)
+            },
+            success: function(res) {
+                console.log('=== 保存结果 ===');
+                console.log('响应代码:', res.code);
+                console.log('响应消息:', res.msg);
+                console.log('完整响应:', res);
+
+                var msg = res.msg || '保存成功';
+                if (res.data) {
+                    msg += ' | 节点数：' + (res.data.nodes || 0) + ' | 连线数：' + (res.data.edges || 0);
+                }
+
+                showNotification(msg, true);
+            },
+            error: function(xhr, status, error) {
+                console.error('=== 保存失败 ===');
+                console.error('状态码:', xhr.status);
+                console.error('响应内容:', xhr.responseText);
+
+                var errorMsg = '保存失败：' + error;
+                showNotification(errorMsg, false);
+            }
+        });
+    };
+});
+</script>
+{include file='common/script' /}

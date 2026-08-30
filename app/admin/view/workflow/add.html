@@ -1,264 +1,85 @@
 {include file='common/meta' /}
-<form id="form-add" class="form-horizontal" role="form" data-url="workflow/add" data-back="workflow">
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">工作流名称<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <input class="form-control" name="row[name]" value="" data-rule="required" placeholder="如：订单审批流程">
+<div class="card card-primary card-outline">
+    <div class="card-header">
+        <h3 class="card-title">添加工作流</h3>
+        <div class="card-tools">
+            <a href="{:url('workflow/index')}" class="btn btn-default btn-sm">
+                <i class="fas fa-arrow-left"></i> 返回
+            </a>
         </div>
     </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">工作流标识<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <input class="form-control" name="row[code]" value="" data-rule="required;alphaNum" placeholder="如：order_approval">
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">关联表名<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[table_name]" id="workflow-table-name" data-rule="required">
-                <option value="">请选择关联表</option>
-                <option value="mes_order">mes_order</option>
-                <option value="mes_purchase">mes_purchase</option>
-                <option value="mes_production">mes_production</option>
-                <option value="mes_inventory">mes_inventory</option>
-                <option value="mes_material">mes_material</option>
-            </select>
-            <small class="form-text text-muted">请选择该工作流对应的业务表名，系统会自动根据表名提供标题字段选择，避免写错。</small>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">标题字段<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[title_field]" id="workflow-title-field" data-rule="required" disabled>
-                <option value="">请选择标题字段</option>
-            </select>
-            <small class="form-text text-muted">先选择关联表名，再从下拉列表选择标题字段。该字段用作流程实例标题，不能随意填写。</small>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">初始状态<span class="text-danger">*</span></label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[initial_state]" id="workflow-initial-state" data-rule="required" disabled>
-                <option value="">请先添加状态</option>
-            </select>
-            <small class="form-text text-muted">先在下面“流程状态”区块中添加状态，再选择初始状态。初始状态必须与状态区块中的某个状态标识一致。</small>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">描述</label>
-        <div class="col-xs-12 col-sm-8">
-            <textarea class="form-control" name="row[description]" rows="3" placeholder="工作流说明"></textarea>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">状态</label>
-        <div class="col-xs-12 col-sm-8">
-            <select class="form-control" name="row[status]">
-                <option value="active">启用</option>
-                <option value="inactive">禁用</option>
-            </select>
-        </div>
-    </div>
-    
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">流程状态</label>
-        <div class="col-xs-12 col-sm-10">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <button type="button" class="btn btn-sm btn-success add-state"><i class="fas fa-plus"></i> 添加状态</button>
-                </div>
-                <div class="panel-body states-container">
-                    <p class="text-sm text-muted">先点击“添加状态”，从候选列表选择“状态标识”，再填写“状态名称”。状态标识请使用系统提供的英文短码，避免随意输入。</p>
-                    <div class="template-state" style="display:none;">
-                        <div class="form-inline state-item mb-2" style="background:#f5f5f5;padding:10px;border-radius:4px;">
-                            <input type="hidden" name="states[id][]" value="">
-                            <div class="form-group mb-0 mr-2">
-                                <label>状态标识：</label>
-                                <select class="form-control input-sm" name="states[code][]" required>
-                                    <option value="">请选择状态标识</option>
-                                    <option value="draft">draft</option>
-                                    <option value="pending">pending</option>
-                                    <option value="approved">approved</option>
-                                    <option value="rejected">rejected</option>
-                                    <option value="completed">completed</option>
-                                    <option value="canceled">canceled</option>
-                                </select>
-                            </div>
-                            <div class="form-group mb-0 mr-2">
-                                <label>状态名称：</label>
-                                <input type="text" class="form-control input-sm" name="states[name][]" placeholder="如：已审批" required>
-                            </div>
-                            <div class="form-group mb-0 mr-2">
-                                <label>排序：</label>
-                                <input type="number" class="form-control input-sm" name="states[sort][]" value="0" style="width:60px;">
-                            </div>
-                            <div class="form-group mb-0 mr-2">
-                                <label>类型：</label>
-                                <select class="form-control input-sm" name="states[type][]">
-                                    <option value="normal">普通</option>
-                                    <option value="start">开始</option>
-                                    <option value="end">结束</option>
-                                </select>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-danger remove-state"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
+    <div class="card-body">
+        <form id="form-add" class="form-horizontal" role="form" data-url="workflow/add" data-back="workflow">
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">流程名称<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <input class="form-control" name="name" value="" data-rule="required" placeholder="如：订单审批流程">
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">流转规则</label>
-        <div class="col-xs-12 col-sm-10">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <button type="button" class="btn btn-sm btn-success add-transition"><i class="fas fa-plus"></i> 添加流转规则</button>
-                </div>
-                <div class="panel-body transitions-container">
-                    <p class="text-sm text-muted">先定义好状态之后，再添加流转规则。源状态和目标状态必须是已定义的状态标识，操作名称请从候选列表中选择。</p>
-                    <div class="template-transition" style="display:none;">
-                        <div class="form-inline transition-item mb-2" style="background:#f5f5f5;padding:10px;border-radius:4px;">
-                            <input type="hidden" name="transitions[id][]" value="">
-                            <div class="form-group mb-0 mr-2">
-                                <label>源状态：</label>
-                                <select class="form-control input-sm transition-from" name="transitions[from_state][]" disabled>
-                                    <option value="">请先添加状态</option>
-                                </select>
-                            </div>
-                            <i class="fas fa-arrow-right mr-2"></i>
-                            <div class="form-group mb-0 mr-2">
-                                <label>目标状态：</label>
-                                <select class="form-control input-sm transition-to" name="transitions[to_state][]" disabled>
-                                    <option value="">请先添加状态</option>
-                                </select>
-                            </div>
-                            <div class="form-group mb-0 mr-2">
-                                <label>操作名称：</label>
-                                <select class="form-control input-sm" name="transitions[name][]" required>
-                                    <option value="">请选择操作名称</option>
-                                    <option value="提交审批">提交审批</option>
-                                    <option value="审批通过">审批通过</option>
-                                    <option value="驳回">驳回</option>
-                                    <option value="撤销">撤销</option>
-                                    <option value="重新提交">重新提交</option>
-                                    <option value="结束流程">结束流程</option>
-                                </select>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-danger remove-transition"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">流程代码<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <input class="form-control" name="code" value="" data-rule="required" placeholder="如：order_approval">
+                    <small class="text-muted">唯一标识，只能包含字母、数字和下划线</small>
                 </div>
             </div>
-        </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">所属模块<span class="text-danger">*</span></label>
+                <div class="col-xs-12 col-sm-8">
+                    <select class="form-control" name="module_code" data-rule="required">
+                        <option value="">请选择模块</option>
+                        {foreach name="modules" key="k" item="v"}
+                        <option value="{$k}">{$v}</option>
+                        {/foreach}
+                    </select>
+                    <small class="text-muted">选择此流程所属的业务模块</small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">流程描述</label>
+                <div class="col-xs-12 col-sm-8">
+                    <textarea class="form-control" name="description" rows="3" placeholder="请输入流程描述"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">状态</label>
+                <div class="col-xs-12 col-sm-8">
+                    <select class="form-control" name="status">
+                        <option value="1">启用</option>
+                        <option value="0">禁用</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group layer-footer">
+                <label class="control-label col-xs-12 col-sm-2"></label>
+                <div class="col-xs-12 col-sm-8">
+                    <button type="submit" class="btn btn-success btn-embossed">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <button type="reset" class="btn btn-default btn-embossed">
+                        <i class="fas fa-redo"></i> 重置
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
-    
-    <div class="form-group layer-footer">
-        <label class="control-label col-xs-12 col-sm-2"></label>
-        <div class="col-xs-12 col-sm-8">
-            <button type="submit" class="btn btn-success btn-embossed">确定</button>
-            <button type="reset" class="btn btn-default btn-embossed">重置</button>
-        </div>
+</div>
+
+<div class="card card-info card-outline mt-3">
+    <div class="card-header">
+        <h4 class="card-title"><i class="fas fa-info-circle"></i> 使用说明</h4>
     </div>
-</form>
-<script>
-$(function() {
-    var workflowTableFields = {
-        mes_order: ['order_no', 'order_name', 'name'],
-        mes_purchase: ['purchase_no', 'name'],
-        mes_production: ['production_no', 'name'],
-        mes_inventory: ['inventory_no', 'name'],
-        mes_material: ['material_no', 'name']
-    };
-
-    function updateTitleFieldOptions() {
-        var tableName = $('#workflow-table-name').val();
-        var fields = workflowTableFields[tableName] || [];
-        var html = '<option value="">请选择标题字段</option>';
-        fields.forEach(function(field) {
-            html += '<option value="' + field + '">' + field + '</option>';
-        });
-        $('#workflow-title-field').html(html).prop('disabled', fields.length === 0);
-    }
-
-    function updateInitialStateOptions() {
-        var states = [];
-        var selected = $('#workflow-initial-state').val();
-        $('.state-item select[name="states[code][]"]').each(function() {
-            var value = $(this).val();
-            if (value) {
-                states.push(value);
-            }
-        });
-        if (states.length === 0) {
-            $('#workflow-initial-state').html('<option value="">请先添加状态</option>').prop('disabled', true);
-            $('.transition-from, .transition-to').html('<option value="">请先添加状态</option>').prop('disabled', true);
-            return;
-        }
-        var html = '<option value="">请选择初始状态</option>';
-        states.forEach(function(code) {
-            html += '<option value="' + code + '"' + (code === selected ? ' selected' : '') + '>' + code + '</option>';
-        });
-        $('#workflow-initial-state').html(html).prop('disabled', false);
-        $('.transition-from, .transition-to').prop('disabled', false);
-    }
-
-    $('.add-state').on('click', function() {
-        var html = $('.template-state').html();
-        $(html).appendTo('.states-container').show();
-        updateStateSelects();
-        updateInitialStateOptions();
-    });
-    $(document).on('click', '.remove-state', function() {
-        $(this).closest('.state-item').remove();
-        updateStateSelects();
-        updateInitialStateOptions();
-    });
-    $(document).on('change', '.state-item select[name="states[code][]"]', function() {
-        updateStateSelects();
-        updateInitialStateOptions();
-    });
-    
-    $('.add-transition').on('click', function() {
-        var html = $('.template-transition').html();
-        var item = $(html).appendTo('.transitions-container').show();
-        updateStateSelects();
-    });
-    $(document).on('click', '.remove-transition', function() {
-        $(this).closest('.transition-item').remove();
-    });
-    
-    $('#workflow-table-name').on('change', function() {
-        updateTitleFieldOptions();
-    });
-
-    function updateStateSelects() {
-        var states = [];
-        $('.state-item select[name="states[code][]"]').each(function() {
-            var value = $(this).val();
-            if (value) {
-                states.push(value);
-            }
-        });
-        var options;
-        if (states.length === 0) {
-            options = '<option value="">请先添加状态</option>';
-            $('.transition-from, .transition-to').each(function() {
-                $(this).html(options).prop('disabled', true);
-            });
-            return;
-        }
-        options = '<option value="">请选择</option>';
-        states.forEach(function(code) {
-            options += '<option value="' + code + '">' + code + '</option>';
-        });
-        $('.transition-from, .transition-to').each(function() {
-            $(this).html(options).prop('disabled', false);
-        });
-    }
-
-    updateTitleFieldOptions();
-    updateInitialStateOptions();
-});
-</script>
-{include file='common/script-iframe' /}
+    <div class="card-body">
+        <ol>
+            <li>填写流程基本信息（名称、代码、模块）</li>
+            <li>保存后点击"设计流程"按钮进入流程设计器</li>
+            <li>拖拽节点（开始、审批、结束）到画布</li>
+            <li>配置节点属性（审批人、审批类型等）</li>
+            <li>连接节点形成完整的流程</li>
+            <li>保存流程设计</li>
+            <li>在模块配置中设置为默认流程</li>
+        </ol>
+    </div>
+</div>
+{include file='common/script' /}

@@ -1,0 +1,80 @@
+{include file='common/meta' /}
+<style>
+body { padding: 15px; }
+.workflow-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+.stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+.stat-card h3 { font-size: 32px; margin: 10px 0; font-weight: bold; }
+.stat-card.approved { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.stat-card.mine { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.stat-card.avg { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+</style>
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">审批中心</h3>
+            <div>
+                <a href="/admin/workflow/definition/index" class="btn btn-sm btn-outline-secondary"><i class="layui-icon layui-icon-template"></i> 审批流定义</a>
+                <a href="/admin/workflow/module/index" class="btn btn-sm btn-outline-secondary"><i class="layui-icon layui-icon-set-fill"></i> 模块接入</a>
+                <a href="{$config.moduleurl}/workflow/instance/index" class="btn btn-sm btn-outline-primary"><i class="layui-icon layui-icon-list"></i> 工作流实例</a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- 统计卡片 -->
+        <div class="workflow-stats">
+            <div class="stat-card">
+                <p class="mb-1">待审批</p>
+                <h3 id="pending-count">-</h3>
+            </div>
+            <div class="stat-card approved">
+                <p class="mb-1">已审批</p>
+                <h3 id="done-count">-</h3>
+            </div>
+            <div class="stat-card mine">
+                <p class="mb-1">我发起的</p>
+                <h3 id="mine-count">-</h3>
+            </div>
+            <div class="stat-card avg">
+                <p class="mb-1">平均耗时</p>
+                <h3 id="avg-time">-</h3>
+            </div>
+        </div>
+
+        <div id="approval-toolbar" class="mb-3">
+            <button type="button" class="btn btn-sm btn-secondary btn-refresh-all">
+                <i class="layui-icon layui-icon-refresh"></i> 刷新数据
+            </button>
+        </div>
+
+        <!-- Tab页签 -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pending-tab">待我审批</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#done-tab">我已审批</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mine-tab">我发起的</button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3">
+            <!-- 待我审批 -->
+            <div class="tab-pane fade show active" id="pending-tab">
+                <table id="pending-table" class="table table-striped table-bordered"></table>
+            </div>
+
+            <!-- 我已审批 -->
+            <div class="tab-pane fade" id="done-tab">
+                <table id="done-table" class="table table-striped table-bordered"></table>
+            </div>
+
+            <!-- 我发起的 -->
+            <div class="tab-pane fade" id="mine-tab">
+                <table id="mine-table" class="table table-striped table-bordered"></table>
+            </div>
+        </div>
+    </div>
+</div>
+{include file='common/script' /}

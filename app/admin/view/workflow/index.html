@@ -1,15 +1,132 @@
-<div class="card panel-intro">
+{include file='common/meta' /}
+<div class="card card-primary card-outline">
     <div class="card-header">
-        <div class="panel-lead"><em>工作流管理</em> 管理系统的审批工作流</div>
+        <h3 class="card-title">工作流定义</h3>
+        <div class="card-tools">
+            <a href="{:url('workflow/add')}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> 新增流程
+            </a>
+        </div>
     </div>
     <div class="card-body">
-        <div id="toolbar" class="toolbar mb-2">
-            <a href="javascript:;" class="btn btn-primary btn-refresh" title="刷新"><i class="fas fa-sync-alt"></i> 刷新</a>
-            <a href="javascript:;" class="btn btn-success btn-add" title="创建工作流"><i class="fas fa-plus"></i> 创建工作流</a>
-            <a href="javascript:;" class="btn btn-info btn-instances" title="流程实例"><i class="fas fa-list-alt"></i> 流程实例</a>
-            <a href="javascript:;" class="btn btn-warning btn-edit btn-disabled disabled" title="编辑"><i class="fas fa-edit"></i> 编辑</a>
-            <a href="javascript:;" class="btn btn-danger btn-del btn-disabled disabled" title="删除"><i class="fas fa-trash-alt"></i> 删除</a>
+        <div class="form-inline mb-3">
+            <select id="module-filter" class="form-control">
+                <option value="">全部模块</option>
+                <option value="order">订单审批</option>
+                <option value="salary">工资审批</option>
+                <option value="purchase">采购审批</option>
+            </select>
         </div>
-        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+        <table class="table table-bordered table-striped" id="workflow-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>流程名称</th>
+                    <th>流程代码</th>
+                    <th>所属模块</th>
+                    <th>描述</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
+
+<script>
+$(function() {
+    var table = $('#workflow-table').bootstrapTable({
+        url: '{:url("workflow/index")}',
+        method: 'get',
+        sidePagination: 'server',
+        pagination: true,
+        pageSize: 10,
+        pageList: [10, 25, 50],
+        responseHandler: function(res) {
+            return {
+                total: res.count,
+                rows: res.data
+            };
+        },
+        columns: [
+            {field: 'id', title: 'ID', width: 60},
+            {field: 'name', title: '流程名称'},
+            {field: 'code', title: '流程代码'},
+            {
+                field: 'module_code',
+                title: '所属模块',
+                formatter: function(value) {
+                    var map = {
+                        'order': '订单审批',
+                        'salary': '工资审批',
+                        'purchase': '采购审批'
+                    };
+                    return map[value] || value;
+                }
+            },
+            {field: 'description', title: '描述'},
+            {
+                field: 'status',
+                title: '状态',
+                formatter: function(value) {
+                    return value == 1 ?
+                        '<span class="badge badge-success">启用</span>' :
+                        '<span class="badge badge-danger">禁用</span>';
+                }
+            },
+            {field: 'create_time', title: '创建时间'},
+            {
+                field: 'operate',
+                title: '操作',
+                formatter: function(value, row) {
+                    var html = '';
+                    html += '<a href="{:url("workflow/design")}?id=' + row.id + '" class="btn btn-info btn-sm">';
+                    html += '<i class="fas fa-project-diagram"></i> 设计';
+                    html += '</a> ';
+                    html += '<a href="{:url("workflow/edit")}?id=' + row.id + '" class="btn btn-primary btn-sm">';
+                    html += '<i class="fas fa-edit"></i> 编辑';
+                    html += '</a> ';
+                    html += '<button class="btn btn-danger btn-sm delete-btn" data-id="' + row.id + '">';
+                    html += '<i class="fas fa-trash"></i> 删除';
+                    html += '</button>';
+                    return html;
+                }
+            }
+        ]
+    });
+
+    // 模块筛选
+    $('#module-filter').change(function() {
+        table.bootstrapTable('refresh', {
+            query: {
+                module_code: $(this).val()
+            }
+        });
+    });
+
+    // 删除
+    $(document).on('click', '.delete-btn', function() {
+        var id = $(this).data('id');
+        Layer.confirm('确定要删除吗？', function(index) {
+            $.ajax({
+                url: '{:url("workflow/del")}',
+                type: 'POST',
+                data: {ids: id},
+                success: function(res) {
+                    if (res.code == 1) {
+                        Layer.msg('删除成功');
+                        table.bootstrapTable('refresh');
+                    } else {
+                        Layer.msg(res.msg || '删除失败');
+                    }
+                    Layer.close(index);
+                }
+            });
+        });
+    });
+});
+</script>
+<script src="/assets/js/backend/toastr-fix.js"></script>
+{include file='common/script' /}

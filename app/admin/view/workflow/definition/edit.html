@@ -1,0 +1,61 @@
+{include file='common/meta' /}
+<style>
+body { padding: 15px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { font-weight: 500; }
+</style>
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">编辑审批流</h3>
+            <a href="/admin/workflow/definition/index" class="btn btn-sm btn-outline-secondary">
+                <i class="layui-icon layui-icon-left"></i> 返回列表
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <form id="form-edit">
+            <input type="hidden" name="id" value="{$data.id|default=0}">
+            <div class="form-group">
+                <label>流程名称 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="name" value="{$data.name|default=''}" required placeholder="请输入流程名称">
+            </div>
+            <div class="form-group">
+                <label>所属模块 <span class="text-danger">*</span></label>
+                <select class="form-select" name="module_code" required>
+                    <option value="">请选择业务模块</option>
+                    {foreach $modules as $k=>$v}
+                    <option value="{$k}" {if isset($data.module_code) && $data.module_code==$k}selected{/if}>{$v}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>备注</label>
+                <input type="text" class="form-control" name="remark" value="{$data.remark|default=''}" placeholder="请输入备注">
+            </div>
+            <div class="form-group">
+                <label>状态</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="status" id="status1" value="1" {if ($data.status|default=1)==1}checked{/if}>
+                        <label class="form-check-label" for="status1">启用</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="status" id="status0" value="0" {if ($data.status|default=1)==0}checked{/if}>
+                        <label class="form-check-label" for="status0">禁用</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="layui-icon layui-icon-ok"></i> 保存
+                </button>
+                <button type="button" class="btn btn-success btn-designer">
+                    <i class="layui-icon layui-icon-template-1"></i> 节点配置
+                </button>
+                <a href="/admin/workflow/definition/index" class="btn btn-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{include file='common/script' /}

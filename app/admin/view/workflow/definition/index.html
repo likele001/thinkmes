@@ -1,0 +1,72 @@
+{include file='common/meta' /}
+<style>
+body { padding: 15px; }
+</style>
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">审批流定义</h3>
+            <div>
+                <a href="/admin/workflow/module/index" class="btn btn-sm btn-outline-secondary">
+                    <i class="layui-icon layui-icon-set-fill"></i> 模块接入
+                </a>
+                <a href="/admin/workflow/approval/index" class="btn btn-sm btn-outline-info">
+                    <i class="layui-icon layui-icon-template-1"></i> 审批中心
+                </a>
+                <a href="{$config.moduleurl}/workflow/instance/index" class="btn btn-sm btn-outline-primary">
+                    <i class="layui-icon layui-icon-list"></i> 工作流实例
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="toolbar" class="mb-3">
+            <div class="d-flex flex-wrap align-items-center" style="gap:8px;">
+                <button type="button" class="btn btn-sm btn-success btn-add">
+                    <i class="layui-icon layui-icon-addition"></i> 新建
+                </button>
+                <button type="button" class="btn btn-sm btn-primary btn-edit disabled btn-disabled">
+                    <i class="layui-icon layui-icon-edit"></i> 编辑
+                </button>
+                <button type="button" class="btn btn-sm btn-danger btn-del disabled btn-disabled">
+                    <i class="layui-icon layui-icon-delete"></i> 删除
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary btn-refresh">
+                    <i class="layui-icon layui-icon-refresh"></i> 刷新
+                </button>
+                <div class="d-flex flex-wrap align-items-center ml-auto" style="gap:8px;">
+                    <select id="moduleCode" class="form-control form-control-sm" style="width:200px;">
+                        <option value="">全部模块</option>
+                        <option value="mes_order">MES-订单</option>
+                        <option value="mes_purchase">MES-采购</option>
+                        <option value="mes_salary">MES-工资</option>
+                        <option value="mes_quality">MES-质检</option>
+                        <option value="mes_shipment">MES-发货</option>
+                        <option value="crm_contract">CRM-合同</option>
+                        <option value="crm_sale_order">CRM-销售订单</option>
+                        <option value="crm_quote">CRM-报价</option>
+                        <option value="hr_leave">HR-请假</option>
+                        <option value="hr_overtime">HR-加班</option>
+                        <option value="hr_onboard">HR-入职</option>
+                        <option value="hr_offboard">HR-离职</option>
+                        <option value="finance_receivable">财务-应收</option>
+                        <option value="finance_payable">财务-应付</option>
+                        <option value="finance_payment">财务-付款申请</option>
+                        <option value="equipment_repair">设备-维修</option>
+                        <option value="equipment_purchase">设备-采购</option>
+                    </select>
+                    <input id="keyword" class="form-control form-control-sm" style="width:220px;" placeholder="搜索流程名称">
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-search">
+                        <i class="layui-icon layui-icon-search"></i> 搜索
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-reset">
+                        <i class="layui-icon layui-icon-refresh-3"></i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <table id="table" class="table table-striped table-bordered table-hover" width="100%"></table>
+    </div>
+</div>
+{include file='common/script' /}

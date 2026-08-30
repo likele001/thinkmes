@@ -1,0 +1,250 @@
+{include file='common/meta' /}
+<style>
+body { padding: 20px; }
+.timeline-item { position: relative; padding-bottom: 30px; border-left: 2px solid #e6e6e6; padding-left: 30px; }
+.timeline-item:before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: #0d6efd; }
+.timeline-item.active:before { background: #198754; box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.2); }
+.timeline-item.skip:before { background: #adb5bd; }
+.timeline-item.reject:before { background: #dc3545; }
+.timeline-header { margin-bottom: 10px; }
+.timeline-title { font-size: 16px; font-weight: bold; color: #333; }
+.timeline-time { font-size: 12px; color: #999; margin-top: 5px; }
+.timeline-content { background: #f8f8f8; padding: 15px; border-radius: 4px; margin-top: 10px; }
+.timeline-user { display: flex; align-items: center; margin-bottom: 5px; }
+.timeline-avatar { width: 30px; height: 30px; border-radius: 50%; background: #0d6efd; color: white; text-align: center; line-height: 30px; margin-right: 10px; font-size: 12px; }
+.timeline-status { display: inline-block; padding: 2px 8px; border-radius: 2px; font-size: 12px; margin-left: 10px; }
+.timeline-status.pending { background: #e7f1ff; color: #0d6efd; }
+.timeline-status.approved { background: #d1e7dd; color: #198754; }
+.timeline-status.rejected { background: #f8d7da; color: #dc3545; }
+.timeline-status.transfer { background: #fff3cd; color: #ffc107; }
+.timeline-status.skip { background: #e9ecef; color: #6c757d; }
+</style>
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">审批详情</h3>
+            <button class="btn btn-sm btn-secondary" onclick="parent.layer.closeAll()">关闭</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- 基本信息 -->
+        <h5 class="mb-3">基本信息</h5>
+        <div class="mb-3">
+            <label class="form-label">实例编号</label>
+            <input type="text" class="form-control" id="instance-no" readonly>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">业务标题</label>
+            <input type="text" class="form-control" id="business-title" readonly>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">发起人</label>
+            <input type="text" class="form-control" id="initiator" readonly>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">发起时间</label>
+            <input type="text" class="form-control" id="start-time" readonly>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">当前状态</label>
+            <div id="instance-status"></div>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- 审批流程 -->
+        <h5 class="mb-3">审批流程</h5>
+        <div id="timeline-box">
+            <div class="text-center text-muted py-5">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+var instanceId = parseInt('{$Think.get.id|raw}') || 0;
+
+$(function() {
+    if (!instanceId) {
+        layer.msg('参数错误', {icon: 2});
+        return;
+    }
+
+    loadDetail();
+
+    function loadDetail() {
+        $.get('/admin/workflow/approval/detail?id=' + instanceId, function(res){
+            if (res.code === 1) {
+                renderDetail(res.data);
+            } else {
+                layer.msg(res.msg || '加载失败', {icon: 2});
+            }
+        }, 'json').fail(function(){
+            layer.msg('加载失败', {icon: 2});
+        });
+    }
+
+    function renderDetail(data) {
+        var instance = data.instance;
+        var nodes = data.nodes || [];
+        var tasks = data.tasks || [];
+        var logs = data.logs || [];
+
+        // 填充基本信息
+        $('#instance-no').val(instance.instance_no);
+        $('#business-title').val(instance.business_title);
+        $('#initiator').val(instance.initiator_name);
+        $('#start-time').val(formatTime(instance.start_time));
+
+        // 状态
+        var statusHtml = '';
+        if (instance.status === 0) {
+            statusHtml = '<span class="badge bg-primary">审批中</span>';
+        } else if (instance.status === 1) {
+            statusHtml = '<span class="badge bg-success">已通过</span>';
+        } else if (instance.status === 2) {
+            statusHtml = '<span class="badge bg-danger">已拒绝</span>';
+        } else if (instance.status === 3) {
+            statusHtml = '<span class="badge bg-secondary">已撤回</span>';
+        } else if (instance.status === 4) {
+            statusHtml = '<span class="badge bg-warning">回写异常</span>';
+        }
+        $('#instance-status').html(statusHtml);
+
+        // 渲染时间线
+        renderTimeline(nodes, tasks, logs, instance);
+    }
+
+    function renderTimeline(nodes, tasks, logs, instance) {
+        var html = '';
+        var currentNodeId = instance.current_node_id;
+
+        // 按节点顺序处理
+        nodes.forEach(function(node, index) {
+            var nodeTasks = tasks.filter(function(t){ return t.node_id === node.id; });
+            var nodeLogs = logs.filter(function(l){ return l.node_id === node.id; });
+            var isCurrent = node.id === currentNodeId;
+            var isSkipped = nodeTasks.length === 0 && nodeLogs.length === 0;
+            var isRejected = nodeTasks.some(function(t){ return t.status === 2; });
+            var isPending = isCurrent && instance.status === 0;
+
+            // 判断节点类型
+            var itemClass = 'timeline-item';
+            if (isPending) {
+                itemClass += ' active';
+            } else if (isRejected) {
+                itemClass += ' reject';
+            } else if (isSkipped) {
+                itemClass += ' skip';
+            }
+
+            html += '<div class="' + itemClass + '">';
+            html += '<div class="timeline-header">';
+            html += '<span class="timeline-title">节点' + node.sort + '：' + node.name + '</span>';
+
+            // 节点状态标签
+            if (isPending) {
+                html += '<span class="timeline-status pending">待审批</span>';
+            } else if (isRejected) {
+                html += '<span class="timeline-status rejected">已拒绝</span>';
+            } else if (isSkipped) {
+                html += '<span class="timeline-status skip">已跳过</span>';
+            } else if (nodeTasks.some(function(t){ return t.status === 1;})) {
+                html += '<span class="timeline-status approved">已通过</span>';
+            }
+
+            html += '</div>';
+
+            // 审批人列表
+            if (nodeTasks.length > 0) {
+                nodeTasks.forEach(function(task){
+                    var taskStatus = '';
+                    var taskStatusClass = '';
+                    if (task.status === 0) {
+                        taskStatus = '待审批';
+                        taskStatusClass = 'pending';
+                    } else if (task.status === 1) {
+                        taskStatus = '已通过';
+                        taskStatusClass = 'approved';
+                    } else if (task.status === 2) {
+                        taskStatus = '已拒绝';
+                        taskStatusClass = 'rejected';
+                    } else if (task.status === 3) {
+                        taskStatus = '已取消';
+                        taskStatusClass = 'skip';
+                    } else if (task.status === 4) {
+                        taskStatus = '已转交';
+                        taskStatusClass = 'transfer';
+                    }
+
+                    html += '<div class="timeline-content">';
+                    html += '<div class="timeline-user">';
+                    html += '<div class="timeline-avatar">' + (task.approver_name || '?').substring(0, 1) + '</div>';
+                    html += '<div style="flex: 1;">';
+                    html += '<div>' + task.approver_name + ' <span class="timeline-status ' + taskStatusClass + '">' + taskStatus + '</span></div>';
+
+                    // 审批意见
+                    if (task.comment) {
+                        html += '<div style="margin-top: 5px; color: #666; font-size: 13px;">意见：' + task.comment + '</div>';
+                    }
+
+                    // 操作时间
+                    if (task.action_time > 0) {
+                        html += '<div class="timeline-time">' + formatTime(task.action_time) + '</div>';
+                    }
+
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+            } else if (isSkipped) {
+                // 节点被跳过
+                html += '<div class="timeline-content">';
+                html += '<div style="color: #999;">条件不满足，自动跳过</div>';
+                html += '</div>';
+            }
+
+            // 操作日志
+            nodeLogs.forEach(function(log){
+                if (log.action === 'transfer') {
+                    html += '<div class="timeline-content" style="background: #fff3cd;">';
+                    html += '<div><span class="timeline-status transfer">转交</span></div>';
+                    html += '<div style="margin-top: 5px;">' + log.actor_name + ' 转交给 ' + log.to_approver_name + '</div>';
+                    if (log.comment) {
+                        html += '<div style="margin-top: 5px; color: #666; font-size: 13px;">备注：' + log.comment + '</div>';
+                    }
+                    html += '<div class="timeline-time">' + formatTime(log.create_time) + '</div>';
+                    html += '</div>';
+                }
+            });
+
+            html += '</div>';
+        });
+
+        // 发起节点
+        var startLog = logs.find(function(l){ return l.action === 'start'; });
+        if (startLog) {
+            html = '<div class="timeline-item">' +
+                '<div class="timeline-header">' +
+                '<span class="timeline-title">发起申请</span>' +
+                '</div>' +
+                '<div class="timeline-content">' +
+                '<div class="timeline-user">' +
+                '<div class="timeline-avatar">' + (instance.initiator_name || '?').substring(0, 1) + '</div>' +
+                '<div>' + instance.initiator_name + ' 发起了审批流程</div>' +
+                '</div>' +
+                '<div class="timeline-time">' + formatTime(instance.start_time) + '</div>' +
+                '</div>' +
+                '</div>' + html;
+        }
+
+        $('#timeline-box').html(html || '<div class="text-center text-muted">暂无数据</div>');
+    }
+
+    function formatTime(timestamp) {
+        if (!timestamp) return '-';
+        var date = new Date(timestamp * 1000);
+        return date.toLocaleString('zh-CN');
+    }
+});
+</script>
+{include file='common/script' /}
