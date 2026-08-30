@@ -1,7 +1,7 @@
 *.log
 .env
 composer.phar
-composer.lock
+# composer.lock 应用项目应提交（锁定依赖版本，便于复现与准确告警）
 .DS_Store
 Thumbs.db
 /.idea
