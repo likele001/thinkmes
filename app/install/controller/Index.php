@@ -18,7 +18,7 @@ class Index
 
     public function __construct()
     {
-        $this->lockFile = runtime_path() . 'install.lock';
+        $this->lockFile = install_lock_file();
     }
 
     /**
@@ -29,7 +29,7 @@ class Index
         if (request()->get('reinstall') === '1') {
             return null;
         }
-        if (is_file($this->lockFile)) {
+        if (install_is_locked()) {
             $entry = $this->getAdminEntryFromEnv();
             $url = $entry !== '' ? '/' . $entry . '/index/login' : (string) url('/admin/index/login');
             return redirect($url);
@@ -280,6 +280,7 @@ class Index
             'config'  => config_path(),
         ];
         $root = root_path();
+        $rootTrim = rtrim(str_replace('\\', '/', $root), '/');
         $dirList = [];
         foreach ($dirs as $label => $dir) {
             $writable = is_dir($dir) && is_writable($dir);
@@ -289,11 +290,19 @@ class Index
             }
             $dirList[] = ['name' => $label, 'path' => $dir, 'ok' => $writable];
         }
-        $envFile = $root . '.env';
-        $envWritable = !is_file($envFile) || is_writable($envFile);
-        $dirList[] = ['name' => '.env', 'path' => $envFile, 'ok' => $envWritable];
+        // 项目根须可写：安装要在根目录创建/写入 .env（.env 不存在时 is_file 为 false，原先误判为可写）
+        $rootWritable = is_dir($rootTrim) && is_writable($rootTrim);
+        $dirList[] = ['name' => '项目根目录', 'path' => $rootTrim, 'ok' => $rootWritable];
 
-        $allOk = $phpOk && $allExtOk && $envWritable;
+        $envFile = $rootTrim . '/.env';
+        if (is_file($envFile)) {
+            $envWritable = is_writable($envFile);
+        } else {
+            $envWritable = $rootWritable;
+        }
+        $dirList[] = ['name' => '.env（新建或覆盖）', 'path' => $envFile, 'ok' => $envWritable];
+
+        $allOk = $phpOk && $allExtOk && $rootWritable && $envWritable;
         foreach ($dirList as $d) {
             if (!$d['ok']) {
                 $allOk = false;
@@ -389,8 +398,8 @@ class Index
      */
     protected function writeEnv(string $dbHost, int $dbPort, string $dbName, string $dbUser, string $dbPass, string $dbPrefix, string $dbCharset, string $adminEntry = ''): void
     {
-        $root = root_path();
-        $envFile = $root . '.env';
+        $root = rtrim(str_replace('\\', '/', root_path()), '/');
+        $envFile = $root . '/.env';
         $lines = [
             'APP_DEBUG = false',
             'DB_TYPE = mysql',
@@ -418,8 +427,15 @@ class Index
             }
             $content = $old;
         }
-        if (file_put_contents($envFile, $content) === false) {
-            throw new \RuntimeException('无法写入 .env 文件，请检查目录可写权限');
+        $written = @file_put_contents($envFile, $content);
+        if ($written === false) {
+            $user = function_exists('posix_getpwuid') && function_exists('posix_geteuid')
+                ? (posix_getpwuid(posix_geteuid())['name'] ?? '')
+                : '';
+            $who = $user !== '' ? "当前 PHP 用户：{$user}。" : '';
+            $hint = "{$who}请让 Web 用户对项目根目录有写权限，例如（宝塔常见用户 www）："
+                . "chown -R www:www {$root} && find {$root} -type d -exec chmod 755 {} \\; && find {$root} -type f -exec chmod 644 {} \\;";
+            throw new \RuntimeException('无法写入 .env：' . $envFile . '。' . $hint);
         }
     }
 

@@ -127,12 +127,11 @@ Route::post('app_center/install', 'AppCenter/install');
 Route::post('app_center/uninstall', 'AppCenter/uninstall');
 Route::post('app_center/upload', 'AppCenter/upload');
 
-// 套餐功能占位（报表、导出、API、自定义字段、工作流、通知、备份）
+// 套餐功能占位（报表、导出、API、自定义字段、通知、备份）
 Route::get('report/index', 'Report/index');
 Route::get('export/index', 'Export/index');
 Route::get('api/index', 'Api/index');
 Route::get('custom_field/index', 'CustomField/index');
-Route::get('workflow/index', 'Workflow/index');
 Route::get('notification/index', 'Notification/index');
 Route::get('backup/index', 'Backup/index');
 

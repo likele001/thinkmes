@@ -1,0 +1,17 @@
+<div class="row justify-content-center py-5">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4 p-md-5 text-center">
+        <h1 class="h3 mb-3">{:lang('welcome_page_title')}</h1>
+        <p class="text-muted mb-4">{:lang('welcome_page_desc')}</p>
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center flex-wrap">
+          <a class="btn btn-primary btn-lg px-4" href="{$user_login_url|default='/index/user/login'}">{:lang('welcome_btn_user')}</a>
+          <a class="btn btn-outline-secondary btn-lg px-4" href="{$admin_login_url|default='/admin/index/login'}">{:lang('welcome_btn_admin')}</a>
+        </div>
+        <p class="small text-muted mt-4 mb-0">
+          <a href="{$wemedia_url|default='/index/wemedia/index'}">{:lang('welcome_link_wemedia')}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

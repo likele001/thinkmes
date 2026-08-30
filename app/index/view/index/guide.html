@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThinkMes 使用指南 - 智能MES生产管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0891b2;
+            --primary-dark: #0e7490;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* NAV */
+        .doc-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            height: 64px; padding: 0 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(15,23,42,.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .doc-nav-logo {
+            display: flex; align-items: center; gap: .6rem;
+            font-size: 1.15rem; font-weight: 700;
+            color: var(--text-primary); text-decoration: none;
+        }
+        
+        .doc-nav-logo-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: linear-gradient(135deg, #0891b2, #06b6d4);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: .7rem; font-weight: 800;
+        }
+        
+        .doc-nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .doc-nav-links a {
+            font-size: .9rem; font-weight: 500;
+            color: var(--text-secondary); text-decoration: none;
+            transition: color .2s;
+        }
+        .doc-nav-links a:hover { color: var(--text-primary); }
+        .doc-nav-links .active { color: #22d3ee; font-weight: 600; }
+        
+        /* LAYOUT */
+        .doc-layout {
+            display: flex; max-width: 1200px;
+            margin: 0 auto; padding: 64px 2rem 4rem; gap: 2rem;
+        }
+        
+        /* SIDEBAR */
+        .doc-sidebar {
+            width: 240px; flex-shrink: 0;
+            position: sticky; top: 80px; align-self: flex-start;
+            max-height: calc(100vh - 100px); overflow-y: auto;
+        }
+        
+        .doc-sidebar a {
+            display: block; padding: .45rem .75rem; border-radius: 6px;
+            font-size: .85rem; color: var(--text-secondary);
+            text-decoration: none; transition: all .15s; margin-bottom: 2px;
+        }
+        .doc-sidebar a:hover { background: rgba(8,145,178,.1); color: var(--text-primary); }
+        .doc-sidebar a.active { background: rgba(8,145,178,.2); color: #22d3ee; font-weight: 600; }
+        .doc-sidebar .group { margin-bottom: 1.5rem; }
+        .doc-sidebar .group-title {
+            font-size: .7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .08em;
+            color: #64748b; padding: .5rem .75rem .25rem;
+        }
+        
+        /* CONTENT */
+        .doc-content { flex: 1; min-width: 0; max-width: 780px; }
+        .doc-content h1 {
+            font-size: 2rem; font-weight: 800;
+            margin-bottom: .5rem; color: var(--text-primary);
+        }
+        .doc-content .doc-subtitle {
+            font-size: 1.1rem; color: var(--text-secondary);
+            margin-bottom: 2.5rem; line-height: 1.7;
+        }
+        .doc-content h2 {
+            font-size: 1.5rem; font-weight: 700;
+            margin: 3rem 0 1rem; padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .doc-content h2:first-of-type { border-top: none; padding-top: 0; }
+        .doc-content h3 {
+            font-size: 1.15rem; font-weight: 700;
+            margin: 2rem 0 .75rem; color: #67e8f9;
+        }
+        .doc-content p {
+            margin-bottom: 1rem; color: var(--text-secondary); line-height: 1.7;
+        }
+        .doc-content ul, .doc-content ol {
+            margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary);
+        }
+        .doc-content li { margin-bottom: .4rem; line-height: 1.7; }
+        .doc-content strong { color: #67e8f9; font-weight: 600; }
+        
+        /* CALLOUT */
+        .callout {
+            padding: 1rem 1.25rem; border-radius: 12px;
+            margin-bottom: 1.5rem; font-size: .9rem;
+        }
+        .callout-info { background: rgba(8,145,178,.1); border-left: 3px solid #0891b2; color: #67e8f9; }
+        .callout-success { background: rgba(34,197,94,.1); border-left: 3px solid #22c55e; color: #86efac; }
+        .callout-warning { background: rgba(245,158,11,.1); border-left: 3px solid #f59e0b; color: #fcd34d; }
+        .callout-title { font-weight: 700; margin-bottom: .25rem; }
+        
+        /* STEP LIST */
+        .step-list { counter-reset: step; list-style: none; padding: 0; margin-bottom: 1.5rem; }
+        .step-list li {
+            counter-increment: step; padding: .75rem 0 .75rem 3rem;
+            position: relative; border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .step-list li:last-child { border-bottom: none; }
+        .step-list li::before {
+            content: counter(step); position: absolute; left: 0; top: .75rem;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--primary); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .8rem; font-weight: 700;
+        }
+        
+        /* TABLE */
+        .doc-table {
+            width: 100%; border-collapse: collapse;
+            margin-bottom: 1.5rem; font-size: .9rem;
+        }
+        .doc-table th {
+            background: rgba(8,145,178,.1); padding: .6rem .8rem;
+            text-align: left; font-weight: 600;
+            border: 1px solid var(--border-color); color: #67e8f9;
+        }
+        .doc-table td {
+            padding: .6rem .8rem;
+            border: 1px solid var(--border-color); color: var(--text-secondary);
+        }
+        .doc-table tr:hover td { background: rgba(8,145,178,.05); }
+        
+        /* CODE */
+        code {
+            background: rgba(8,145,178,.15); padding: .15rem .4rem;
+            border-radius: 4px; font-size: .85em;
+            font-family: 'SF Mono', 'Fira Code', monospace; color: #67e8f9;
+        }
+        
+        /* MOBILE TOC */
+        .mobile-toc { display: none; margin-bottom: 2rem; }
+        .mobile-toc select {
+            width: 100%; padding: .6rem;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: .9rem; background: var(--bg-card); color: var(--text-primary);
+        }
+        
+        /* FOOTER */
+        .doc-footer {
+            display: flex; justify-content: space-between;
+            margin-top: 4rem; padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .doc-footer a {
+            display: flex; flex-direction: column;
+            padding: 1rem 1.5rem; border: 1px solid var(--border-color);
+            border-radius: 12px; transition: all .2s; min-width: 200px;
+            text-decoration: none;
+        }
+        .doc-footer a:hover { border-color: #22d3ee; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+        .doc-footer .label { font-size: .75rem; color: #64748b; margin-bottom: .25rem; }
+        .doc-footer .title { font-size: .95rem; font-weight: 600; color: #22d3ee; }
+        
+        @media (max-width: 900px) {
+            .doc-nav { padding: 0 1rem; }
+            .doc-nav-links { gap: 1rem; }
+            .doc-nav-links a { font-size: .8rem; }
+            .doc-sidebar { display: none; }
+            .mobile-toc { display: block; }
+            .doc-layout { padding: 64px 1rem 2rem; }
+            .doc-content h1 { font-size: 1.5rem; }
+            .doc-content h2 { font-size: 1.25rem; }
+            .doc-footer { flex-direction: column; gap: 1rem; }
+            .doc-footer a { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAV -->
+    <nav class="doc-nav">
+        <a class="doc-nav-logo" href="/index/index/index">
+            <div class="doc-nav-logo-icon">TM</div>
+            <span>ThinkMes</span>
+        </a>
+        <div class="doc-nav-links">
+            <a href="/index/index/index">首页</a>
+            <a class="active">使用指南</a>
+            <a href="/index/user/login">用户登录</a>
+            <a href="/admin/index/login">管理登录</a>
+        </div>
+    </nav>
+
+    <div class="doc-layout">
+        <!-- SIDEBAR -->
+        <aside class="doc-sidebar">
+            <div class="group">
+                <div class="group-title">入门指南</div>
+                <a href="#ch1" class="active">1. 快速开始</a>
+                <a href="#ch2">2. 系统配置</a>
+                <a href="#ch3">3. 主数据管理</a>
+            </div>
+            <div class="group">
+                <div class="group-title">生产管理</div>
+                <a href="#ch4">4. 订单管理</a>
+                <a href="#ch5">5. 生产计划</a>
+                <a href="#ch6">6. 任务派工</a>
+                <a href="#ch7">7. 报工与审核</a>
+            </div>
+            <div class="group">
+                <div class="group-title">工资与财务</div>
+                <a href="#ch8">8. 工资管理</a>
+                <a href="#ch9">9. 客户对账</a>
+                <a href="#ch10">10. 成本分析</a>
+            </div>
+            <div class="group">
+                <div class="group-title">员工端</div>
+                <a href="#ch11">11. 员工登录</a>
+                <a href="#ch12">12. 扫码报工</a>
+                <a href="#ch13">13. 工资查看</a>
+            </div>
+            <div class="group">
+                <div class="group-title">客户端</div>
+                <a href="#ch14">14. 客户下单</a>
+                <a href="#ch15">15. 订单追踪</a>
+            </div>
+            <div class="group">
+                <div class="group-title">帮助</div>
+                <a href="#ch16">16. 常见问题</a>
+            </div>
+        </aside>
+
+        <!-- MOBILE TOC -->
+        <div class="mobile-toc">
+            <select onchange="document.getElementById(this.value)?.scrollIntoView({behavior:'smooth'})">
+                <option value="">跳转到章节...</option>
+                <option value="ch1">1. 快速开始</option>
+                <option value="ch2">2. 系统配置</option>
+                <option value="ch3">3. 主数据管理</option>
+                <option value="ch4">4. 订单管理</option>
+                <option value="ch5">5. 生产计划</option>
+                <option value="ch6">6. 任务派工</option>
+                <option value="ch7">7. 报工与审核</option>
+                <option value="ch8">8. 工资管理</option>
+                <option value="ch9">9. 客户对账</option>
+                <option value="ch10">10. 成本分析</option>
+                <option value="ch11">11. 员工登录</option>
+                <option value="ch12">12. 扫码报工</option>
+                <option value="ch13">13. 工资查看</option>
+                <option value="ch14">14. 客户下单</option>
+                <option value="ch15">15. 订单追踪</option>
+                <option value="ch16">16. 常见问题</option>
+            </select>
+        </div>
+
+        <!-- CONTENT -->
+        <main class="doc-content">
+            <h1>ThinkMes 使用指南</h1>
+            <p class="doc-subtitle">从系统配置到日常生产，分章节详细介绍 ThinkMes 的每一项功能。涵盖管理员PC端、员工H5端、客户端完整操作流程。</p>
+
+            <!-- CH1: 快速开始 -->
+            <h2 id="ch1">1. 快速开始</h2>
+            <p>本节介绍如何快速上手 ThinkMes 系统。</p>
+
+            <h3>1.1 系统简介</h3>
+            <p>ThinkMes 是一款专为中小型制造企业设计的智能MES生产管理系统，主要功能包括：</p>
+            <ul>
+                <li><strong>扫码报工</strong>：员工扫码即可完成报工，30秒完成操作</li>
+                <li><strong>自动算薪</strong>：基于报工记录自动计算计件工资</li>
+                <li><strong>订单管理</strong>：全渠道订单管理，客户自助下单</li>
+                <li><strong>生产排产</strong>：可视化甘特图排产，智能派工</li>
+                <li><strong>质量溯源</strong>：一物一码，全流程追溯</li>
+            </ul>
+
+            <h3>1.2 访问地址</h3>
+            <table class="doc-table">
+                <thead><tr><th>页面</th><th>地址</th></tr></thead>
+                <tbody>
+                    <tr><td>官网首页</td><td><code>/index/index/index</code></td></tr>
+                    <tr><td>用户登录</td><td><code>/index/user/login</code></td></tr>
+                    <tr><td>用户注册</td><td><code>/index/user/register</code></td></tr>
+                    <tr><td>管理后台</td><td><code>/admin/index/login</code></td></tr>
+                </tbody>
+            </table>
+
+            <h3>1.3 默认账号</h3>
+            <table class="doc-table">
+                <thead><tr><th>角色</th><th>用户名</th><th>密码</th></tr></thead>
+                <tbody>
+                    <tr><td>管理员</td><td>admin</td><td>admin123</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">安全提示</div>
+                首次登录后请立即修改默认密码！
+            </div>
+
+            <!-- CH2: 系统配置 -->
+            <h2 id="ch2">2. 系统配置</h2>
+            <p>系统管理员负责创建用户账号、分配角色和管理权限。</p>
+
+            <h3>2.1 用户管理</h3>
+            <p><strong>操作路径</strong>：系统 → 用户管理</p>
+            <ol class="step-list">
+                <li>点击 <strong>「+ 新建用户」</strong> 按钮</li>
+                <li>填写用户名（全局唯一）、姓名、密码、部门、手机号</li>
+                <li>选择角色（可多选，系统合并权限）</li>
+                <li>点击 <strong>「保存」</strong> 完成创建</li>
+            </ol>
+
+            <h3>2.2 角色管理</h3>
+            <p><strong>操作路径</strong>：系统 → 角色管理</p>
+            <p>系统内置多个角色，建议不要修改：</p>
+            <table class="doc-table">
+                <thead><tr><th>角色</th><th>说明</th><th>核心权限</th></tr></thead>
+                <tbody>
+                    <tr><td>超级管理员</td><td>全部权限</td><td>所有</td></tr>
+                    <tr><td>厂长</td><td>生产/财务/报表</td><td>dashboard, report, salary</td></tr>
+                    <tr><td>生产计划员</td><td>订单/排产/派工</td><td>order, plan, task</td></tr>
+                    <tr><td>班组长</td><td>派工审核/报工审核</td><td>dispatch, report.audit</td></tr>
+                    <tr><td>操作员工</td><td>报工/查看任务</td><td>task, report</td></tr>
+                    <tr><td>客户</td><td>下单/查看进度</td><td>order.view</td></tr>
+                    <tr><td>财务</td><td>工资/对账/报表</td><td>salary, finance</td></tr>
+                </tbody>
+            </table>
+
+            <h3>2.3 部门管理</h3>
+            <p><strong>操作路径</strong>：系统 → 部门管理</p>
+            <ol class="step-list">
+                <li>点击 <strong>「+ 新建部门」</strong></li>
+                <li>填写部门名称（如"冲压车间""质检部"）</li>
+                <li>设置上级部门建立层级关系</li>
+            </ol>
+
+            <!-- CH3: 主数据管理 -->
+            <h2 id="ch3">3. 主数据管理</h2>
+            <p>产品和型号是两个独立模块，型号关联产品。</p>
+
+            <h3>3.1 产品管理</h3>
+            <p><strong>操作路径</strong>：主数据 → 产品</p>
+            <ol class="step-list">
+                <li>点击 <strong>「+ 新建产品」</strong></li>
+                <li>填写产品编码（唯一）、名称、分类、单位、描述</li>
+                <li>支持 Excel 批量导入</li>
+            </ol>
+
+            <h3>3.2 产品型号</h3>
+            <p><strong>操作路径</strong>：主数据 → 产品型号</p>
+            <ol class="step-list">
+                <li>选择关联的产品</li>
+                <li>填写型号编码（唯一）、颜色、材料、规格</li>
+                <li>上传多角度图片</li>
+            </ol>
+
+            <h3>3.3 工序管理</h3>
+            <p><strong>操作路径</strong>：主数据 → 工序</p>
+            <p>创建工厂的各个工序（如：下料、冲压、焊接、组装、质检），设置所属车间和标准工时。</p>
+
+            <h3>3.4 工艺路线</h3>
+            <p><strong>操作路径</strong>：主数据 → 工艺路线</p>
+            <ol class="step-list">
+                <li>选择产品，输入路线名称</li>
+                <li>逐条添加工序步骤，拖拽调整顺序</li>
+                <li>设置默认路线</li>
+            </ol>
+
+            <h3>3.5 工序工价</h3>
+            <p><strong>操作路径</strong>：主数据 → 工序工价</p>
+            <ol class="step-list">
+                <li>选择产品型号</li>
+                <li>为每个工序输入单价（元/件）</li>
+                <li>支持批量设置</li>
+            </ol>
+
+            <!-- CH4: 订单管理 -->
+            <h2 id="ch4">4. 订单管理</h2>
+
+            <h3>4.1 创建订单</h3>
+            <p><strong>操作路径</strong>：生产 → 订单管理</p>
+            <ol class="step-list">
+                <li>点击 <strong>「+ 新建订单」</strong></li>
+                <li>选择客户、产品型号、数量、交期</li>
+                <li>保存后订单状态为 <strong>「草稿」</strong></li>
+                <li>确认后自动分解为工单</li>
+            </ol>
+
+            <h3>4.2 订单状态</h3>
+            <p>草稿 → 已确认 → 生产中 → 已完成 → 已发货 / 已取消</p>
+
+            <!-- CH5: 生产计划 -->
+            <h2 id="ch5">5. 生产计划</h2>
+
+            <h3>5.1 排产</h3>
+            <p><strong>操作路径</strong>：生产 → 生产计划</p>
+            <ol class="step-list">
+                <li>查看待排产工单列表</li>
+                <li>在甘特图上<strong>拖拽</strong>调整起止日期</li>
+                <li>系统自动检查物料齐套</li>
+                <li>点击 <strong>「发布计划」</strong></li>
+            </ol>
+
+            <!-- CH6: 任务派工 -->
+            <h2 id="ch6">6. 任务派工</h2>
+
+            <h3>6.1 派工操作</h3>
+            <p><strong>操作路径</strong>：生产 → 任务派工</p>
+            <ol class="step-list">
+                <li>选择工单，系统按技能标签推荐员工</li>
+                <li>选择员工和派工数量</li>
+                <li>生成任务二维码，可打印粘贴在工件上</li>
+                <li>系统自动推送通知到员工手机端</li>
+            </ol>
+
+            <!-- CH7: 报工与审核 -->
+            <h2 id="ch7">7. 报工与审核</h2>
+
+            <h3>7.1 员工报工</h3>
+            <p>员工在手机端扫码或手动选择任务，输入合格数/不良数，上传完工照片/视频，提交后立即显示预估工资。</p>
+
+            <h3>7.2 多级审核</h3>
+            <p><strong>操作路径</strong>：生产 → 报工审核</p>
+            <ol class="step-list">
+                <li><strong>班组长初审</strong>：查看照片/视频，核实数量</li>
+                <li><strong>QC 终审</strong>：质检角度审核</li>
+                <li>驳回需填写原因</li>
+                <li>支持批量审核</li>
+            </ol>
+
+            <!-- CH8: 工资管理 -->
+            <h2 id="ch8">8. 工资管理</h2>
+
+            <h3>8.1 自动计算</h3>
+            <p><strong>操作路径</strong>：生产 → 工资管理</p>
+            <p><strong>公式</strong>：<code>月总工资 = Σ(审核通过报工合格数 × 工序工价) + 补贴 - 扣款</code></p>
+            <ol class="step-list">
+                <li>选择月份，系统自动汇总</li>
+                <li>查看员工工资明细</li>
+                <li>可手动添加补贴或扣款</li>
+                <li>确认后生成电子工资条</li>
+            </ol>
+
+            <!-- CH9: 客户对账 -->
+            <h2 id="ch9">9. 客户对账</h2>
+            <p><strong>操作路径</strong>：财务 → 客户对账单</p>
+            <ol class="step-list">
+                <li>选择客户和对账周期</li>
+                <li>系统自动列出该周期内所有订单及金额</li>
+                <li>核实无误后，对账单发送给客户</li>
+                <li>支持导出 PDF/Excel</li>
+            </ol>
+
+            <!-- CH10: 成本分析 -->
+            <h2 id="ch10">10. 成本分析</h2>
+            <p><strong>操作路径</strong>：财务 → 成本毛利</p>
+            <p>按订单维度分析：收入、工资成本、物料成本、毛利/毛利率。</p>
+
+            <!-- CH11: 员工登录 -->
+            <h2 id="ch11">11. 员工登录</h2>
+
+            <h3>11.1 登录方式</h3>
+            <ol class="step-list">
+                <li>在手机浏览器输入 H5 地址</li>
+                <li>或扫描工厂发放的二维码</li>
+                <li>输入用户名（通常是工号）和密码</li>
+            </ol>
+
+            <!-- CH12: 扫码报工 -->
+            <h2 id="ch12">12. 扫码报工</h2>
+            <p>这是员工最高频的操作，整个流程不超过 30 秒。</p>
+
+            <h3>12.1 操作流程</h3>
+            <ol class="step-list">
+                <li>点击首页 <strong>「扫码报工」</strong></li>
+                <li>扫描任务二维码</li>
+                <li>输入<strong>合格数</strong>和<strong>不良数</strong></li>
+                <li>上传完工照片或视频</li>
+                <li>点击 <strong>「提交」</strong>，立即显示预估工资</li>
+            </ol>
+
+            <!-- CH13: 工资查看 -->
+            <h2 id="ch13">13. 工资查看</h2>
+
+            <h3>13.1 查看工资</h3>
+            <p><strong>路径</strong>：我的 → 工资</p>
+            <p>选择月份查看计件工资、补贴、扣款、实发金额。</p>
+
+            <h3>13.2 电子工资条</h3>
+            <p><strong>路径</strong>：我的 → 工资条</p>
+            <p>查看完整工资明细，支持电子签名确认。</p>
+
+            <!-- CH14: 客户下单 -->
+            <h2 id="ch14">14. 客户下单</h2>
+
+            <h3>14.1 下单流程</h3>
+            <ol class="step-list">
+                <li>底部导航 <strong>「下单」</strong></li>
+                <li>浏览产品列表，选择型号</li>
+                <li>输入订单数量、交期</li>
+                <li>点击 <strong>「提交订单」</strong></li>
+            </ol>
+
+            <!-- CH15: 订单追踪 -->
+            <h2 id="ch15">15. 订单追踪</h2>
+            <p><strong>路径</strong>：底部导航「追踪」</p>
+            <p>时间线视图显示各工序完成状态，自动刷新。</p>
+
+            <!-- CH16: 常见问题 -->
+            <h2 id="ch16">16. 常见问题</h2>
+
+            <h3>Q: 订单确认后发现型号错了？</h3>
+            <p>已确认的订单不可修改。操作：<strong>作废该订单 → 新建正确的订单</strong>。</p>
+
+            <h3>Q: 报工提交后发现数字填错了？</h3>
+            <p>联系班组长 <strong>「驳回」</strong> 该报工，然后重新报工。</p>
+
+            <h3>Q: 工资计算有误？</h3>
+            <p>进入工资管理查看明细，每笔报工的数量和金额都有记录。</p>
+
+            <h3>Q: 忘记密码怎么办？</h3>
+            <p>联系管理员重置密码。</p>
+
+            <!-- FOOTER -->
+            <div class="doc-footer">
+                <a href="/index/index/index">
+                    <span class="label">← 返回</span>
+                    <span class="title">系统首页</span>
+                </a>
+                <a href="#ch1" onclick="event.preventDefault();document.getElementById('ch1').scrollIntoView({behavior:'smooth'})">
+                    <span class="label">回到顶部</span>
+                    <span class="title">开始阅读</span>
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 侧边栏高亮
+        function updateActive() {
+            const h2s = document.querySelectorAll('.doc-content h2[id]');
+            let current = '';
+            h2s.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top <= 100) current = el.id;
+            });
+            if (current) {
+                document.querySelectorAll('.doc-sidebar a').forEach(a => {
+                    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+                });
+            }
+        }
+        window.addEventListener('scroll', updateActive);
+    </script>
+</body>
+</html>

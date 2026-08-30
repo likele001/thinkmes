@@ -24,6 +24,25 @@ test_route.php
 test_purchase.php
 miniappnews
 /miniappnews/
-.gitignore
 /workbuddy/
 build/thinkmes
+
+
+# ---- 2026-08-30 补充 ----
+# Node 依赖（原来只屏蔽了 PHP 的 /vendor，漏了 node_modules）
+node_modules/
+frontend/*/node_modules/
+
+# AI 编辑器配置（原来只屏蔽了 /.idea 和 /.vscode）
+.claude/
+.codebuddy/
+.cursor/
+.cursorrules
+.kiro/
+.qoder/
+.trae/
+# 备份文件（我的临时备份，别误提交）
+*.bak_*
+
+# 安装锁（本地部署标记，非源码）
+install.lock

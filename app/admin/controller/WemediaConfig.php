@@ -49,7 +49,7 @@ class WemediaConfig extends Backend
         }
         $this->maskApiKeysForDisplay($config);
         View::assign('title', '自媒体配置');
-        View::assign('config', $config);
+        $this->mergeViewConfig($config);
         View::assign('aiProviderOptions', WemediaConfigModel::getAiProviderOptions());
         View::assign('ttsProviderOptions', WemediaConfigModel::getTtsProviderOptions());
         View::assign('ttsVoiceOptions', WemediaConfigModel::getTtsVoiceOptions());

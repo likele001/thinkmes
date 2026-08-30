@@ -119,3 +119,7 @@ Route::get('customer-service', 'CustomerService/index');
 Route::get('customer-service/chat', 'CustomerService/chat');
 Route::get('customer-service/knowledge', 'CustomerService/knowledge');
 Route::get('customer-service/ticket', 'CustomerService/ticket');
+
+// 官网和使用指南
+Route::get('homepage', 'Index/homepage');
+Route::get('guide', 'Index/guide');

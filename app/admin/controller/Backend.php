@@ -21,6 +21,12 @@ abstract class Backend extends BaseController
      */
     protected $auth = null;
 
+    /**
+     * assignBackendConfig 注入的完整布局 config（含 moduleurl/menu_url），供子类 mergeViewConfig 合并业务字段，避免覆盖导致随机后台入口失效
+     * @var array<string, mixed>
+     */
+    protected array $backendViewConfig = [];
+
     protected function initialize(): void
     {
         parent::initialize();
@@ -166,9 +172,20 @@ abstract class Backend extends BaseController
             'tenant_view_id' => $this->getTenantId(),
         ];
 
+        $this->backendViewConfig = $config;
         View::assign('config', $config);
         View::assign('admin', Session::get('admin_info'));
         View::assign('site', $config['site']);
+    }
+
+    /**
+     * 将页面业务变量合并进视图 config，保留 moduleurl、menu_url、site、lang 等布局字段
+     *
+     * @param array<string, mixed> $pageVars 如短信键、自媒体配置键（勿与布局顶层键同名）
+     */
+    protected function mergeViewConfig(array $pageVars): void
+    {
+        View::assign('config', array_merge($this->backendViewConfig, $pageVars));
     }
 
     /**

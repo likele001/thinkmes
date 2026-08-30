@@ -47,8 +47,8 @@ class Order extends Backend
         $workflowStatusFilter = trim((string) $this->request->get('workflow_status_filter', ''));
 
         $tenantId = $this->getTenantId();
-        $workflowInstanceTable = Db::name('workflow_instance')->getTable();
-        $workflowStateTable = Db::name('workflow_state')->getTable();
+        $workflowInstanceTable = Db::name('wf_instance')->getTable();
+        $workflowStateTable = Db::name('wf_node')->getTable();
 
         $query = OrderModel::alias('o')->with(['orderModels.model.product', 'customer'])
             ->order('o.id', 'desc');
@@ -69,15 +69,15 @@ class Order extends Backend
         }
 
         if ($workflowStatusFilter !== '') {
-            $query->leftJoin($workflowInstanceTable . ' wi', 'wi.record_id = o.id AND wi.table_name = "mes_order"', 'left')
-                ->leftJoin($workflowStateTable . ' ws', 'ws.id = wi.current_state_id', 'left')
+            $query->leftJoin($workflowInstanceTable . ' wi', 'wi.business_id = o.id AND wi.module_code = "mes_order"', 'left')
+                ->leftJoin($workflowStateTable . ' ws', 'ws.id = wi.current_node_id', 'left')
                 ->group('o.id');
             if ($workflowStatusFilter === 'not_started') {
                 $query->whereNull('wi.id');
             } elseif ($workflowStatusFilter === 'in_progress') {
-                $query->whereNotNull('wi.id')->where('wi.is_completed', 0);
+                $query->whereNotNull('wi.id')->where('wi.status', 0);
             } elseif ($workflowStatusFilter === 'completed') {
-                $query->where('wi.is_completed', 1);
+                $query->whereIn('wi.status', [1, 2, 3, 4]);
             }
         }
 
@@ -1348,9 +1348,11 @@ class Order extends Backend
         $workflowGraph = $workflowService->getWorkflowGraph('mes_order', $orderId);
         $pendingApprovals = [];
         if ($workflowInstance) {
-            $pendingApprovals = \app\admin\model\WorkflowApproval::where('instance_id', $workflowInstance->id)
+            $pendingApprovals = Db::name('wf_task')
+                ->where('tenant_id', $tenantId)
+                ->where('instance_id', (int) ($workflowInstance['id'] ?? 0))
                 ->where('approver_id', $this->auth->id ?? 0)
-                ->where('status', 'pending')
+                ->where('status', 0)
                 ->select()
                 ->toArray();
         }

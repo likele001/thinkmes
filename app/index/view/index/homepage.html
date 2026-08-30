@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ThinkMes - 智能MES生产管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0891b2;
+            --primary-dark: #0e7490;
+            --accent: #06b6d4;
+            --gradient: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #22d3ee 100%);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1e293b;
+        }
+        
+        /* NAV */
+        .navbar {
+            background: rgba(255,255,255,.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        
+        .brand-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--gradient);
+            color: #fff;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: .7rem; font-weight: 800;
+            margin-right: .5rem;
+        }
+        
+        /* HERO */
+        .hero {
+            padding: 100px 0 80px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -30%;
+            width: 80%; height: 200%;
+            background: radial-gradient(circle, rgba(8,145,178,.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        
+        .hero-badge {
+            display: inline-block;
+            padding: .5rem 1rem;
+            background: rgba(8,145,178,.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-size: .85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-text {
+            font-size: 1.25rem;
+            color: #64748b;
+            line-height: 1.8;
+            max-width: 600px;
+        }
+        
+        .hero-stats {
+            display: flex; gap: 3rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(8,145,178,.2);
+        }
+        
+        .hero-stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        
+        .hero-stat-label {
+            font-size: .85rem;
+            color: #64748b;
+        }
+        
+        .hero-image {
+            background: var(--gradient);
+            border-radius: 20px;
+            padding: 2rem;
+            min-height: 400px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 20px 60px rgba(8,145,178,.3);
+        }
+        
+        .hero-image-text {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        /* BUTTONS */
+        .btn-primary {
+            background: var(--gradient);
+            border: none;
+            padding: .75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: transform .2s, box-shadow .2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(8,145,178,.4);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+            padding: .75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        /* SECTIONS */
+        .section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+        
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: #64748b;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .section-label {
+            display: inline-block;
+            padding: .4rem 1rem;
+            background: rgba(8,145,178,.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-size: .8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+        
+        /* CARDS */
+        .feature-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            height: 100%;
+            border: 1px solid #e2e8f0;
+            transition: all .3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,.08);
+            border-color: var(--primary);
+        }
+        
+        .feature-icon {
+            width: 56px; height: 56px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-icon-cyan {
+            background: rgba(8,145,178,.1);
+            color: var(--primary);
+        }
+        
+        .feature-icon-blue {
+            background: rgba(59,130,246,.1);
+            color: #3b82f6;
+        }
+        
+        .feature-icon-green {
+            background: rgba(34,197,94,.1);
+            color: #22c55e;
+        }
+        
+        .feature-icon-orange {
+            background: rgba(249,115,22,.1);
+            color: #f97316;
+        }
+        
+        .feature-icon-purple {
+            background: rgba(139,92,246,.1);
+            color: #8b5cf6;
+        }
+        
+        .feature-icon-pink {
+            background: rgba(236,72,153,.1);
+            color: #ec4899;
+        }
+        
+        .feature-card h4 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: .75rem;
+        }
+        
+        .feature-card p {
+            color: #64748b;
+            font-size: .95rem;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+        
+        /* MODULES */
+        .module-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        
+        .module-icon {
+            width: 80px; height: 80px;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        
+        .module-content h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: .75rem;
+        }
+        
+        .module-content p {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        
+        .module-features {
+            display: flex; flex-wrap: wrap; gap: .5rem;
+        }
+        
+        .module-feature {
+            padding: .4rem 1rem;
+            background: #f1f5f9;
+            border-radius: 50px;
+            font-size: .85rem;
+            color: #475569;
+        }
+        
+        /* ADVANTAGES */
+        .advantage-card {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .advantage-icon {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: rgba(8,145,178,.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem;
+            color: var(--primary);
+        }
+        
+        .advantage-card h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: .75rem;
+        }
+        
+        .advantage-card p {
+            color: #64748b;
+            font-size: .95rem;
+        }
+        
+        /* CTA */
+        .cta-section {
+            background: var(--gradient);
+            padding: 80px 0;
+            text-align: center;
+            color: #fff;
+        }
+        
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+        
+        .cta-section p {
+            font-size: 1.1rem;
+            opacity: .9;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-white {
+            background: #fff;
+            color: var(--primary);
+            padding: .75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            border: none;
+            transition: all .2s;
+        }
+        
+        .btn-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,.2);
+            color: var(--primary-dark);
+        }
+        
+        /* FOOTER */
+        .footer {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 60px 0 30px;
+        }
+        
+        .footer h5 {
+            color: #f8fafc;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: .75rem;
+        }
+        
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: .9rem;
+            transition: color .2s;
+        }
+        
+        .footer-links a:hover {
+            color: #f8fafc;
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid #1e293b;
+            padding-top: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+            font-size: .85rem;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 992px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero-stats { gap: 2rem; }
+            .module-card { flex-direction: column; }
+        }
+        
+        @media (max-width: 768px) {
+            .hero { padding: 60px 0; }
+            .hero h1 { font-size: 2rem; }
+            .hero-stats { flex-wrap: wrap; gap: 1.5rem; }
+            .section { padding: 50px 0; }
+            .section-title { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAV -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/index/index/index">
+                <span class="brand-icon">TM</span>
+                ThinkMes
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto me-4">
+                    <li class="nav-item"><a class="nav-link" href="#features">功能</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#modules">模块</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#advantages">优势</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/index/index/guide">使用指南</a></li>
+                </ul>
+                <div class="d-flex gap-2">
+                    <a href="/index/user/login" class="btn btn-outline-primary btn-sm">登录</a>
+                    <a href="/index/user/register" class="btn btn-primary btn-sm">免费试用</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <div class="hero-badge">智能制造 · 高效管理</div>
+                    <h1>新一代<span style="color: var(--primary)">智能MES</span>生产管理系统</h1>
+                    <p class="hero-text">为中小型制造企业量身打造的轻量化生产管理系统。扫码报工、自动算薪、订单追踪、质量溯源，让生产管理更简单高效。</p>
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+                        <a href="/index/user/register" class="btn btn-primary btn-lg">
+                            <i class="bi bi-rocket-takeoff me-2"></i>免费试用
+                        </a>
+                        <a href="/index/index/guide" class="btn btn-outline-primary btn-lg">
+                            <i class="bi bi-book me-2"></i>查看文档
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div>
+                            <div class="hero-stat-number">50+</div>
+                            <div class="hero-stat-label">功能模块</div>
+                        </div>
+                        <div>
+                            <div class="hero-stat-number">10x</div>
+                            <div class="hero-stat-label">效率提升</div>
+                        </div>
+                        <div>
+                            <div class="hero-stat-number">99%</div>
+                            <div class="hero-stat-label">用户满意</div>
+                        </div>
+                        <div>
+                            <div class="hero-stat-number">24h</div>
+                            <div class="hero-stat-label">快速部署</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-image">
+                        <div class="hero-image-text">
+                            <i class="bi bi-gear-wide-connected" style="font-size: 4rem;"></i>
+                            <br><br>
+                            智能制造<br>
+                            从这里开始
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">核心功能</div>
+                <h2 class="section-title">为什么选择 ThinkMes？</h2>
+                <p class="section-subtitle">专为中小型制造企业设计，简单易用、功能全面、部署快速</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-cyan">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
+                        <h4>扫码报工</h4>
+                        <p>员工扫码即可报工，30秒完成操作。支持照片/视频上传，实时工资预览。</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-blue">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        <h4>自动算薪</h4>
+                        <p>基于报工记录自动计算计件工资，支持补贴/扣款，一键生成工资条。</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-green">
+                            <i class="bi bi-clipboard-data"></i>
+                        </div>
+                        <h4>订单管理</h4>
+                        <p>全渠道订单管理，客户自助下单，订单状态实时追踪，交期倒计时提醒。</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-orange">
+                            <i class="bi bi-kanban"></i>
+                        </div>
+                        <h4>生产排产</h4>
+                        <p>可视化甘特图排产，拖拽调整计划，物料齐套检查，智能派工。</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-purple">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h4>质量溯源</h4>
+                        <p>一物一码，扫描成品码追溯全流程。物料批次、操作员工、质检记录全记录。</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon feature-icon-pink">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                        <h4>多端支持</h4>
+                        <p>PC管理端、员工H5端、客户小程序端，随时随地掌握生产动态。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODULES -->
+    <section class="section" id="modules" style="background: #f8fafc;">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">功能模块</div>
+                <h2 class="section-title">完整的生产管理解决方案</h2>
+                <p class="section-subtitle">覆盖生产全流程，从订单到交付的完整闭环</p>
+            </div>
+            
+            <div class="module-card">
+                <div class="module-icon" style="background: rgba(8,145,178,.1); color: #0891b2;">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div class="module-content">
+                    <h3>主数据管理</h3>
+                    <p>产品、型号、工序、工艺路线、物料、BOM等基础数据管理，为生产提供数据支撑。</p>
+                    <div class="module-features">
+                        <span class="module-feature">产品管理</span>
+                        <span class="module-feature">型号管理</span>
+                        <span class="module-feature">工序管理</span>
+                        <span class="module-feature">工艺路线</span>
+                        <span class="module-feature">物料管理</span>
+                        <span class="module-feature">BOM管理</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="module-card">
+                <div class="module-icon" style="background: rgba(34,197,94,.1); color: #22c55e;">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <div class="module-content">
+                    <h3>生产管理</h3>
+                    <p>从订单创建到生产完成的全流程管理，支持扫码报工、多级审核、进度看板。</p>
+                    <div class="module-features">
+                        <span class="module-feature">订单管理</span>
+                        <span class="module-feature">生产计划</span>
+                        <span class="module-feature">任务派工</span>
+                        <span class="module-feature">扫码报工</span>
+                        <span class="module-feature">报工审核</span>
+                        <span class="module-feature">进度看板</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="module-card">
+                <div class="module-icon" style="background: rgba(249,115,22,.1); color: #f97316;">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <div class="module-content">
+                    <h3>工资与财务</h3>
+                    <p>自动计算计件工资，支持补贴/扣款，生成电子工资条，客户对账单。</p>
+                    <div class="module-features">
+                        <span class="module-feature">工资计算</span>
+                        <span class="module-feature">工资条</span>
+                        <span class="module-feature">客户对账</span>
+                        <span class="module-feature">成本分析</span>
+                        <span class="module-feature">收支流水</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="module-card">
+                <div class="module-icon" style="background: rgba(139,92,246,.1); color: #8b5cf6;">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="module-content">
+                    <h3>CRM客户管理</h3>
+                    <p>客户档案、联系人、销售机会、订单跟进，全方位管理客户关系。</p>
+                    <div class="module-features">
+                        <span class="module-feature">客户档案</span>
+                        <span class="module-feature">联系人管理</span>
+                        <span class="module-feature">销售机会</span>
+                        <span class="module-feature">公海池</span>
+                        <span class="module-feature">订单跟进</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="module-card">
+                <div class="module-icon" style="background: rgba(236,72,153,.1); color: #ec4899;">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="module-content">
+                    <h3>数据报表</h3>
+                    <p>生产报表、经营报表、自定义报表，用数据驱动决策。</p>
+                    <div class="module-features">
+                        <span class="module-feature">生产报表</span>
+                        <span class="module-feature">经营报表</span>
+                        <span class="module-feature">车间大屏</span>
+                        <span class="module-feature">数据导出</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ADVANTAGES -->
+    <section class="section" id="advantages">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">产品优势</div>
+                <h2 class="section-title">为什么选择我们？</h2>
+                <p class="section-subtitle">轻量化、易部署、低成本、高效率</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="advantage-card">
+                        <div class="advantage-icon">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                        <h4>快速部署</h4>
+                        <p>24小时内完成部署，即装即用，无需复杂配置</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="advantage-card">
+                        <div class="advantage-icon">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                        <h4>简单易用</h4>
+                        <p>员工扫码即可报工，零学习成本，30秒上手</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="advantage-card">
+                        <div class="advantage-icon">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h4>成本低廉</h4>
+                        <p>按需付费，无需购买昂贵设备，中小企业首选</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="advantage-card">
+                        <div class="advantage-icon">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h4>数据安全</h4>
+                        <p>私有化部署，数据自主掌控，多重备份保障</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>准备好提升生产效率了吗？</h2>
+            <p>立即注册，免费体验智能MES系统的强大功能</p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="/index/user/register" class="btn btn-white btn-lg">
+                    <i class="bi bi-rocket-takeoff me-2"></i>免费试用
+                </a>
+                <a href="/index/index/guide" class="btn btn-outline-light btn-lg rounded-pill px-4">
+                    查看文档
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h5>
+                        <span class="brand-icon">TM</span>
+                        ThinkMes
+                    </h5>
+                    <p class="small">新一代智能MES生产管理系统，让生产管理更简单高效。</p>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h5>产品</h5>
+                    <ul class="footer-links">
+                        <li><a href="#features">核心功能</a></li>
+                        <li><a href="#modules">功能模块</a></li>
+                        <li><a href="#advantages">产品优势</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h5>支持</h5>
+                    <ul class="footer-links">
+                        <li><a href="/index/index/guide">使用指南</a></li>
+                        <li><a href="/index/user/login">用户登录</a></li>
+                        <li><a href="/index/user/register">注册账号</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h5>功能</h5>
+                    <ul class="footer-links">
+                        <li><a href="#">扫码报工</a></li>
+                        <li><a href="#">自动算薪</a></li>
+                        <li><a href="#">订单管理</a></li>
+                        <li><a href="#">质量溯源</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h5>账号</h5>
+                    <ul class="footer-links">
+                        <li><a href="/index/user/login">用户登录</a></li>
+                        <li><a href="/admin/index/login">管理后台</a></li>
+                        <li><a href="/index/user/register">注册账号</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 ThinkMes. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+        
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,.1)';
+            } else {
+                navbar.style.boxShadow = '0 1px 3px rgba(0,0,0,.05)';
+            }
+        });
+    </script>
+</body>
+</html>

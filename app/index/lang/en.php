@@ -46,4 +46,10 @@ return [
     'label_email'       => 'Email',
     'placeholder_username' => 'Username',
     'placeholder_email' => 'Email',
+
+    'welcome_page_title' => 'Welcome',
+    'welcome_page_desc'  => 'Choose an entry: members use User Center; administrators use Backend.',
+    'welcome_btn_user'   => 'User login',
+    'welcome_btn_admin'  => 'Admin login',
+    'welcome_link_wemedia' => 'Wemedia workspace',
 ];

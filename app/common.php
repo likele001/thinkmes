@@ -3,6 +3,39 @@
 
 use think\facade\Lang;
 
+if (!function_exists('install_lock_file')) {
+    /**
+     * 安装锁统一路径（项目根目录，避免与 runtime 缓存一同被清理）
+     */
+    function install_lock_file(): string
+    {
+        return rtrim((string) root_path(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'install.lock';
+    }
+}
+
+if (!function_exists('install_is_locked')) {
+    /**
+     * 是否已安装：优先项目根 install.lock，并兼容曾写在 runtime 下的锁
+     */
+    function install_is_locked(): bool
+    {
+        if (is_file(install_lock_file())) {
+            return true;
+        }
+        $root = rtrim((string) root_path(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $legacyRuntime = $root . 'runtime' . DIRECTORY_SEPARATOR . 'install.lock';
+        if (is_file($legacyRuntime)) {
+            return true;
+        }
+        foreach (['install', 'index'] as $sub) {
+            if (is_file($root . 'runtime' . DIRECTORY_SEPARATOR . $sub . DIRECTORY_SEPARATOR . 'install.lock')) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
 if (!function_exists('__')) {
     /**
      * 多语言翻译函数

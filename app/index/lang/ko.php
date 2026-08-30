@@ -46,4 +46,10 @@ return [
     'label_email'       => '이메일',
     'placeholder_username' => '사용자명',
     'placeholder_email' => '이메일',
+
+    'welcome_page_title' => '환영합니다',
+    'welcome_page_desc'  => '회원은 사용자 센터, 관리자는 관리자 화면으로 이동하세요.',
+    'welcome_btn_user'   => '사용자 로그인',
+    'welcome_btn_admin'  => '관리자 로그인',
+    'welcome_link_wemedia' => '웨미디어 작업실',
 ];

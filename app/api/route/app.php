@@ -69,9 +69,15 @@ Route::get('customer/orders', 'Customer/orders')->middleware(\app\api\middleware
 // 小程序绑定（需登录）
 Route::post('miniapp/bind', 'Miniapp/bind')->middleware(\app\api\middleware\UserAuth::class);
 
-require __DIR__ . '/restaurant_wxa.php';
-require __DIR__ . '/restaurant_openclaw.php';
-require __DIR__ . '/prompt.php';
+if (is_file(__DIR__ . '/restaurant_wxa.php')) {
+    require __DIR__ . '/restaurant_wxa.php';
+}
+if (is_file(__DIR__ . '/restaurant_openclaw.php')) {
+    require __DIR__ . '/restaurant_openclaw.php';
+}
+if (is_file(__DIR__ . '/prompt.php')) {
+    require __DIR__ . '/prompt.php';
+}
 
 // C端用户：文件上传（需登录）
 Route::post('common/upload', 'Common/upload')->middleware(\app\api\middleware\UserAuth::class);

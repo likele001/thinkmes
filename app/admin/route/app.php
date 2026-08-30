@@ -220,6 +220,9 @@ if (is_file(__DIR__ . '/restaurant.php')) {
 if (is_file(__DIR__ . '/extension.php')) {
     require __DIR__ . '/extension.php';
 }
+if (is_file(__DIR__ . '/workflow.php')) {
+    require __DIR__ . '/workflow.php';
+}
 
 
 // 客服管理路由（注意：具体路由要放在通用路由前面）

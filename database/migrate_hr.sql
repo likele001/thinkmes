@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `fa_hr_department` (
   `tenant_id` int unsigned NOT NULL DEFAULT 0,
   `name` varchar(64) NOT NULL,
   `pid` int unsigned NOT NULL DEFAULT 0,
+  `manager_id` int unsigned NOT NULL DEFAULT 0 COMMENT '部门负责人管理员ID',
   `sort` int NOT NULL DEFAULT 0,
   `create_time` int DEFAULT NULL,
   `update_time` int DEFAULT NULL,
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `fa_hr_position` (
 CREATE TABLE IF NOT EXISTS `fa_hr_employee` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `tenant_id` int unsigned NOT NULL DEFAULT 0,
+  `admin_id` int unsigned NOT NULL DEFAULT 0 COMMENT '绑定后台管理员ID',
   `no` varchar(32) DEFAULT NULL COMMENT '工号',
   `name` varchar(64) NOT NULL,
   `department_id` int unsigned NOT NULL DEFAULT 0,

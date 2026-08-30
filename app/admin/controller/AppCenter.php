@@ -27,6 +27,7 @@ class AppCenter extends Backend
         'hr'        => ['title' => '人事考勤', 'description' => '组织、员工、考勤、排班、请假、薪资'],
         'finance'   => ['title' => '财务管理', 'description' => '科目、凭证、账簿、报表'],
         'restaurant'=> ['title' => '餐饮SaaS', 'description' => '门店、区域、桌台、菜品、扫码点餐'],
+        'workflow'  => ['title' => '工作流审批', 'description' => '审批流定义、模块接入、审批中心、流程实例'],
     ];
 
     /** 卸载时可选删除的数据表：key => 表名前缀（不含 fa_），用于 SHOW TABLES LIKE prefix+pattern；上传安装的以 app.json tables 为准 */
@@ -38,6 +39,7 @@ class AppCenter extends Backend
         'equipment' => ['equipment_'],
         'hr'        => ['hr_'],
         'finance'   => ['finance_'],
+        'workflow'  => ['wf_'],
     ];
 
     protected function initialize(): void

@@ -86,6 +86,11 @@
         var iframeHeight = Math.max(400, $(window).height() - headerH - tabsH);
         $(document).addtabs({ nav: '#nav-addtabs', tab: '#tab-addtabs-content', iframeUse: true, iframeHeight: iframeHeight, close: true, monitor: 'body' });
 
+        // Toastr兼容层：将Toastr调用重定向到Toast
+        if (typeof Toastr === 'undefined') {
+            window.Toastr = window.Toast;
+        }
+
         // 根据当前激活的 tab 在侧栏菜单中高亮对应项并展开父级（与参考图一致：展开父级 + 当前项高亮）
         function normalizePathForMatch(url) {
             if (!url || typeof url !== 'string') return '';

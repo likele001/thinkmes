@@ -45,7 +45,7 @@ class SmsConfig extends Backend
         foreach ($rows as $r) {
             $config[$r->name] = $r->value;
         }
-        View::assign('config', $config);
+        $this->mergeViewConfig($config);
         View::assign('title', '短信配置');
         return $this->fetchWithLayout('sms_config/index');
     }
