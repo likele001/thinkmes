@@ -1,3 +1,9 @@
+# 第三方组件声明
+
+本项目部分功能基于以下开源项目，其许可条款一并适用。
+
+本项目中使用的 ThinkPHP 框架遵循 Apache License 2.0，详见：
+https://www.apache.org/licenses/LICENSE-2.0
 
 ThinkPHP遵循Apache2开源协议发布，并提供免费使用。
 版权所有Copyright © 2006-2025 by ThinkPHP (http://thinkphp.cn)
